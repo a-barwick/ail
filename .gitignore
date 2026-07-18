@@ -1,0 +1,26 @@
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs, coverage, and temporary files
+*.log
+coverage/
+tmp/
+temp/
+
+# Common build outputs. Candidate-specific ignores belong with each prototype.
+build/
+dist/
+target/
+out/
