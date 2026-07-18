@@ -2,7 +2,15 @@
 
 Date: 2026-07-18
 
+Status: **Historical design review**
+
 Scope: review of the finalized design direction supplied at repository creation.
+Subsequent project and application framing is captured in
+[project-intent.md](project-intent.md) and
+[application-vision.md](application-vision.md).
+
+Documentation role: point-in-time review. Findings remain useful, but this file
+does not supersede the artifacts it reviews.
 
 ## Assessment
 

@@ -5,6 +5,11 @@ Status: **Design input**
 Purpose: capture the agreed identity and constraints that precede a normative
 language specification.
 
+Documentation layer: language and compiler design. This document proposes how
+AIL may satisfy the [project intent](project-intent.md) and
+[application vision](application-vision.md). It does not define normative program
+behavior. See the [documentation model](README.md).
+
 ## Identity
 
 AIL is a deterministic, executable programming language designed for agents to
@@ -12,7 +17,8 @@ author, inspect, debug, and refactor, and for an ordinary compiler to translate
 into bytecode, machine code, or compatible target source.
 
 AIL is not a specification language, an agent protocol, a prompt format, or a
-compiler-agent collaboration. Human readability is incidental.
+compiler-agent collaboration. Human authorship ergonomics are secondary, but
+human auditability is a hard requirement.
 
 Two choices anchor the design:
 
@@ -176,6 +182,35 @@ call-graph, control-flow, and target-compatibility changes.
 Multi-file refactors are transactions: the complete transformation commits only
 if it validates.
 
+## Architectural health and project policy
+
+Complete impact analysis prevents missed consequences, but it does not prevent a
+behaviorally correct change from concentrating control flow, authority, state,
+and dependencies in one unit. The compiler should therefore expose primitive
+architectural facts for executable units and aggregate semantic scopes.
+
+Given a compatible base and candidate revision, the compiler reports an
+architectural delta: new or enlarged hotspots, dependency and capability
+changes, state concentration, cycles, context growth, coverage loss, and policy
+or baseline changes. Unchanged accepted debt remains visible without becoming a
+new regression.
+
+The language creates analyzable relationships; the compiler measures them; the
+project decides which thresholds and boundaries to enforce. Universal AIL
+semantics do not declare that every large function is invalid or infer the
+project's preferred architecture.
+
+Project policy may record facts, warn, or deny validation. Denied results and
+incomplete analysis required by a denied rule prevent a structural transaction
+from committing. Exceptions are explicit, scoped, versioned policy artifacts,
+not source-comment suppressions.
+
+The proposed metric catalog, manifest, baseline, exception, diagnostic, and
+validation behavior are defined in the
+[architectural health manifest](architecture-health.md). The feature remains
+non-normative until UC-007, its requirements, numbered protocol rules, and
+conformance fixtures are accepted.
+
 ## Targets
 
 Native AIL semantics are authoritative. Compatible target source may be emitted
@@ -203,10 +238,10 @@ The first version excludes:
 - comments used as contracts; and
 - reflection over arbitrary implementation details.
 
-## Next artifact
+## Next normative artifact
 
-The next normative artifact is a small core of roughly 20–30 constructs,
-including:
+After the application-use-case and requirements gate, the next normative
+artifact is a small core of roughly 20–30 constructs, including:
 
 - a canonical grammar and formatter;
 - static and dynamic semantics;
