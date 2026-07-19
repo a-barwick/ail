@@ -354,7 +354,7 @@ configurations with stable results.
 The gate passes with 18 locked artifacts and 14 stable synthetic outcomes.
 M8b collected no agent or performance evidence.
 
-#### Active submilestone: M8c — Implement the interactive agent runner
+#### Completed submilestone: M8c — Implement the interactive agent runner
 
 Build a fresh locked workspace, enforce the manifest-start gate, invoke only
 the selected Codex agent and normal language tools, and record every model,
@@ -367,7 +367,33 @@ for success, failure, timeout, permission violation, input-token limit, and
 incomplete evidence. M8c does not run an official trial or implement the later
 private correctness replay.
 
+M8c delivered the locked task-workspace and prompt gate, task-derived
+least-privilege permissions, isolated Codex and loopback-provider
+configuration, complete raw event capture, exact token reconciliation and
+limits, process-group termination, deterministic final-source retention, and
+M2 edit, validation, incomplete-validation, and repair-cycle accounting. Six
+fake/dry terminal outcomes and the boundary checks pass without invoking the
+measured agent.
+
 #### M8c focused verification
+
+```bash
+python3 benchmarks/tools/harness.py verify-calibration
+python3 tools/check_docs.py
+```
+
+#### Active submilestone: M8d — Implement correctness verification and replay
+
+Run the full public and separately held private oracle against the retained
+final revision after the agent stops. Verify seeded consumers, protected
+artifacts, permissions, revision-bound completion evidence, and functional
+replay without exposing private inputs or results to the agent.
+
+M8d must reject incomplete, answer-exposing, revision-mismatched, and seeded
+regression results. It may use fake and dry evidence but must not collect
+official trials.
+
+#### M8d focused verification
 
 ```bash
 python3 benchmarks/tools/harness.py verify-calibration

@@ -4,31 +4,28 @@ Last updated: 2026-07-19
 
 ## Active milestone
 
-M8 — Baseline agent calibration (M8c: interactive agent runner)
+M8 — Baseline agent calibration (M8d: correctness verification and replay)
 
 ## Current goal
 
-Implement the interactive trial runner against the frozen M8a experiment
-treatment and M8b evidence contracts. Use fake and dry streams only; no
-official agent or performance evidence exists yet.
+Implement post-run correctness verification and replay against the retained
+M8c final revision. Use fake and dry evidence only; no official agent or
+performance evidence exists yet.
 
 The next agent should:
 
-- follow M8c in the
+- follow M8d in the
   [accepted M8 execution plan](m8-execution-plan.md);
-- materialize a fresh locked task workspace and enforce the complete pre-start
-  gate before invoking the agent;
-- record fake and dry model, tool, edit, validation, permission, limit, and
-  process events into the accepted
-  [calibration evidence contract](../benchmarks/calibration/README.md);
-- derive edit, validation, incomplete-validation, and repair counts using the
-  frozen M2 definitions; and
-- stop before private correctness replay, performance adapters, readiness
-  pilots, or official evidence.
+- keep the private package outside every agent-readable path;
+- run the complete public/private oracle, seeded-consumer checks,
+  protected-artifact checks, permission checks, and completion-evidence checks
+  against one retained final revision;
+- prove functional replay from the locked trial manifest; and
+- stop before performance adapters, readiness pilots, or official evidence.
 
 ## Starting point
 
-The following work is accepted and should not be redesigned in M8c:
+The following work is accepted and should not be redesigned in M8d:
 
 - [UC-001 request validation and persistence](use-cases/UC-001-request-validation-and-persistence.md)
 - [UC-003 public schema evolution](use-cases/UC-003-public-schema-evolution.md)
@@ -84,6 +81,7 @@ Key decisions:
 - M7 — Cross-baseline parity and freeze
 - M8a — Frozen agent experiment contract
 - M8b — Calibration evidence contracts and verifier
+- M8c — Interactive agent runner
 
 M1 delivered 37 canonical public JSON cases, a machine-readable schema, a
 dependency-free semantic checker and formatter, negative-path tool tests, and a
@@ -141,9 +139,17 @@ cumulative-prefix deltas for category attribution and zero reconciliation
 tolerance. M8f must still prove that rule with the selected agent before the
 campaign freeze.
 
-## After M8c
+M8c added a task-start-derived interactive runner with a complete pre-start
+observation gate, isolated Codex and loopback-provider configuration,
+least-privilege filesystem and network policy, raw event capture, exact token
+and wall limits, process-group termination, deterministic final-source
+retention, and frozen M2 activity accounting. Fake and dry streams prove stable
+success, failure, timeout, permission, token-limit, and incomplete-evidence
+outcomes. It invoked no model and recorded no official evidence.
 
-- M8d — Implement correctness verification and replay
+## After M8d
+
+- M8e — Implement performance measurement
 - M9 — Frozen AIL success targets
 
 ## Proposed future validation
@@ -151,7 +157,7 @@ campaign freeze.
 [UC-007 architectural regression control](use-cases/UC-007-architectural-regression-control.md),
 its [proposed requirements](requirements/architectural-health.md), and the
 [architectural health manifest](architecture-health.md) define a later scaling
-gate. They do not expand M8c or authorize implementation before review and
+gate. They do not expand M8d or authorize implementation before review and
 acceptance.
 
 ## Do not start yet
@@ -159,7 +165,6 @@ acceptance.
 - AIL syntax design
 - AIL compiler implementation
 - Compiler-stack prototypes
-- Correctness replay implementation
 - Agent benchmark runs
 - Performance measurements
 - M8 evidence collection
@@ -169,10 +174,9 @@ Those depend on later M8 submilestones or later roadmap milestones.
 
 ## Blockers
 
-None recorded for M8c. The runner must produce the accepted evidence records
-without weakening the M8a treatment or M8b verifier. An unrepresentable event,
-permission, or limit is a reason to stop and amend the predecessor contract,
-not to collect partial evidence.
+None recorded for M8d. Correctness and replay must bind every result to the
+retained M8c final revision without exposing the private package or changing the
+frozen M8a treatment and M8b evidence contract.
 
 ## Handoff checklist
 
@@ -186,5 +190,5 @@ After meaningful work:
 - run `python3 tools/check_docs.py`; and
 - update the roadmap only when the milestone exit criterion passes.
 
-For M8c, use only fake and dry streams, keep official counts at zero, and leave
-a concise handoff for M8d.
+For M8d, use only fake and dry evidence, keep official counts at zero, and leave
+a concise handoff for M8e.

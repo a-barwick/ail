@@ -2,7 +2,7 @@
 
 Status: **Accepted 2026-07-19**
 
-Progress: P0 and M8a are complete. M8b is active. The starting-state section
+Progress: P0 and M8a through M8c are complete. M8d is active. The starting-state section
 records the condition when this plan was accepted.
 
 Documentation role: operational delivery plan for M8. The

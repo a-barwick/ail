@@ -70,7 +70,9 @@ LOCKED_ARTIFACTS = (
     "benchmarks/schemas/calibration-raw-event.schema.json",
     "benchmarks/schemas/calibration-report.schema.json",
     "benchmarks/schemas/calibration-warm-measurement.schema.json",
+    "benchmarks/tests/test_agent_runner.py",
     "benchmarks/tests/test_calibration.py",
+    "benchmarks/tools/agent_runner.py",
     "benchmarks/tools/calibration.py",
 )
 PROMPT_PREFIX = (
@@ -1644,8 +1646,12 @@ def verify_synthetic_campaigns(
 def verify_calibration() -> None:
     contract = check_contract_lock()
     outcomes = verify_synthetic_campaigns(contract)
+    import agent_runner as agent_runner_tool
+
+    runner_outcomes = agent_runner_tool.verify_fake_and_dry_streams()
     print(
         "M8 calibration verifier passed: "
         f"{len(LOCKED_ARTIFACTS)} contract artifacts and "
-        f"{len(outcomes)} stable synthetic outcomes verified."
+        f"{len(outcomes)} stable synthetic outcomes verified; "
+        f"{len(runner_outcomes)} M8c fake/dry runner outcomes verified."
     )

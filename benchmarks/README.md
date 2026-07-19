@@ -154,8 +154,11 @@ it in the locked
 `verify-calibration`. The verifier accepts structurally complete empty, pilot,
 and partial campaigns, requires final counts for a campaign marked complete,
 and rejects changed, missing, inconsistent, mixed, or incorrectly summarized
-evidence. M8c must implement and dry-test the interactive runner, and M8f must
-pass all readiness configurations before any official trial counts.
+evidence. M8c implements and dry-tests the interactive runner, generated
+least-privilege configuration, pre-start gate, event and final-source capture,
+limit enforcement, and M2 activity accounting. M8d adds post-run correctness
+and replay, and M8f must pass all readiness configurations before any official
+trial counts.
 
 Run the M8b gate with:
 
