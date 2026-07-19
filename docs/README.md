@@ -86,9 +86,9 @@ Every example must use one of these labels:
 
 The job-service reference workload, its two use cases, its first requirements,
 its frozen public JSON fixtures, and its language-independent benchmark harness
-and task contract are accepted. The Rust baseline is complete, and the active
-task is M4: implement the Go baseline. Architectural regression control is a
-separate proposed scaling use
+and task contract are accepted. The Rust and Go baselines are complete, and the
+active task is M5: implement the Python baseline. Architectural regression
+control is a separate proposed scaling use
 case and feature specification; it does not expand the active slice until
 reviewed and accepted.
 
