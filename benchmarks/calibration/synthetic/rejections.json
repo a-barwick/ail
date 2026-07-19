@@ -1,0 +1,68 @@
+{
+  "synthetic_fixture_format": 1,
+  "scenarios": [
+    {
+      "synthetic_fixture_format": 1,
+      "id": "missing-counts",
+      "state": "complete",
+      "mutation": "missing_counts",
+      "expected": "campaign_counts_missing"
+    },
+    {
+      "synthetic_fixture_format": 1,
+      "id": "duplicate-trial-identity",
+      "state": "complete",
+      "mutation": "duplicate_trial_identity",
+      "expected": "duplicate_trial_identity"
+    },
+    {
+      "synthetic_fixture_format": 1,
+      "id": "changed-inputs",
+      "state": "complete",
+      "mutation": "changed_inputs",
+      "expected": "changed_campaign_input"
+    },
+    {
+      "synthetic_fixture_format": 1,
+      "id": "invalid-hash",
+      "state": "complete",
+      "mutation": "invalid_hash",
+      "expected": "evidence_hash_invalid"
+    },
+    {
+      "synthetic_fixture_format": 1,
+      "id": "incomplete-token-categories",
+      "state": "complete",
+      "mutation": "incomplete_token_categories",
+      "expected": "token_categories_incomplete"
+    },
+    {
+      "synthetic_fixture_format": 1,
+      "id": "missing-raw-events",
+      "state": "complete",
+      "mutation": "missing_raw_events",
+      "expected": "raw_events_missing"
+    },
+    {
+      "synthetic_fixture_format": 1,
+      "id": "unaccounted-exclusion",
+      "state": "complete",
+      "mutation": "unaccounted_exclusion",
+      "expected": "exclusion_unaccounted"
+    },
+    {
+      "synthetic_fixture_format": 1,
+      "id": "incorrect-summary",
+      "state": "complete",
+      "mutation": "incorrect_summary",
+      "expected": "report_summary_incorrect"
+    },
+    {
+      "synthetic_fixture_format": 1,
+      "id": "mixed-configuration",
+      "state": "complete",
+      "mutation": "mixed_configuration",
+      "expected": "mixed_configuration"
+    }
+  ]
+}

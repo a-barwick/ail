@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/calibration-cold-measurement.schema.json",
+  "title": "AIL M8 cold-start and memory measurement",
+  "type": "object",
+  "required": [
+    "cold_measurement_format",
+    "measurement_id",
+    "schedule_id",
+    "campaign_id",
+    "configuration_id",
+    "language",
+    "official",
+    "round",
+    "status",
+    "exclusion_reason",
+    "environment_sha256",
+    "package_manifest_path",
+    "package_manifest_sha256",
+    "dependency_lock_sha256",
+    "clock",
+    "affinity",
+    "load",
+    "readiness_signal",
+    "process_creation_ns",
+    "readiness_ns",
+    "idle_rss_bytes",
+    "peak_rss_bytes",
+    "exit_status",
+    "external_access_attempts",
+    "corpus"
+  ],
+  "properties": {
+    "cold_measurement_format": {
+      "const": 1
+    },
+    "measurement_id": {
+      "type": "string"
+    },
+    "schedule_id": {
+      "type": "string"
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "configuration_id": {
+      "type": "string"
+    },
+    "language": {
+      "enum": [
+        "rust",
+        "go",
+        "python",
+        "typescript"
+      ]
+    },
+    "official": {
+      "enum": [
+        "yes",
+        "no"
+      ]
+    },
+    "round": {
+      "type": "integer"
+    },
+    "status": {
+      "enum": [
+        "included",
+        "excluded"
+      ]
+    },
+    "exclusion_reason": {
+      "type": "string"
+    },
+    "environment_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "package_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "package_manifest_path": {
+      "type": "string"
+    },
+    "dependency_lock_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "clock": {
+      "type": "object"
+    },
+    "affinity": {
+      "type": "object"
+    },
+    "load": {
+      "type": "object"
+    },
+    "readiness_signal": {
+      "type": "string"
+    },
+    "process_creation_ns": {
+      "type": "integer"
+    },
+    "readiness_ns": {
+      "type": "integer"
+    },
+    "idle_rss_bytes": {
+      "type": "integer"
+    },
+    "peak_rss_bytes": {
+      "type": "integer"
+    },
+    "exit_status": {
+      "type": "integer"
+    },
+    "external_access_attempts": {
+      "type": "integer"
+    },
+    "corpus": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

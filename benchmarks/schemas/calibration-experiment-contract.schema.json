@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/calibration-experiment-contract.schema.json",
+  "title": "AIL M8 frozen agent experiment contract",
+  "type": "object",
+  "required": [
+    "experiment_contract_format",
+    "contract_id",
+    "benchmark_id",
+    "authority",
+    "agent",
+    "protocol",
+    "prompt",
+    "initial_context",
+    "task_starts",
+    "tools",
+    "token_accounting",
+    "permissions",
+    "limits",
+    "terminal_classes",
+    "environment",
+    "performance",
+    "schemas"
+  ],
+  "properties": {
+    "experiment_contract_format": {
+      "const": 1
+    },
+    "contract_id": {
+      "const": "m8-agent-experiment-v1"
+    },
+    "benchmark_id": {
+      "const": "ail-job-service"
+    },
+    "authority": {
+      "type": "object"
+    },
+    "agent": {
+      "type": "object"
+    },
+    "protocol": {
+      "type": "object"
+    },
+    "prompt": {
+      "type": "object"
+    },
+    "initial_context": {
+      "type": "array"
+    },
+    "task_starts": {
+      "type": "array"
+    },
+    "tools": {
+      "type": "object"
+    },
+    "token_accounting": {
+      "type": "object"
+    },
+    "permissions": {
+      "type": "object"
+    },
+    "limits": {
+      "type": "object"
+    },
+    "terminal_classes": {
+      "type": "array"
+    },
+    "environment": {
+      "type": "object"
+    },
+    "performance": {
+      "type": "object"
+    },
+    "schemas": {
+      "type": "array",
+      "minItems": 7
+    }
+  },
+  "additionalProperties": false
+}

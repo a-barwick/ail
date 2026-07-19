@@ -4,31 +4,31 @@ Last updated: 2026-07-19
 
 ## Active milestone
 
-M8 — Baseline agent calibration (M8b: evidence contracts and verifier)
+M8 — Baseline agent calibration (M8c: interactive agent runner)
 
 ## Current goal
 
-Build the machine-checkable evidence boundary before any official agent or
-performance result exists. Define calibration schemas and digest locks, then
-implement `verify-calibration` with synthetic campaigns that prove complete
-evidence is accepted and missing, changed, inconsistent, or mixed evidence is
-rejected.
+Implement the interactive trial runner against the frozen M8a experiment
+treatment and M8b evidence contracts. Use fake and dry streams only; no
+official agent or performance evidence exists yet.
 
 The next agent should:
 
-- follow M8b in the
+- follow M8c in the
   [accepted M8 execution plan](m8-execution-plan.md);
-- implement schemas and locks for agent, raw-event, performance, campaign,
-  index, and report evidence under the frozen
-  [M8 agent experiment contract](decisions/0002-m8-agent-experiment-contract.md);
-- add `python3 benchmarks/tools/harness.py verify-calibration` and synthetic
-  acceptance/rejection fixtures; and
-- stop before the interactive agent runner, correctness replay, performance
-  adapters, readiness pilots, or official evidence.
+- materialize a fresh locked task workspace and enforce the complete pre-start
+  gate before invoking the agent;
+- record fake and dry model, tool, edit, validation, permission, limit, and
+  process events into the accepted
+  [calibration evidence contract](../benchmarks/calibration/README.md);
+- derive edit, validation, incomplete-validation, and repair counts using the
+  frozen M2 definitions; and
+- stop before private correctness replay, performance adapters, readiness
+  pilots, or official evidence.
 
 ## Starting point
 
-The following work is accepted and should not be redesigned in M8b:
+The following work is accepted and should not be redesigned in M8c:
 
 - [UC-001 request validation and persistence](use-cases/UC-001-request-validation-and-persistence.md)
 - [UC-003 public schema evolution](use-cases/UC-003-public-schema-evolution.md)
@@ -44,6 +44,7 @@ The following work is accepted and should not be redesigned in M8b:
 - [Answer-free task starts](../benchmarks/task-starts/README.md)
 - [M8 execution plan](m8-execution-plan.md)
 - [M8 agent experiment contract](decisions/0002-m8-agent-experiment-contract.md)
+- [M8 calibration evidence contract](../benchmarks/calibration/README.md)
 - [Rust baseline](../benchmarks/baselines/rust/README.md)
 - [Go baseline](../benchmarks/baselines/go/README.md)
 - [Python baseline](../benchmarks/baselines/python/README.md)
@@ -82,6 +83,7 @@ Key decisions:
 - M6 — TypeScript baseline
 - M7 — Cross-baseline parity and freeze
 - M8a — Frozen agent experiment contract
+- M8b — Calibration evidence contracts and verifier
 
 M1 delivered 37 canonical public JSON cases, a machine-readable schema, a
 dependency-free semantic checker and formatter, negative-path tool tests, and a
@@ -124,9 +126,24 @@ from a 100,000-token pilot limit to a 500,000-token interactive trial limit.
 The preserved pilot remains non-authoritative and official M8 counts remain
 zero.
 
-## After M8b
+M8b added eight schemas, a canonical experiment contract, SHA-256 locks, agent
+and performance record shapes, raw JSONL event records, evidence indexes, and a
+fact-only report contract. `verify-calibration` checks exact task starts and
+rendered prompts, complete categorical token accounting, event continuity,
+artifact hashes, unique identities, exclusions, campaign counts, summaries,
+and configuration consistency. Its empty, pilot, partial, malformed, complete,
+and nine targeted rejection fixtures produce 14 stable outcomes. The M2 and M7
+locks were re-sealed only for the added harness command; frozen tasks, fixtures,
+oracles, task starts, and baseline source trees did not change.
 
-- M8c — Implement the interactive agent runner
+M8b used the exact Responses input-token count endpoint with ordered
+cumulative-prefix deltas for category attribution and zero reconciliation
+tolerance. M8f must still prove that rule with the selected agent before the
+campaign freeze.
+
+## After M8c
+
+- M8d — Implement correctness verification and replay
 - M9 — Frozen AIL success targets
 
 ## Proposed future validation
@@ -134,7 +151,7 @@ zero.
 [UC-007 architectural regression control](use-cases/UC-007-architectural-regression-control.md),
 its [proposed requirements](requirements/architectural-health.md), and the
 [architectural health manifest](architecture-health.md) define a later scaling
-gate. They do not expand M8b or authorize implementation before review and
+gate. They do not expand M8c or authorize implementation before review and
 acceptance.
 
 ## Do not start yet
@@ -142,7 +159,6 @@ acceptance.
 - AIL syntax design
 - AIL compiler implementation
 - Compiler-stack prototypes
-- Interactive agent runner
 - Correctness replay implementation
 - Agent benchmark runs
 - Performance measurements
@@ -153,9 +169,10 @@ Those depend on later M8 submilestones or later roadmap milestones.
 
 ## Blockers
 
-None recorded for M8b. The schemas and verifier must preserve the frozen M8a
-contract; finding an unrepresentable requirement is a reason to stop and amend
-the decision, not to weaken evidence silently.
+None recorded for M8c. The runner must produce the accepted evidence records
+without weakening the M8a treatment or M8b verifier. An unrepresentable event,
+permission, or limit is a reason to stop and amend the predecessor contract,
+not to collect partial evidence.
 
 ## Handoff checklist
 
@@ -169,5 +186,5 @@ After meaningful work:
 - run `python3 tools/check_docs.py`; and
 - update the roadmap only when the milestone exit criterion passes.
 
-For M8b, leave empty, pilot, partial, malformed, and complete synthetic
-campaigns with stable expected results and a concise handoff for M8c.
+For M8c, use only fake and dry streams, keep official counts at zero, and leave
+a concise handoff for M8d.

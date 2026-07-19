@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/calibration-campaign.schema.json",
+  "title": "AIL M8 campaign configuration and ordering",
+  "type": "object",
+  "required": [
+    "campaign_format",
+    "campaign_id",
+    "profile",
+    "completion_state",
+    "configuration",
+    "requirements",
+    "ordering"
+  ],
+  "properties": {
+    "campaign_format": {
+      "const": 1
+    },
+    "campaign_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*$"
+    },
+    "profile": {
+      "enum": [
+        "official",
+        "pilot",
+        "synthetic"
+      ]
+    },
+    "completion_state": {
+      "enum": [
+        "empty",
+        "pilot",
+        "partial",
+        "complete"
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "required": [
+        "id",
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "id": {
+          "const": "m8-agent-experiment-v1"
+        },
+        "path": {
+          "const": "benchmarks/calibration/experiment-contract.json"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "requirements": {
+      "type": "object",
+      "required": [
+        "successful_agent_trials_per_configuration",
+        "warm_measurements_per_language",
+        "cold_measurements_per_language"
+      ],
+      "properties": {
+        "successful_agent_trials_per_configuration": {
+          "type": "integer"
+        },
+        "warm_measurements_per_language": {
+          "type": "integer"
+        },
+        "cold_measurements_per_language": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ordering": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "schedule_id",
+          "kind",
+          "round",
+          "language",
+          "task"
+        ],
+        "properties": {
+          "schedule_id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "agent_trial",
+              "warm_measurement",
+              "cold_measurement"
+            ]
+          },
+          "round": {
+            "type": "integer"
+          },
+          "language": {
+            "enum": [
+              "rust",
+              "go",
+              "python",
+              "typescript"
+            ]
+          },
+          "task": {
+            "enum": [
+              "UC-001",
+              "UC-003",
+              "not_applicable"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

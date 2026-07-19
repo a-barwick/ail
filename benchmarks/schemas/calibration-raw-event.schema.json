@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/calibration-raw-event.schema.json",
+  "title": "AIL M8 raw model and tool event",
+  "type": "object",
+  "required": [
+    "event_format",
+    "sequence",
+    "event_id",
+    "trial_id",
+    "configuration_id",
+    "phase",
+    "kind",
+    "monotonic_ns",
+    "payload",
+    "payload_sha256"
+  ],
+  "properties": {
+    "event_format": {
+      "const": 1
+    },
+    "sequence": {
+      "type": "integer"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "trial_id": {
+      "type": "string"
+    },
+    "configuration_id": {
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "start",
+        "agent",
+        "stop",
+        "verify",
+        "classify"
+      ]
+    },
+    "kind": {
+      "enum": [
+        "trial.started",
+        "model.request",
+        "model.response",
+        "tool.call",
+        "tool.result",
+        "workspace.edit",
+        "validation.result",
+        "permission.result",
+        "process.result",
+        "trial.stopped"
+      ]
+    },
+    "monotonic_ns": {
+      "type": "integer"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "payload_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": false
+}

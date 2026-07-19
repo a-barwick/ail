@@ -1,0 +1,7 @@
+{
+  "synthetic_fixture_format": 1,
+  "id": "partial",
+  "state": "partial",
+  "mutation": "none",
+  "expected": "accepted:partial"
+}

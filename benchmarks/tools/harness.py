@@ -18,6 +18,7 @@ from typing import Any, Iterator, NoReturn
 
 import fixtures as fixture_tool
 import task_starts as task_start_tool
+import calibration as calibration_tool
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -1183,6 +1184,20 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("self-test", help="exercise every M2 harness outcome")
+    calibration = subparsers.add_parser(
+        "verify-calibration",
+        help="verify the M8 evidence contract and calibration campaign",
+    )
+    calibration.add_argument(
+        "--campaign",
+        type=Path,
+        help="evidence-index.json to validate; omit to run M8b synthetic fixtures",
+    )
+    calibration.add_argument(
+        "--index-lock",
+        type=Path,
+        help="external evidence-index lock; defaults beside --campaign",
+    )
 
     verify = subparsers.add_parser("verify", help="verify a baseline runner")
     verify.add_argument(
@@ -1236,6 +1251,26 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "self-test":
             self_test()
+        elif args.command == "verify-calibration":
+            if args.index_lock is not None and args.campaign is None:
+                _raise(
+                    "evidence_index_lock_invalid",
+                    "--index-lock requires --campaign",
+                )
+            if args.campaign is None:
+                calibration_tool.verify_calibration()
+            else:
+                result = calibration_tool.verify_campaign(
+                    args.campaign,
+                    args.index_lock,
+                )
+                print(
+                    "M8 calibration evidence passed: "
+                    f"{result.campaign_id} is {result.completion_state}; "
+                    f"{result.agent_trials} agent, "
+                    f"{result.warm_measurements} warm, and "
+                    f"{result.cold_measurements} cold records."
+                )
         elif args.command == "verify":
             descriptor, manifest, lock = _verification_paths(args.language)
             verify_from_paths(
@@ -1274,6 +1309,9 @@ def main(argv: list[str] | None = None) -> int:
                 f"Contract lock passed: {len(CONTRACT_ARTIFACTS)} artifacts match."
             )
     except HarnessError as error:
+        print(f"ERROR [{error.code}]: {error.message}", file=sys.stderr)
+        return 1
+    except calibration_tool.CalibrationError as error:
         print(f"ERROR [{error.code}]: {error.message}", file=sys.stderr)
         return 1
     return 0

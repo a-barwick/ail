@@ -15,11 +15,11 @@
     },
     {
       "path": "benchmarks/baselines/go/verification-manifest.json",
-      "sha256": "15a26696fea38409376f10707c75aa59b759a9ffd11d2ebbcd129b4e3b84dd91"
+      "sha256": "e70c5dc4489ba965eb2eb015f0b5422cf4f5f13c895b93e2d2f956d8c1ee7314"
     },
     {
       "path": "benchmarks/baselines/go/verification-manifest.lock.json",
-      "sha256": "8742fc80a70cfc3518ce2dd56f95270eb53475806e97e018efc5d3d448d0822d"
+      "sha256": "ca6fcf62cacb3c26f9e3051bb685c161bb4bfc613bcd3cfd2992834531b14c17"
     },
     {
       "path": "benchmarks/baselines/python/checkpoints.json",
@@ -35,11 +35,11 @@
     },
     {
       "path": "benchmarks/baselines/python/verification-manifest.json",
-      "sha256": "7e0298cdb6ebe73e84f1a29ed00b171e1d2d53ac023fae66b69d89ea09f0a830"
+      "sha256": "eebe537795bcaa9bec9a1840b0991a8f5c377798b5359f7870d9cdcb3b0812f2"
     },
     {
       "path": "benchmarks/baselines/python/verification-manifest.lock.json",
-      "sha256": "12fc3cedb56c8488a49e33d0709d9a2f72182e34090d9b03f362e1d46f38bec0"
+      "sha256": "0003c9429b29f9dfbf2c793e62676ff46fd61ca9d4f0a32ce31bf1c4539e73b5"
     },
     {
       "path": "benchmarks/baselines/rust/checkpoints.json",
@@ -55,11 +55,11 @@
     },
     {
       "path": "benchmarks/baselines/rust/verification-manifest.json",
-      "sha256": "53330a6dab44aa8de53d0a02d7b28142768ebad86b77147b5da63429965f5fe0"
+      "sha256": "0dfce9418eed9296b6f93302940f52b9d68403e4f306ea97bebd7bbcfb6d5212"
     },
     {
       "path": "benchmarks/baselines/rust/verification-manifest.lock.json",
-      "sha256": "473926a2be7e83408e85ae679cbb10e75944d9f3a5c8c01ed2b71a9ef0930cfb"
+      "sha256": "6c7418a11a1e085360c7bee06b14c7ee5d91f23027d6a4f65b380d73a2fd5f09"
     },
     {
       "path": "benchmarks/baselines/typescript/checkpoints.json",
@@ -75,15 +75,15 @@
     },
     {
       "path": "benchmarks/baselines/typescript/verification-manifest.json",
-      "sha256": "0aaf7539bb0cc23d66d8a3790fc7f431d4307fde66a8bc00c00df9a2fec0a6d7"
+      "sha256": "9d08acb4c4b44cb69a6b86b222fd9a1412ef54ca382f00ab57bedbdd01bd9720"
     },
     {
       "path": "benchmarks/baselines/typescript/verification-manifest.lock.json",
-      "sha256": "b2a679966d7a5f52c8ef99ff803c1d4884041f70d70512ed3970fb2ee8352e80"
+      "sha256": "bb52ae2cc835d4827fd7e28ff35a31782399dc00688696645b4cc0bb53141994"
     },
     {
       "path": "benchmarks/contracts/contract-lock.json",
-      "sha256": "2c2f25aefc41de2d7ef7a834485ff44ed0a610705fd87cce85f7351ade450831"
+      "sha256": "25a57959be218a53bcd71dc1864b50f3d582cd8fa7084d47910867a5da634ce7"
     },
     {
       "path": "benchmarks/contracts/hidden-contract.json",
@@ -151,7 +151,7 @@
     },
     {
       "path": "benchmarks/tools/harness.py",
-      "sha256": "a15771f97e7e193161b78f0002def6abaad296c5d81748cd9e526133446de207"
+      "sha256": "84c3c4fd54b9924b8b36820b8533263ff6dff92f6de30ab3262091ac43f81f40"
     },
     {
       "path": "benchmarks/tools/task_starts.py",

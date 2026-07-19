@@ -1,0 +1,7 @@
+{
+  "synthetic_fixture_format": 1,
+  "id": "empty",
+  "state": "empty",
+  "mutation": "none",
+  "expected": "accepted:empty"
+}
