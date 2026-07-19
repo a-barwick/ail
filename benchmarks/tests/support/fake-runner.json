@@ -1,0 +1,10 @@
+{
+  "runner_contract": 1,
+  "language": "self-test",
+  "command": [
+    "python3",
+    "benchmarks/tests/support/fake_runner.py"
+  ],
+  "working_directory": ".",
+  "environment": {}
+}

@@ -85,10 +85,10 @@ Every example must use one of these labels:
 ## Current position
 
 The job-service reference workload, its two use cases, its first requirements,
-and its frozen language-independent public JSON fixture corpus are accepted.
-The active task is M2: freeze the benchmark harness and task contract.
-Architectural regression control is a separate proposed scaling use case and
-feature specification; it does not expand the active slice until reviewed and
-accepted.
+its frozen public JSON fixtures, and its language-independent benchmark harness
+and task contract are accepted. The active task is M3: implement the Rust
+baseline. Architectural regression control is a separate proposed scaling use
+case and feature specification; it does not expand the active slice until
+reviewed and accepted.
 
 There is no accepted AIL syntax or normative language specification yet.

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/runner-descriptor.schema.json",
+  "title": "AIL benchmark implementation runner descriptor",
+  "type": "object",
+  "required": [
+    "runner_contract",
+    "language",
+    "command",
+    "working_directory",
+    "environment"
+  ],
+  "properties": {
+    "runner_contract": {
+      "const": 1
+    },
+    "language": {
+      "enum": [
+        "rust",
+        "go",
+        "python",
+        "typescript",
+        "ail",
+        "self-test"
+      ]
+    },
+    "command": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "working_directory": {
+      "type": "string"
+    },
+    "environment": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

@@ -68,9 +68,9 @@ proposed architectural-regression feature, and
 
 ## Repository status
 
-The job-service workload, use cases, requirements, and shared public JSON
-fixture corpus are accepted. The active milestone is M2: freeze the benchmark
-harness and task contract before writing baseline implementations.
+The job-service workload, use cases, requirements, public JSON fixtures, and
+benchmark harness/task contract are accepted. The active milestone is M3: build
+the first equivalent baseline in stable Rust.
 
 M0–M13 is the sole operational delivery sequence and is defined in
 [docs/roadmap.md](docs/roadmap.md).

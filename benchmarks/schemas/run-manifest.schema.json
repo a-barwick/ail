@@ -1,0 +1,440 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/run-manifest.schema.json",
+  "title": "AIL benchmark locked run manifest",
+  "type": "object",
+  "required": [
+    "manifest_format",
+    "benchmark_id",
+    "configuration_id",
+    "source",
+    "runner",
+    "task",
+    "tests",
+    "tools",
+    "model",
+    "environment",
+    "permissions",
+    "limits",
+    "retry_policy",
+    "token_accounting",
+    "repair_policy",
+    "correctness",
+    "outputs",
+    "artifact_locks"
+  ],
+  "properties": {
+    "manifest_format": {
+      "const": 1
+    },
+    "benchmark_id": {
+      "const": "ail-job-service"
+    },
+    "configuration_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "language",
+        "repository",
+        "start_revision",
+        "dependency_revision",
+        "source_tree_sha256"
+      ],
+      "properties": {
+        "language": {
+          "enum": [
+            "rust",
+            "go",
+            "python",
+            "typescript",
+            "ail",
+            "self-test"
+          ]
+        },
+        "repository": {
+          "type": "string"
+        },
+        "start_revision": {
+          "type": "string"
+        },
+        "dependency_revision": {
+          "type": "string"
+        },
+        "source_tree_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "runner": {
+      "type": "object",
+      "required": [
+        "descriptor_path",
+        "descriptor_sha256"
+      ],
+      "properties": {
+        "descriptor_path": {
+          "type": "string"
+        },
+        "descriptor_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "object",
+      "required": [
+        "task_id",
+        "path",
+        "sha256",
+        "initial_context"
+      ],
+      "properties": {
+        "task_id": {
+          "enum": [
+            "UC-001",
+            "UC-003"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "initial_context": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "tests": {
+      "type": "object",
+      "required": [
+        "public_fixture_manifest",
+        "public_fixture_manifest_sha256",
+        "hidden_package",
+        "hidden_package_sha256"
+      ],
+      "properties": {
+        "public_fixture_manifest": {
+          "type": "string"
+        },
+        "public_fixture_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "hidden_package": {
+          "type": "string"
+        },
+        "hidden_package_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "version",
+          "command"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "command": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "model": {
+      "type": "object",
+      "required": [
+        "provider",
+        "name",
+        "version",
+        "agent",
+        "sampling"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "agent": {
+          "type": "string"
+        },
+        "sampling": {
+          "type": "object",
+          "required": [
+            "parameters",
+            "unavailable"
+          ],
+          "properties": {
+            "parameters": {
+              "type": "object"
+            },
+            "unavailable": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "container_image",
+        "reference_host",
+        "operating_system",
+        "architecture"
+      ],
+      "properties": {
+        "container_image": {
+          "type": "string"
+        },
+        "reference_host": {
+          "type": "string"
+        },
+        "operating_system": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "permissions": {
+      "type": "object",
+      "required": [
+        "network",
+        "filesystem_read",
+        "filesystem_write",
+        "subprocess"
+      ],
+      "properties": {
+        "network": {
+          "enum": [
+            "denied",
+            "recorded"
+          ]
+        },
+        "filesystem_read": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "filesystem_write": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "subprocess": {
+          "enum": [
+            "allowlisted",
+            "recorded"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "limits": {
+      "type": "object",
+      "required": [
+        "run_seconds",
+        "functional_corpus_seconds",
+        "input_tokens",
+        "startup_seconds",
+        "peak_memory_mib"
+      ],
+      "properties": {
+        "run_seconds": {
+          "type": "integer"
+        },
+        "functional_corpus_seconds": {
+          "type": "integer"
+        },
+        "input_tokens": {
+          "type": "integer"
+        },
+        "startup_seconds": {
+          "type": "integer"
+        },
+        "peak_memory_mib": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "retry_policy": {
+      "type": "object",
+      "required": [
+        "max_attempts",
+        "retryable_failures"
+      ],
+      "properties": {
+        "max_attempts": {
+          "type": "integer"
+        },
+        "retryable_failures": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "token_accounting": {
+      "type": "object",
+      "required": [
+        "tokenizer",
+        "categories",
+        "repeated_context"
+      ],
+      "properties": {
+        "tokenizer": {
+          "type": "string"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "initial_context",
+              "source_reads",
+              "semantic_tool_output",
+              "diagnostics",
+              "build_and_test_output",
+              "other_tool_output"
+            ]
+          }
+        },
+        "repeated_context": {
+          "const": "count_every_delivery"
+        }
+      },
+      "additionalProperties": false
+    },
+    "repair_policy": {
+      "type": "object",
+      "required": [
+        "definition_version",
+        "pre_edit_checks_count"
+      ],
+      "properties": {
+        "definition_version": {
+          "const": 1
+        },
+        "pre_edit_checks_count": {
+          "const": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "correctness": {
+      "type": "object",
+      "required": [
+        "required_visibility",
+        "required_checks",
+        "final_revision_evidence"
+      ],
+      "properties": {
+        "required_visibility": {
+          "enum": [
+            "public",
+            "public_and_hidden"
+          ]
+        },
+        "required_checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "final_revision_evidence": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "outputs": {
+      "type": "object",
+      "required": [
+        "events",
+        "results",
+        "measurements"
+      ],
+      "properties": {
+        "events": {
+          "type": "string"
+        },
+        "results": {
+          "type": "string"
+        },
+        "measurements": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifact_locks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
