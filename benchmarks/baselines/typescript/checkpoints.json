@@ -1,0 +1,43 @@
+{
+  "checkpoint_format": 1,
+  "tree_digest_algorithm": "sha256 of concatenated '<file-sha256>  <repository-relative-path>\\n' records in listed order",
+  "checkpoints": [
+    {
+      "id": "typescript-v1",
+      "task": "UC-001",
+      "source_tree_sha256": "3f959cb243de8f657131646d3c487f44b0a54292180641820008c6430609b644",
+      "files": [
+        "benchmarks/baselines/typescript/.prettierignore",
+        "benchmarks/baselines/typescript/eslint.config.mjs",
+        "benchmarks/baselines/typescript/package-lock.json",
+        "benchmarks/baselines/typescript/package.json",
+        "benchmarks/baselines/typescript/tests/support.ts",
+        "benchmarks/baselines/typescript/tests/v1.test.ts",
+        "benchmarks/baselines/typescript/tsconfig.json",
+        "benchmarks/baselines/typescript/v1/job-service.ts"
+      ]
+    },
+    {
+      "id": "typescript-v2",
+      "task": "UC-003",
+      "source_tree_sha256": "ef7eef1afc3c371ff9d2871c079aaadf00e1fc3031a4771e5532e221939af07f",
+      "files": [
+        "benchmarks/baselines/typescript/.prettierignore",
+        "benchmarks/baselines/typescript/eslint.config.mjs",
+        "benchmarks/baselines/typescript/package-lock.json",
+        "benchmarks/baselines/typescript/package.json",
+        "benchmarks/baselines/typescript/tests/contract.test.ts",
+        "benchmarks/baselines/typescript/tests/fixture.test.ts",
+        "benchmarks/baselines/typescript/tests/runner.test.ts",
+        "benchmarks/baselines/typescript/tests/service-store.test.ts",
+        "benchmarks/baselines/typescript/tests/support.ts",
+        "benchmarks/baselines/typescript/tsconfig.json",
+        "benchmarks/baselines/typescript/v2/domain.ts",
+        "benchmarks/baselines/typescript/v2/fixture.ts",
+        "benchmarks/baselines/typescript/v2/runner.ts",
+        "benchmarks/baselines/typescript/v2/service.ts",
+        "benchmarks/baselines/typescript/v2/store.ts"
+      ]
+    }
+  ]
+}

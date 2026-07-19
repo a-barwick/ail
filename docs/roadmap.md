@@ -44,9 +44,9 @@ becomes active.
 | M2 | Benchmark harness and frozen task contract | Complete | M1 |
 | M3 | Rust baseline | Complete | M2 |
 | M4 | Go baseline | Complete | M2 |
-| M5 | Python baseline | Active | M2 |
-| M6 | TypeScript baseline | Planned | M2 |
-| M7 | Cross-baseline parity and freeze | Planned | M3–M6 |
+| M5 | Python baseline | Complete | M2 |
+| M6 | TypeScript baseline | Complete | M2 |
+| M7 | Cross-baseline parity and freeze | Active | M3–M6 |
 | M8 | Baseline agent calibration | Planned | M7 |
 | M9 | Frozen AIL success targets | Planned | M8 |
 | M10 | Illustrative AIL comparison | Planned | M9 |
@@ -214,7 +214,7 @@ error handling, and its normalized results match the shared oracle.
 
 ### M5 — Python baseline
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -243,7 +243,7 @@ normalized results match the shared oracle.
 
 ### M6 — TypeScript baseline
 
-**Status:** Planned
+**Status:** Complete
 
 #### Scope
 
@@ -272,7 +272,7 @@ normalized results match the shared oracle.
 
 ### M7 — Cross-baseline parity and freeze
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 

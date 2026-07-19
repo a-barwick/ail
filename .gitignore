@@ -25,5 +25,6 @@ temp/
 # Common build outputs. Candidate-specific ignores belong with each prototype.
 build/
 dist/
+node_modules/
 target/
 out/

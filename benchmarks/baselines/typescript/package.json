@@ -1,0 +1,27 @@
+{
+  "name": "ail-job-service-typescript-baseline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "23.10.0"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "tsx --test tests/**/*.test.ts",
+    "coverage": "c8 --all --include='v1/**/*.ts' --include='v2/**/*.ts' --exclude='v2/runner.ts' --check-coverage --lines=95 --branches=90 --functions=95 --statements=95 tsx --test tests/**/*.test.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.31.0",
+    "@types/node": "24.0.15",
+    "c8": "10.1.3",
+    "eslint": "9.31.0",
+    "prettier": "3.6.2",
+    "tsx": "4.20.3",
+    "typescript": "5.8.3",
+    "typescript-eslint": "8.38.0"
+  }
+}

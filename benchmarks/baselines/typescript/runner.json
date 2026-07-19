@@ -1,0 +1,12 @@
+{
+  "runner_contract": 1,
+  "language": "typescript",
+  "command": [
+    "node_modules/.bin/tsx",
+    "v2/runner.ts"
+  ],
+  "working_directory": "benchmarks/baselines/typescript",
+  "environment": {
+    "NO_COLOR": "1"
+  }
+}

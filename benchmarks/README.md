@@ -95,9 +95,8 @@ python3 benchmarks/tools/harness.py verify \
   --visibility public
 ```
 
-The completed Rust and Go implementations and their setup, build, test, and run
-instructions are in [`baselines/rust/`](baselines/rust/README.md) and
-[`baselines/go/`](baselines/go/README.md).
+The completed Rust, Go, Python, and TypeScript implementations and their setup,
+build, test, coverage, and run instructions are under `baselines/`.
 
 ## Public and hidden boundary
 

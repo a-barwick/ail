@@ -1,0 +1,71 @@
+{
+  "seed_location_format": 1,
+  "language": "typescript",
+  "locations": [
+    {
+      "seed_id": "SEED.PREVALIDATION_EFFECT",
+      "semantic_locations": [
+        "v1/job-service.createJob",
+        "v2/service.createJob"
+      ]
+    },
+    {
+      "seed_id": "SEED.REQUEST_CONSTRUCTOR",
+      "semantic_locations": [
+        "v2/fixture.decodeRequest"
+      ]
+    },
+    {
+      "seed_id": "SEED.REQUEST_ADAPTER",
+      "semantic_locations": [
+        "v2/fixture.decodeRequest:ApiVersion.v1"
+      ]
+    },
+    {
+      "seed_id": "SEED.HANDLER_PROPAGATION",
+      "semantic_locations": [
+        "v2/service.createJob",
+        "v2/domain.Job"
+      ]
+    },
+    {
+      "seed_id": "SEED.STORE_CONTRACT",
+      "semantic_locations": [
+        "v2/domain.JobStore",
+        "v2/store.DeterministicJobStore"
+      ]
+    },
+    {
+      "seed_id": "SEED.PERSISTED_CODEC",
+      "semantic_locations": [
+        "v2/fixture.encodeStoredJob",
+        "v2/store.adaptStoredJobToV2"
+      ]
+    },
+    {
+      "seed_id": "SEED.RESPONSE_PROJECTION",
+      "semantic_locations": [
+        "v2/fixture.encodeResponse"
+      ]
+    },
+    {
+      "seed_id": "SEED.RESULT_CONSUMER",
+      "semantic_locations": [
+        "v2/fixture.encodeResponse"
+      ]
+    },
+    {
+      "seed_id": "SEED.AUTHORITY_EXPANSION",
+      "semantic_locations": [
+        "v1/job-service.JobStore",
+        "v2/domain.JobStore"
+      ]
+    },
+    {
+      "seed_id": "SEED.STALE_EVIDENCE",
+      "semantic_locations": [
+        "benchmarks/baselines/typescript/verification-manifest.json"
+      ]
+    }
+  ]
+}
