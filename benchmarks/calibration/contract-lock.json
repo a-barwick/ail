@@ -3,7 +3,7 @@
   "artifacts": [
     {
       "path": "benchmarks/calibration/README.md",
-      "sha256": "9ac403eeb810ab7d5586e798e7c378098da40b5d32bae1b9ca1306c04a6c6333"
+      "sha256": "63ec6ea831b4f4b44d0963ba7b0290a86d010e8be6146716d438209ffcf141cd"
     },
     {
       "path": "benchmarks/calibration/experiment-contract.json",
@@ -66,12 +66,20 @@
       "sha256": "b8af360b8ee87d1a37d4a1bdaf2034c8be1a82190746909b033ff705e309863c"
     },
     {
+      "path": "benchmarks/tests/test_agent_runner.py",
+      "sha256": "ceccd92ea6debef2854d92c19a894de2911319a2b11dfb075252602dfa41e7ef"
+    },
+    {
       "path": "benchmarks/tests/test_calibration.py",
       "sha256": "a18af74bcbf255f35b37a82de82efbc3d1c0fb9cb07491a14a1af9ac5c1774fb"
     },
     {
+      "path": "benchmarks/tools/agent_runner.py",
+      "sha256": "44a53767a3389a634eb78f84f1124ce9f0263ec1fe03102bd5398cc00a6cea20"
+    },
+    {
       "path": "benchmarks/tools/calibration.py",
-      "sha256": "69d3aa43e25485445a6cba51e8ff1ce2bd7ae3e37978a19227033af170cb3422"
+      "sha256": "8ea550ff74ce3bd54f4b0d8e8116758c1fa51958a56c1eb5fb32900285c3527c"
     }
   ]
 }

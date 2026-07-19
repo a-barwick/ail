@@ -95,8 +95,9 @@ its frozen public JSON fixtures, and its language-independent benchmark harness
 and task contract are accepted. The Rust, Go, Python, and TypeScript baselines
 are complete. M7 froze cross-baseline parity, the public and private benchmark
 inputs, and eight deterministic answer-free task starts. The active work is
-M8c: implement and dry-test the interactive agent runner against the accepted
-M8a treatment and the M8b evidence boundary. No official evidence exists yet.
+M8d: implement post-run correctness verification and replay against the M8c
+interactive runner and the accepted evidence boundary. No official evidence
+exists yet.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and
 accepted.

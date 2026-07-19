@@ -1,6 +1,6 @@
 # M8 calibration evidence contract
 
-Status: **M8b contract; no official evidence**
+Status: **M8c runner contract; no official evidence**
 
 This directory defines the machine-checkable evidence boundary for the M8
 baseline campaign. It implements the accepted
@@ -11,7 +11,30 @@ without running an agent or measuring a baseline.
 the two rendered prompts, the six token categories, permissions, limits,
 terminal classes, performance safety rules, and evidence schema registry.
 `contract-lock.json` locks that configuration, every calibration schema, the
-verifier, and the synthetic campaign recipes by SHA-256.
+verifier, the interactive runner, its tests, and the synthetic campaign recipes
+by SHA-256.
+
+## Interactive runner
+
+`../tools/agent_runner.py` implements the M8a agent workflow up to the M8d
+correctness boundary. It rebuilds and verifies a locked task workspace, checks
+the exact prompt and pre-start observations, derives a least-privilege
+permission profile, and generates an isolated Codex configuration whose
+Responses provider is the loopback recorder. Optional tools, network access,
+environment inheritance, retries, delegation, history, and update checks are
+disabled. The generated keys follow the official
+[Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml);
+M8f must still validate them against the pinned 0.144.6 executable.
+
+The runner records complete model, tool, edit, validation, permission, process,
+and terminal payloads. It enforces the 500,000 cumulative-input-token and
+600-second wall limits, derives the frozen M2 activity counts, terminates the
+whole process group under the locked grace rule, and retains deterministic
+final source without local Git, dependency, cache, or build artifacts.
+
+M8c uses only fake and dry streams. Its runner outcome is not a successful M8
+trial until M8d supplies matching public/private correctness, seeded-consumer,
+protected-artifact, and completion-evidence results for the same final revision.
 
 ## Evidence layout
 
@@ -94,3 +117,9 @@ campaigns plus stable rejection cases for malformed evidence, missing counts,
 duplicate trial identities, changed inputs, invalid hashes, incomplete token
 categories, missing raw events, unaccounted exclusions, incorrect reports, and
 mixed configurations.
+
+The no-argument verifier also runs the M8c fake/dry matrix for normal success,
+non-zero exit, wall timeout, permission violation, input-token limit, and
+incomplete evidence. It checks M2 repair accounting, pre-start rejection,
+permission boundaries, deterministic source capture, isolated Codex
+configuration, and process-group termination without invoking Codex.
