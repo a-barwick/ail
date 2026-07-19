@@ -98,6 +98,32 @@ python3 benchmarks/tools/harness.py verify \
 The completed Rust, Go, Python, and TypeScript implementations and their setup,
 build, test, coverage, and run instructions are under `baselines/`.
 
+## M7 parity freeze
+
+M7 verifies the four baseline runners together. It checks the locked V1 and V2
+source trees, every seed-location category, and the normalized response, final
+state, and ordered store calls for every public and private case. The committed
+[parity report](m7-parity-report.json) records the four locked tool sets and
+one non-reversible digest per private case; it does not publish private case
+paths, inputs, or expected values. [m7-freeze.json](m7-freeze.json) locks the
+report, manifests, runner descriptors, source checkpoints, task text, and
+contract inputs by digest.
+
+The private ZIP is deliberately not stored in the repository. A verifier must
+receive the digest-locked archive through `AIL_HIDDEN_PACKAGE` (or the
+equivalent `--hidden-package` option):
+
+```bash
+export AIL_HIDDEN_PACKAGE=/secure/path/ail-job-service-m7-hidden.zip
+python3 benchmarks/tools/harness.py verify-all
+```
+
+The ZIP is read only by the harness, extracted beneath an ignored temporary
+directory for the individual runner calls, and removed immediately afterwards.
+It must contain one canonical fixture for each frozen hidden behavior category,
+use stored ZIP entries in lexical order with the fixed 1980 timestamp, and
+match the archive digest in every locked baseline manifest.
+
 ## Public and hidden boundary
 
 Only public behavior cases belong under `fixtures/public/`. Later milestones

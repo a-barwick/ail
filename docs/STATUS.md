@@ -15,14 +15,10 @@ agent or performance measurements.
 
 The next agent should:
 
-- add the candidate-neutral `verify-all` command required by M7;
-- compare response, final state, and ordered store calls for every public and
-  packaged hidden case;
-- instantiate every M2 hidden seed category in all four baselines without
-  changing the frozen behavior or task text;
-- freeze tool versions, source trees, tests, and manifests by digest;
-- publish the case-by-case parity report; and
-- leave M8 a complete, reviewable benchmark lock.
+- provision the frozen Go 1.26, CPython 3.13.5, and Node.js 23.10 toolchains;
+- run `python3 benchmarks/tools/harness.py verify-all` with the separately
+  held `AIL_HIDDEN_PACKAGE`; and
+- mark M7 complete and advance to M8 only after all four real baselines pass.
 
 ## Starting point
 
@@ -88,6 +84,14 @@ tree, TypeScript, ESLint, Prettier, the ordinary Node test runner, c8 coverage,
 57 focused and integration tests, frozen V1/V2 checkpoints, and all 37 public
 fixtures accepted by the shared harness.
 
+M7 now provides the candidate-neutral `verify-all` gate, validates both locked
+source checkpoints and every frozen seed location for each baseline, verifies
+the response, final state, and ordered store calls for public and digest-locked
+private cases, and compares all normalized results across languages. It also
+publishes a 42-case parity report (37 public and 5 private) and a 28-artifact
+freeze lock. The private ZIP is outside the repository and is identified only
+by its SHA-256 digest in the locked manifests.
+
 ## Planned next
 
 - M8 — Baseline agent calibration
@@ -113,7 +117,10 @@ Those depend on later milestones.
 
 ## Blockers
 
-None.
+The local verification host has Rust 1.88.0, but does not have the frozen Go
+1.26, CPython 3.13.5, or Node.js 23 toolchains. The M7 harness unit suite and
+the Rust public-and-private parity run pass; the remaining three real baseline
+runs require those provisioned tools before M7 can meet its exit criterion.
 
 ## Handoff checklist
 
