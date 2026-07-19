@@ -95,6 +95,9 @@ python3 benchmarks/tools/harness.py verify \
   --visibility public
 ```
 
+The completed M3 Rust implementation and its setup, build, test, and run
+instructions are in [`baselines/rust/`](baselines/rust/README.md).
+
 ## Public and hidden boundary
 
 Only public behavior cases belong under `fixtures/public/`. Later milestones

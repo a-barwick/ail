@@ -69,8 +69,8 @@ proposed architectural-regression feature, and
 ## Repository status
 
 The job-service workload, use cases, requirements, public JSON fixtures, and
-benchmark harness/task contract are accepted. The active milestone is M3: build
-the first equivalent baseline in stable Rust.
+benchmark harness/task contract are accepted. The Rust baseline is complete.
+The active milestone is M4: build the equivalent Go baseline.
 
 M0–M13 is the sole operational delivery sequence and is defined in
 [docs/roadmap.md](docs/roadmap.md).
@@ -80,12 +80,12 @@ Stack evaluation criteria and candidate spikes are in
 
 ## Working in this repository
 
-Documentation and language-independent benchmark tooling are the only source
-artifacts at this stage:
+The repository contains documentation, language-independent benchmark tooling,
+and the first baseline implementation:
 
 ```text
 AGENTS.md          Repository guidance and thesis guardrails for agent work
-benchmarks/        Frozen public JSON cases, schemas, and dependency-free tools
+benchmarks/        Frozen cases, schemas, tools, and baseline implementations
 docs/
   README.md        Documentation layers, authority, and traceability
   STATUS.md        Active milestone and next-agent handoff

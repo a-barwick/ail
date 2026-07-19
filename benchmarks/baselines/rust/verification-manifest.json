@@ -1,0 +1,240 @@
+{
+  "manifest_format": 1,
+  "benchmark_id": "ail-job-service",
+  "configuration_id": "m3-rust-public-verification",
+  "source": {
+    "language": "rust",
+    "repository": "benchmarks/baselines/rust",
+    "start_revision": "rust-v1-727dae069299327d",
+    "dependency_revision": "a10d82b6d842432670f8c2e700fb4de519e31376b067f77617e5541364ad13ec",
+    "source_tree_sha256": "727dae069299327d28c8599a6888db75da631fdc216faf478dbc6c7ba6e60a99"
+  },
+  "runner": {
+    "descriptor_path": "benchmarks/baselines/rust/runner.json",
+    "descriptor_sha256": "e1c61cd40776b96875b0ab400c8d29de177d2307b349fd7e9d89efe2dc968211"
+  },
+  "task": {
+    "task_id": "UC-003",
+    "path": "benchmarks/tasks/uc003-add-priority.md",
+    "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6",
+    "initial_context": [
+      "benchmarks/tasks/uc003-add-priority.md",
+      "benchmarks/baselines/rust/v1"
+    ]
+  },
+  "tests": {
+    "public_fixture_manifest": "benchmarks/fixtures/manifest.json",
+    "public_fixture_manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "hidden_package": "benchmarks/contracts/hidden-contract.json",
+    "hidden_package_sha256": "2e48b0fb8c30ed23e27a8fdde2b50c8f95ac5629f96f7b646041aee16fc93624"
+  },
+  "tools": [
+    {
+      "name": "rustc",
+      "version": "1.88.0",
+      "command": [
+        "rustc"
+      ]
+    },
+    {
+      "name": "cargo",
+      "version": "1.88.0",
+      "command": [
+        "cargo"
+      ]
+    },
+    {
+      "name": "rustfmt",
+      "version": "1.8.0",
+      "command": [
+        "cargo",
+        "fmt"
+      ]
+    },
+    {
+      "name": "clippy",
+      "version": "0.1.88",
+      "command": [
+        "cargo",
+        "clippy"
+      ]
+    },
+    {
+      "name": "rust-analyzer",
+      "version": "1.88.0",
+      "command": [
+        "rust-analyzer"
+      ]
+    }
+  ],
+  "model": {
+    "provider": "not-applicable",
+    "name": "reference-implementation-verification",
+    "version": "m3",
+    "agent": "not-an-agent-benchmark-run",
+    "sampling": {
+      "parameters": {},
+      "unavailable": [
+        "This manifest verifies the reference implementation; M8 records agent-run settings."
+      ]
+    }
+  },
+  "environment": {
+    "container_image": "not-applicable-for-m3-reference-verification",
+    "reference_host": "local-stable-rust-verification",
+    "operating_system": "Darwin",
+    "architecture": "arm64"
+  },
+  "permissions": {
+    "network": "denied",
+    "filesystem_read": [
+      "benchmarks"
+    ],
+    "filesystem_write": [
+      "benchmarks/baselines/rust/target"
+    ],
+    "subprocess": "allowlisted"
+  },
+  "limits": {
+    "run_seconds": 300,
+    "functional_corpus_seconds": 30,
+    "input_tokens": 100000,
+    "startup_seconds": 2,
+    "peak_memory_mib": 512
+  },
+  "retry_policy": {
+    "max_attempts": 1,
+    "retryable_failures": []
+  },
+  "token_accounting": {
+    "tokenizer": "not-applicable-for-m3-reference-verification",
+    "categories": [
+      "initial_context",
+      "source_reads",
+      "semantic_tool_output",
+      "diagnostics",
+      "build_and_test_output",
+      "other_tool_output"
+    ],
+    "repeated_context": "count_every_delivery"
+  },
+  "repair_policy": {
+    "definition_version": 1,
+    "pre_edit_checks_count": false
+  },
+  "correctness": {
+    "required_visibility": "public",
+    "required_checks": [
+      "response",
+      "final_jobs",
+      "store_calls",
+      "uc001_regression",
+      "v1_compatibility",
+      "v2_priority"
+    ],
+    "final_revision_evidence": true
+  },
+  "outputs": {
+    "events": "artifacts/rust/events.jsonl",
+    "results": "artifacts/rust/results.json",
+    "measurements": "artifacts/rust/measurements.json"
+  },
+  "artifact_locks": [
+    {
+      "path": "benchmarks/baselines/rust/Cargo.lock",
+      "sha256": "a10d82b6d842432670f8c2e700fb4de519e31376b067f77617e5541364ad13ec"
+    },
+    {
+      "path": "benchmarks/baselines/rust/Cargo.toml",
+      "sha256": "41c080ece449319aa1984d2f7a868494ff0c325d730a73e18d8b32501e1f5696"
+    },
+    {
+      "path": "benchmarks/baselines/rust/checkpoints.json",
+      "sha256": "bbd07aea25c7fcb47c563446dcd94b8818b7429227ffef415323e5caa49f3e08"
+    },
+    {
+      "path": "benchmarks/baselines/rust/runner.json",
+      "sha256": "e1c61cd40776b96875b0ab400c8d29de177d2307b349fd7e9d89efe2dc968211"
+    },
+    {
+      "path": "benchmarks/baselines/rust/rust-toolchain.toml",
+      "sha256": "88f0ad85480c9890237d1d475d05a9ff3c67cd568c5ba065ead6f0dda9304430"
+    },
+    {
+      "path": "benchmarks/baselines/rust/seed-locations.json",
+      "sha256": "3bfa79974f87e3811993272a371e6dfea3e4faa71279cdcc5ce39f0a48896bc3"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v1/Cargo.toml",
+      "sha256": "19bf77f0779f390b952ba3aaf1e91eb4cd28d000451e3ee9a87bc0004f560197"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v1/src/lib.rs",
+      "sha256": "6866403918bee06f1a998ce1cfa50a8d720a6fe58623b3b67d2f66d0881d1776"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/Cargo.toml",
+      "sha256": "c1d0fb3306344bdebc4d8e57008c5f496817e082cc8817966f7a746df3b64c16"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/codec.rs",
+      "sha256": "1081265e4d90883bcba0c50cb9a19e12e158b5dae02412eba1b8c5c9109f58d9"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/domain.rs",
+      "sha256": "a2933f044d1b117641a9b7e7ae4f88b34aa187a9c22f00f679b32db499595cab"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/lib.rs",
+      "sha256": "de1808b137f016fb6a59daf3e78738829dcc8b847c550b52598fcb7ff4bec600"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/main.rs",
+      "sha256": "49c7899086470441a5c4ce16a9ce8b4d6de20738db2890aa02d761ca2e2045c3"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/service.rs",
+      "sha256": "1616943cd6f6ecce30e3d6b9045507daa54979cc06b1b916b00fa1e827159e3c"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/store.rs",
+      "sha256": "03f9496bd035e627e7cb60511362e5173255f5f2761d4d93c3384858436c6b13"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/tests/checkpoints.rs",
+      "sha256": "2910443639d33fe1c37d9093f08c90f8574483dc6bc5a78b2325d5b09a5648bd"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/tests/runner_cli.rs",
+      "sha256": "a525ad023653e160844280b74031bd83e4b23f886092805829de425b8c5cbda0"
+    },
+    {
+      "path": "benchmarks/contracts/contract-lock.json",
+      "sha256": "1cd939458b069d3e22ee10331cfb14d5a6675030597b2342aaa35519e0cd5039"
+    },
+    {
+      "path": "benchmarks/contracts/hidden-contract.json",
+      "sha256": "2e48b0fb8c30ed23e27a8fdde2b50c8f95ac5629f96f7b646041aee16fc93624"
+    },
+    {
+      "path": "benchmarks/fixtures/manifest.json",
+      "sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5"
+    },
+    {
+      "path": "benchmarks/schemas/run-manifest.schema.json",
+      "sha256": "09288aa3ebf0346a9fe0107e3a685365f9d1048e13de242f1c2c6f0f76ce7a27"
+    },
+    {
+      "path": "benchmarks/schemas/runner-result.schema.json",
+      "sha256": "6c7be400e77276ec6d8cec4a026be5dea255e2e59f917f7d0b79c3f2ce0f7018"
+    },
+    {
+      "path": "benchmarks/tasks/uc003-add-priority.md",
+      "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6"
+    },
+    {
+      "path": "benchmarks/tools/harness.py",
+      "sha256": "be33ad4eaa9b9026583b9903866afab1e1b3b8792324d858f6a3be9730a5f2c6"
+    }
+  ]
+}

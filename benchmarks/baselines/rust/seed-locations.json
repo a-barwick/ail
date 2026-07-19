@@ -1,0 +1,71 @@
+{
+  "seed_location_format": 1,
+  "language": "rust",
+  "locations": [
+    {
+      "seed_id": "SEED.PREVALIDATION_EFFECT",
+      "semantic_locations": [
+        "ail_job_service_v1::create_job",
+        "ail_job_service_v2::service::create_job"
+      ]
+    },
+    {
+      "seed_id": "SEED.REQUEST_CONSTRUCTOR",
+      "semantic_locations": [
+        "ail_job_service_v2::codec::decode_request"
+      ]
+    },
+    {
+      "seed_id": "SEED.REQUEST_ADAPTER",
+      "semantic_locations": [
+        "ail_job_service_v2::codec::decode_request::ApiVersion::V1"
+      ]
+    },
+    {
+      "seed_id": "SEED.HANDLER_PROPAGATION",
+      "semantic_locations": [
+        "ail_job_service_v2::service::create_job",
+        "ail_job_service_v2::domain::Job"
+      ]
+    },
+    {
+      "seed_id": "SEED.STORE_CONTRACT",
+      "semantic_locations": [
+        "ail_job_service_v2::domain::JobStore",
+        "ail_job_service_v2::store::DeterministicJobStore"
+      ]
+    },
+    {
+      "seed_id": "SEED.PERSISTED_CODEC",
+      "semantic_locations": [
+        "ail_job_service_v2::codec::stored_job_json",
+        "ail_job_service_v2::store::StoredJob::adapt_to_v2"
+      ]
+    },
+    {
+      "seed_id": "SEED.RESPONSE_PROJECTION",
+      "semantic_locations": [
+        "ail_job_service_v2::codec::response_json"
+      ]
+    },
+    {
+      "seed_id": "SEED.RESULT_CONSUMER",
+      "semantic_locations": [
+        "ail_job_service_v2::codec::response_json"
+      ]
+    },
+    {
+      "seed_id": "SEED.AUTHORITY_EXPANSION",
+      "semantic_locations": [
+        "ail_job_service_v1::JobStore",
+        "ail_job_service_v2::domain::JobStore"
+      ]
+    },
+    {
+      "seed_id": "SEED.STALE_EVIDENCE",
+      "semantic_locations": [
+        "benchmarks/baselines/rust/verification-manifest.json"
+      ]
+    }
+  ]
+}
