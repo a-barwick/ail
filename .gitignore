@@ -15,6 +15,7 @@ Thumbs.db
 
 # Logs, coverage, and temporary files
 *.log
+.coverage
 __pycache__/
 *.py[cod]
 coverage/

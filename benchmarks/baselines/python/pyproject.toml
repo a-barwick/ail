@@ -1,0 +1,59 @@
+[project]
+name = "ail-job-service-python-baseline"
+version = "0.1.0"
+description = "Typed Python baseline for the AIL job-service benchmark"
+requires-python = "==3.13.*"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "mypy==1.17.0",
+  "pytest==8.4.1",
+  "pytest-cov==6.2.1",
+  "ruff==0.12.4",
+]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["v1", "v2", "tests"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["v1", "v2"]
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "ANN401",
+  "COM812",
+  "D",
+  "EM101",
+  "EM102",
+  "FBT001",
+  "PLC0415",
+  "PLR2004",
+  "S101",
+  "S603",
+  "TC003",
+  "TRY003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ARG001", "SLF001"]
+
+[tool.ruff.format]
+quote-style = "double"
