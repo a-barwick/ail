@@ -1,0 +1,402 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/job-service-fixture.schema.json",
+  "title": "AIL job-service benchmark fixture",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/create_job_case"
+    },
+    {
+      "$ref": "#/$defs/decode_stored_job_case"
+    }
+  ],
+  "$defs": {
+    "base_case": {
+      "type": "object",
+      "properties": {
+        "fixture_format": {
+          "const": 1
+        },
+        "case_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "service_version": {
+          "enum": [
+            1,
+            2
+          ]
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "required": [
+        "api_version",
+        "job_id",
+        "task",
+        "payload_base64"
+      ],
+      "properties": {
+        "api_version": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "job_id": {
+          "type": "string"
+        },
+        "task": {
+          "type": "string"
+        },
+        "payload_base64": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "stored_job": {
+      "type": "object",
+      "required": [
+        "record_version",
+        "job_id",
+        "task",
+        "payload_base64"
+      ],
+      "properties": {
+        "record_version": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "job_id": {
+          "type": "string"
+        },
+        "task": {
+          "type": "string"
+        },
+        "payload_base64": {
+          "type": "string"
+        },
+        "priority": {
+          "enum": [
+            "low",
+            "normal",
+            "high"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "validation_issue": {
+      "type": "object",
+      "required": [
+        "field",
+        "reason"
+      ],
+      "properties": {
+        "field": {
+          "enum": [
+            "job_id",
+            "task",
+            "payload",
+            "priority"
+          ]
+        },
+        "reason": {
+          "enum": [
+            "missing",
+            "invalid_format",
+            "too_long",
+            "control_character",
+            "payload_too_large"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "result": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "job"
+          ],
+          "properties": {
+            "kind": {
+              "const": "created"
+            },
+            "job": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "issues"
+          ],
+          "properties": {
+            "kind": {
+              "const": "invalid"
+            },
+            "issues": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/validation_issue"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "job_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "already_exists"
+            },
+            "job_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "persistence_unavailable"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "response": {
+      "type": "object",
+      "required": [
+        "api_version",
+        "result"
+      ],
+      "properties": {
+        "api_version": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "result": {
+          "$ref": "#/$defs/result"
+        }
+      },
+      "additionalProperties": false
+    },
+    "store_call": {
+      "type": "object",
+      "required": [
+        "operation",
+        "job"
+      ],
+      "properties": {
+        "operation": {
+          "const": "insert_if_absent"
+        },
+        "job": {
+          "$ref": "#/$defs/stored_job"
+        }
+      },
+      "additionalProperties": false
+    },
+    "create_expected": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "response",
+            "final_jobs",
+            "store_calls"
+          ],
+          "properties": {
+            "response": {
+              "$ref": "#/$defs/response"
+            },
+            "final_jobs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/stored_job"
+              }
+            },
+            "store_calls": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/store_call"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "decode_error",
+            "final_jobs",
+            "store_calls"
+          ],
+          "properties": {
+            "decode_error": {
+              "type": "object",
+              "required": [
+                "code",
+                "field",
+                "value"
+              ],
+              "properties": {
+                "code": {
+                  "const": "unknown_priority"
+                },
+                "field": {
+                  "const": "priority"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "final_jobs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/stored_job"
+              }
+            },
+            "store_calls": {
+              "type": "array",
+              "maxItems": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "create_job_case": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base_case"
+        },
+        {
+          "type": "object",
+          "required": [
+            "fixture_format",
+            "case_id",
+            "service_version",
+            "operation",
+            "request",
+            "initial_jobs",
+            "expected"
+          ],
+          "properties": {
+            "fixture_format": {
+              "const": 1
+            },
+            "case_id": {
+              "type": "string"
+            },
+            "service_version": {
+              "enum": [
+                1,
+                2
+              ]
+            },
+            "operation": {
+              "const": "create_job"
+            },
+            "request": {
+              "$ref": "#/$defs/request"
+            },
+            "initial_jobs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/stored_job"
+              }
+            },
+            "store_outcome": {
+              "enum": [
+                "inserted",
+                "duplicate",
+                "unavailable_before_commit"
+              ]
+            },
+            "expected": {
+              "$ref": "#/$defs/create_expected"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "decode_stored_job_case": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base_case"
+        },
+        {
+          "type": "object",
+          "required": [
+            "fixture_format",
+            "case_id",
+            "service_version",
+            "operation",
+            "stored_job",
+            "expected"
+          ],
+          "properties": {
+            "fixture_format": {
+              "const": 1
+            },
+            "case_id": {
+              "type": "string"
+            },
+            "service_version": {
+              "const": 2
+            },
+            "operation": {
+              "const": "decode_stored_job"
+            },
+            "stored_job": {
+              "$ref": "#/$defs/stored_job"
+            },
+            "expected": {
+              "type": "object",
+              "required": [
+                "decoded_job"
+              ],
+              "properties": {
+                "decoded_job": {
+                  "$ref": "#/$defs/stored_job"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

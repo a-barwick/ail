@@ -9,9 +9,10 @@ interface for navigation, diagnostics, structural edits, and impact analysis.
 Human authorship ergonomics are secondary. Human auditability is a hard
 requirement.
 
-The project is in design and validation. No implementation stack has been
-selected, and this repository intentionally contains no framework, package
-manager, or generated compiler skeleton yet.
+The project is in design and validation. No compiler implementation stack has
+been selected, and this repository intentionally contains no framework, root
+package manager, or generated compiler skeleton. It does contain
+language-independent benchmark data and dependency-free validation tooling.
 
 ## Project thesis
 
@@ -67,9 +68,9 @@ proposed architectural-regression feature, and
 
 ## Repository status
 
-The job-service workload, use cases, and first requirements are accepted. The
-active milestone is M1: build and freeze the shared JSON fixture corpus before
-writing baseline implementations.
+The job-service workload, use cases, requirements, and shared public JSON
+fixture corpus are accepted. The active milestone is M2: freeze the benchmark
+harness and task contract before writing baseline implementations.
 
 M0–M13 is the sole operational delivery sequence and is defined in
 [docs/roadmap.md](docs/roadmap.md).
@@ -79,10 +80,12 @@ Stack evaluation criteria and candidate spikes are in
 
 ## Working in this repository
 
-Documentation is the only source artifact at this stage:
+Documentation and language-independent benchmark tooling are the only source
+artifacts at this stage:
 
 ```text
 AGENTS.md          Repository guidance and thesis guardrails for agent work
+benchmarks/        Frozen public JSON cases, schemas, and dependency-free tools
 docs/
   README.md        Documentation layers, authority, and traceability
   STATUS.md        Active milestone and next-agent handoff

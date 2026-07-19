@@ -1,0 +1,21 @@
+{
+  "fixture_format": 1,
+  "case_id": "uc003-v1-stored-job-adapted",
+  "service_version": 2,
+  "operation": "decode_stored_job",
+  "stored_job": {
+    "record_version": 1,
+    "job_id": "job-legacy",
+    "task": "legacy-task",
+    "payload_base64": "bGVnYWN5"
+  },
+  "expected": {
+    "decoded_job": {
+      "record_version": 2,
+      "job_id": "job-legacy",
+      "task": "legacy-task",
+      "payload_base64": "bGVnYWN5",
+      "priority": "normal"
+    }
+  }
+}

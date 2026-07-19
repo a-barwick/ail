@@ -188,13 +188,16 @@ entries.
 
 ## Validation
 
-Before baseline implementation begins, the fixture corpus must have:
+The checked-in [benchmark artifacts](../../benchmarks/README.md) provide:
 
 - a machine-readable schema or validator;
 - a formatter that produces the repository's one accepted JSON layout;
 - a manifest listing every case and its SHA-256 digest;
 - a language-independent reference check for Base64 and version fields; and
 - review confirming that every expected behavior comes from UC-001 or UC-003.
+
+Run `python3 benchmarks/tools/fixtures.py check` from the repository root to
+verify the complete public corpus.
 
 Those tools validate benchmark data only. They do not become part of the AIL
 compiler or language specification.

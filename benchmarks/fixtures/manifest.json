@@ -1,0 +1,673 @@
+{
+  "manifest_format": 1,
+  "schema": {
+    "path": "benchmarks/schemas/job-service-fixture.schema.json",
+    "sha256": "ec904f368b679aaeb0d6b6c62dee1f969a9d394da3aaa176c180589ac2fe7f86"
+  },
+  "fixtures": [
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-created-empty-payload.json",
+      "sha256": "74ea75c10d293fb63e0862982cc00e45b0e094baddf69957e289b462e041ccea",
+      "case_id": "uc001-v1-created-empty-payload",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:created_empty_payload",
+        "uc001:job_id_min_length",
+        "uc001:task_min_length",
+        "uc001:payload_empty"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-created-non-ascii-boundaries.json",
+      "sha256": "117cc77a61c50d097b86f9143aa442dca1d190c657237b8b16df890e3f235603",
+      "case_id": "uc001-v1-created-non-ascii-boundaries",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:created_non_ascii_task",
+        "uc001:job_id_max_length",
+        "uc001:task_max_length"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-duplicate.json",
+      "sha256": "e006494f2664c3261cfd2b4748d2101d6f0daca8ab5f4e7184ca8c0fcf4c1f53",
+      "case_id": "uc001-v1-duplicate",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:duplicate"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-job-id-invalid-character.json",
+      "sha256": "05de98c227d0720753720100e54b53ce4aea6a75c309ffd5e002a829d6c45244",
+      "case_id": "uc001-v1-job-id-invalid-character",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:job_id_invalid_character"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-job-id-invalid-start.json",
+      "sha256": "372a17bfa6b2021f63cce24d69d0b83d715c677b8c9d8577038c9ae177f2d488",
+      "case_id": "uc001-v1-job-id-invalid-start",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:job_id_invalid_start"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-job-id-missing.json",
+      "sha256": "1e1c1c46954380f682bf9fc4af2e4918dfe7a1a7f443dd0f862a41c93fafd492",
+      "case_id": "uc001-v1-job-id-missing",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:job_id_missing"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-job-id-too-long.json",
+      "sha256": "c25320a5dc5a132abdeb423da64487c08f00a23bbb3a265ceecdc9480d63f7a0",
+      "case_id": "uc001-v1-job-id-too-long",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:job_id_too_long"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-multiple-invalid-ordered.json",
+      "sha256": "3686333e6c96d40e7f6f9b1ecda2e4551d0a81e8fa77c657da3db0d9f32709b5",
+      "case_id": "uc001-v1-multiple-invalid-ordered",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:multiple_invalid_order"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-payload-maximum.json",
+      "sha256": "68478c53df1c5b22e69790d2b521a125cf94decc28432b3c447c278692f0ba89",
+      "case_id": "uc001-v1-payload-maximum",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:payload_max"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-payload-too-large.json",
+      "sha256": "71c8c3979fa51430d0247bf73dba172cf8353e44aaa09eb33fa68e8d8782c02f",
+      "case_id": "uc001-v1-payload-too-large",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:payload_too_large"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-task-control-character.json",
+      "sha256": "03fe9eef07cc9a40d1b505936cbe673186759fd99d80324ef17c390e3a8369f2",
+      "case_id": "uc001-v1-task-control-character",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:task_control_character"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-task-missing.json",
+      "sha256": "b483676a7204d183e408b553fb0405e362e541d14b2cce147cdb3e2acfa7f486",
+      "case_id": "uc001-v1-task-missing",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:task_missing"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-task-too-long.json",
+      "sha256": "0035f4fd69361f846cf46bef6594640a9adf9bb0a29622f945a581a263e38874",
+      "case_id": "uc001-v1-task-too-long",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:task_too_long"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc001-v1-unavailable.json",
+      "sha256": "741d1bb6c50a95ac87487224c6a3842d01f0357bd39db05ff1da6289d951c5a8",
+      "case_id": "uc001-v1-unavailable",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003"
+      ],
+      "coverage": [
+        "uc001:unavailable"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v1-request-adapted.json",
+      "sha256": "1d101dbc1ed2bdb9bd44b6f66f7f811926144dee04da19b2c3ab7dbb64f355eb",
+      "case_id": "uc003-v1-request-adapted",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-002",
+        "APP-004"
+      ],
+      "coverage": [
+        "uc003:v1_request_adapter",
+        "uc003:v1_response_projection"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v1-request-duplicate.json",
+      "sha256": "e595d4b5dd6e5606f292fbf9a88a62a38ee688559abcb420015b417231dfd5ac",
+      "case_id": "uc003-v1-request-duplicate",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "uc003:duplicate_v1_request"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v1-request-unavailable.json",
+      "sha256": "2f3b435df36e139882f6d422d937a87c93d62327919f4cf1b476906f278bd9a8",
+      "case_id": "uc003-v1-request-unavailable",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "uc003:unavailable_v1_request"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-created-priority-high.json",
+      "sha256": "ad3c75a853f91d8cedf056a1d475dff545c9c579a6649f1ec1887135917735ba",
+      "case_id": "uc003-v2-created-priority-high",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "uc003:v2_priority_high"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-created-priority-low.json",
+      "sha256": "3714bb5cb90901a27bf018e4b445726b909bf070b8a773080c06b7d18220c343",
+      "case_id": "uc003-v2-created-priority-low",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "uc003:v2_priority_low"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-created-priority-normal.json",
+      "sha256": "6d0d37b635aa23611d7398c7088a1695e405c4a57f65eb87988c1922726d6993",
+      "case_id": "uc003-v2-created-priority-normal",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "uc003:v2_priority_normal"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-priority-missing.json",
+      "sha256": "7beb0936bb56c33bc9749fa51c5282ba7261912b7e1cebd554b6c4363e8486a3",
+      "case_id": "uc003-v2-priority-missing",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-004"
+      ],
+      "coverage": [
+        "uc003:v2_priority_missing"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-priority-unknown.json",
+      "sha256": "5e9a04a75c254e775d80ee7d63f827c9742467f91294d83fa7ab15b49511a41b",
+      "case_id": "uc003-v2-priority-unknown",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-004"
+      ],
+      "coverage": [
+        "uc003:v2_priority_unknown"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-created-empty-payload.json",
+      "sha256": "6ca0627984fa03a95c9226742ec187b0290f29e2d6feea836dcef5f3c49f1e8b",
+      "case_id": "uc003-v2-regression-created-empty-payload",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:created_empty_payload",
+        "regression:job_id_min_length",
+        "regression:task_min_length",
+        "regression:payload_empty"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-created-non-ascii-boundaries.json",
+      "sha256": "b0ef2b2b9533085fb63434ebbb5652cd5bcaa08c53d5cb528f9170cfbcf9eb43",
+      "case_id": "uc003-v2-regression-created-non-ascii-boundaries",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:created_non_ascii_task",
+        "regression:job_id_max_length",
+        "regression:task_max_length"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-duplicate.json",
+      "sha256": "837f6c88aae2ea5c5ff34b566bbf10ea9b7278541f5ef39076203c7093cf7289",
+      "case_id": "uc003-v2-regression-duplicate",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:duplicate",
+        "uc003:duplicate_v2_request"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-job-id-invalid-character.json",
+      "sha256": "c9eeb5893a0ad250c7464ed182a5dca4837d45ea5fa2c881ba3ffac83d0adbf8",
+      "case_id": "uc003-v2-regression-job-id-invalid-character",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:job_id_invalid_character"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-job-id-invalid-start.json",
+      "sha256": "6e2be04b992493b4c500f0b698f04256861b6a714a0a7f9a87da6a18053a0982",
+      "case_id": "uc003-v2-regression-job-id-invalid-start",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:job_id_invalid_start"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-job-id-missing.json",
+      "sha256": "03cda2396384e8534e7e7c5657a53c343caa6bdb1a4a1e6189eda10efed4fff3",
+      "case_id": "uc003-v2-regression-job-id-missing",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:job_id_missing"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-job-id-too-long.json",
+      "sha256": "6cb3f1b1390dcdaa2f3c8988a7aecefe632837a7e1884b9e151a314b9c478895",
+      "case_id": "uc003-v2-regression-job-id-too-long",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:job_id_too_long"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-multiple-invalid-ordered.json",
+      "sha256": "d9bbf3160a4e37f0645d73aadc921229dd569102577906985ddac6dbb1b4cc9a",
+      "case_id": "uc003-v2-regression-multiple-invalid-ordered",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:multiple_invalid_order"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-payload-maximum.json",
+      "sha256": "94284a874a2a67d0a5ef19beaf91054633d9cf04d2b0a5c5669b3f52261f3f45",
+      "case_id": "uc003-v2-regression-payload-maximum",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:payload_max"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-payload-too-large.json",
+      "sha256": "c1a841f1b4a831218e90bdb4e6193dd481d480672e25ba2eb7083e1ce73b13db",
+      "case_id": "uc003-v2-regression-payload-too-large",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:payload_too_large"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-task-control-character.json",
+      "sha256": "d901063f687df16e91640d5e73125a069a875fe1e00db28de2108c0d9107a354",
+      "case_id": "uc003-v2-regression-task-control-character",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:task_control_character"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-task-missing.json",
+      "sha256": "d25e18a4f50dc850aac5f2aa9f5ad838607581161a13e3655ebf58e0932df4a3",
+      "case_id": "uc003-v2-regression-task-missing",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:task_missing"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-task-too-long.json",
+      "sha256": "9a0aff637721cae599a07218a3d726fdaca3fbbfc6f388463ed6bb57b7cd1f2c",
+      "case_id": "uc003-v2-regression-task-too-long",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:task_too_long"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/create_job/uc003-v2-regression-unavailable.json",
+      "sha256": "22fff8ad92def0117fa82e3362917cc709d89cde4cb28d2d2fa0416b68154c58",
+      "case_id": "uc003-v2-regression-unavailable",
+      "operation": "create_job",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "APP-003",
+        "APP-004"
+      ],
+      "coverage": [
+        "regression:unavailable",
+        "uc003:unavailable_v2_request"
+      ]
+    },
+    {
+      "path": "benchmarks/fixtures/public/decode_stored_job/uc003-v1-stored-job-adapted.json",
+      "sha256": "8af12932074ea5a786684667a6ea2f9cb17394da0281d48af94137876181473d",
+      "case_id": "uc003-v1-stored-job-adapted",
+      "operation": "decode_stored_job",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-004"
+      ],
+      "coverage": [
+        "uc003:v1_stored_adapter"
+      ]
+    }
+  ]
+}

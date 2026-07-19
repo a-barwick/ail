@@ -1,0 +1,46 @@
+{
+  "fixture_format": 1,
+  "case_id": "uc001-v1-created-empty-payload",
+  "service_version": 1,
+  "operation": "create_job",
+  "request": {
+    "api_version": 1,
+    "job_id": "a",
+    "task": "x",
+    "payload_base64": ""
+  },
+  "initial_jobs": [],
+  "store_outcome": "inserted",
+  "expected": {
+    "response": {
+      "api_version": 1,
+      "result": {
+        "kind": "created",
+        "job": {
+          "job_id": "a",
+          "task": "x",
+          "payload_base64": ""
+        }
+      }
+    },
+    "final_jobs": [
+      {
+        "record_version": 1,
+        "job_id": "a",
+        "task": "x",
+        "payload_base64": ""
+      }
+    ],
+    "store_calls": [
+      {
+        "operation": "insert_if_absent",
+        "job": {
+          "record_version": 1,
+          "job_id": "a",
+          "task": "x",
+          "payload_base64": ""
+        }
+      }
+    ]
+  }
+}

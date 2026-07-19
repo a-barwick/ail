@@ -40,8 +40,8 @@ becomes active.
 | Milestone | Capability | Status | Depends on |
 | --- | --- | --- | --- |
 | M0 | Accepted reference workload and requirements | Complete | — |
-| M1 | Frozen job-service fixture corpus | Active | M0 |
-| M2 | Benchmark harness and frozen task contract | Planned | M1 |
+| M1 | Frozen job-service fixture corpus | Complete | M0 |
+| M2 | Benchmark harness and frozen task contract | Active | M1 |
 | M3 | Rust baseline | Planned | M2 |
 | M4 | Go baseline | Planned | M2 |
 | M5 | Python baseline | Planned | M2 |
@@ -79,7 +79,7 @@ compiler stack.
 
 ### M1 — Frozen job-service fixture corpus
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -118,7 +118,7 @@ design documents.
 
 ### M2 — Benchmark harness and frozen task contract
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 

@@ -1,0 +1,53 @@
+{
+  "fixture_format": 1,
+  "case_id": "uc003-v2-regression-duplicate",
+  "service_version": 2,
+  "operation": "create_job",
+  "request": {
+    "api_version": 2,
+    "job_id": "job-existing",
+    "task": "rebuild-search-index",
+    "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9",
+    "priority": "normal"
+  },
+  "initial_jobs": [
+    {
+      "record_version": 2,
+      "job_id": "job-existing",
+      "task": "existing-task",
+      "payload_base64": "ZXhpc3Rpbmc=",
+      "priority": "normal"
+    }
+  ],
+  "store_outcome": "duplicate",
+  "expected": {
+    "response": {
+      "api_version": 2,
+      "result": {
+        "kind": "already_exists",
+        "job_id": "job-existing"
+      }
+    },
+    "final_jobs": [
+      {
+        "record_version": 2,
+        "job_id": "job-existing",
+        "task": "existing-task",
+        "payload_base64": "ZXhpc3Rpbmc=",
+        "priority": "normal"
+      }
+    ],
+    "store_calls": [
+      {
+        "operation": "insert_if_absent",
+        "job": {
+          "record_version": 2,
+          "job_id": "job-existing",
+          "task": "rebuild-search-index",
+          "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9",
+          "priority": "normal"
+        }
+      }
+    ]
+  }
+}

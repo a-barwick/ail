@@ -1,0 +1,29 @@
+{
+  "fixture_format": 1,
+  "case_id": "uc001-v1-job-id-missing",
+  "service_version": 1,
+  "operation": "create_job",
+  "request": {
+    "api_version": 1,
+    "job_id": "",
+    "task": "rebuild-search-index",
+    "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9"
+  },
+  "initial_jobs": [],
+  "expected": {
+    "response": {
+      "api_version": 1,
+      "result": {
+        "kind": "invalid",
+        "issues": [
+          {
+            "field": "job_id",
+            "reason": "missing"
+          }
+        ]
+      }
+    },
+    "final_jobs": [],
+    "store_calls": []
+  }
+}
