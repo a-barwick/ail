@@ -1,0 +1,7 @@
+{
+  "synthetic_fixture_format": 1,
+  "id": "pilot",
+  "state": "pilot",
+  "mutation": "none",
+  "expected": "accepted:pilot"
+}

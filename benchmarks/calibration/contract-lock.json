@@ -1,0 +1,77 @@
+{
+  "calibration_contract_lock_format": 1,
+  "artifacts": [
+    {
+      "path": "benchmarks/calibration/README.md",
+      "sha256": "9ac403eeb810ab7d5586e798e7c378098da40b5d32bae1b9ca1306c04a6c6333"
+    },
+    {
+      "path": "benchmarks/calibration/experiment-contract.json",
+      "sha256": "52d146ad672ab3b93a31083f8907e3d8c6db970da14e3dc3ddd30ace739adbce"
+    },
+    {
+      "path": "benchmarks/calibration/synthetic/complete.json",
+      "sha256": "b762c1c814ab92ccd67930d4ab8b74b8acee541590ee0e86241ae5bd5e0ced1b"
+    },
+    {
+      "path": "benchmarks/calibration/synthetic/empty.json",
+      "sha256": "a5eb05362e0083a1e368f8154e6b8eac4cf2a7fe1963469d6a685a002471da89"
+    },
+    {
+      "path": "benchmarks/calibration/synthetic/malformed.json",
+      "sha256": "d2bedd094cd97b0f7521a6f8ee0708570f25e6783bb1186ab3c51a39ccbc3683"
+    },
+    {
+      "path": "benchmarks/calibration/synthetic/partial.json",
+      "sha256": "abeb7428931915bb614dd84ce771ef1fb53e519e774de608981e1bdc71b1a55c"
+    },
+    {
+      "path": "benchmarks/calibration/synthetic/pilot.json",
+      "sha256": "cbdbfdfab25f5e4d73adedea0426c796b83d2935737f96981dfcc3f617e452d2"
+    },
+    {
+      "path": "benchmarks/calibration/synthetic/rejections.json",
+      "sha256": "6da4c2b02b47e592774966e2a3ad220a6516e0fdaaa708eb49a63cfaf7a5f253"
+    },
+    {
+      "path": "benchmarks/schemas/calibration-agent-trial.schema.json",
+      "sha256": "5ca1bf804fc7fcbc71e8d34db61c19e9b173782b77244d8838d8f62277749701"
+    },
+    {
+      "path": "benchmarks/schemas/calibration-campaign.schema.json",
+      "sha256": "5adb5e70a40f9a8c69a24813855caabbcab66a1bfe7c2b283d0d4ea8d97eeb51"
+    },
+    {
+      "path": "benchmarks/schemas/calibration-cold-measurement.schema.json",
+      "sha256": "cb0cd137e5de272a0877b034f97a1a40f4fd6a05f7d0011e6ec71bfc66b1457d"
+    },
+    {
+      "path": "benchmarks/schemas/calibration-evidence-index.schema.json",
+      "sha256": "32d58d7b3c13a899b1978373c833b8b8b448449ebb7c3ffb88ed1ef1f9243272"
+    },
+    {
+      "path": "benchmarks/schemas/calibration-experiment-contract.schema.json",
+      "sha256": "99ebb65289ba0737672949214e0e60bec199b1ebe477d3e063fda4ae7fde55f5"
+    },
+    {
+      "path": "benchmarks/schemas/calibration-raw-event.schema.json",
+      "sha256": "19e11b9a8739eebc9535615a8d3a298776299692b8ab849d7ef9eebd2ad34c73"
+    },
+    {
+      "path": "benchmarks/schemas/calibration-report.schema.json",
+      "sha256": "c89d5995306a7f44d0d5d9b07f1b45c955727febecb244902cade5ebe5a08799"
+    },
+    {
+      "path": "benchmarks/schemas/calibration-warm-measurement.schema.json",
+      "sha256": "b8af360b8ee87d1a37d4a1bdaf2034c8be1a82190746909b033ff705e309863c"
+    },
+    {
+      "path": "benchmarks/tests/test_calibration.py",
+      "sha256": "a18af74bcbf255f35b37a82de82efbc3d1c0fb9cb07491a14a1af9ac5c1774fb"
+    },
+    {
+      "path": "benchmarks/tools/calibration.py",
+      "sha256": "69d3aa43e25485445a6cba51e8ff1ce2bd7ae3e37978a19227033af170cb3422"
+    }
+  ]
+}

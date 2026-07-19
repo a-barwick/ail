@@ -148,10 +148,20 @@ terminal classifications used by M8. It also records the reviewed NFR-002
 amendment from the infeasible 100,000-token pilot limit to a 500,000 cumulative
 delivered-input-token safety limit.
 
-The decision is a configuration contract, not official evidence. M8b must
-encode it in schemas and digest locks, M8c must implement and dry-test the
-interactive runner, and M8f must pass all readiness configurations before any
-official trial counts.
+The decision is a configuration contract, not official evidence. M8b encodes
+it in the locked
+[calibration evidence contract](calibration/README.md), eight JSON schemas, and
+`verify-calibration`. The verifier accepts structurally complete empty, pilot,
+and partial campaigns, requires final counts for a campaign marked complete,
+and rejects changed, missing, inconsistent, mixed, or incorrectly summarized
+evidence. M8c must implement and dry-test the interactive runner, and M8f must
+pass all readiness configurations before any official trial counts.
+
+Run the M8b gate with:
+
+```bash
+python3 benchmarks/tools/harness.py verify-calibration
+```
 
 ## Public and hidden boundary
 

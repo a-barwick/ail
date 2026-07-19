@@ -329,14 +329,14 @@ tokens because ordinary interactive pilots exceeded the lower limit.
 M8a collected no official evidence and did not implement the later trial
 runner.
 
-#### Active submilestone: M8b — Build the evidence contracts and verifier
+#### Completed submilestone: M8b — Build the evidence contracts and verifier
 
-Define schemas and digest locks for agent trial records, raw model and tool
+M8b delivered schemas and digest locks for agent trials, raw model and tool
 events, warm-state measurements, cold-start and memory measurements, campaign
-configuration and ordering, evidence indexes, and the final report. Implement
-`verify-calibration` before any official evidence is collected. Synthetic
-campaigns must prove stable acceptance and rejection for empty, pilot, partial,
-malformed, and complete evidence.
+configuration and ordering, evidence indexes, and the final fact-only report.
+The calibration verifier checks the complete digest graph, exact M8a inputs,
+token reconciliation, raw-event continuity, counts, exclusions, summaries, and
+configuration identity.
 
 #### M8b focused verification
 
@@ -350,6 +350,29 @@ artifact and the synthetic fixtures reject missing counts, duplicate trial
 identities, changed inputs, invalid hashes, incomplete token categories,
 missing raw events, unaccounted exclusions, incorrect summaries, and mixed
 configurations with stable results.
+
+The gate passes with 18 locked artifacts and 14 stable synthetic outcomes.
+M8b collected no agent or performance evidence.
+
+#### Active submilestone: M8c — Implement the interactive agent runner
+
+Build a fresh locked workspace, enforce the manifest-start gate, invoke only
+the selected Codex agent and normal language tools, and record every model,
+tool, edit, validation, permission, limit, and process event. Derive edits,
+validation attempts, incomplete validations, and repair cycles from the raw
+stream using the frozen M2 definitions.
+
+Dry and fake streams must prove stable classification and evidence accounting
+for success, failure, timeout, permission violation, input-token limit, and
+incomplete evidence. M8c does not run an official trial or implement the later
+private correctness replay.
+
+#### M8c focused verification
+
+```bash
+python3 benchmarks/tools/harness.py verify-calibration
+python3 tools/check_docs.py
+```
 
 #### Scope
 

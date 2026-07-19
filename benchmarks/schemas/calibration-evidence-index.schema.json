@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/calibration-evidence-index.schema.json",
+  "title": "AIL M8 calibration evidence index",
+  "type": "object",
+  "required": [
+    "evidence_index_format",
+    "campaign_id",
+    "configuration_id",
+    "configuration_sha256",
+    "artifacts"
+  ],
+  "properties": {
+    "evidence_index_format": {
+      "const": 1
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "configuration_id": {
+      "const": "m8-agent-experiment-v1"
+    },
+    "configuration_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "record_id",
+          "kind",
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "record_id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "campaign",
+              "agent_trial",
+              "raw_events",
+              "warm_measurement",
+              "cold_measurement",
+              "blob",
+              "report"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

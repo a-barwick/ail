@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/calibration-report.schema.json",
+  "title": "AIL M8 fact-only calibration report",
+  "type": "object",
+  "required": [
+    "report_format",
+    "campaign_id",
+    "configuration_id",
+    "completion_state",
+    "agent_distributions",
+    "warm_distributions",
+    "cold_distributions",
+    "exclusions",
+    "ail_comparison",
+    "ail_targets"
+  ],
+  "properties": {
+    "report_format": {
+      "const": 1
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "configuration_id": {
+      "const": "m8-agent-experiment-v1"
+    },
+    "completion_state": {
+      "enum": [
+        "empty",
+        "pilot",
+        "partial",
+        "complete"
+      ]
+    },
+    "agent_distributions": {
+      "type": "array"
+    },
+    "warm_distributions": {
+      "type": "array"
+    },
+    "cold_distributions": {
+      "type": "array"
+    },
+    "exclusions": {
+      "type": "array"
+    },
+    "ail_comparison": {
+      "const": "not_permitted_in_m8"
+    },
+    "ail_targets": {
+      "const": "not_permitted_in_m8"
+    }
+  },
+  "additionalProperties": false
+}

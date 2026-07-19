@@ -1,0 +1,7 @@
+{
+  "synthetic_fixture_format": 1,
+  "id": "malformed",
+  "state": "complete",
+  "mutation": "malformed",
+  "expected": "agent_trial_invalid"
+}

@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/calibration-warm-measurement.schema.json",
+  "title": "AIL M8 warm-state performance measurement",
+  "type": "object",
+  "required": [
+    "warm_measurement_format",
+    "measurement_id",
+    "schedule_id",
+    "campaign_id",
+    "configuration_id",
+    "language",
+    "official",
+    "round",
+    "status",
+    "exclusion_reason",
+    "environment_sha256",
+    "package_sha256",
+    "dependency_lock_sha256",
+    "readiness",
+    "warmup",
+    "clock",
+    "affinity",
+    "load",
+    "corpus",
+    "latency",
+    "throughput_milli_requests_per_second"
+  ],
+  "properties": {
+    "warm_measurement_format": {
+      "const": 1
+    },
+    "measurement_id": {
+      "type": "string"
+    },
+    "schedule_id": {
+      "type": "string"
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "configuration_id": {
+      "type": "string"
+    },
+    "language": {
+      "enum": [
+        "rust",
+        "go",
+        "python",
+        "typescript"
+      ]
+    },
+    "official": {
+      "enum": [
+        "yes",
+        "no"
+      ]
+    },
+    "round": {
+      "type": "integer"
+    },
+    "status": {
+      "enum": [
+        "included",
+        "excluded"
+      ]
+    },
+    "exclusion_reason": {
+      "type": "string"
+    },
+    "environment_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "package_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "dependency_lock_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "readiness": {
+      "type": "object"
+    },
+    "warmup": {
+      "type": "object"
+    },
+    "clock": {
+      "type": "object"
+    },
+    "affinity": {
+      "type": "object"
+    },
+    "load": {
+      "type": "object"
+    },
+    "corpus": {
+      "type": "object"
+    },
+    "latency": {
+      "type": "object",
+      "required": [
+        "sample_count",
+        "samples_path",
+        "samples_sha256",
+        "p50_ns",
+        "p95_ns",
+        "p99_ns"
+      ],
+      "properties": {
+        "sample_count": {
+          "type": "integer"
+        },
+        "samples_path": {
+          "type": "string"
+        },
+        "samples_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "p50_ns": {
+          "type": "integer"
+        },
+        "p95_ns": {
+          "type": "integer"
+        },
+        "p99_ns": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "throughput_milli_requests_per_second": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}
