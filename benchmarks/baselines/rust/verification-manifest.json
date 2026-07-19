@@ -1,7 +1,7 @@
 {
   "manifest_format": 1,
   "benchmark_id": "ail-job-service",
-  "configuration_id": "m3-rust-public-verification",
+  "configuration_id": "m7-rust-parity-freeze",
   "source": {
     "language": "rust",
     "repository": "benchmarks/baselines/rust",
@@ -11,7 +11,7 @@
   },
   "runner": {
     "descriptor_path": "benchmarks/baselines/rust/runner.json",
-    "descriptor_sha256": "e1c61cd40776b96875b0ab400c8d29de177d2307b349fd7e9d89efe2dc968211"
+    "descriptor_sha256": "f8d038b9c46f72e8e77622c7671215676dd6545deb7e5f8cc0eaac60c1091b59"
   },
   "task": {
     "task_id": "UC-003",
@@ -25,8 +25,8 @@
   "tests": {
     "public_fixture_manifest": "benchmarks/fixtures/manifest.json",
     "public_fixture_manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
-    "hidden_package": "benchmarks/contracts/hidden-contract.json",
-    "hidden_package_sha256": "2e48b0fb8c30ed23e27a8fdde2b50c8f95ac5629f96f7b646041aee16fc93624"
+    "hidden_package": "external:ail-job-service-m7-hidden.zip",
+    "hidden_package_sha256": "c2b16b96f5710a6b8d9bb00f95011d337b064fa2d5f1f94b024bb54c33454752"
   },
   "tools": [
     {
@@ -123,7 +123,7 @@
     "pre_edit_checks_count": false
   },
   "correctness": {
-    "required_visibility": "public",
+    "required_visibility": "public_and_hidden",
     "required_checks": [
       "response",
       "final_jobs",
@@ -154,7 +154,7 @@
     },
     {
       "path": "benchmarks/baselines/rust/runner.json",
-      "sha256": "e1c61cd40776b96875b0ab400c8d29de177d2307b349fd7e9d89efe2dc968211"
+      "sha256": "f8d038b9c46f72e8e77622c7671215676dd6545deb7e5f8cc0eaac60c1091b59"
     },
     {
       "path": "benchmarks/baselines/rust/rust-toolchain.toml",
@@ -210,7 +210,7 @@
     },
     {
       "path": "benchmarks/contracts/contract-lock.json",
-      "sha256": "1cd939458b069d3e22ee10331cfb14d5a6675030597b2342aaa35519e0cd5039"
+      "sha256": "ce0df6e98322032368edcc274407c610e976889ef9b262a8e2d42365d4488a11"
     },
     {
       "path": "benchmarks/contracts/hidden-contract.json",
@@ -234,7 +234,7 @@
     },
     {
       "path": "benchmarks/tools/harness.py",
-      "sha256": "be33ad4eaa9b9026583b9903866afab1e1b3b8792324d858f6a3be9730a5f2c6"
+      "sha256": "8924be2408b3d8817fded0e872664356b4ce8ca022ce27134bf5e967dfffc011"
     }
   ]
 }

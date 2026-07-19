@@ -1,0 +1,299 @@
+{
+  "parity_report_format": 1,
+  "public_fixture_manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+  "hidden_package_sha256": "c2b16b96f5710a6b8d9bb00f95011d337b064fa2d5f1f94b024bb54c33454752",
+  "comparison": [
+    "response",
+    "final_jobs",
+    "store_calls"
+  ],
+  "languages": [
+    {
+      "language": "rust",
+      "v1_source_tree_sha256": "727dae069299327d28c8599a6888db75da631fdc216faf478dbc6c7ba6e60a99",
+      "v2_source_tree_sha256": "909af2ce1bf391e27c0e25b00e81dcea5abf814b9ee0870e388b860ecb7414df",
+      "tool_versions": [
+        {
+          "name": "rustc",
+          "version": "1.88.0"
+        },
+        {
+          "name": "cargo",
+          "version": "1.88.0"
+        },
+        {
+          "name": "rustfmt",
+          "version": "1.8.0"
+        },
+        {
+          "name": "clippy",
+          "version": "0.1.88"
+        },
+        {
+          "name": "rust-analyzer",
+          "version": "1.88.0"
+        }
+      ]
+    },
+    {
+      "language": "go",
+      "v1_source_tree_sha256": "167b0fec750194f875e4f42f8778fdec950fbfdb494648f5419b1eb914c79e32",
+      "v2_source_tree_sha256": "b908cf6e800dd2712a138614c3963860cad77bb01da5cf5daa90bdae59094b00",
+      "tool_versions": [
+        {
+          "name": "go",
+          "version": "1.26.0"
+        },
+        {
+          "name": "gofmt",
+          "version": "go1.26.0"
+        },
+        {
+          "name": "go-vet",
+          "version": "go1.26.0"
+        },
+        {
+          "name": "gopls",
+          "version": "0.21.1"
+        }
+      ]
+    },
+    {
+      "language": "python",
+      "v1_source_tree_sha256": "c995bf0c3630a2aa8c8bab192f6cc12c497e4eac11cd65f9e7fd1ecfceae0755",
+      "v2_source_tree_sha256": "d8ff859b987a47413cb9b5600a10df95e344322d3963c5218bc6ad04d12c5135",
+      "tool_versions": [
+        {
+          "name": "python",
+          "version": "3.13.5"
+        },
+        {
+          "name": "uv",
+          "version": "0.7.12"
+        },
+        {
+          "name": "mypy",
+          "version": "1.17.0"
+        },
+        {
+          "name": "ruff",
+          "version": "0.12.4"
+        },
+        {
+          "name": "pytest",
+          "version": "8.4.1"
+        }
+      ]
+    },
+    {
+      "language": "typescript",
+      "v1_source_tree_sha256": "3f959cb243de8f657131646d3c487f44b0a54292180641820008c6430609b644",
+      "v2_source_tree_sha256": "ef7eef1afc3c371ff9d2871c079aaadf00e1fc3031a4771e5532e221939af07f",
+      "tool_versions": [
+        {
+          "name": "node",
+          "version": "23.10.0"
+        },
+        {
+          "name": "npm",
+          "version": "10.9.2"
+        },
+        {
+          "name": "typescript",
+          "version": "5.8.3"
+        },
+        {
+          "name": "eslint",
+          "version": "9.31.0"
+        },
+        {
+          "name": "prettier",
+          "version": "3.6.2"
+        },
+        {
+          "name": "tsx",
+          "version": "4.20.3"
+        },
+        {
+          "name": "c8",
+          "version": "10.1.3"
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "uc001-v1-created-empty-payload",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-created-non-ascii-boundaries",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-duplicate",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-job-id-invalid-character",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-job-id-invalid-start",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-job-id-missing",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-job-id-too-long",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-multiple-invalid-ordered",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-payload-maximum",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-payload-too-large",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-task-control-character",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-task-missing",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-task-too-long",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc001-v1-unavailable",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v1-request-adapted",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v1-request-duplicate",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v1-request-unavailable",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-created-priority-high",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-created-priority-low",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-created-priority-normal",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-priority-missing",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-priority-unknown",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-created-empty-payload",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-created-non-ascii-boundaries",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-duplicate",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-job-id-invalid-character",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-job-id-invalid-start",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-job-id-missing",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-job-id-too-long",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-multiple-invalid-ordered",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-payload-maximum",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-payload-too-large",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-task-control-character",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-task-missing",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-task-too-long",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v2-regression-unavailable",
+      "visibility": "public"
+    },
+    {
+      "case_id": "uc003-v1-stored-job-adapted",
+      "visibility": "public"
+    },
+    {
+      "behavior_category": "HIDDEN.VALIDATION_COMBINATIONS",
+      "case_sha256": "568dd37ca74d8099c95d088be3743b515ffe3d0d61f2889d9c8eec7fc9ceddb0",
+      "visibility": "hidden"
+    },
+    {
+      "behavior_category": "HIDDEN.PAYLOAD_BYTES",
+      "case_sha256": "2cab96b30e3fbcebf3626af27c447a1d33d79c7fc82d2413c9e8a895496dfe84",
+      "visibility": "hidden"
+    },
+    {
+      "behavior_category": "HIDDEN.STORE_POSTCONDITIONS",
+      "case_sha256": "57d3d424dbd6553dd3756b872e485000399b5089264d400ba4ec8c4f3cd1fb0a",
+      "visibility": "hidden"
+    },
+    {
+      "behavior_category": "HIDDEN.VERSION_COMPATIBILITY",
+      "case_sha256": "7504ad622c823b7c8220be67acee69477b1fc5a28ce2c37e0d1710f3ba5f4e11",
+      "visibility": "hidden"
+    },
+    {
+      "behavior_category": "HIDDEN.ZERO_EFFECT_FAILURES",
+      "case_sha256": "8a0a9dc15172597ff32d18c0740801aae8f8f79d42f642b68b74cca3d1432455",
+      "visibility": "hidden"
+    }
+  ]
+}
