@@ -1,0 +1,232 @@
+{
+  "manifest_format": 1,
+  "benchmark_id": "ail-job-service",
+  "configuration_id": "m4-go-public-verification",
+  "source": {
+    "language": "go",
+    "repository": "benchmarks/baselines/go",
+    "start_revision": "go-v1-167b0fec750194f8",
+    "dependency_revision": "af43b9aa489277f1e30da053323e833ebf6f44cf1765da983e7e7b39be2e86b0",
+    "source_tree_sha256": "167b0fec750194f875e4f42f8778fdec950fbfdb494648f5419b1eb914c79e32"
+  },
+  "runner": {
+    "descriptor_path": "benchmarks/baselines/go/runner.json",
+    "descriptor_sha256": "830201446e641d1f6a792266cbe91348cf673702386efc18f333e548f456886c"
+  },
+  "task": {
+    "task_id": "UC-003",
+    "path": "benchmarks/tasks/uc003-add-priority.md",
+    "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6",
+    "initial_context": [
+      "benchmarks/tasks/uc003-add-priority.md",
+      "benchmarks/baselines/go/v1"
+    ]
+  },
+  "tests": {
+    "public_fixture_manifest": "benchmarks/fixtures/manifest.json",
+    "public_fixture_manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "hidden_package": "benchmarks/contracts/hidden-contract.json",
+    "hidden_package_sha256": "2e48b0fb8c30ed23e27a8fdde2b50c8f95ac5629f96f7b646041aee16fc93624"
+  },
+  "tools": [
+    {
+      "name": "go",
+      "version": "1.26.0",
+      "command": [
+        "go"
+      ]
+    },
+    {
+      "name": "gofmt",
+      "version": "go1.26.0",
+      "command": [
+        "gofmt"
+      ]
+    },
+    {
+      "name": "go-vet",
+      "version": "go1.26.0",
+      "command": [
+        "go",
+        "vet"
+      ]
+    },
+    {
+      "name": "gopls",
+      "version": "0.21.1",
+      "command": [
+        "gopls"
+      ]
+    }
+  ],
+  "model": {
+    "provider": "not-applicable",
+    "name": "reference-implementation-verification",
+    "version": "m4",
+    "agent": "not-an-agent-benchmark-run",
+    "sampling": {
+      "parameters": {},
+      "unavailable": [
+        "This manifest verifies the reference implementation; M8 records agent-run settings."
+      ]
+    }
+  },
+  "environment": {
+    "container_image": "not-applicable-for-m4-reference-verification",
+    "reference_host": "local-stable-go-verification",
+    "operating_system": "Darwin",
+    "architecture": "arm64"
+  },
+  "permissions": {
+    "network": "denied",
+    "filesystem_read": [
+      "benchmarks"
+    ],
+    "filesystem_write": [
+      "/tmp/ail-go-build-cache"
+    ],
+    "subprocess": "allowlisted"
+  },
+  "limits": {
+    "run_seconds": 300,
+    "functional_corpus_seconds": 30,
+    "input_tokens": 100000,
+    "startup_seconds": 2,
+    "peak_memory_mib": 512
+  },
+  "retry_policy": {
+    "max_attempts": 1,
+    "retryable_failures": []
+  },
+  "token_accounting": {
+    "tokenizer": "not-applicable-for-m4-reference-verification",
+    "categories": [
+      "initial_context",
+      "source_reads",
+      "semantic_tool_output",
+      "diagnostics",
+      "build_and_test_output",
+      "other_tool_output"
+    ],
+    "repeated_context": "count_every_delivery"
+  },
+  "repair_policy": {
+    "definition_version": 1,
+    "pre_edit_checks_count": false
+  },
+  "correctness": {
+    "required_visibility": "public",
+    "required_checks": [
+      "response",
+      "final_jobs",
+      "store_calls",
+      "uc001_regression",
+      "v1_compatibility",
+      "v2_priority"
+    ],
+    "final_revision_evidence": true
+  },
+  "outputs": {
+    "events": "artifacts/go/events.jsonl",
+    "results": "artifacts/go/results.json",
+    "measurements": "artifacts/go/measurements.json"
+  },
+  "artifact_locks": [
+    {
+      "path": "benchmarks/baselines/go/checkpoints.json",
+      "sha256": "22d64ec9fc8617e2f5c04959b29165e5ce9e5de44f5a81b00baf961c62d91932"
+    },
+    {
+      "path": "benchmarks/baselines/go/go.mod",
+      "sha256": "af43b9aa489277f1e30da053323e833ebf6f44cf1765da983e7e7b39be2e86b0"
+    },
+    {
+      "path": "benchmarks/baselines/go/runner.json",
+      "sha256": "830201446e641d1f6a792266cbe91348cf673702386efc18f333e548f456886c"
+    },
+    {
+      "path": "benchmarks/baselines/go/seed-locations.json",
+      "sha256": "d8ae70e255c4787a77d09135fdac1df9f08464ee723785384956a022fdfb43cd"
+    },
+    {
+      "path": "benchmarks/baselines/go/v1/jobservice.go",
+      "sha256": "92a5ff822e303c9a5cf9a7a641d407cb0a0b6a9819e554f280b1ac77b7ef25f9"
+    },
+    {
+      "path": "benchmarks/baselines/go/v1/jobservice_test.go",
+      "sha256": "570972c4ad2b7d94f43163b8836b7a1104436c5fb2335fc071cbfff6a739345e"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/cmd/runner/main.go",
+      "sha256": "82d4661dbf1de7132ec2dae6a015fc7f2a11087f7dcd6fc9676bbcab1b3e91cc"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/cmd/runner/main_test.go",
+      "sha256": "7c429d86f80453a800c466ba956fd8257279ae5b1228865478be6983a874b795"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/contract/checkpoints_test.go",
+      "sha256": "d96ef04ff507342cc61c0ab427839d334c83c373969e24d5fec9fde20920b11c"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/domain/domain.go",
+      "sha256": "a5a1913e6cf076bf38898a43661a8696ef72536545c39846a01c28924e73bbcc"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/domain/domain_test.go",
+      "sha256": "a4feb154e54d0f4c61dded7268a680bf974aa333c3e1b4d81657cee64e808775"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/fixture/codec.go",
+      "sha256": "aefee2bc16607b9e02692827b4122a40d21a4cc4195c1fd8fe46f30dc087352f"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/fixture/codec_test.go",
+      "sha256": "7808ec22fc5f1ceb0db27e0b85c0d418e21649a925ce57aa705eb9b72e598733"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/service/service.go",
+      "sha256": "0bccaebddeaa1465713fab99e400f7bfdf7b2cdcf4e8fb720f47555608d84319"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/service/service_test.go",
+      "sha256": "71dd622b603ad5bafaa4013158fe88b8422726b349ba28da6dfd374d04bf75c0"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/store/store.go",
+      "sha256": "8aa497b853debfafef1a006aebdcd677cd1fb2e3671f1d753068a732bf12d16a"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/store/store_test.go",
+      "sha256": "4bef5ca63cb9d126dc48dc4cf0b1cb07a69218569c3e889cb602e64671337578"
+    },
+    {
+      "path": "benchmarks/contracts/contract-lock.json",
+      "sha256": "1cd939458b069d3e22ee10331cfb14d5a6675030597b2342aaa35519e0cd5039"
+    },
+    {
+      "path": "benchmarks/contracts/hidden-contract.json",
+      "sha256": "2e48b0fb8c30ed23e27a8fdde2b50c8f95ac5629f96f7b646041aee16fc93624"
+    },
+    {
+      "path": "benchmarks/fixtures/manifest.json",
+      "sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5"
+    },
+    {
+      "path": "benchmarks/schemas/run-manifest.schema.json",
+      "sha256": "09288aa3ebf0346a9fe0107e3a685365f9d1048e13de242f1c2c6f0f76ce7a27"
+    },
+    {
+      "path": "benchmarks/schemas/runner-result.schema.json",
+      "sha256": "6c7be400e77276ec6d8cec4a026be5dea255e2e59f917f7d0b79c3f2ce0f7018"
+    },
+    {
+      "path": "benchmarks/tasks/uc003-add-priority.md",
+      "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6"
+    },
+    {
+      "path": "benchmarks/tools/harness.py",
+      "sha256": "be33ad4eaa9b9026583b9903866afab1e1b3b8792324d858f6a3be9730a5f2c6"
+    }
+  ]
+}

@@ -43,8 +43,8 @@ becomes active.
 | M1 | Frozen job-service fixture corpus | Complete | M0 |
 | M2 | Benchmark harness and frozen task contract | Complete | M1 |
 | M3 | Rust baseline | Complete | M2 |
-| M4 | Go baseline | Active | M2 |
-| M5 | Python baseline | Planned | M2 |
+| M4 | Go baseline | Complete | M2 |
+| M5 | Python baseline | Active | M2 |
 | M6 | TypeScript baseline | Planned | M2 |
 | M7 | Cross-baseline parity and freeze | Planned | M3–M6 |
 | M8 | Baseline agent calibration | Planned | M7 |
@@ -186,7 +186,7 @@ error handling, and its normalized results match the shared oracle.
 
 ### M4 — Go baseline
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -214,7 +214,7 @@ error handling, and its normalized results match the shared oracle.
 
 ### M5 — Python baseline
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 

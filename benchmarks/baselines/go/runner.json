@@ -1,0 +1,16 @@
+{
+  "runner_contract": 1,
+  "language": "go",
+  "command": [
+    "go",
+    "-C",
+    "benchmarks/baselines/go",
+    "run",
+    "./v2/cmd/runner"
+  ],
+  "working_directory": ".",
+  "environment": {
+    "GOCACHE": "/tmp/ail-go-build-cache",
+    "GOTOOLCHAIN": "local"
+  }
+}

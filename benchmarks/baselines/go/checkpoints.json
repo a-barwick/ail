@@ -1,0 +1,35 @@
+{
+  "checkpoint_format": 1,
+  "tree_digest_algorithm": "sha256 of concatenated '<file-sha256>  <repository-relative-path>\\n' records in listed order",
+  "checkpoints": [
+    {
+      "id": "go-v1",
+      "task": "UC-001",
+      "source_tree_sha256": "167b0fec750194f875e4f42f8778fdec950fbfdb494648f5419b1eb914c79e32",
+      "files": [
+        "benchmarks/baselines/go/go.mod",
+        "benchmarks/baselines/go/v1/jobservice.go",
+        "benchmarks/baselines/go/v1/jobservice_test.go"
+      ]
+    },
+    {
+      "id": "go-v2",
+      "task": "UC-003",
+      "source_tree_sha256": "b908cf6e800dd2712a138614c3963860cad77bb01da5cf5daa90bdae59094b00",
+      "files": [
+        "benchmarks/baselines/go/go.mod",
+        "benchmarks/baselines/go/v2/cmd/runner/main.go",
+        "benchmarks/baselines/go/v2/cmd/runner/main_test.go",
+        "benchmarks/baselines/go/v2/contract/checkpoints_test.go",
+        "benchmarks/baselines/go/v2/domain/domain.go",
+        "benchmarks/baselines/go/v2/domain/domain_test.go",
+        "benchmarks/baselines/go/v2/fixture/codec.go",
+        "benchmarks/baselines/go/v2/fixture/codec_test.go",
+        "benchmarks/baselines/go/v2/service/service.go",
+        "benchmarks/baselines/go/v2/service/service_test.go",
+        "benchmarks/baselines/go/v2/store/store.go",
+        "benchmarks/baselines/go/v2/store/store_test.go"
+      ]
+    }
+  ]
+}
