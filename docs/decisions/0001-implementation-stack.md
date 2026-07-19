@@ -1,8 +1,10 @@
-# ADR 0001: Authoritative implementation stack
+# ADR 0001: Defer authoritative implementation-stack selection
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-07-18
 - Owners: project maintainers
+- Documentation layer and scope: implementation evidence and repository
+  architecture
 
 ## Context
 
@@ -16,7 +18,8 @@ or accidental architecture inherited from a disposable prototype.
 
 ## Decision
 
-No implementation stack is selected yet.
+Defer selection of the authoritative implementation stack until the common
+compiler spikes are complete.
 
 Keep the repository root stack-neutral. Evaluate candidates with identical,
 bounded prototypes described in
@@ -25,11 +28,12 @@ inside their own directories.
 
 ## Consequences
 
-- Normative semantics and protocol work can proceed immediately.
+- Application use cases and requirements can proceed immediately; normative
+  semantics and protocol work follow from their accepted validation slice.
 - There is no runnable compiler until a spike is selected.
 - Candidate comparisons have a common scope and evidence format.
-- Root build tooling will be introduced only with an accepted update to this
-  record.
+- Root build tooling will be introduced only after M13 accepts the
+  stack-selection ADR that supersedes this record.
 
 ## Alternatives considered
 
@@ -43,10 +47,14 @@ inside their own directories.
 
 ## Validation
 
-Accept this record with a selected stack after:
+This deferral remains valid until:
 
-1. the core semantic subset used by the spike is written;
-2. at least Rust and TypeScript complete the common spike;
+1. M11 freezes the semantic subset and shared spike fixtures;
+2. at least Rust and TypeScript complete the M12 common spike;
 3. results are scored using weights fixed in advance; and
-4. the chosen stack demonstrates a credible path through the semantic oracle
-   and first production backend.
+4. one candidate demonstrates a credible path through the semantic oracle and
+   first production backend.
+
+M13 records the selected stack in a new ADR and marks this deferral record
+superseded. Reopening the choice earlier requires new evidence and a separate
+reviewed decision.

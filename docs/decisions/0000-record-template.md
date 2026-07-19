@@ -3,6 +3,7 @@
 - Status: Proposed
 - Date: YYYY-MM-DD
 - Owners: project maintainers
+- Documentation layer and scope:
 
 ## Context
 
@@ -25,4 +26,5 @@ Describe serious alternatives and why they were not selected.
 ## Validation
 
 State how the decision will be tested and what evidence would justify revisiting
-it.
+it. Link the motivating use cases, requirements, normative rules, or prototype
+evidence where applicable.

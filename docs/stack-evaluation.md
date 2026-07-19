@@ -5,9 +5,27 @@ Status: **Open**
 Decision owner: project maintainers
 
 Decision record: [decisions/0001-implementation-stack.md](decisions/0001-implementation-stack.md)
+Selection record: a new ADR created in M13 that supersedes ADR 0001
+
+Documentation layer: implementation evidence plan. Candidate behavior is not
+normative language or protocol behavior.
 
 The repository is deliberately stack-neutral. The stack should be chosen using
 small comparable prototypes, not familiarity alone.
+
+## Prerequisites
+
+Do not begin the common spikes until:
+
+1. the first application use cases and relevant requirements are accepted;
+2. the five-construct semantic subset is written;
+3. the canonical fixtures and structured diagnostic shape are shared; and
+4. the minimal protocol contract for handles, revisions, rename, and identity
+   mapping is reviewable.
+
+Candidate prototypes test the same written contract. They must not resolve
+semantic ambiguity independently, because that would make their results
+incomparable.
 
 ## Decision criteria
 
