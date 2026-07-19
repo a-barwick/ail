@@ -1,0 +1,35 @@
+{
+  "fixture_format": 1,
+  "case_id": "uc003-v1-request-unavailable",
+  "service_version": 2,
+  "operation": "create_job",
+  "request": {
+    "api_version": 1,
+    "job_id": "job-1042",
+    "task": "rebuild-search-index",
+    "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9"
+  },
+  "initial_jobs": [],
+  "store_outcome": "unavailable_before_commit",
+  "expected": {
+    "response": {
+      "api_version": 1,
+      "result": {
+        "kind": "persistence_unavailable"
+      }
+    },
+    "final_jobs": [],
+    "store_calls": [
+      {
+        "operation": "insert_if_absent",
+        "job": {
+          "record_version": 2,
+          "job_id": "job-1042",
+          "task": "rebuild-search-index",
+          "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9",
+          "priority": "normal"
+        }
+      }
+    ]
+  }
+}

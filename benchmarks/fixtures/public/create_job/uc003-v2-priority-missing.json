@@ -1,0 +1,29 @@
+{
+  "fixture_format": 1,
+  "case_id": "uc003-v2-priority-missing",
+  "service_version": 2,
+  "operation": "create_job",
+  "request": {
+    "api_version": 2,
+    "job_id": "job-1042",
+    "task": "rebuild-search-index",
+    "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9"
+  },
+  "initial_jobs": [],
+  "expected": {
+    "response": {
+      "api_version": 2,
+      "result": {
+        "kind": "invalid",
+        "issues": [
+          {
+            "field": "priority",
+            "reason": "missing"
+          }
+        ]
+      }
+    },
+    "final_jobs": [],
+    "store_calls": []
+  }
+}

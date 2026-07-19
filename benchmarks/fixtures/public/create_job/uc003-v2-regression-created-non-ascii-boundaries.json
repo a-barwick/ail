@@ -1,0 +1,50 @@
+{
+  "fixture_format": 1,
+  "case_id": "uc003-v2-regression-created-non-ascii-boundaries",
+  "service_version": 2,
+  "operation": "create_job",
+  "request": {
+    "api_version": 2,
+    "job_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "task": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+    "payload_base64": "bmHDr3Zl",
+    "priority": "normal"
+  },
+  "initial_jobs": [],
+  "store_outcome": "inserted",
+  "expected": {
+    "response": {
+      "api_version": 2,
+      "result": {
+        "kind": "created",
+        "job": {
+          "job_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "task": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+          "payload_base64": "bmHDr3Zl",
+          "priority": "normal"
+        }
+      }
+    },
+    "final_jobs": [
+      {
+        "record_version": 2,
+        "job_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "task": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+        "payload_base64": "bmHDr3Zl",
+        "priority": "normal"
+      }
+    ],
+    "store_calls": [
+      {
+        "operation": "insert_if_absent",
+        "job": {
+          "record_version": 2,
+          "job_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "task": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+          "payload_base64": "bmHDr3Zl",
+          "priority": "normal"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "fixture_format": 1,
+  "case_id": "uc003-v2-created-priority-low",
+  "service_version": 2,
+  "operation": "create_job",
+  "request": {
+    "api_version": 2,
+    "job_id": "job-1042",
+    "task": "rebuild-search-index",
+    "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9",
+    "priority": "low"
+  },
+  "initial_jobs": [],
+  "store_outcome": "inserted",
+  "expected": {
+    "response": {
+      "api_version": 2,
+      "result": {
+        "kind": "created",
+        "job": {
+          "job_id": "job-1042",
+          "task": "rebuild-search-index",
+          "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9",
+          "priority": "low"
+        }
+      }
+    },
+    "final_jobs": [
+      {
+        "record_version": 2,
+        "job_id": "job-1042",
+        "task": "rebuild-search-index",
+        "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9",
+        "priority": "low"
+      }
+    ],
+    "store_calls": [
+      {
+        "operation": "insert_if_absent",
+        "job": {
+          "record_version": 2,
+          "job_id": "job-1042",
+          "task": "rebuild-search-index",
+          "payload_base64": "eyJ0ZW5hbnQiOiJub3J0aCJ9",
+          "priority": "low"
+        }
+      }
+    ]
+  }
+}
