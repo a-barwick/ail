@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/runner-result.schema.json",
+  "title": "AIL benchmark normalized implementation result",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/single_case"
+    },
+    {
+      "$ref": "#/$defs/corpus"
+    }
+  ],
+  "$defs": {
+    "actual": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "response",
+            "final_jobs",
+            "store_calls"
+          ],
+          "properties": {
+            "response": {
+              "type": "object"
+            },
+            "final_jobs": {
+              "type": "array"
+            },
+            "store_calls": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "decode_error",
+            "final_jobs",
+            "store_calls"
+          ],
+          "properties": {
+            "decode_error": {
+              "type": "object"
+            },
+            "final_jobs": {
+              "type": "array"
+            },
+            "store_calls": {
+              "type": "array",
+              "maxItems": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "decoded_job"
+          ],
+          "properties": {
+            "decoded_job": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "single_case": {
+      "type": "object",
+      "required": [
+        "result_format",
+        "case_id",
+        "operation",
+        "actual"
+      ],
+      "properties": {
+        "result_format": {
+          "const": 1
+        },
+        "case_id": {
+          "type": "string"
+        },
+        "operation": {
+          "enum": [
+            "create_job",
+            "decode_stored_job"
+          ]
+        },
+        "actual": {
+          "$ref": "#/$defs/actual"
+        }
+      },
+      "additionalProperties": false
+    },
+    "corpus": {
+      "type": "object",
+      "required": [
+        "result_format",
+        "fixture_manifest_sha256",
+        "results"
+      ],
+      "properties": {
+        "result_format": {
+          "const": 1
+        },
+        "fixture_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/single_case"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

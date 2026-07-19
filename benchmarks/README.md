@@ -43,10 +43,63 @@ changes its digest. After an intentional reviewed fixture change, regenerate
 the manifest with `manifest --write`, review the resulting traceability, and
 run the complete check.
 
+## Runner and task contract
+
+M2 freezes the process boundary shared by every baseline:
+
+- [runner-contract.md](contracts/runner-contract.md) defines one-case and corpus
+  commands;
+- [runner-result.schema.json](schemas/runner-result.schema.json) defines
+  normalized functional output;
+- [run-manifest.schema.json](schemas/run-manifest.schema.json) records source,
+  task, tests, tools, model, environment, permissions, limits, retries, token
+  accounting, repair policy, evidence, and artifact locks;
+- [run-classification.md](contracts/run-classification.md) defines validation
+  attempts, repair cycles, successful runs, failures, timeouts, and the
+  pre-start manifest gate;
+- [the UC-001 task](tasks/uc001-implement-create-job.md) and
+  [the UC-003 task](tasks/uc003-add-priority.md) contain the final task text;
+  and
+- [hidden-contract.json](contracts/hidden-contract.json) freezes
+  language-independent hidden behavior and seeded semantic roles without
+  publishing concrete hidden inputs, locations, or answers.
+
+The contract is locked by SHA-256 in
+`benchmarks/contracts/contract-lock.json`. Verify the complete harness and
+contract with:
+
+```bash
+python3 benchmarks/tools/harness.py self-test
+```
+
+The self-test proves that a fake conforming implementation is accepted in
+one-case and corpus modes. It also seeds response, final-state, ordered-call,
+coverage, manifest, schema, process, and timeout failures and verifies their
+stable classifications. Changed or incomplete locked run manifests are
+rejected before the implementation subprocess starts.
+
+Baseline milestones add:
+
+```text
+benchmarks/baselines/<language>/
+  runner.json
+  verification-manifest.json
+  verification-manifest.lock.json
+```
+
+That layout makes the roadmap verification command stable:
+
+```bash
+python3 benchmarks/tools/harness.py verify \
+  --language <language> \
+  --visibility public
+```
+
 ## Public and hidden boundary
 
 Only public behavior cases belong under `fixtures/public/`. Later milestones
-may package hidden combinations and seeded language-specific consumers outside
-that tree. Hidden inputs may exercise only behavior already accepted by UC-001
-or UC-003, and their answers must not be disclosed by this public corpus or its
-manifest.
+instantiate and package hidden combinations and seeded language-specific
+consumers outside that tree. The deterministic hidden ZIP is readable by the
+harness but outside agent-readable paths. Hidden inputs may exercise only
+behavior already accepted by UC-001 or UC-003, and their answers must not be
+disclosed by this public corpus, contract, or manifest.

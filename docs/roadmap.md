@@ -41,8 +41,8 @@ becomes active.
 | --- | --- | --- | --- |
 | M0 | Accepted reference workload and requirements | Complete | — |
 | M1 | Frozen job-service fixture corpus | Complete | M0 |
-| M2 | Benchmark harness and frozen task contract | Active | M1 |
-| M3 | Rust baseline | Planned | M2 |
+| M2 | Benchmark harness and frozen task contract | Complete | M1 |
+| M3 | Rust baseline | Active | M2 |
 | M4 | Go baseline | Planned | M2 |
 | M5 | Python baseline | Planned | M2 |
 | M6 | TypeScript baseline | Planned | M2 |
@@ -118,7 +118,7 @@ design documents.
 
 ### M2 — Benchmark harness and frozen task contract
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -156,7 +156,7 @@ M3–M6 without changing the M2 behavior or seeding rules.
 
 ### M3 — Rust baseline
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 

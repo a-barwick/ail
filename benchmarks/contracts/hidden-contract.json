@@ -1,0 +1,143 @@
+{
+  "hidden_contract_format": 1,
+  "behavior_categories": [
+    {
+      "id": "HIDDEN.VALIDATION_COMBINATIONS",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001"
+      ],
+      "rule": "Combine accepted field bounds and preserve one issue per field in accepted order."
+    },
+    {
+      "id": "HIDDEN.PAYLOAD_BYTES",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001"
+      ],
+      "rule": "Exercise opaque byte payloads only within the accepted 0 through 4097 byte boundary range."
+    },
+    {
+      "id": "HIDDEN.STORE_POSTCONDITIONS",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-002",
+        "APP-003"
+      ],
+      "rule": "Combine accepted inserted, duplicate, and unavailable outcomes with exact final-state and one-call postconditions."
+    },
+    {
+      "id": "HIDDEN.VERSION_COMPATIBILITY",
+      "use_cases": [
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-004"
+      ],
+      "rule": "Combine explicit V1 and V2 identities, V1-to-normal adapters, request-version response projection, and accepted priority identities."
+    },
+    {
+      "id": "HIDDEN.ZERO_EFFECT_FAILURES",
+      "use_cases": [
+        "UC-001",
+        "UC-003"
+      ],
+      "requirements": [
+        "APP-001",
+        "APP-004"
+      ],
+      "rule": "Invalid structured input and unknown V2 priority must preserve initial state and make no store call."
+    }
+  ],
+  "seed_categories": [
+    {
+      "id": "SEED.PREVALIDATION_EFFECT",
+      "task": "UC-001",
+      "semantic_role": "create_job handler",
+      "expected_failure": "store call occurs before complete validation"
+    },
+    {
+      "id": "SEED.REQUEST_CONSTRUCTOR",
+      "task": "UC-003",
+      "semantic_role": "V2 request producer",
+      "expected_failure": "required priority is not supplied explicitly"
+    },
+    {
+      "id": "SEED.REQUEST_ADAPTER",
+      "task": "UC-003",
+      "semantic_role": "V1 request adapter",
+      "expected_failure": "normal priority is not selected explicitly"
+    },
+    {
+      "id": "SEED.HANDLER_PROPAGATION",
+      "task": "UC-003",
+      "semantic_role": "create_job handler and Job constructor",
+      "expected_failure": "priority is not propagated unchanged"
+    },
+    {
+      "id": "SEED.STORE_CONTRACT",
+      "task": "UC-003",
+      "semantic_role": "store capability and deterministic store",
+      "expected_failure": "stored priority is missing or altered"
+    },
+    {
+      "id": "SEED.PERSISTED_CODEC",
+      "task": "UC-003",
+      "semantic_role": "persisted-job encoder or V1 decoder",
+      "expected_failure": "record version or explicit normal adaptation is wrong"
+    },
+    {
+      "id": "SEED.RESPONSE_PROJECTION",
+      "task": "UC-003",
+      "semantic_role": "created-result constructor and V1 projection",
+      "expected_failure": "priority is lost from V2 or exposed in V1"
+    },
+    {
+      "id": "SEED.RESULT_CONSUMER",
+      "task": "UC-003",
+      "semantic_role": "closed-result consumer",
+      "expected_failure": "a declared result variant is not handled"
+    },
+    {
+      "id": "SEED.AUTHORITY_EXPANSION",
+      "task": "UC-001_OR_UC-003",
+      "semantic_role": "handler capability boundary",
+      "expected_failure": "new external authority or observable effect is introduced"
+    },
+    {
+      "id": "SEED.STALE_EVIDENCE",
+      "task": "UC-003",
+      "semantic_role": "completion manifest",
+      "expected_failure": "completion evidence does not name the final source revision"
+    }
+  ],
+  "packaging": {
+    "package_format": "permission-separated-zip-v1",
+    "manifest_name": "hidden-manifest.json",
+    "entry_digest": "sha256",
+    "entry_order": "lexical",
+    "compression": "stored",
+    "entry_timestamp": "1980-01-01T00:00:00Z",
+    "case_encoding": "job-service-fixture-format-1",
+    "seed_location_phase": "M3-M6",
+    "agent_visibility": "denied",
+    "runner_visibility": "read-only",
+    "rules": [
+      "The deterministic ZIP package is outside every agent-readable path.",
+      "The locked run manifest records the archive digest without exposing entry paths or expected values to the agent.",
+      "The canonical hidden manifest and all package entries are stored in lexical order with fixed timestamps and no compression.",
+      "Language-specific locations instantiate semantic roles without changing the category or oracle.",
+      "Hidden cases may combine accepted behavior but may not introduce new behavior.",
+      "Each entry references one frozen behavior or seed category, and packaging or injection must not modify the locked agent-visible task."
+    ]
+  }
+}
