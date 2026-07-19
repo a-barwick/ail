@@ -1,0 +1,264 @@
+{
+  "manifest_format": 1,
+  "benchmark_id": "ail-job-service",
+  "configuration_id": "m6-typescript-public-verification",
+  "source": {
+    "language": "typescript",
+    "repository": "benchmarks/baselines/typescript",
+    "start_revision": "typescript-v1-3f959cb243de8f65",
+    "dependency_revision": "abb5831a57b46e68648a55b41a08a990ac8fd9af6fb707cd52b3590caddee894",
+    "source_tree_sha256": "3f959cb243de8f657131646d3c487f44b0a54292180641820008c6430609b644"
+  },
+  "runner": {
+    "descriptor_path": "benchmarks/baselines/typescript/runner.json",
+    "descriptor_sha256": "6484b0baddf0e8097b0c17d1460bea4eb3cede5c3e12c6f8f21e1e95694b2ab6"
+  },
+  "task": {
+    "task_id": "UC-003",
+    "path": "benchmarks/tasks/uc003-add-priority.md",
+    "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6",
+    "initial_context": [
+      "benchmarks/tasks/uc003-add-priority.md",
+      "benchmarks/baselines/typescript/v1"
+    ]
+  },
+  "tests": {
+    "public_fixture_manifest": "benchmarks/fixtures/manifest.json",
+    "public_fixture_manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "hidden_package": "benchmarks/contracts/hidden-contract.json",
+    "hidden_package_sha256": "2e48b0fb8c30ed23e27a8fdde2b50c8f95ac5629f96f7b646041aee16fc93624"
+  },
+  "tools": [
+    {
+      "name": "node",
+      "version": "23.10.0",
+      "command": [
+        "node"
+      ]
+    },
+    {
+      "name": "npm",
+      "version": "10.9.2",
+      "command": [
+        "npm"
+      ]
+    },
+    {
+      "name": "typescript",
+      "version": "5.8.3",
+      "command": [
+        "node_modules/.bin/tsc"
+      ]
+    },
+    {
+      "name": "eslint",
+      "version": "9.31.0",
+      "command": [
+        "node_modules/.bin/eslint"
+      ]
+    },
+    {
+      "name": "prettier",
+      "version": "3.6.2",
+      "command": [
+        "node_modules/.bin/prettier"
+      ]
+    },
+    {
+      "name": "tsx",
+      "version": "4.20.3",
+      "command": [
+        "node_modules/.bin/tsx"
+      ]
+    },
+    {
+      "name": "c8",
+      "version": "10.1.3",
+      "command": [
+        "node_modules/.bin/c8"
+      ]
+    }
+  ],
+  "model": {
+    "provider": "not-applicable",
+    "name": "reference-implementation-verification",
+    "version": "m6",
+    "agent": "not-an-agent-benchmark-run",
+    "sampling": {
+      "parameters": {},
+      "unavailable": [
+        "This manifest verifies the reference implementation; M8 records agent-run settings."
+      ]
+    }
+  },
+  "environment": {
+    "container_image": "not-applicable-for-m6-reference-verification",
+    "reference_host": "local-node-verification",
+    "operating_system": "Darwin",
+    "architecture": "arm64"
+  },
+  "permissions": {
+    "network": "denied",
+    "filesystem_read": [
+      "benchmarks"
+    ],
+    "filesystem_write": [
+      "/tmp/ail-typescript-runner"
+    ],
+    "subprocess": "allowlisted"
+  },
+  "limits": {
+    "run_seconds": 300,
+    "functional_corpus_seconds": 30,
+    "input_tokens": 100000,
+    "startup_seconds": 2,
+    "peak_memory_mib": 512
+  },
+  "retry_policy": {
+    "max_attempts": 1,
+    "retryable_failures": []
+  },
+  "token_accounting": {
+    "tokenizer": "not-applicable-for-m6-reference-verification",
+    "categories": [
+      "initial_context",
+      "source_reads",
+      "semantic_tool_output",
+      "diagnostics",
+      "build_and_test_output",
+      "other_tool_output"
+    ],
+    "repeated_context": "count_every_delivery"
+  },
+  "repair_policy": {
+    "definition_version": 1,
+    "pre_edit_checks_count": false
+  },
+  "correctness": {
+    "required_visibility": "public",
+    "required_checks": [
+      "response",
+      "final_jobs",
+      "store_calls",
+      "uc001_regression",
+      "v1_compatibility",
+      "v2_priority"
+    ],
+    "final_revision_evidence": true
+  },
+  "outputs": {
+    "events": "artifacts/typescript/events.jsonl",
+    "results": "artifacts/typescript/results.json",
+    "measurements": "artifacts/typescript/measurements.json"
+  },
+  "artifact_locks": [
+    {
+      "path": "benchmarks/baselines/typescript/.prettierignore",
+      "sha256": "46fbb88cb13c2c62460f37d19c1cf23d7d74d504797ffac7a1a27d1adb8dda75"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/checkpoints.json",
+      "sha256": "fdd8fe7d1bb0bf680cf743805a956c6b3466789fc79bcbd85827ab2ab439fc48"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/eslint.config.mjs",
+      "sha256": "e052dd6fcf7a6885f5a005d2141b549f16b586509f429b826a8868c63af5a734"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/package-lock.json",
+      "sha256": "abb5831a57b46e68648a55b41a08a990ac8fd9af6fb707cd52b3590caddee894"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/package.json",
+      "sha256": "384a9bd458a144c87099312f947d450fdc02b857d394f82eb4ce9b4224c54c84"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/runner.json",
+      "sha256": "6484b0baddf0e8097b0c17d1460bea4eb3cede5c3e12c6f8f21e1e95694b2ab6"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/seed-locations.json",
+      "sha256": "1b8b639c43174258b904f86fd3b5cbc0b5d294a3359422a78c90fc65341eccb2"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/contract.test.ts",
+      "sha256": "e89b44b0ac901b7201eb3b3f7a49e045edf5c2f9c669ba01596bab7f5ca042de"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/fixture.test.ts",
+      "sha256": "cb47a2f23f01b91a59cb99155641ba968e9af364d5d2fd95f23f4ec0d5f860b2"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/runner.test.ts",
+      "sha256": "afc2e47f3257bbba7470f9d940fca759acd8bb6654db0a911b1553cb2d120cae"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/service-store.test.ts",
+      "sha256": "1403878bf3e69efa49cf93ce8972311d1140dac94727885c08cd30d77993831c"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/support.ts",
+      "sha256": "35113735d5a82aa5493f82eaea4d457bec315a8820dc9c9d68fec98ec1115a22"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/v1.test.ts",
+      "sha256": "1f98f67945878997e1a051042471de89c2364dfff48839a643976d6f3102e317"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tsconfig.json",
+      "sha256": "91ea3d5503b3844df32cddaf000f932a9e4fc6ba66bd9bc73a84e85e47af9498"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v1/job-service.ts",
+      "sha256": "6d47b6ea5eafb53e1be364c7238234107db40ab0f6d9c142b02951a35bc3639b"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/domain.ts",
+      "sha256": "ab67cbada5e4b6f1bf863f74959aa0e5d36453dbd41f0d8726c5522357136523"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/fixture.ts",
+      "sha256": "5ee7ea5c295ee30959648f2f1bc1fc76c372eee7fcb8aa527087976378b9d3ff"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/runner.ts",
+      "sha256": "93d420a053373860d40d6f1f2ada6c67a98ce231afb0100d141d281c58789f3e"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/service.ts",
+      "sha256": "13d5b85e8418af069486ddaf3b27191c51a46034076fa44eeb1fc7b7e70469e8"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/store.ts",
+      "sha256": "1a37e17fc51a6ff367e529a8199e0f01e8797e72ca301e575ac3b545dd84c785"
+    },
+    {
+      "path": "benchmarks/contracts/contract-lock.json",
+      "sha256": "1cd939458b069d3e22ee10331cfb14d5a6675030597b2342aaa35519e0cd5039"
+    },
+    {
+      "path": "benchmarks/contracts/hidden-contract.json",
+      "sha256": "2e48b0fb8c30ed23e27a8fdde2b50c8f95ac5629f96f7b646041aee16fc93624"
+    },
+    {
+      "path": "benchmarks/fixtures/manifest.json",
+      "sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5"
+    },
+    {
+      "path": "benchmarks/schemas/run-manifest.schema.json",
+      "sha256": "09288aa3ebf0346a9fe0107e3a685365f9d1048e13de242f1c2c6f0f76ce7a27"
+    },
+    {
+      "path": "benchmarks/schemas/runner-result.schema.json",
+      "sha256": "6c7be400e77276ec6d8cec4a026be5dea255e2e59f917f7d0b79c3f2ce0f7018"
+    },
+    {
+      "path": "benchmarks/tasks/uc003-add-priority.md",
+      "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6"
+    },
+    {
+      "path": "benchmarks/tools/harness.py",
+      "sha256": "be33ad4eaa9b9026583b9903866afab1e1b3b8792324d858f6a3be9730a5f2c6"
+    }
+  ]
+}

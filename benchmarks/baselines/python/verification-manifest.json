@@ -1,0 +1,263 @@
+{
+  "manifest_format": 1,
+  "benchmark_id": "ail-job-service",
+  "configuration_id": "m5-python-public-verification",
+  "source": {
+    "language": "python",
+    "repository": "benchmarks/baselines/python",
+    "start_revision": "python-v1-c995bf0c3630a2aa",
+    "dependency_revision": "51317d86e86dbd1497232d1c7e7e868f1f04ef225ba93d8016a7bf5ab1a60306",
+    "source_tree_sha256": "c995bf0c3630a2aa8c8bab192f6cc12c497e4eac11cd65f9e7fd1ecfceae0755"
+  },
+  "runner": {
+    "descriptor_path": "benchmarks/baselines/python/runner.json",
+    "descriptor_sha256": "be73e50d25b74125aabb4e06c72da2f7ed5b0044dac7df27e3e4e21ed8aeeaa3"
+  },
+  "task": {
+    "task_id": "UC-003",
+    "path": "benchmarks/tasks/uc003-add-priority.md",
+    "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6",
+    "initial_context": [
+      "benchmarks/tasks/uc003-add-priority.md",
+      "benchmarks/baselines/python/v1"
+    ]
+  },
+  "tests": {
+    "public_fixture_manifest": "benchmarks/fixtures/manifest.json",
+    "public_fixture_manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "hidden_package": "benchmarks/contracts/hidden-contract.json",
+    "hidden_package_sha256": "2e48b0fb8c30ed23e27a8fdde2b50c8f95ac5629f96f7b646041aee16fc93624"
+  },
+  "tools": [
+    {
+      "name": "python",
+      "version": "3.13.5",
+      "command": [
+        "python3"
+      ]
+    },
+    {
+      "name": "uv",
+      "version": "0.7.12",
+      "command": [
+        "uv"
+      ]
+    },
+    {
+      "name": "mypy",
+      "version": "1.17.0",
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "mypy"
+      ]
+    },
+    {
+      "name": "ruff",
+      "version": "0.12.4",
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "ruff"
+      ]
+    },
+    {
+      "name": "pytest",
+      "version": "8.4.1",
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "pytest"
+      ]
+    }
+  ],
+  "model": {
+    "provider": "not-applicable",
+    "name": "reference-implementation-verification",
+    "version": "m5",
+    "agent": "not-an-agent-benchmark-run",
+    "sampling": {
+      "parameters": {},
+      "unavailable": [
+        "This manifest verifies the reference implementation; M8 records agent-run settings."
+      ]
+    }
+  },
+  "environment": {
+    "container_image": "not-applicable-for-m5-reference-verification",
+    "reference_host": "local-cpython-verification",
+    "operating_system": "Darwin",
+    "architecture": "arm64"
+  },
+  "permissions": {
+    "network": "denied",
+    "filesystem_read": [
+      "benchmarks"
+    ],
+    "filesystem_write": [
+      "/tmp/ail-python-cache"
+    ],
+    "subprocess": "allowlisted"
+  },
+  "limits": {
+    "run_seconds": 300,
+    "functional_corpus_seconds": 30,
+    "input_tokens": 100000,
+    "startup_seconds": 2,
+    "peak_memory_mib": 512
+  },
+  "retry_policy": {
+    "max_attempts": 1,
+    "retryable_failures": []
+  },
+  "token_accounting": {
+    "tokenizer": "not-applicable-for-m5-reference-verification",
+    "categories": [
+      "initial_context",
+      "source_reads",
+      "semantic_tool_output",
+      "diagnostics",
+      "build_and_test_output",
+      "other_tool_output"
+    ],
+    "repeated_context": "count_every_delivery"
+  },
+  "repair_policy": {
+    "definition_version": 1,
+    "pre_edit_checks_count": false
+  },
+  "correctness": {
+    "required_visibility": "public",
+    "required_checks": [
+      "response",
+      "final_jobs",
+      "store_calls",
+      "uc001_regression",
+      "v1_compatibility",
+      "v2_priority"
+    ],
+    "final_revision_evidence": true
+  },
+  "outputs": {
+    "events": "artifacts/python/events.jsonl",
+    "results": "artifacts/python/results.json",
+    "measurements": "artifacts/python/measurements.json"
+  },
+  "artifact_locks": [
+    {
+      "path": "benchmarks/baselines/python/checkpoints.json",
+      "sha256": "507bc6c13d7543c727f53e1ab1ff03f878b9ad521ce94f71ed2349fe98df593a"
+    },
+    {
+      "path": "benchmarks/baselines/python/pyproject.toml",
+      "sha256": "2f0a8b4e2be8c4ef11c262aafc6d91df102a32459bbe4c1178447049215fbcd4"
+    },
+    {
+      "path": "benchmarks/baselines/python/runner.json",
+      "sha256": "be73e50d25b74125aabb4e06c72da2f7ed5b0044dac7df27e3e4e21ed8aeeaa3"
+    },
+    {
+      "path": "benchmarks/baselines/python/seed-locations.json",
+      "sha256": "1aba1d72a1d896171ec913b5aa794e30ae070d1da4c0f94d2bd23387c254a771"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/__init__.py",
+      "sha256": "f4df72a93e89c3771316c1d8606856adce414861b305717fd863ac03e0b799c9"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/conftest.py",
+      "sha256": "d08cd0d8e27e25b72c0e2b24925c20e1b04006465af27fa289ae2f94d494b57a"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_contract.py",
+      "sha256": "7ecacc1834fae705f3819271b5822747ff0abfd76a8a9be366bd1db05ff636a8"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_fixture.py",
+      "sha256": "b1c6799df5c474ea5c293ead5c39c42fb4ece911a69e37f6909edc79c81b4202"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_runner.py",
+      "sha256": "77f1fea2618603808cb679e9d5f3ee4739226ffdb5402bbdbd062fa3a83c42ff"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_service.py",
+      "sha256": "28b110be28babded23e6c5698256d88da2f09367d1f0a78ab84302c9b04240aa"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_store.py",
+      "sha256": "4423a5e77cb2d3b79e34fccfe81bf719ccb7c5cbc0a911b6e47af334169db5a1"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_v1.py",
+      "sha256": "8447a8e6cd709a6fafe9269c7497382f74a57d05438cbc25582b7c874137f909"
+    },
+    {
+      "path": "benchmarks/baselines/python/uv.lock",
+      "sha256": "51317d86e86dbd1497232d1c7e7e868f1f04ef225ba93d8016a7bf5ab1a60306"
+    },
+    {
+      "path": "benchmarks/baselines/python/v1/__init__.py",
+      "sha256": "2f8c8d5bd45ef225891838e8c95df83711b05efccf872e3a5ca0d3a264c306a7"
+    },
+    {
+      "path": "benchmarks/baselines/python/v1/job_service.py",
+      "sha256": "17d05ff51fb8d8462ea409a3d5cc7d28fa7ef7e3b5c600e35463ffd235a0427c"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/__init__.py",
+      "sha256": "21d850b7593c24e05aea9425fd7bd595aabb7ac20faccb0b88e6c9e5f71c77bf"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/domain.py",
+      "sha256": "c1490656b814b3b9a2480e75ef8fb65753b1fb10098fa7853c27687f9119f8ca"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/fixture.py",
+      "sha256": "3b95bda8b63178c22f5bd2d2554a4455b677054b5b9d0f5c12d6e20ea5f2b653"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/runner.py",
+      "sha256": "cc371b949ca3187ff0121245c766e9deb26c5eb9fbfcd80657fa66f515d7a437"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/service.py",
+      "sha256": "0a4a87d838e0f2743cc8237a823868add94a856e0169cb3249fa226a975ab326"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/store.py",
+      "sha256": "4a5150dbdfc0ad0a854d32d658fc463c2de28f208ce5fc3ca71a314e08c9eba0"
+    },
+    {
+      "path": "benchmarks/contracts/contract-lock.json",
+      "sha256": "1cd939458b069d3e22ee10331cfb14d5a6675030597b2342aaa35519e0cd5039"
+    },
+    {
+      "path": "benchmarks/contracts/hidden-contract.json",
+      "sha256": "2e48b0fb8c30ed23e27a8fdde2b50c8f95ac5629f96f7b646041aee16fc93624"
+    },
+    {
+      "path": "benchmarks/fixtures/manifest.json",
+      "sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5"
+    },
+    {
+      "path": "benchmarks/schemas/run-manifest.schema.json",
+      "sha256": "09288aa3ebf0346a9fe0107e3a685365f9d1048e13de242f1c2c6f0f76ce7a27"
+    },
+    {
+      "path": "benchmarks/schemas/runner-result.schema.json",
+      "sha256": "6c7be400e77276ec6d8cec4a026be5dea255e2e59f917f7d0b79c3f2ce0f7018"
+    },
+    {
+      "path": "benchmarks/tasks/uc003-add-priority.md",
+      "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6"
+    },
+    {
+      "path": "benchmarks/tools/harness.py",
+      "sha256": "be33ad4eaa9b9026583b9903866afab1e1b3b8792324d858f6a3be9730a5f2c6"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "runner_contract": 1,
+  "language": "python",
+  "command": [
+    "python3",
+    "-m",
+    "v2.runner"
+  ],
+  "working_directory": "benchmarks/baselines/python",
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONHASHSEED": "0"
+  }
+}

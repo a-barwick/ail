@@ -12,6 +12,14 @@ from urllib.parse import unquote
 ROOT = Path(__file__).resolve().parents[1]
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
 EXTERNAL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*:")
+IGNORED_DIRECTORIES = {
+    ".git",
+    ".venv",
+    "coverage",
+    "dist",
+    "node_modules",
+    "target",
+}
 MILESTONE_ROW = re.compile(
     r"^\|\s*(M\d+)\s*\|.*\|\s*(Complete|Active|Planned|Deferred)\s*\|",
     re.MULTILINE,
@@ -27,7 +35,7 @@ def markdown_files() -> list[Path]:
     return sorted(
         path
         for path in ROOT.rglob("*.md")
-        if ".git" not in path.parts
+        if not IGNORED_DIRECTORIES.intersection(path.parts)
     )
 
 
