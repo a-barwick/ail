@@ -46,8 +46,8 @@ becomes active.
 | M4 | Go baseline | Complete | M2 |
 | M5 | Python baseline | Complete | M2 |
 | M6 | TypeScript baseline | Complete | M2 |
-| M7 | Cross-baseline parity and freeze | Active | M3–M6 |
-| M8 | Baseline agent calibration | Planned | M7 |
+| M7 | Cross-baseline parity and freeze | Complete | M3–M6 |
+| M8 | Baseline agent calibration | Active | M7 |
 | M9 | Frozen AIL success targets | Planned | M8 |
 | M10 | Illustrative AIL comparison | Planned | M9 |
 | M11 | Narrow language and protocol contract | Planned | M10 |
@@ -272,14 +272,16 @@ normalized results match the shared oracle.
 
 ### M7 — Cross-baseline parity and freeze
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
 - Run all four baselines through one harness
 - Compare response, final state, and ordered storage calls case by case
 - Resolve behavioral differences without weakening the accepted oracle
-- Freeze V1 task starts and V2 reference results by source-tree digest
+- Freeze distinct answer-free UC-001 and UC-003 task-start packages for every
+  baseline language, with explicit file manifests and independent tree digests
+- Freeze the accepted V1 and V2 reference results by source-tree digest
 - Instantiate the M2 hidden seed categories in each baseline and prove that
   their behavior and oracle did not change
 - Lock tool versions, task text, public and hidden tests, source trees, and run
@@ -295,19 +297,40 @@ normalized results match the shared oracle.
 #### Focused verification
 
 ```bash
+python3 benchmarks/tools/task_starts.py check --run-starting-state
 python3 benchmarks/tools/harness.py verify-all
 python3 benchmarks/tools/fixtures.py manifest --check
 ```
 
 #### Exit criterion
 
+All eight answer-free task starts pass their expected starting-state checks.
 Every language produces the same normalized behavior for every public and
 hidden case, and all benchmark inputs are locked by digest before measurements
 start.
 
 ### M8 — Baseline agent calibration
 
-**Status:** Planned
+**Status:** Active
+
+#### Active submilestone: M8a — Freeze the experiment contract
+
+Before any official evidence is collected, record one reviewed decision that
+fixes the measured model and agent identity, interactive tool-use protocol,
+prompt wrapper, initial context, normal tools, token accounting, permissions,
+limits, retry and termination rules, reference environment, and run
+classifications. M8a does not run agent trials or performance measurements and
+does not build the later evidence runner.
+
+#### M8a focused verification
+
+```bash
+python3 tools/check_docs.py
+```
+
+M8a is complete only when two reviewers can independently determine how a
+trial starts, proceeds, stops, and counts, and the accepted input-token limit
+is feasible or has been amended through a reviewed requirement decision.
 
 #### Scope
 

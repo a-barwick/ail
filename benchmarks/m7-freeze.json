@@ -15,11 +15,11 @@
     },
     {
       "path": "benchmarks/baselines/go/verification-manifest.json",
-      "sha256": "10bb7e51aa2236b4329eb41bd2389f283fbaa744a8c382570c25d402744baa8e"
+      "sha256": "15a26696fea38409376f10707c75aa59b759a9ffd11d2ebbcd129b4e3b84dd91"
     },
     {
       "path": "benchmarks/baselines/go/verification-manifest.lock.json",
-      "sha256": "d441f5d703a31a9b618758e8aee0fe87119e2494016ab2b8bf780b29b5e07bf6"
+      "sha256": "8742fc80a70cfc3518ce2dd56f95270eb53475806e97e018efc5d3d448d0822d"
     },
     {
       "path": "benchmarks/baselines/python/checkpoints.json",
@@ -35,11 +35,11 @@
     },
     {
       "path": "benchmarks/baselines/python/verification-manifest.json",
-      "sha256": "314a87fdc0a78fe55e0c60c8bca8980e86bd25db070e864cd4167c9c85828cfe"
+      "sha256": "7e0298cdb6ebe73e84f1a29ed00b171e1d2d53ac023fae66b69d89ea09f0a830"
     },
     {
       "path": "benchmarks/baselines/python/verification-manifest.lock.json",
-      "sha256": "18093363cd4cc43e3cdd3db176d08ca306d0b990f56f37b0818d0e5130bdbff9"
+      "sha256": "12fc3cedb56c8488a49e33d0709d9a2f72182e34090d9b03f362e1d46f38bec0"
     },
     {
       "path": "benchmarks/baselines/rust/checkpoints.json",
@@ -55,11 +55,11 @@
     },
     {
       "path": "benchmarks/baselines/rust/verification-manifest.json",
-      "sha256": "561e2f4a68031254b74cee7642eb5adee0a5bea10cd72340e8d3cd6a2e5ff1cf"
+      "sha256": "53330a6dab44aa8de53d0a02d7b28142768ebad86b77147b5da63429965f5fe0"
     },
     {
       "path": "benchmarks/baselines/rust/verification-manifest.lock.json",
-      "sha256": "90824169ce40d0c0cb5dbf24d78c8c4532146dcd98117b672d32cf40a7aef350"
+      "sha256": "473926a2be7e83408e85ae679cbb10e75944d9f3a5c8c01ed2b71a9ef0930cfb"
     },
     {
       "path": "benchmarks/baselines/typescript/checkpoints.json",
@@ -75,15 +75,15 @@
     },
     {
       "path": "benchmarks/baselines/typescript/verification-manifest.json",
-      "sha256": "95deb60924cd9415e42f9bfd6f5cc9c92d029962c37dd75a04b6424e7a0c0fd9"
+      "sha256": "0aaf7539bb0cc23d66d8a3790fc7f431d4307fde66a8bc00c00df9a2fec0a6d7"
     },
     {
       "path": "benchmarks/baselines/typescript/verification-manifest.lock.json",
-      "sha256": "38375c00508714afde79562fc85fa5ac736658f0262adb91a836491bc43767d4"
+      "sha256": "b2a679966d7a5f52c8ef99ff803c1d4884041f70d70512ed3970fb2ee8352e80"
     },
     {
       "path": "benchmarks/contracts/contract-lock.json",
-      "sha256": "ce0df6e98322032368edcc274407c610e976889ef9b262a8e2d42365d4488a11"
+      "sha256": "2c2f25aefc41de2d7ef7a834485ff44ed0a610705fd87cce85f7351ade450831"
     },
     {
       "path": "benchmarks/contracts/hidden-contract.json",
@@ -102,6 +102,42 @@
       "sha256": "09288aa3ebf0346a9fe0107e3a685365f9d1048e13de242f1c2c6f0f76ce7a27"
     },
     {
+      "path": "benchmarks/task-starts/README.md",
+      "sha256": "cfe5bc7cb59d333aa5ca886173a541e4a868a723e7287199306fcbc0652898d5"
+    },
+    {
+      "path": "benchmarks/task-starts/overlays/python/uc001/pyproject.toml",
+      "sha256": "0c840d136bfd796458f437d02dcaf26f7b90a3d85da1abb3651bf8b163600b18"
+    },
+    {
+      "path": "benchmarks/task-starts/overlays/rust/uc001/Cargo.lock",
+      "sha256": "3dfaa312842b111519d09f7d5cb0a90a8fd2a0c9217e8b168d8c2466bd493b50"
+    },
+    {
+      "path": "benchmarks/task-starts/overlays/rust/uc001/Cargo.toml",
+      "sha256": "93f1a8cdbe56dcd904840ff51e2b4fdadbaa1176eac74815e1716865b16d28b8"
+    },
+    {
+      "path": "benchmarks/task-starts/overlays/rust/uc003/v2/Cargo.toml",
+      "sha256": "b608bde528703bc06c8c9ff36096fc00fc7629afdd9557776510baa0bdf51533"
+    },
+    {
+      "path": "benchmarks/task-starts/overlays/rust/uc003/v2/tests/task_checks.rs",
+      "sha256": "d97e6c0f95bf160b72cd03193c297577145f50bbdc005cc4a13f23c5906c2e20"
+    },
+    {
+      "path": "benchmarks/task-starts/overlays/typescript/common/.prettierignore",
+      "sha256": "0b857b3a82025531a244cfe2b0449f40e29be9d40fdd5baa29d3ae2d8c87fc94"
+    },
+    {
+      "path": "benchmarks/task-starts/overlays/typescript/uc001/tsconfig.json",
+      "sha256": "a67ebc071d06d700e883032673b30978bb643429130c2778e20e5fcd6581f669"
+    },
+    {
+      "path": "benchmarks/task-starts/task-starts.json",
+      "sha256": "dc67e6e7890fd21983e00154c5f8974e5da6d4d6456b526df2546a83a1ab47ea"
+    },
+    {
       "path": "benchmarks/tasks/uc001-implement-create-job.md",
       "sha256": "6b1bec05983bf8442e2a9981d20a64cdbc00e6712edca5785f8610c1708fbefa"
     },
@@ -110,8 +146,16 @@
       "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6"
     },
     {
+      "path": "benchmarks/tests/test_task_starts.py",
+      "sha256": "7051e513573a34176ef94a430403f7ca3c6f758eb13d5721c6dffd5518ce1997"
+    },
+    {
       "path": "benchmarks/tools/harness.py",
-      "sha256": "8924be2408b3d8817fded0e872664356b4ce8ca022ce27134bf5e967dfffc011"
+      "sha256": "a15771f97e7e193161b78f0002def6abaad296c5d81748cd9e526133446de207"
+    },
+    {
+      "path": "benchmarks/tools/task_starts.py",
+      "sha256": "201e972f4d3328e8f5758d2d9487dd123ca94f8083528b0e3728d6d907e05c61"
     }
   ]
 }

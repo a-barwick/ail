@@ -109,6 +109,21 @@ paths, inputs, or expected values. [m7-freeze.json](m7-freeze.json) locks the
 report, manifests, runner descriptors, source checkpoints, task text, and
 contract inputs by digest.
 
+M7 also freezes eight independently reproducible
+[answer-free task starts](task-starts/README.md). UC-001 starts contain the
+selected language's public V1 contracts and ordinary tests with explicit
+handler and validation holes. UC-003 starts contain the accepted V1
+implementation and ordinary V2 task tests without V2 implementation source.
+Every package has an explicit per-file manifest and its own tree digest. The
+standalone package gate rejects another baseline language, private fixtures,
+hidden seed locations, completed reference source, freeze-only metadata,
+changed protected artifacts, nondeterministic rebuilds, and an incomplete
+language/task matrix:
+
+```bash
+python3 benchmarks/tools/task_starts.py check --run-starting-state
+```
+
 The private ZIP is deliberately not stored in the repository. A verifier must
 receive the digest-locked archive through `AIL_HIDDEN_PACKAGE` (or the
 equivalent `--hidden-package` option):

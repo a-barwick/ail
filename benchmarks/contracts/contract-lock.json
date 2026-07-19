@@ -51,7 +51,7 @@
     },
     {
       "path": "benchmarks/tools/harness.py",
-      "sha256": "8924be2408b3d8817fded0e872664356b4ce8ca022ce27134bf5e967dfffc011"
+      "sha256": "a15771f97e7e193161b78f0002def6abaad296c5d81748cd9e526133446de207"
     }
   ]
 }

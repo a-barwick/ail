@@ -1,0 +1,15 @@
+[workspace]
+members = ["v1"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+rust-version = "1.88"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "deny"
+pedantic = "deny"

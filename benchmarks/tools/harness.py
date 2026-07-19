@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Iterator, NoReturn
 
 import fixtures as fixture_tool
+import task_starts as task_start_tool
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -1016,6 +1017,7 @@ def _m7_freeze_artifacts() -> list[str]:
         "benchmarks/tasks/uc003-add-priority.md",
         "benchmarks/tools/harness.py",
     ]
+    artifacts.extend(task_start_tool.freeze_artifacts())
     for language in BASELINE_LANGUAGES:
         prefix = f"benchmarks/baselines/{language}"
         artifacts.extend(
@@ -1152,6 +1154,7 @@ def verify_all(hidden_package: Path | None = None) -> None:
     check_contract_lock()
     fixture_tool.check_all()
     check_m7_freeze()
+    task_start_tool.check_task_start_lock()
     verifications: list[Verification] = []
     for language in BASELINE_LANGUAGES:
         descriptor, manifest, lock = _verification_paths(language)

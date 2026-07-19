@@ -87,8 +87,10 @@ Every example must use one of these labels:
 The job-service reference workload, its two use cases, its first requirements,
 its frozen public JSON fixtures, and its language-independent benchmark harness
 and task contract are accepted. The Rust, Go, Python, and TypeScript baselines
-are complete, and the active task is M7: verify cross-baseline parity and freeze
-the benchmark inputs. Architectural regression control is a separate proposed scaling use
+are complete. M7 froze cross-baseline parity, the public and private benchmark
+inputs, and eight deterministic answer-free task starts. The active work is
+M8a: freeze the baseline experiment contract before collecting any official
+evidence. Architectural regression control is a separate proposed scaling use
 case and feature specification; it does not expand the active slice until
 reviewed and accepted.
 
