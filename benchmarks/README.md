@@ -139,6 +139,20 @@ It must contain one canonical fixture for each frozen hidden behavior category,
 use stored ZIP entries in lexical order with the fixed 1980 timestamp, and
 match the archive digest in every locked baseline manifest.
 
+## M8 agent experiment contract
+
+[ADR 0002](../docs/decisions/0002-m8-agent-experiment-contract.md) freezes the
+candidate measured agent, model, interactive tool-use protocol, prompt, initial
+context, permissions, limits, token accounting, reference environment, and
+terminal classifications used by M8. It also records the reviewed NFR-002
+amendment from the infeasible 100,000-token pilot limit to a 500,000 cumulative
+delivered-input-token safety limit.
+
+The decision is a configuration contract, not official evidence. M8b must
+encode it in schemas and digest locks, M8c must implement and dry-test the
+interactive runner, and M8f must pass all readiness configurations before any
+official trial counts.
+
 ## Public and hidden boundary
 
 Only public behavior cases belong under `fixtures/public/`. Later milestones

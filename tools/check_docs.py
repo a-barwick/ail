@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check local Markdown links and roadmap/status milestone consistency."""
+"""Check local links, decision records, and milestone consistency."""
 
 from __future__ import annotations
 
@@ -28,6 +28,21 @@ MILESTONE_HEADING = re.compile(r"^###\s+(M\d+)\s+.+$", re.MULTILINE)
 MILESTONE_STATUS = re.compile(
     r"^\*\*Status:\*\*\s+(Complete|Active|Planned|Deferred)\s*$",
     re.MULTILINE,
+)
+ADR_FILENAME = re.compile(r"^(\d{4})-[a-z0-9-]+\.md$")
+ADR_TITLE = re.compile(r"^# ADR (\d{4}): .+$", re.MULTILINE)
+ADR_METADATA = (
+    "- Status:",
+    "- Date:",
+    "- Owners:",
+    "- Documentation layer and scope:",
+)
+ADR_SECTIONS = (
+    "## Context",
+    "## Decision",
+    "## Consequences",
+    "## Alternatives considered",
+    "## Validation",
 )
 
 
@@ -127,8 +142,74 @@ def milestone_errors() -> list[str]:
     return errors
 
 
+def decision_errors() -> list[str]:
+    errors: list[str] = []
+    decisions = ROOT / "docs" / "decisions"
+    seen_ids: dict[str, Path] = {}
+
+    for path in sorted(decisions.glob("*.md")):
+        filename_match = ADR_FILENAME.fullmatch(path.name)
+        if not filename_match:
+            errors.append(
+                f"{path.relative_to(ROOT)}: decision filename must use "
+                "NNNN-lowercase-kebab-case.md"
+            )
+            continue
+
+        decision_id = filename_match.group(1)
+        if decision_id in seen_ids:
+            errors.append(
+                f"{path.relative_to(ROOT)}: duplicate ADR {decision_id}; first "
+                f"used by {seen_ids[decision_id].relative_to(ROOT)}"
+            )
+        else:
+            seen_ids[decision_id] = path
+
+        text = path.read_text(encoding="utf-8")
+        title_match = ADR_TITLE.search(text)
+        if not title_match:
+            errors.append(
+                f"{path.relative_to(ROOT)}: missing '# ADR {decision_id}: ...' "
+                "title"
+            )
+        elif title_match.group(1) != decision_id:
+            errors.append(
+                f"{path.relative_to(ROOT)}: title ADR {title_match.group(1)} "
+                f"does not match filename {decision_id}"
+            )
+
+        for metadata in ADR_METADATA:
+            pattern = (
+                rf"^{re.escape(metadata)}(?:\s+.*)?$"
+                if decision_id == "0000"
+                else rf"^{re.escape(metadata)}\s+.+$"
+            )
+            if not re.search(pattern, text, re.MULTILINE):
+                errors.append(
+                    f"{path.relative_to(ROOT)}: missing decision metadata "
+                    f"'{metadata}'"
+                )
+
+        section_positions = [text.find(section) for section in ADR_SECTIONS]
+        for section, position in zip(ADR_SECTIONS, section_positions):
+            if position == -1:
+                errors.append(
+                    f"{path.relative_to(ROOT)}: missing decision section "
+                    f"'{section}'"
+                )
+        present_positions = [
+            position for position in section_positions if position != -1
+        ]
+        if present_positions != sorted(present_positions):
+            errors.append(
+                f"{path.relative_to(ROOT)}: decision sections are out of order"
+            )
+
+    return errors
+
+
 def main() -> int:
-    errors = local_link_errors() + milestone_errors()
+    errors = local_link_errors() + milestone_errors() + decision_errors()
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
@@ -136,7 +217,8 @@ def main() -> int:
 
     print(
         f"Documentation check passed: {len(markdown_files())} Markdown files, "
-        "local links valid, milestone status aligned."
+        "local links valid, decision records structured, milestone status "
+        "aligned."
     )
     return 0
 

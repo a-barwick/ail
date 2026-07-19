@@ -4,28 +4,31 @@ Last updated: 2026-07-19
 
 ## Active milestone
 
-M8 — Baseline agent calibration (M8a: freeze the experiment contract)
+M8 — Baseline agent calibration (M8b: evidence contracts and verifier)
 
 ## Current goal
 
-Record one reviewed experiment decision that makes every later baseline trial
-reproducible and comparable. Fix the measured model and agent identity,
-interactive tool-use protocol, prompt wrapper, initial context, normal tools,
-token accounting, permissions, limits, retry and termination rules, reference
-environment, and run classifications before any official evidence is
-collected.
+Build the machine-checkable evidence boundary before any official agent or
+performance result exists. Define calibration schemas and digest locks, then
+implement `verify-calibration` with synthetic campaigns that prove complete
+evidence is accepted and missing, changed, inconsistent, or mixed evidence is
+rejected.
 
 The next agent should:
 
-- create a reviewed decision record for the M8a experiment contract;
-- use the eight locked task starts without changing their files, task text,
-  tools, or starting-state classifications; and
-- stop before agent trials, performance measurements, evidence collection, or
-  implementation of the later trial runner.
+- follow M8b in the
+  [accepted M8 execution plan](m8-execution-plan.md);
+- implement schemas and locks for agent, raw-event, performance, campaign,
+  index, and report evidence under the frozen
+  [M8 agent experiment contract](decisions/0002-m8-agent-experiment-contract.md);
+- add `python3 benchmarks/tools/harness.py verify-calibration` and synthetic
+  acceptance/rejection fixtures; and
+- stop before the interactive agent runner, correctness replay, performance
+  adapters, readiness pilots, or official evidence.
 
 ## Starting point
 
-The following work is accepted and should not be redesigned in M8a:
+The following work is accepted and should not be redesigned in M8b:
 
 - [UC-001 request validation and persistence](use-cases/UC-001-request-validation-and-persistence.md)
 - [UC-003 public schema evolution](use-cases/UC-003-public-schema-evolution.md)
@@ -39,6 +42,8 @@ The following work is accepted and should not be redesigned in M8a:
 - [Final UC-001 task](../benchmarks/tasks/uc001-implement-create-job.md)
 - [Final UC-003 task](../benchmarks/tasks/uc003-add-priority.md)
 - [Answer-free task starts](../benchmarks/task-starts/README.md)
+- [M8 execution plan](m8-execution-plan.md)
+- [M8 agent experiment contract](decisions/0002-m8-agent-experiment-contract.md)
 - [Rust baseline](../benchmarks/baselines/rust/README.md)
 - [Go baseline](../benchmarks/baselines/go/README.md)
 - [Python baseline](../benchmarks/baselines/python/README.md)
@@ -54,6 +59,15 @@ Key decisions:
   workspace with protected task, test, fixture, and tool artifacts;
 - normal language tooling remains available without custom semantic advantages;
 - hidden cases may combine only already accepted UC-001 and UC-003 behavior;
+- every agent trial uses one pinned Codex CLI agent with explicit
+  `gpt-5.6-sol` at High reasoning, an interactive local-tool loop, no subagents,
+  and no external agent tools;
+- the agent wall limit is 600 seconds and the amended cumulative input-token
+  safety limit is 500,000 tokens including cached and repeated delivery;
+- provider request capture, exact categorical accounting, least-privilege
+  filesystem access, network denial, no trial retries, and complete
+  public/private final-revision correctness are required before a trial can be
+  successful;
 - official M8 trial and performance counts still begin at zero; and
 - no M8 configuration or evidence becomes official before its reviewed freeze.
 
@@ -67,6 +81,7 @@ Key decisions:
 - M5 — Python baseline
 - M6 — TypeScript baseline
 - M7 — Cross-baseline parity and freeze
+- M8a — Frozen agent experiment contract
 
 M1 delivered 37 canonical public JSON cases, a machine-readable schema, a
 dependency-free semantic checker and formatter, negative-path tool tests, and a
@@ -101,9 +116,17 @@ Go, Python, and TypeScript tools and the separately held private ZIP were
 available for the closing gate. The ZIP remains outside the repository and is
 identified only by its SHA-256 digest in the locked manifests.
 
-## After M8a
+M8a accepted ADR 0002. It selects the candidate measured model and agent,
+defines one tool-using trial state machine, fixes the prompt and initial
+context, requires request-level evidence and token reconciliation, isolates the
+workspace and network, defines terminal classifications, and amends NFR-002
+from a 100,000-token pilot limit to a 500,000-token interactive trial limit.
+The preserved pilot remains non-authoritative and official M8 counts remain
+zero.
 
-- M8b — Build the evidence contracts and verifier
+## After M8b
+
+- M8c — Implement the interactive agent runner
 - M9 — Frozen AIL success targets
 
 ## Proposed future validation
@@ -111,7 +134,7 @@ identified only by its SHA-256 digest in the locked manifests.
 [UC-007 architectural regression control](use-cases/UC-007-architectural-regression-control.md),
 its [proposed requirements](requirements/architectural-health.md), and the
 [architectural health manifest](architecture-health.md) define a later scaling
-gate. They do not expand M8a or authorize implementation before review and
+gate. They do not expand M8b or authorize implementation before review and
 acceptance.
 
 ## Do not start yet
@@ -119,6 +142,8 @@ acceptance.
 - AIL syntax design
 - AIL compiler implementation
 - Compiler-stack prototypes
+- Interactive agent runner
+- Correctness replay implementation
 - Agent benchmark runs
 - Performance measurements
 - M8 evidence collection
@@ -128,8 +153,9 @@ Those depend on later M8 submilestones or later roadmap milestones.
 
 ## Blockers
 
-None recorded for M8a. Experiment choices that require review are the work of
-the active submilestone, not authority to begin collection.
+None recorded for M8b. The schemas and verifier must preserve the frozen M8a
+contract; finding an unrepresentable requirement is a reason to stop and amend
+the decision, not to weaken evidence silently.
 
 ## Handoff checklist
 
@@ -142,3 +168,6 @@ After meaningful work:
 - run the active milestone's verification commands;
 - run `python3 tools/check_docs.py`; and
 - update the roadmap only when the milestone exit criterion passes.
+
+For M8b, leave empty, pilot, partial, malformed, and complete synthetic
+campaigns with stable expected results and a concise handoff for M8c.

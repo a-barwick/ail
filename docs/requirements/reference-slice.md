@@ -565,18 +565,28 @@ Source use cases: UC-001 and UC-003.
 Requirement: For each task, measure every model input token after the task
 starts. Break the total into initial context, source reads, compiler or language
 server results, diagnostics, build and test output, and other tool output. Run
-at least 10 independent successful trials for each task and language. A pilot
-run has a 100,000-input-token safety limit, but that limit is not the eventual
-AIL success target.
+at least 10 independent successful trials for each task and language. Each M8
+agent trial has a 500,000 cumulative delivered-input-token safety limit,
+including cached and repeated context. This limit is not the eventual AIL
+success target.
+
+Amendment accepted 2026-07-19: [ADR 0002](../decisions/0002-m8-agent-experiment-contract.md)
+replaces the initial 100,000-token pilot limit. Two ordinary interactive pilot
+runs used 273,018 and 291,581 input tokens; the lower limit would select against
+normal discovery, validation, and repair. The 500,000-token limit must be
+enforced before each model request and must pass all eight M8f readiness
+configurations before official evidence is collected.
 
 Rationale and agent change cost: This tests context efficiency across the whole
 correct-change loop instead of rewarding short source that requires expensive
 discovery or repair.
 
-Acceptance evidence: Token-accounting logs use the actual model tokenizer,
-deduplicate no repeated context unless the model did not receive it, and publish
-median, range, and category totals for successful and failed runs separately.
-Task correctness is a prerequisite; an incomplete low-token run does not count.
+Acceptance evidence: Token-accounting logs use provider-reported usage for the
+authoritative total and a frozen tokenizer for categorical attribution,
+deduplicate no repeated context unless the model did not receive it, reconcile
+category totals to provider usage, and publish median, range, and category
+totals for successful and failed runs separately. Task correctness is a
+prerequisite; an incomplete low-token run does not count.
 
 Target milestone and scope: M8 baseline calibration and M9 AIL target decision,
 followed by the later empirical suite. Constrains measurement and agent protocol

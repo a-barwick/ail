@@ -313,24 +313,43 @@ start.
 
 **Status:** Active
 
-#### Active submilestone: M8a — Freeze the experiment contract
+M8 is delivered through the sequential M8a–M8o submilestones in the accepted
+[M8 execution plan](m8-execution-plan.md). Only one M8 submilestone is active
+at a time.
 
-Before any official evidence is collected, record one reviewed decision that
-fixes the measured model and agent identity, interactive tool-use protocol,
-prompt wrapper, initial context, normal tools, token accounting, permissions,
-limits, retry and termination rules, reference environment, and run
-classifications. M8a does not run agent trials or performance measurements and
-does not build the later evidence runner.
+#### Completed submilestone: M8a — Freeze the experiment contract
 
-#### M8a focused verification
+[ADR 0002](decisions/0002-m8-agent-experiment-contract.md) fixes the candidate
+measured agent, model, reasoning, interactive tool protocol, prompt wrapper,
+initial context, normal tools, token accounting, permissions, limits, retry and
+termination rules, reference environment, and run classifications. It amends
+the NFR-002 safety limit from 100,000 to 500,000 cumulative delivered input
+tokens because ordinary interactive pilots exceeded the lower limit.
+
+M8a collected no official evidence and did not implement the later trial
+runner.
+
+#### Active submilestone: M8b — Build the evidence contracts and verifier
+
+Define schemas and digest locks for agent trial records, raw model and tool
+events, warm-state measurements, cold-start and memory measurements, campaign
+configuration and ordering, evidence indexes, and the final report. Implement
+`verify-calibration` before any official evidence is collected. Synthetic
+campaigns must prove stable acceptance and rejection for empty, pilot, partial,
+malformed, and complete evidence.
+
+#### M8b focused verification
 
 ```bash
+python3 benchmarks/tools/harness.py verify-calibration
 python3 tools/check_docs.py
 ```
 
-M8a is complete only when two reviewers can independently determine how a
-trial starts, proceeds, stops, and counts, and the accepted input-token limit
-is feasible or has been amended through a reviewed requirement decision.
+M8b is complete only when schemas and locks cover every declared evidence
+artifact and the synthetic fixtures reject missing counts, duplicate trial
+identities, changed inputs, invalid hashes, incomplete token categories,
+missing raw events, unaccounted exclusions, incorrect summaries, and mixed
+configurations with stable results.
 
 #### Scope
 

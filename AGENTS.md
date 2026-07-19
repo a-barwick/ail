@@ -91,6 +91,12 @@ examples to become normative semantics accidentally.
   `docs/STATUS.md`, and leave a concise handoff for the next agent.
 - Keep detailed requirements in their authoritative documents. Milestones link
   to those documents instead of copying them.
+- For this benchmark, a user directive of `Launch P0` or `Launch M8a` through
+  `Launch M8o` authorizes exactly that named task. Before acting, read the
+  launch-directive table and the named task section in
+  `docs/m8-execution-plan.md`, then verify that its predecessor is complete.
+  Do not infer authority to start a later task, change a frozen configuration,
+  or merge and push unless the named directive permits it.
 
 ## Communication style
 
