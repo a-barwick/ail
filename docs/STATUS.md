@@ -4,17 +4,17 @@ Last updated: 2026-07-18
 
 ## Active milestone
 
-M3 — Rust baseline
+M4 — Go baseline
 
 ## Current goal
 
-Build the first idiomatic baseline against the frozen fixtures and harness:
-stable Rust implementing UC-001 and UC-003.
+Build the second idiomatic baseline against the frozen fixtures and harness:
+stable Go implementing UC-001 and UC-003.
 
 The next agent should build:
 
-- a Rust version-one checkpoint suitable for the UC-003 change task;
-- a verified version-two reference implementation;
+- a Go version-one checkpoint suitable for the UC-003 change task;
+- a verified Go version-two reference implementation;
 - the M2 one-case and corpus runner commands;
 - idiomatic focused tests for public contracts, types, closed outcomes, and
   ordered effects; and
@@ -22,7 +22,7 @@ The next agent should build:
 
 ## Starting point
 
-The following work is accepted and should not be redesigned in M3:
+The following work is accepted and should not be redesigned in M4:
 
 - [UC-001 request validation and persistence](use-cases/UC-001-request-validation-and-persistence.md)
 - [UC-003 public schema evolution](use-cases/UC-003-public-schema-evolution.md)
@@ -35,15 +35,17 @@ The following work is accepted and should not be redesigned in M3:
 - [Hidden behavior and seed contract](../benchmarks/contracts/hidden-contract.json)
 - [Final UC-001 task](../benchmarks/tasks/uc001-implement-create-job.md)
 - [Final UC-003 task](../benchmarks/tasks/uc003-add-priority.md)
+- [Completed Rust baseline](../benchmarks/baselines/rust/README.md)
+- [Frozen Rust checkpoints](../benchmarks/baselines/rust/checkpoints.json)
 - [ADR 0001 deferring stack selection](decisions/0001-implementation-stack.md)
 
 Key decisions:
 
 - the shared fixtures, task text, runner protocol, normalized result, and
   failure classifications are frozen;
-- the Rust baseline receives its normal stable compiler, Cargo, rustfmt,
-  Clippy, rust-analyzer, and ordinary tests;
-- the baseline may use idiomatic Rust representations but must not change the
+- the Go baseline receives its normal stable compiler, `gofmt`, `go vet`,
+  `gopls`, and ordinary Go tests;
+- the baseline may use idiomatic Go representations but must not change the
   shared oracle;
 - V1 and V2 source checkpoints must remain distinct and digestible; and
 - concrete hidden seed locations instantiate the M2 semantic roles without
@@ -54,6 +56,7 @@ Key decisions:
 - M0 — Reference workload and requirements
 - M1 — Frozen job-service fixture corpus
 - M2 — Benchmark harness and frozen task contract
+- M3 — Rust baseline
 - Documentation alignment checkpoint: M0–M13 is the sole operational roadmap,
   old phase labels have been retired, and accepted requirements point to
   numbered milestones.
@@ -69,10 +72,18 @@ hidden behavior and seed rules, a 13-artifact contract lock, and a self-test
 that proves 14 pass and failure outcomes. Run
 `python3 benchmarks/tools/harness.py self-test` to verify the contract.
 
+M3 delivered distinct, digest-locked V1 and V2 stable Rust packages, a
+dependency-locked one-case and corpus runner, concrete hidden seed locations,
+28 focused and integration tests, and plain operator instructions. The V2
+tests replay all 37 public fixtures, while the language-neutral harness verifies
+the normalized response, final state, and ordered store calls. Run
+`python3 benchmarks/tools/harness.py verify --language rust --visibility public`
+to verify the baseline.
+
 ## Planned next
 
-- M4–M6 — Go, Python, and TypeScript baselines, in that default serial order
-  unless coordinated otherwise
+- M5–M6 — Python and TypeScript baselines, in that default serial order unless
+  coordinated otherwise
 - M7 — Cross-baseline parity and freeze
 
 ## Proposed future validation
@@ -80,7 +91,7 @@ that proves 14 pass and failure outcomes. Run
 [UC-007 architectural regression control](use-cases/UC-007-architectural-regression-control.md),
 its [proposed requirements](requirements/architectural-health.md), and the
 [architectural health manifest](architecture-health.md) define a later scaling
-gate. They do not expand M3 or authorize implementation before review and
+gate. They do not expand M4 or authorize implementation before review and
 acceptance.
 
 ## Do not start yet
@@ -90,7 +101,7 @@ acceptance.
 - Compiler-stack prototypes
 - Agent benchmark runs
 - Production performance targets
-- Go, Python, or TypeScript baselines without explicit coordination
+- Python or TypeScript baselines without explicit coordination
 
 Those depend on later milestones.
 
@@ -103,7 +114,7 @@ None.
 After meaningful work:
 
 - update this file with what changed and what remains;
-- keep Rust behavior traceable to the frozen shared fixtures and tasks;
+- keep Go behavior traceable to the frozen shared fixtures and tasks;
 - add or update executable checks;
 - record any unresolved behavior instead of choosing it in code;
 - run the active milestone's verification commands;

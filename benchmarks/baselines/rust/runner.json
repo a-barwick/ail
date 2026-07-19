@@ -1,0 +1,21 @@
+{
+  "runner_contract": 1,
+  "language": "rust",
+  "command": [
+    "cargo",
+    "run",
+    "--quiet",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "benchmarks/baselines/rust/Cargo.toml",
+    "-p",
+    "ail-job-service-v2",
+    "--"
+  ],
+  "working_directory": ".",
+  "environment": {
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  }
+}

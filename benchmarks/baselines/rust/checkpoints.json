@@ -1,0 +1,37 @@
+{
+  "checkpoint_format": 1,
+  "tree_digest_algorithm": "sha256 of concatenated '<file-sha256>  <repository-relative-path>\\n' records in listed order",
+  "checkpoints": [
+    {
+      "id": "rust-v1",
+      "task": "UC-001",
+      "source_tree_sha256": "727dae069299327d28c8599a6888db75da631fdc216faf478dbc6c7ba6e60a99",
+      "files": [
+        "benchmarks/baselines/rust/Cargo.toml",
+        "benchmarks/baselines/rust/Cargo.lock",
+        "benchmarks/baselines/rust/rust-toolchain.toml",
+        "benchmarks/baselines/rust/v1/Cargo.toml",
+        "benchmarks/baselines/rust/v1/src/lib.rs"
+      ]
+    },
+    {
+      "id": "rust-v2",
+      "task": "UC-003",
+      "source_tree_sha256": "909af2ce1bf391e27c0e25b00e81dcea5abf814b9ee0870e388b860ecb7414df",
+      "files": [
+        "benchmarks/baselines/rust/Cargo.toml",
+        "benchmarks/baselines/rust/Cargo.lock",
+        "benchmarks/baselines/rust/rust-toolchain.toml",
+        "benchmarks/baselines/rust/v2/Cargo.toml",
+        "benchmarks/baselines/rust/v2/src/codec.rs",
+        "benchmarks/baselines/rust/v2/src/domain.rs",
+        "benchmarks/baselines/rust/v2/src/lib.rs",
+        "benchmarks/baselines/rust/v2/src/main.rs",
+        "benchmarks/baselines/rust/v2/src/service.rs",
+        "benchmarks/baselines/rust/v2/src/store.rs",
+        "benchmarks/baselines/rust/v2/tests/checkpoints.rs",
+        "benchmarks/baselines/rust/v2/tests/runner_cli.rs"
+      ]
+    }
+  ]
+}
