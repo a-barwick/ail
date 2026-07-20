@@ -3,7 +3,7 @@
   "artifacts": [
     {
       "path": "benchmarks/calibration/README.md",
-      "sha256": "563d6a562f53b3c40403ef90f9d711ae92535df811c4afbdb11ed98fb8f7b5c6"
+      "sha256": "140cfce2176e291c227219f7dc2a3d29e817f48fedb84f8b433d104606852b48"
     },
     {
       "path": "benchmarks/calibration/experiment-contract.json",
@@ -31,7 +31,7 @@
     },
     {
       "path": "benchmarks/calibration/synthetic/rejections.json",
-      "sha256": "6da4c2b02b47e592774966e2a3ad220a6516e0fdaaa708eb49a63cfaf7a5f253"
+      "sha256": "2cb4e8a6bd09b87d0e89224394f9975ceb126a1306ed870fbb20777b5453889a"
     },
     {
       "path": "benchmarks/schemas/calibration-agent-trial.schema.json",
@@ -71,7 +71,11 @@
     },
     {
       "path": "benchmarks/tests/test_calibration.py",
-      "sha256": "a18af74bcbf255f35b37a82de82efbc3d1c0fb9cb07491a14a1af9ac5c1774fb"
+      "sha256": "76bb0fe8bc5d8ea7b3dddeec6162d218d9b062606801fe3a1d6da47bf698ab4c"
+    },
+    {
+      "path": "benchmarks/tests/test_correctness.py",
+      "sha256": "4e55300a77426b4c1869b200340aa8d11dfcf4f49cb0913a4323f1fe1bea6295"
     },
     {
       "path": "benchmarks/tools/agent_runner.py",
@@ -79,7 +83,11 @@
     },
     {
       "path": "benchmarks/tools/calibration.py",
-      "sha256": "8ea550ff74ce3bd54f4b0d8e8116758c1fa51958a56c1eb5fb32900285c3527c"
+      "sha256": "4f942f81fbdba1e939cb17913be073b6cf1cd95244ca244c6f4d7468ac43badf"
+    },
+    {
+      "path": "benchmarks/tools/correctness.py",
+      "sha256": "58d15fcb6b56b8504e51466b26309eceb86c11f404eb0960249b76aeec732694"
     }
   ]
 }

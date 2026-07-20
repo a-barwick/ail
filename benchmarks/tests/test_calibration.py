@@ -49,6 +49,7 @@ class CalibrationContractTests(unittest.TestCase):
                 "unaccounted-exclusion": "exclusion_unaccounted",
                 "incorrect-summary": "report_summary_incorrect",
                 "mixed-configuration": "mixed_configuration",
+                "stale-completion-evidence": "completion_evidence_invalid",
             },
         )
 

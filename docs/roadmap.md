@@ -382,7 +382,7 @@ python3 benchmarks/tools/harness.py verify-calibration
 python3 tools/check_docs.py
 ```
 
-#### Active submilestone: M8d — Implement correctness verification and replay
+#### Completed submilestone: M8d — Implement correctness verification and replay
 
 Run the full public and separately held private oracle against the retained
 final revision after the agent stops. Verify seeded consumers, protected
@@ -393,7 +393,30 @@ M8d must reject incomplete, answer-exposing, revision-mismatched, and seeded
 regression results. It may use fake and dry evidence but must not collect
 official trials.
 
+M8d delivered a verifier-only private-package boundary, canonical retained
+source validation, protected-file and permission enforcement, task-applicable
+public/private/seed coverage, revision-bound completion evidence, and
+functional replay from a second fresh extraction. Eight fake/dry outcomes and
+a campaign-level stale-completion mutation prove that false success is rejected.
+
 #### M8d focused verification
+
+```bash
+python3 benchmarks/tools/harness.py verify-calibration
+python3 tools/check_docs.py
+```
+
+#### Active submilestone: M8e — Implement performance measurement
+
+Add equivalent per-language adapters for warm-up, readiness, the shared corpus,
+monotonic latency and throughput, percentile and variance derivation, process
+creation, cold readiness, idle and peak RSS, package identity, dependency
+identity, external-access attempts, and functional correctness.
+
+M8e may run one non-official warm and cold pilot per baseline. It must not
+freeze the campaign or collect official measurements.
+
+#### M8e focused verification
 
 ```bash
 python3 benchmarks/tools/harness.py verify-calibration

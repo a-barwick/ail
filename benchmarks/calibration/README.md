@@ -1,6 +1,6 @@
 # M8 calibration evidence contract
 
-Status: **M8c runner contract; no official evidence**
+Status: **M8d correctness and replay contract; no official evidence**
 
 This directory defines the machine-checkable evidence boundary for the M8
 baseline campaign. It implements the accepted
@@ -38,6 +38,22 @@ final source without local Git, dependency, cache, or build artifacts.
 M8c uses only fake and dry streams. Its runner outcome is not a successful M8
 trial until M8d supplies matching public/private correctness, seeded-consumer,
 protected-artifact, and completion-evidence results for the same final revision.
+
+## Correctness and replay
+
+`../tools/correctness.py` owns the post-run verifier boundary. The separately
+held private ZIP enters only this process. The verifier checks its M7 digest and
+canonical manifest, validates the retained M8c archive and source revision,
+rechecks every protected file, and rejects retained files outside the task's
+editable files and authorized language source roots.
+
+The functional oracle must return every applicable public case, private
+behavior category, and frozen seeded role with a result for the retained
+revision. UC-001 requires its UC-001 public cases and the private categories and
+seeds that apply to UC-001. UC-003 requires the complete evolved corpus and its
+applicable private categories and seeds. A success is replayed from a second
+fresh extraction of the same archive; the complete observation must match
+before revision-bound completion evidence is emitted.
 
 ## Evidence layout
 
@@ -126,3 +142,6 @@ non-zero exit, wall timeout, permission violation, input-token limit, and
 incomplete evidence. It checks M2 repair accounting, pre-start rejection,
 permission boundaries, deterministic source capture, isolated Codex
 configuration, and process-group termination without invoking Codex.
+The M8d matrix additionally proves that a complete dry oracle is replayable and
+that incomplete source, unexpected answer material, stale completion revision,
+seeded regression, and replay divergence cannot be successful.

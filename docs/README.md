@@ -94,9 +94,10 @@ The job-service reference workload, its two use cases, its first requirements,
 its frozen public JSON fixtures, and its language-independent benchmark harness
 and task contract are accepted. The Rust, Go, Python, and TypeScript baselines
 are complete. M7 froze cross-baseline parity, the public and private benchmark
-inputs, and eight deterministic answer-free task starts. The active work is
-M8d: implement post-run correctness verification and replay against the M8c
-interactive runner and the accepted evidence boundary. No official evidence
+inputs, and eight deterministic answer-free task starts. M8d now binds
+post-run correctness and replay to the retained final revision. The active work
+is M8e: implement equivalent warm-state and cold-process measurement adapters
+without collecting official evidence. No official evidence
 exists yet.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and

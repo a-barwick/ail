@@ -72,8 +72,10 @@ LOCKED_ARTIFACTS = (
     "benchmarks/schemas/calibration-warm-measurement.schema.json",
     "benchmarks/tests/test_agent_runner.py",
     "benchmarks/tests/test_calibration.py",
+    "benchmarks/tests/test_correctness.py",
     "benchmarks/tools/agent_runner.py",
     "benchmarks/tools/calibration.py",
+    "benchmarks/tools/correctness.py",
 )
 PROMPT_PREFIX = (
     "Complete the frozen task below in the supplied answer-free workspace.\n"
@@ -683,6 +685,75 @@ def _check_trial(
         indexed = artifact_paths.get(reference["path"])
         if indexed is None or indexed["sha256"] != reference["sha256"]:
             _raise("evidence_artifact_missing", f"{reference['path']}: not indexed")
+    role_references = {entry["role"]: entry for entry in trial["artifacts"]}
+    if len(role_references) != len(trial["artifacts"]):
+        _raise("evidence_artifact_invalid", f"{trial['trial_id']}: roles repeat")
+    if trial["correctness"]["completion_evidence"] == "passed":
+        completion_reference = role_references.get("completion_evidence")
+        final_reference = role_references.get("final_source")
+        if completion_reference is None or final_reference is None:
+            _raise(
+                "completion_evidence_invalid",
+                f"{trial['trial_id']}: required completion artifacts are missing",
+            )
+        indexed_completion = next(
+            (
+                entry
+                for entry in artifacts.values()
+                if entry["path"] == completion_reference["path"]
+            ),
+            None,
+        )
+        if indexed_completion is None:
+            _raise("completion_evidence_invalid", "completion evidence is not indexed")
+        completion_path = paths[indexed_completion["record_id"]]
+        completion = _load_object(
+            completion_path, "completion_evidence_invalid"
+        )
+        _require_canonical(
+            completion_path, completion, "completion_evidence_invalid"
+        )
+        expected_completion_keys = [
+            "completion_evidence_format",
+            "configuration_id",
+            "revision_sha256",
+            "archive_sha256",
+            "task_start_tree_sha256",
+            "private_package_sha256",
+            "checks",
+            "functional_output_sha256",
+            "replay_sha256",
+        ]
+        if (
+            list(completion) != expected_completion_keys
+            or completion["completion_evidence_format"] != 1
+            or completion["configuration_id"] != config_id
+            or completion["revision_sha256"]
+            != trial["correctness"]["revision_sha256"]
+            or completion["archive_sha256"] != final_reference["sha256"]
+            or completion["task_start_tree_sha256"]
+            != trial["inputs"]["task_start_tree_sha256"]
+            or completion["private_package_sha256"]
+            != trial["inputs"]["private_package_sha256"]
+            or completion["checks"]
+            != {
+                "public": "passed",
+                "private": "passed",
+                "seeded_consumers": "passed",
+                "protected_artifacts": "passed",
+                "permissions": "passed",
+                "replay": "passed",
+            }
+            or any(
+                not isinstance(completion[key], str)
+                or len(completion[key]) != 64
+                for key in ("functional_output_sha256", "replay_sha256")
+            )
+        ):
+            _raise(
+                "completion_evidence_invalid",
+                f"{trial['trial_id']}: completion evidence differs",
+            )
     terminal = trial["terminal"]["class"]
     correctness = trial["correctness"]
     success = all(
@@ -1153,6 +1224,35 @@ def _synthetic_trial(
     private_digest = _load_object(M7_PARITY_REPORT, "calibration_contract_invalid")[
         "hidden_package_sha256"
     ]
+    revision_sha256 = "2" * 64
+    functional_output_sha256 = "3" * 64
+    replay_sha256 = "4" * 64
+    completion_blob = _blob(
+        root,
+        f"artifacts/{trial_id}.completion.json",
+        (
+            _canonical(
+                {
+                    "completion_evidence_format": 1,
+                    "configuration_id": configuration,
+                    "revision_sha256": revision_sha256,
+                    "archive_sha256": final_blob["sha256"],
+                    "task_start_tree_sha256": starts[configuration]["tree_sha256"],
+                    "private_package_sha256": private_digest,
+                    "checks": {
+                        "public": "passed",
+                        "private": "passed",
+                        "seeded_consumers": "passed",
+                        "protected_artifacts": "passed",
+                        "permissions": "passed",
+                        "replay": "passed",
+                    },
+                    "functional_output_sha256": functional_output_sha256,
+                    "replay_sha256": replay_sha256,
+                }
+            ).encode("utf-8")
+        ),
+    )
     categories = {
         "initial_context": 100,
         "source_reads": 20,
@@ -1224,7 +1324,7 @@ def _synthetic_trial(
             "external_access_attempts": 0,
         },
         "correctness": {
-            "revision_sha256": "2" * 64,
+            "revision_sha256": revision_sha256,
             "public": "passed",
             "private": "passed",
             "seeded_consumers": "passed",
@@ -1235,12 +1335,17 @@ def _synthetic_trial(
                 "role": "final_source",
                 "path": final_blob["path"],
                 "sha256": final_blob["sha256"],
+            },
+            {
+                "role": "completion_evidence",
+                "path": completion_blob["path"],
+                "sha256": completion_blob["sha256"],
             }
         ],
     }
     return (
         trial,
-        [raw_entry, final_blob],
+        [raw_entry, completion_blob, final_blob],
         [
             {
                 "schedule_id": schedule_id,
@@ -1572,6 +1677,24 @@ def _apply_synthetic_mutation(
     elif mutation == "mixed_configuration":
         first_trial["configuration_id"] = "another-configuration"
         _replace_record(root, entries, first_trial_entry["record_id"], first_trial)
+    elif mutation == "stale_completion_evidence":
+        completion_reference = next(
+            item
+            for item in first_trial["artifacts"]
+            if item["role"] == "completion_evidence"
+        )
+        completion_entry = next(
+            item
+            for item in entries
+            if item["path"] == completion_reference["path"]
+        )
+        completion_path = root / completion_entry["path"]
+        completion = _load_object(completion_path, "synthetic_invalid")
+        completion["revision_sha256"] = "0" * 64
+        _write_json(completion_path, completion)
+        completion_entry["sha256"] = _sha256(completion_path)
+        completion_reference["sha256"] = completion_entry["sha256"]
+        _replace_record(root, entries, first_trial_entry["record_id"], first_trial)
     elif mutation == "malformed":
         path = root / first_trial_entry["path"]
         path.write_text("{not-json\n", encoding="utf-8")
@@ -1647,11 +1770,14 @@ def verify_calibration() -> None:
     contract = check_contract_lock()
     outcomes = verify_synthetic_campaigns(contract)
     import agent_runner as agent_runner_tool
+    import correctness as correctness_tool
 
     runner_outcomes = agent_runner_tool.verify_fake_and_dry_streams()
+    correctness_outcomes = correctness_tool.verify_fake_and_dry_correctness()
     print(
         "M8 calibration verifier passed: "
         f"{len(LOCKED_ARTIFACTS)} contract artifacts and "
         f"{len(outcomes)} stable synthetic outcomes verified; "
-        f"{len(runner_outcomes)} M8c fake/dry runner outcomes verified."
+        f"{len(runner_outcomes)} M8c runner and "
+        f"{len(correctness_outcomes)} M8d correctness outcomes verified."
     )

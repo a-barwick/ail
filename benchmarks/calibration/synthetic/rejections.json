@@ -63,6 +63,13 @@
       "state": "complete",
       "mutation": "mixed_configuration",
       "expected": "mixed_configuration"
+    },
+    {
+      "synthetic_fixture_format": 1,
+      "id": "stale-completion-evidence",
+      "state": "complete",
+      "mutation": "stale_completion_evidence",
+      "expected": "completion_evidence_invalid"
     }
   ]
 }
