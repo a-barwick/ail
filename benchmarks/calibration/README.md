@@ -22,7 +22,10 @@ the exact prompt and pre-start observations, derives a least-privilege
 permission profile, and generates an isolated Codex configuration whose
 Responses provider is the loopback recorder. Optional tools, network access,
 environment inheritance, retries, delegation, history, and update checks are
-disabled. The generated keys follow the official
+disabled. UC-003 may create files only under the selected language's V2 source
+roots; tests, fixtures, task text, tool configuration, parent paths, private
+inputs, and evidence remain unwritable. UC-001 remains limited to its explicitly
+editable source files. The generated keys follow the official
 [Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml);
 M8f must still validate them against the pinned 0.144.6 executable.
 

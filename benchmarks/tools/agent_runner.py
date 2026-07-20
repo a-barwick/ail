@@ -221,6 +221,23 @@ def _profile(configuration: dict[str, Any]) -> dict[str, Any]:
             "benchmarks/baselines/typescript/node_modules",
         ],
     }
+    source_roots_by_language = {
+        "rust": ["benchmarks/baselines/rust/v2/src"],
+        "go": [
+            "benchmarks/baselines/go/v2/cmd/runner",
+            "benchmarks/baselines/go/v2/domain",
+            "benchmarks/baselines/go/v2/fixture",
+            "benchmarks/baselines/go/v2/service",
+            "benchmarks/baselines/go/v2/store",
+        ],
+        "python": ["benchmarks/baselines/python/v2"],
+        "typescript": ["benchmarks/baselines/typescript/v2"],
+    }
+    source_roots = (
+        source_roots_by_language[configuration["language"]]
+        if configuration["task"] == "UC-003"
+        else []
+    )
     return {
         "permission_profile_format": 1,
         "workspace_read": "all",
@@ -237,6 +254,7 @@ def _profile(configuration: dict[str, Any]) -> dict[str, Any]:
             "target",
             *generated_by_language[configuration["language"]],
         ],
+        "workspace_source_write_roots": source_roots,
         "protected_files": protected,
         "parent_repository_read": "denied",
         "private_package_read": "denied",
@@ -409,7 +427,10 @@ def check_write_permission(prepared: PreparedTrial, raw_path: str) -> bool:
         return True
     return any(
         normalized == root or normalized.startswith(root + "/")
-        for root in profile["workspace_generated_write_roots"]
+        for root in (
+            *profile["workspace_generated_write_roots"],
+            *profile["workspace_source_write_roots"],
+        )
     )
 
 
@@ -491,6 +512,8 @@ def materialize_codex_config(
     for path in profile["editable_files"]:
         filesystem_lines.append(f'{_toml_string(path)} = "write"')
     for path in profile["workspace_generated_write_roots"]:
+        filesystem_lines.append(f'{_toml_string(path + "/**")} = "write"')
+    for path in profile["workspace_source_write_roots"]:
         filesystem_lines.append(f'{_toml_string(path + "/**")} = "write"')
     environment = environment_allowlist(prepared, tool_path)
     environment_lines = [
@@ -1086,7 +1109,7 @@ def verify_fake_and_dry_streams() -> list[tuple[str, str]]:
 
     with tempfile.TemporaryDirectory(prefix="ail-m8c-dry-") as raw:
         root = Path(raw)
-        prepared = prepare_trial("python", "UC-001", root / "workspace")
+        prepared = prepare_trial("python", "UC-003", root / "workspace")
         observations = expected_prestart_observations(prepared)
         verify_prestart_observations(prepared, observations)
         config_home = root / "codex-home"
@@ -1119,8 +1142,16 @@ def verify_fake_and_dry_streams() -> list[tuple[str, str]]:
             prepared, "benchmarks/baselines/python/v1/job_service.py"
         ):
             _raise("runner_self_test_failed", "editable source was denied")
+        if not check_write_permission(
+            prepared, "benchmarks/baselines/python/v2/domain.py"
+        ):
+            _raise("runner_self_test_failed", "required V2 source creation was denied")
         if check_write_permission(prepared, "TASK.md"):
             _raise("runner_self_test_failed", "protected task was writable")
+        if check_write_permission(
+            prepared, "benchmarks/baselines/python/tests/test_service.py"
+        ):
+            _raise("runner_self_test_failed", "protected test was writable")
         if check_read_permission(prepared, "../benchmarks/calibration"):
             _raise("runner_self_test_failed", "parent repository was readable")
         first = root / "first.zip"

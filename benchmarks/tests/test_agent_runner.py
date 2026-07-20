@@ -51,6 +51,44 @@ class InteractiveAgentRunnerTests(unittest.TestCase):
                 agent_runner.check_write_permission(prepared, "/etc/passwd")
             )
 
+    def test_uc003_can_create_only_language_source(self) -> None:
+        expected = {
+            "rust": "benchmarks/baselines/rust/v2/src/lib.rs",
+            "go": "benchmarks/baselines/go/v2/domain/domain.go",
+            "python": "benchmarks/baselines/python/v2/domain.py",
+            "typescript": "benchmarks/baselines/typescript/v2/domain.ts",
+        }
+        with tempfile.TemporaryDirectory(prefix="ail-m8c-source-test-") as raw:
+            for language, source_path in expected.items():
+                prepared = agent_runner.prepare_trial(
+                    language, "UC-003", Path(raw) / language
+                )
+                self.assertFalse((prepared.workspace / source_path).exists())
+                self.assertTrue(
+                    agent_runner.check_write_permission(prepared, source_path)
+                )
+                self.assertFalse(
+                    agent_runner.check_write_permission(
+                        prepared, "benchmarks/fixtures/manifest.json"
+                    )
+                )
+                self.assertFalse(
+                    agent_runner.check_write_permission(
+                        prepared, "benchmarks/calibration/evidence.json"
+                    )
+                )
+
+    def test_uc001_cannot_create_unlisted_source(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ail-m8c-uc001-test-") as raw:
+            prepared = agent_runner.prepare_trial(
+                "python", "UC-001", Path(raw) / "workspace"
+            )
+            self.assertFalse(
+                agent_runner.check_write_permission(
+                    prepared, "benchmarks/baselines/python/v2/domain.py"
+                )
+            )
+
     def test_invalid_token_reconciliation_is_incomplete_evidence(self) -> None:
         stream = agent_runner.InteractiveStream(
             "dry.tokens", clock=lambda: 1_000_000_000
