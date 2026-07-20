@@ -1,6 +1,6 @@
 # Implementation stack evaluation
 
-Status: **Open**
+Status: **Active after M11 contract**
 
 Decision owner: project maintainers
 
@@ -26,6 +26,9 @@ Do not begin the common spikes until:
 Candidate prototypes test the same written contract. They must not resolve
 semantic ambiguity independently, because that would make their results
 incomparable.
+
+ADR 0003 makes this the project's active execution path. Baseline calibration,
+numeric AIL targets, and illustrative syntax variants are not prerequisites.
 
 ## Decision criteria
 
@@ -66,13 +69,16 @@ Main costs: weaker representation invariants, runtime and memory overhead, and a
 likely second implementation or native component once compilation and runtime
 performance become central.
 
-### OCaml
+### OCaml — not in the active comparison
 
 Likely strengths: excellent fit for typed ASTs, pattern matching, type-system
 work, and persistent data structures; concise compiler implementation.
 
 Main costs: a smaller contributor and library ecosystem, less familiar
 deployment tooling, and a less direct path to some IDE and WebAssembly targets.
+
+OCaml is excluded from M12 unless a maintainer explicitly commits to supporting
+it operationally. The active comparison is Rust versus TypeScript.
 
 ## Recommended spikes
 
@@ -103,7 +109,9 @@ Use the smallest stack that can plausibly remain the authoritative compiler
 implementation through the first native backend. A prototype can be discarded;
 a semantic oracle is expensive to rewrite.
 
-Current recommendation: test Rust as the durable-compiler candidate and
-TypeScript as the rapid-tooling baseline. Add OCaml if the team is prepared to
-support it operationally. This is a recommendation for evidence gathering, not
-a stack decision.
+Working hypothesis: Rust should win if it can represent lossless syntax,
+revision-scoped identities, semantic graphs, and validated source rewriting
+without disproportionate ownership or implementation cost. TypeScript is the
+rapid-tooling control and should win only if its iteration advantage outweighs
+weaker representation invariants and the likely need for a later native
+implementation. M12 tests that hypothesis; M13 makes the decision.

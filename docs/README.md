@@ -34,9 +34,10 @@ does not make the content of a planned artifact normative.
 The [current status](STATUS.md) names the active milestone and gives the next
 agent its immediate handoff.
 
-The accepted [M8 execution plan](m8-execution-plan.md) decomposes baseline
-calibration into reviewable sequential tasks. It is an operational delivery
-plan, not benchmark policy or language semantics. The
+The deferred [M8 execution plan](m8-execution-plan.md) records how the baseline
+calibration campaign could be resumed. M8a through M8f produced reusable
+infrastructure and non-official pilots; M8g through M8o are not active work.
+The plan is not benchmark policy or language semantics. The
 [M8 agent experiment contract](decisions/0002-m8-agent-experiment-contract.md)
 records the fixed treatment used by those tasks.
 
@@ -94,12 +95,12 @@ The job-service reference workload, its two use cases, its first requirements,
 its frozen public JSON fixtures, and its language-independent benchmark harness
 and task contract are accepted. The Rust, Go, Python, and TypeScript baselines
 are complete. M7 froze cross-baseline parity, the public and private benchmark
-inputs, and eight deterministic answer-free task starts. M8d now binds
-post-run correctness and replay to the retained final revision. M8e added the
-equivalent warm-state and cold-process measurement boundary and passed one
-non-official warm and cold pilot per baseline. The active work is M8f: run
-every readiness configuration and freeze the campaign only if they all pass.
-No official evidence exists yet.
+inputs, and eight deterministic answer-free task starts. M8a through M8f built
+calibration, replay, measurement, and provider-readiness infrastructure, but no
+official evidence exists. ADR 0003 defers the remaining calibration campaign,
+numeric benchmark targets, and illustrative syntax variants because they do not
+inform the compiler-stack decision. The active work is M11: write the
+five-construct shared contract used by the Rust and TypeScript compiler spikes.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and
 accepted.

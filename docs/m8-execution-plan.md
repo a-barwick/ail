@@ -1,9 +1,10 @@
 # M8 baseline calibration execution plan
 
-Status: **Accepted 2026-07-19**
+Status: **Deferred after M8f on 2026-07-19**
 
-Progress: P0 and M8a through M8c are complete. M8d is active. The starting-state section
-records the condition when this plan was accepted.
+Progress: P0 and M8a through M8f are complete as preparation. M8g through M8o
+are deferred. The starting-state section records the condition when this plan
+was accepted.
 
 Documentation role: operational delivery plan for M8. The
 [roadmap](roadmap.md) owns milestone scope, dependencies, non-scope, and exit
@@ -15,6 +16,13 @@ criteria. The accepted [benchmark policy](benchmarks/README.md), numbered
 
 M8 establishes the mainstream-language control group that M9 uses to set AIL
 success targets. It does not implement AIL.
+
+[ADR 0003](decisions/0003-prioritize-stack-decision.md) removes this campaign
+from the compiler-stack critical path. M8a through M8f are preserved as
+completed preparation and non-official pilot evidence. M8g through M8o are
+deferred, no official campaign evidence exists, and the active project work is
+M11. This document remains the resumption plan; it is not current launch
+authority for deferred tasks.
 
 The complete campaign requires:
 
@@ -339,9 +347,16 @@ evidence before it becomes an experiment lock.
 
 ## Launch directives
 
-The phrases `Launch P0` and `Launch M8a` through `Launch M8o` are complete task
-directives. An agent receiving one must not require a copied prompt from a prior
-conversation.
+### Current authority
+
+M8g through M8o are deferred by ADR 0003. Their phrases below describe the
+original campaign workflow but do not authorize work while M11 is active.
+Resuming any of them requires an explicit maintainer decision that first
+repairs and re-verifies the failed TypeScript UC-001 task-start gate.
+
+If maintainers explicitly resume the campaign, the phrases `Launch P0` and
+`Launch M8a` through `Launch M8o` are complete task directives. An agent
+receiving one must not require a copied prompt from a prior conversation.
 
 For every launch directive, the agent must:
 

@@ -163,8 +163,9 @@ four persistent language adapters and one shared warm/cold harness with
 functional and trace gating, native monotonic samples, percentile and variance
 derivation, throughput, process readiness, RSS, package identity, and
 network-denial observation. Its eight retained warm/cold pilots are explicitly
-non-official. M8f must pass all readiness configurations before any official
-trial or performance count.
+non-official. M8f recorded representative provider-backed readiness and an
+enforced safety-limit path. ADR 0003 defers official collection after the first
+M8g pre-start check found a TypeScript UC-001 task-start failure.
 
 Run the M8b gate with:
 

@@ -42,10 +42,11 @@ tests and fails architecture policy. The valid implementation passes both. The
 completion manifest shows that no unauthorized policy, baseline, capability,
 state, or dependency change occurred.
 
-Target milestone and scope: A future numbered scaling milestone after M9 and
-only after UC-007 and this requirement set are accepted. It is not part of
-M0–M13. Constrains application completion, compiler policy, benchmark, and
-governance. It does not prescribe one module layout.
+Target milestone and scope: A future numbered scaling milestone after the core
+semantic graph and revision protocol exist, and only after UC-007 and this
+requirement set are accepted. It is not part of M0–M13. Constrains application
+completion, compiler policy, benchmark, and governance. It does not prescribe
+one module layout.
 
 Dependencies and open questions: Depends on LANG-006, PROTO-006, PROTO-007, and
 the frozen UC-007 architecture policy. The exact cancel-job behavior and policy
@@ -224,9 +225,9 @@ implementation, a superficial helper-extraction variant, and a policy-compliant
 implementation. Hidden checks verify the final semantic graph rather than
 source layout alone.
 
-Target milestone and scope: A future numbered scaling benchmark after M9 and
-only after UC-007 is accepted. It is not part of M0–M13. Constrains benchmark
-and governance.
+Target milestone and scope: A future numbered scaling benchmark after the core
+semantic graph and revision protocol exist, and only after UC-007 is accepted.
+It is not part of M0–M13. Constrains benchmark and governance.
 
 Dependencies and open questions: Depends on NFR-001, PROTO-006, PROTO-007, and
 the frozen UC-007 workspace. Trial count, false-positive allowance, and
