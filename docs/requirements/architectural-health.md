@@ -44,7 +44,7 @@ state, or dependency change occurred.
 
 Target milestone and scope: A future numbered scaling milestone after the core
 semantic graph and revision protocol exist, and only after UC-007 and this
-requirement set are accepted. It is not part of M0–M13. Constrains application
+requirement set are accepted. It is not part of M0–M17. Constrains application
 completion, compiler policy, benchmark, and governance. It does not prescribe
 one module layout.
 
@@ -118,7 +118,7 @@ cannot be rendered as a clean result.
 
 Target milestone and scope: A future numbered scaling-protocol contract and
 implementation milestone after acceptance and after the core revision protocol
-exists. It is not part of M0–M13. Constrains the compiler protocol and policy
+exists. It is not part of M0–M17. Constrains the compiler protocol and policy
 engine, not its transport encoding.
 
 Dependencies and open questions: Depends on LANG-006 and revision-scoped
@@ -227,7 +227,7 @@ source layout alone.
 
 Target milestone and scope: A future numbered scaling benchmark after the core
 semantic graph and revision protocol exist, and only after UC-007 is accepted.
-It is not part of M0–M13. Constrains benchmark and governance.
+It is not part of M0–M17. Constrains benchmark and governance.
 
 Dependencies and open questions: Depends on NFR-001, PROTO-006, PROTO-007, and
 the frozen UC-007 workspace. Trial count, false-positive allowance, and

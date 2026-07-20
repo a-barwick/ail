@@ -4,38 +4,69 @@ Last updated: 2026-07-19
 
 ## Active milestone
 
-M12 — Comparable compiler-stack spikes
+M15 — Rust static semantics and diagnostics
 
 ## Current goal
 
-Implement the exact M11 five-construct contract in Rust and TypeScript, then
-compare the two compiler stacks using the weights frozen before implementation.
-The execution path is:
+Add the first semantic layer to the authoritative Rust compiler. The execution
+path is:
 
 ```text
 M11 five-construct contract (complete)
-  -> M12 Rust and TypeScript spikes (active)
-  -> M13 stack decision
-  -> semantic-oracle implementation
+  -> ADR 0004 Rust decision (accepted)
+  -> M14 lossless syntax and formatter (complete)
+  -> M15 static semantics and diagnostics (active)
+  -> M16 revision protocol and validated rename
+  -> M17 deterministic core interpreter
 ```
+
+M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
+candidate scorecard.
 
 The next agent should:
 
-- read the [M11 contract](../specs/README.md) and
-  [stack evaluation](stack-evaluation.md);
-- create disposable candidates under `prototypes/rust/` and
-  `prototypes/typescript/` without adding a production source tree or root
-  package manager;
-- implement the same lossless parser, canonical formatter, bounded checker,
-  structured diagnostics, revision-scoped handles, inspection, validated
-  rename, and identity-map behavior in both candidates;
-- add one candidate-neutral `python3 prototypes/check.py` command that runs the
-  shared fixtures against both implementations;
-- record implementation time, source size, test time, memory, recovery quality,
-  handle maintenance, packaging, and contributor friction; and
-- stop before choosing the authoritative compiler stack.
+- extend the existing typed syntax tree rather than reparsing canonical text;
+- build deterministic top-level and function-local symbol tables;
+- implement exact named-type checks for records, variants, functions, locals,
+  and capability calls;
+- accept capability interfaces as compiler input and verify declared effects;
+- return inferred local types and the exact structured diagnostics required by
+  the M11 fixtures;
+- preserve M14 losslessness, spans, recovery, formatter behavior, and CLI
+  commands; and
+- keep revisions, rename, execution, broader constructs, and lowering outside
+  M15.
 
-## M11 result
+## M14 result
+
+M14 created the production root Cargo workspace and `ail-compiler` crate. It
+delivered:
+
+- a lossless lexer whose token spans partition every UTF-8 source byte;
+- typed syntax for records, closed variants, functions, local bindings, and
+  capability calls;
+- deterministic missing-colon recovery with
+  `AIL.PARSE.EXPECTED_TOKEN`;
+- canonical declaration, expression, literal, effect, and record-field
+  formatting;
+- idempotent formatting across every parseable M11 fixture;
+- an `ailc` command with `check`, `format`, and `reconstruct`; and
+- seven focused conformance tests backed by all seven M11 fixture inputs and
+  the three CLI operations.
+
+The compiler intentionally performs no name or type checking yet. The
+capability-error and type-error fixtures parse and format in M14; M15 must
+produce their declared semantic diagnostics.
+
+## Stack decision
+
+[ADR 0004](decisions/0004-rust-compiler-stack.md) selects Rust as the
+authoritative compiler language through the first production backend. It
+supersedes ADR 0001 and the M12/M13 comparison path. The decision accepts Rust's
+ownership, compile-time, and contributor-learning risks and manages them in the
+production compiler rather than through a disposable TypeScript implementation.
+
+## M11 contract
 
 M11 delivered exactly five constructs:
 
@@ -47,15 +78,8 @@ M11 delivered exactly five constructs:
 
 The contract contains 24 numbered proposed language and protocol rules, seven
 canonical fixture categories, nine transport-independent protocol shapes, and
-a dependency-free checker. The checker verifies rule identifiers, accepted
-requirement traceability, exact construct count, fixture fields and coverage,
-source digests, structured diagnostics, rename edits, stale-revision rejection,
-and identity maps. Its built-in mutations prove rejection of a sixth construct,
-unknown requirement, missing protocol shape, incomplete expected result, and
-changed source.
-
-The M11 subset is fixed for comparing M12 candidates. It is proposed language
-and protocol material, not the accepted broader 20–30 construct AIL core.
+a dependency-free checker. The M11 subset remains proposed language material,
+but it is the fixed conformance boundary for M14 through M16.
 
 ## Accepted foundation
 
@@ -67,8 +91,9 @@ and protocol material, not the accepted broader 20–30 construct AIL core.
 - Cross-language normalized parity
 - Eight digest-locked answer-free task starts
 - M8a–M8f calibration infrastructure and non-official pilot evidence
-- M11 shared compiler-spike contract and fixtures
-- Stack-evaluation weights and Rust/TypeScript candidate set
+- M11 language/protocol contract and fixtures
+- ADR 0004 Rust compiler decision
+- M14 Rust lossless syntax and canonical formatter
 
 ## Completed
 
@@ -81,7 +106,13 @@ and protocol material, not the accepted broader 20–30 construct AIL core.
 - M6 — TypeScript baseline
 - M7 — Cross-baseline parity and freeze
 - M8a–M8f — Calibration preparation and readiness infrastructure
-- M11 — Compiler-stack spike contract
+- M11 — Five-construct language and protocol contract
+- M14 — Rust lossless syntax and canonical formatter
+
+## Superseded
+
+- M12 — Comparable Rust and TypeScript compiler spikes
+- M13 — Separate compiler-stack decision milestone
 
 ## Deferred
 
@@ -91,29 +122,28 @@ and protocol material, not the accepted broader 20–30 construct AIL core.
 - UC-007 — Architectural regression control
 
 These items require an explicit maintainer decision to resume. They do not
-block M12, M13, or the first semantic-oracle implementation milestone.
+block compiler implementation.
 
 ## Do not start yet
 
-- M13 stack selection before both M12 candidates and their scorecard pass
-- A production source tree or root package manager before M13 selects the stack
-- Candidate-specific syntax, semantics, diagnostics, or fixture changes
-- The broader 20–30 construct language core
+- M16 revision transactions or rename before M15 passes
+- The broader 20–30 construct language core before its rules are accepted
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
 ## Blockers
 
-None. Both M12 candidates can start from the same checked M11 contract.
+None.
 
 ## Handoff checklist
 
 After meaningful work:
 
-- keep both candidates disposable and behaviorally identical;
-- run every shared fixture through both candidates;
-- report candidate friction as evidence instead of changing the contract;
-- run `python3 prototypes/check.py`;
+- keep compiler behavior within the active milestone and numbered M11 rules;
+- add executable tests for every delivered behavior;
+- run `cargo fmt --all --check`;
+- run `cargo test --workspace`;
+- run `cargo clippy --workspace --all-targets -- -D warnings`;
 - run `python3 specs/tools/core_contract.py check`;
 - run `python3 tools/check_docs.py`; and
-- update this file and the roadmap only when the M12 exit criterion passes.
+- update this file and the roadmap only when the M15 exit criterion passes.

@@ -2,9 +2,9 @@
 
 Status: **Proposed normative contract**
 
-This directory contains the smallest shared contract needed by the M12 Rust
-and TypeScript compiler-stack spikes. It is deliberately narrower than the
-eventual AIL core.
+This directory contains the smallest fixed contract for the first authoritative
+Rust compiler milestones. It is deliberately narrower than the eventual AIL
+core.
 
 The M11 contract consists of:
 
@@ -15,8 +15,8 @@ The M11 contract consists of:
 - canonical fixtures under `fixtures/`.
 
 The JSON files are a conformance-fixture encoding, not a selected compiler
-transport. M12 candidates must implement the same rules and expected results.
-They may not use implementation behavior to fill a gap in this contract.
+transport. The Rust implementation must match the same rules and expected
+results. It may not use implementation behavior to fill a gap in this contract.
 
 Run the dependency-free contract check with:
 
@@ -24,5 +24,7 @@ Run the dependency-free contract check with:
 python3 specs/tools/core_contract.py check
 ```
 
-M11 does not authorize a production compiler tree, root package manager,
-interpreter, runtime, or candidate-specific extension.
+[ADR 0004](../docs/decisions/0004-rust-compiler-stack.md) now authorizes the
+production Rust compiler tree. M11 still does not authorize fixture-specific
+extensions, an interpreter, runtime behavior, or semantics beyond its numbered
+rules.

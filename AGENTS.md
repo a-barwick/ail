@@ -52,10 +52,11 @@ Preserve these distinctions:
 
 ## Current project state
 
-The repository is in design and validation. The first job-service use cases and
-requirements are accepted. `docs/STATUS.md` names the active benchmark
-milestone. UC-007 and the architectural health manifest are proposed future
-scaling work and do not expand the active milestone until accepted.
+The repository has entered authoritative compiler implementation. The first
+job-service use cases and requirements and the M11 five-construct contract are
+accepted inputs to the active Rust compiler milestones. `docs/STATUS.md` names
+the active milestone. UC-007 and the architectural health manifest remain
+proposed future scaling work and do not expand it until accepted.
 
 Behavior examples at this stage are non-normative and must not establish syntax.
 
@@ -63,12 +64,10 @@ The narrow normative core specification, canonical fixtures, and minimal
 transport-independent semantic protocol contract follow the use-case and
 requirements gate.
 
-Do not add a production source tree or root package manager until the core spike
-fixture has been written, the candidate prototypes have been evaluated, and the
-implementation-stack decision has been accepted.
-
-Treat prototypes as disposable evidence. Do not allow prototype choices or
-examples to become normative semantics accidentally.
+[ADR 0004](docs/decisions/0004-rust-compiler-stack.md) selects Rust and
+authorizes the root Cargo workspace and production `compiler/` tree. The M11
+contract and fixtures, not incidental implementation behavior, constrain the
+first compiler slices.
 
 ## Milestone workflow
 

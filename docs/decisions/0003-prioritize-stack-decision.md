@@ -1,6 +1,7 @@
 # ADR 0003: Prioritize the compiler-stack decision
 
-- Status: Accepted
+- Status: Accepted; stack-comparison sequence superseded by
+  [ADR 0004](0004-rust-compiler-stack.md)
 - Date: 2026-07-19
 - Owners: project maintainers
 - Documentation layer and scope: roadmap sequencing and benchmark governance
@@ -63,10 +64,10 @@ Activate M11 with only the contract required to compare compiler stacks:
 - a validated rename operation and identity map; and
 - a dependency-free contract checker.
 
-M12 implements the same contract in Rust and TypeScript. M13 selects the
-authoritative compiler stack using the weights already frozen in
-`docs/stack-evaluation.md`. The broader 20–30 construct language core becomes
-the first implementation milestone after M13.
+The original sequence called for Rust and TypeScript implementations followed
+by a stack decision. [ADR 0004](0004-rust-compiler-stack.md) supersedes that
+part of this decision: Rust is selected directly and the broader compiler work
+begins as production Rust milestones.
 
 ## Consequences
 
@@ -75,8 +76,9 @@ the first implementation milestone after M13.
   code rather than benchmark operations or illustrative syntax.
 - M8a–M8f remain available if the empirical campaign is resumed.
 - NFR-002 through NFR-005 remain product-validation requirements, but their
-  statistical sample counts no longer gate M11 through M13.
-- No production source tree or root package manager is added before M13.
+  statistical sample counts no longer gate M11 through M17.
+- No production source tree or root package manager was added before the stack
+  decision. ADR 0004 now authorizes the root Rust workspace.
 - The failed TypeScript task-start gate is recorded rather than repaired now,
   because official calibration is deferred.
 

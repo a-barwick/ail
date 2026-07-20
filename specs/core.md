@@ -1,8 +1,8 @@
 # M11 five-construct core contract
 
-Status: **Proposed normative rules for the compiler-stack spikes**
+Status: **Proposed normative rules for the first Rust compiler milestones**
 
-This document defines exactly five AIL language constructs for M12. It is not
+This document defines exactly five AIL language constructs for M14–M16. It is not
 the broader job-service language core. The rules are proposed so two candidate
 compiler implementations can be compared against one contract; acceptance of
 the eventual language core remains later work.

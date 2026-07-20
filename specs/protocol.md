@@ -1,8 +1,8 @@
 # M11 transport-independent compiler protocol
 
-Status: **Proposed normative rules for the compiler-stack spikes**
+Status: **Proposed normative rules for the first Rust compiler milestones**
 
-This field model defines the semantic interface M12 candidates must expose. It
+This field model defines the semantic interface the Rust compiler must expose. It
 does not select JSON-RPC, HTTP, a process boundary, or an on-disk database. The
 JSON fixtures are only the repository's deterministic conformance encoding.
 

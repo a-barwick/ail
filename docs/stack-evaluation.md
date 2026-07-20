@@ -1,17 +1,19 @@
 # Implementation stack evaluation
 
-Status: **Active for M12**
+Status: **Closed by maintainer decision**
 
 Decision owner: project maintainers
 
-Decision record: [decisions/0001-implementation-stack.md](decisions/0001-implementation-stack.md)
-Selection record: a new ADR created in M13 that supersedes ADR 0001
+Deferral record: [decisions/0001-implementation-stack.md](decisions/0001-implementation-stack.md)
+Selection record: [decisions/0004-rust-compiler-stack.md](decisions/0004-rust-compiler-stack.md)
 
 Documentation layer: implementation evidence plan. Candidate behavior is not
 normative language or protocol behavior.
 
-The repository is deliberately stack-neutral. The stack should be chosen using
-small comparable prototypes, not familiarity alone.
+This document preserves the comparison plan that preceded the maintainer's
+direct Rust selection. ADR 0004 accepts the foregone comparison and makes Rust
+authoritative; the criteria below remain useful as historical risks and review
+questions, not an active gate.
 
 ## Prerequisites
 
@@ -27,8 +29,9 @@ Candidate prototypes test the same written contract. They must not resolve
 semantic ambiguity independently, because that would make their results
 incomparable.
 
-ADR 0003 makes this the project's active execution path. Baseline calibration,
-numeric AIL targets, and illustrative syntax variants are not prerequisites.
+ADR 0003 made this the project's active execution path. ADR 0004 supersedes the
+candidate-comparison step. Baseline calibration, numeric AIL targets, and
+illustrative syntax variants remain outside the compiler critical path.
 
 ## Decision criteria
 
@@ -109,9 +112,7 @@ Use the smallest stack that can plausibly remain the authoritative compiler
 implementation through the first native backend. A prototype can be discarded;
 a semantic oracle is expensive to rewrite.
 
-Working hypothesis: Rust should win if it can represent lossless syntax,
-revision-scoped identities, semantic graphs, and validated source rewriting
-without disproportionate ownership or implementation cost. TypeScript is the
-rapid-tooling control and should win only if its iteration advantage outweighs
-weaker representation invariants and the likely need for a later native
-implementation. M12 tests that hypothesis; M13 makes the decision.
+Rust is selected. Its lossless-syntax, revision-identity, semantic-graph, and
+source-rewriting friction must now be managed and measured in the authoritative
+compiler rather than used as a reason to maintain a second semantic
+implementation.

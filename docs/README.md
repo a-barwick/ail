@@ -19,17 +19,17 @@ syntax.
 | Derived requirements | [requirements/README.md](requirements/README.md) | What observable capabilities and constraints follow from the use cases? | Proposed until explicitly accepted |
 | Benchmark policy | [benchmarks/README.md](benchmarks/README.md) | How are AIL and strong baselines compared fairly? | Accepted measurement policy and language-independent test data; non-normative for AIL |
 | Language design | [design-direction.md](design-direction.md) and [architectural health manifest](architecture-health.md) | Which language and compiler ideas may satisfy the requirements? | Design input; non-normative |
-| Normative specification | [M11 spike contract](../specs/README.md) | What exact source, static semantics, diagnostics, and protocol behavior are required? | Proposed rules and fixtures binding on M12 candidates; not yet accepted as the broader AIL core |
-| Implementation evidence | [stack-evaluation.md](stack-evaluation.md) and `../prototypes/` | Can a design be implemented, and in which stack? | Evidence only; cannot create semantics |
+| Normative specification | [M11 core contract](../specs/README.md) | What exact source, static semantics, diagnostics, and protocol behavior are required? | Proposed rules and fixtures binding on the first Rust compiler milestones; not yet accepted as the broader AIL core |
+| Implementation architecture | [ADR 0004](decisions/0004-rust-compiler-stack.md) | Which stack owns compiler semantics? | Rust is authoritative through the first production backend |
 
 Architecture decision records under `decisions/` explain why consequential
 choices were made. Reviews such as [spec-review.md](spec-review.md) assess the
 state of another artifact at a point in time; they do not silently update that
 artifact.
 
-The [roadmap](roadmap.md) sequences work across layers. M0–M13 is its sole
-operational sequence; the long-range outlook is not active work. A roadmap entry
-does not make the content of a planned artifact normative.
+The [roadmap](roadmap.md) sequences work across layers. M14–M17 are the current
+compiler implementation sequence; the long-range outlook is not active work. A
+roadmap entry does not make planned behavior normative.
 
 The [current status](STATUS.md) names the active milestone and gives the next
 agent its immediate handoff.
@@ -100,11 +100,14 @@ calibration, replay, measurement, and provider-readiness infrastructure, but no
 official evidence exists. ADR 0003 defers the remaining calibration campaign,
 numeric benchmark targets, and illustrative syntax variants because they do not
 inform the compiler-stack decision. M11 completed the proposed five-construct
-shared contract. The active work is M12: implement that unchanged contract in
-Rust and TypeScript and collect the predeclared stack-comparison evidence.
+shared contract. ADR 0004 selects Rust directly and supersedes the M12/M13
+comparison path. M14 delivered lossless syntax, deterministic recovery, and
+canonical formatting. The active work is M15: implement name resolution, local
+inference, capability checking, and structured diagnostics in the authoritative
+Rust compiler.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and
 accepted.
 
 There is no accepted broad AIL syntax or normative language core yet. The M11
-subset is proposed and fixed only for the M12 compiler-stack comparison.
+subset is the fixed conformance boundary for the first Rust compiler slices.
