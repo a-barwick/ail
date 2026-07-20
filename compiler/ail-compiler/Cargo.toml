@@ -1,0 +1,21 @@
+[package]
+name = "ail-compiler"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "ail_compiler"
+
+[[bin]]
+name = "ailc"
+path = "src/bin/ailc.rs"
+
+[dependencies]
+serde_json = "1.0.150"
+
+[dev-dependencies]
+serde_json = "1.0.150"
+
+[lints]
+workspace = true

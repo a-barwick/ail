@@ -1,6 +1,6 @@
 # ADR 0001: Defer authoritative implementation-stack selection
 
-- Status: Accepted
+- Status: Superseded by [ADR 0004](0004-rust-compiler-stack.md)
 - Date: 2026-07-18
 - Owners: project maintainers
 - Documentation layer and scope: implementation evidence and repository
@@ -55,6 +55,5 @@ This deferral remains valid until:
 4. one candidate demonstrates a credible path through the semantic oracle and
    first production backend.
 
-M13 records the selected stack in a new ADR and marks this deferral record
-superseded. Reopening the choice earlier requires new evidence and a separate
-reviewed decision.
+[ADR 0004](0004-rust-compiler-stack.md) records the maintainer's direct Rust
+selection and supersedes this deferral without running the comparative spikes.

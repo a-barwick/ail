@@ -9,9 +9,9 @@ interface for navigation, diagnostics, structural edits, and impact analysis.
 Human authorship ergonomics are secondary. Human auditability is a hard
 requirement.
 
-The project is in design and validation. No compiler implementation stack has
-been selected, and this repository intentionally contains no framework, root
-package manager, or generated compiler skeleton. It does contain
+The project has entered compiler implementation. Rust is the authoritative
+compiler stack, the root Cargo workspace is production code, and the frozen
+M11 contract constrains its first slices. The repository also contains
 language-independent benchmark data and dependency-free validation tooling.
 
 ## Project thesis
@@ -70,14 +70,14 @@ proposed architectural-regression feature, and
 
 The job-service workload, use cases, requirements, public JSON fixtures, and
 benchmark harness/task contract are accepted. The Rust, Go, Python, and
-TypeScript baselines are complete. The active milestone is M7: verify
-cross-baseline parity and freeze the benchmark inputs.
+TypeScript baselines and the M11 five-construct contract are complete. The
+active compiler milestone is tracked in [docs/STATUS.md](docs/STATUS.md).
 
-M0–M13 is the sole operational delivery sequence and is defined in
+The operational delivery sequence is defined in
 [docs/roadmap.md](docs/roadmap.md).
 The immediate handoff is in [docs/STATUS.md](docs/STATUS.md).
-Stack evaluation criteria and candidate spikes are in
-[docs/stack-evaluation.md](docs/stack-evaluation.md).
+The Rust decision is recorded in
+[ADR 0004](docs/decisions/0004-rust-compiler-stack.md).
 
 ## Working in this repository
 
@@ -101,13 +101,12 @@ docs/
   spec-review.md
   stack-evaluation.md
   use-cases/       Concrete application and agent-change scenarios
-prototypes/        Disposable, isolated implementation spikes
+compiler/          Authoritative Rust compiler crates
 tools/             Dependency-free repository documentation checks
 ```
 
-Do not introduce a root package manager or production source tree as part of a
-prototype. A stack decision should be accepted first so that experimental
-dependencies do not become accidental architecture.
+The root Cargo workspace and `compiler/` tree are authoritative. Keep benchmark
+baselines and any future experiments isolated from compiler semantics.
 
 ## Project policy
 

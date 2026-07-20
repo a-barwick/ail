@@ -200,10 +200,9 @@ independent reviewer can account for each changed semantic identity and
 observable behavior solely from canonical source, the manifest, and referenced
 evidence.
 
-Target milestone and scope: M2 benchmark contract and M11 diagnostic and
-protocol contract. Compiler implementation belongs to numbered milestones added
-after M13. Constrains protocol, benchmark, and governance surfaces; it does not
-require one report presentation.
+Target milestone and scope: M2 benchmark contract, M11 diagnostic and protocol
+contract, and M15–M17 compiler implementation. Constrains protocol, benchmark,
+and governance surfaces; it does not require one report presentation.
 
 Dependencies, conflicts, and open questions: Depends on PROTO-001 through
 PROTO-005. The long-term signing, retention, and provenance policy is deferred.
@@ -320,7 +319,7 @@ outcome, and no trailing effect. Repeated interpreter and candidate
 implementation runs match the logical trace oracle.
 
 Target milestone and scope: M11 dynamic-semantics contract followed by the
-numbered semantic-oracle milestones added after M13. Constrains the language and
+the M15–M17 semantic-oracle milestones. Constrains the language and
 conformance suite. Bit-reproducible build output, allocator behavior, and
 production scheduling are separate concerns.
 
@@ -351,9 +350,9 @@ including aliases and renamed display symbols. Any intentionally opaque
 boundary is represented as an explicit incomplete-coverage edge.
 
 Target milestone and scope: M11 schema, static-semantics, and impact-query
-contract. Compiler implementation belongs to numbered milestones added after
-M13. Constrains language analyzability and protocol exposure, not source file
-layout or code generation strategy.
+contract followed by M15 and M16 implementation. Constrains language
+analyzability and protocol exposure, not source file layout or code generation
+strategy.
 
 Dependencies, conflicts, and open questions: Depends on modules, generics,
 serialization identities, and rules for generated or foreign code. The first
@@ -382,9 +381,9 @@ reference fixtures, use stable field categories and ordering, identify the
 source revision, and agree with static checking and execution. A human-readable
 rendering can be derived without adding semantic information.
 
-Target milestone and scope: Minimal contract in M11; implementation in numbered
-core-protocol milestones added after M13. Constrains the transport-independent
-protocol schema and compiler, not JSON-RPC or another transport.
+Target milestone and scope: Minimal contract in M11; implementation in M15 and
+M16. Constrains the transport-independent protocol schema and compiler, not
+JSON-RPC or another transport.
 
 Dependencies, conflicts, and open questions: Depends on LANG-001 through
 LANG-005. Budgeting and transitive context expansion beyond direct dependencies
@@ -420,10 +419,9 @@ unnecessary entries. `unchecked` lists known external consumers and unavailable
 source without claiming they were analyzed. The report also confirms that
 storage authority and call ordering do not change.
 
-Target milestone and scope: Contract in M11; implementation in numbered
-core-protocol milestones added after M13. Constrains protocol and compiler
-analysis. It does not require mainstream baseline tools to expose equivalent
-data.
+Target milestone and scope: Contract in M11; implementation in M15 and M16.
+Constrains protocol and compiler analysis. It does not require mainstream
+baseline tools to expose equivalent data.
 
 Dependencies, conflicts, and open questions: Depends on LANG-005 and PROTO-003.
 Larger workloads may set a different `review` limit, but must do so before their
@@ -450,9 +448,9 @@ schema, removed identity, new priority type, stale-handle rejection, and
 explicit remapping. Every UC-003 completion artifact is bound to R1 or R2 as
 appropriate.
 
-Target milestone and scope: Minimal contract in M11; implementation in numbered
-core-protocol milestones added after M13. Constrains compiler protocol and
-structural edit clients, not persistent source-control identifiers.
+Target milestone and scope: Minimal contract in M11; implementation in M16.
+Constrains compiler protocol and structural edit clients, not persistent
+source-control identifiers.
 
 Dependencies, conflicts, and open questions: Depends on the workspace revision
 model. Handle lifetime, revision garbage collection, and concurrent client
@@ -479,7 +477,7 @@ with a missed constructor, incompatible serializer, failing fixture, and stale
 base revision each leave R1 unchanged and return categorized causes.
 
 Target milestone and scope: Complete transaction contract shape in M11;
-implementation in numbered core-protocol milestones added after M13. Constrains
+implementation in the M15 and M16 core-protocol milestones. Constrains
 protocol transactions and canonical text generation, not the internal
 refactoring algorithm or user approval policy.
 
@@ -508,10 +506,9 @@ construction, missing result handling, undeclared capability use, stale handle,
 missed schema consumer, and failed compatibility fixture. Snapshot tests verify
 stable structured fields and causality independently of prose wording.
 
-Target milestone and scope: M11 diagnostic contract followed by numbered
-core-protocol implementation milestones added after M13. Constrains
-compiler/protocol diagnostics and validation summaries; human prose remains a
-derived rendering.
+Target milestone and scope: M11 diagnostic contract followed by M15 and M16.
+Constrains compiler/protocol diagnostics and validation summaries; human prose
+remains a derived rendering.
 
 Dependencies, conflicts, and open questions: Depends on the initial diagnostic
 taxonomy and revision model. Security redaction and long-term compatibility of
@@ -707,12 +704,12 @@ the full statistical campaign:
 1. a frozen language-independent fixture and trace corpus;
 2. a baseline benchmark protocol and equivalent Rust, Go, Python, and
    TypeScript reference implementations;
-3. a five-construct language and protocol contract for compiler-stack spikes;
-4. comparable compiler-stack spikes and a stack decision;
-5. semantic-oracle implementation; and
+3. a five-construct language and protocol contract;
+4. the accepted Rust implementation-stack decision;
+5. authoritative compiler implementation through M14–M17; and
 6. resumed baseline calibration and frozen numeric targets before comparative
    AIL benchmark runs.
 
-These requirements do not authorize a production source tree or settle the
-compiler implementation stack. The common compiler spikes remain gated by
-[the stack-evaluation prerequisites](../stack-evaluation.md).
+[ADR 0004](../decisions/0004-rust-compiler-stack.md) authorizes the production
+Rust compiler tree. The numbered rules and fixtures remain authoritative over
+incidental implementation behavior.

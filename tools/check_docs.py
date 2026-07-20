@@ -21,12 +21,12 @@ IGNORED_DIRECTORIES = {
     "target",
 }
 MILESTONE_ROW = re.compile(
-    r"^\|\s*(M\d+)\s*\|.*\|\s*(Complete|Active|Planned|Deferred)\s*\|",
+    r"^\|\s*(M\d+)\s*\|.*\|\s*(Complete|Active|Planned|Deferred|Superseded)\s*\|",
     re.MULTILINE,
 )
 MILESTONE_HEADING = re.compile(r"^###\s+(M\d+)\s+.+$", re.MULTILINE)
 MILESTONE_STATUS = re.compile(
-    r"^\*\*Status:\*\*\s+(Complete|Active|Planned|Deferred)\s*$",
+    r"^\*\*Status:\*\*\s+(Complete|Active|Planned|Deferred|Superseded)\s*$",
     re.MULTILINE,
 )
 ADR_FILENAME = re.compile(r"^(\d{4})-[a-z0-9-]+\.md$")

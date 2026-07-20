@@ -10,7 +10,7 @@ normative.
 ## Milestone operating model
 
 Milestones describe reviewable capabilities, not dates. Status values are
-**Complete**, **Active**, **Planned**, and **Deferred**.
+**Complete**, **Active**, **Planned**, **Deferred**, and **Superseded**.
 
 `docs/STATUS.md` names the active milestone and gives the next agent its
 immediate handoff. Only one milestone is active unless the user explicitly
@@ -51,8 +51,12 @@ becomes active.
 | M9 | Frozen AIL success targets | Deferred | M8 campaign |
 | M10 | Illustrative AIL comparison | Deferred | — |
 | M11 | Compiler-stack spike contract | Complete | M0, M7 |
-| M12 | Comparable compiler-stack spikes | Active | M11 |
-| M13 | Compiler implementation-stack decision | Planned | M12 |
+| M12 | Comparable compiler-stack spikes | Superseded | M11 |
+| M13 | Compiler implementation-stack decision | Superseded | M11 |
+| M14 | Rust lossless syntax and canonical formatter | Complete | M11, ADR 0004 |
+| M15 | Rust static semantics and diagnostics | Active | M14 |
+| M16 | Rust revision protocol and validated rename | Planned | M15 |
+| M17 | Deterministic core interpreter | Planned | M16 |
 
 ## Delivery milestones
 
@@ -69,7 +73,7 @@ becomes active.
 - Accepted JSON fixture format
 - Accepted measure-first benchmark policy
 - Accepted deferral of the compiler-stack decision until comparable spikes
-- One operational M0–M13 roadmap with a revision-stable handoff
+- One revision-stable operational roadmap and handoff
 
 #### Exit criterion
 
@@ -322,7 +326,7 @@ through M8o are not active work and no official M8 evidence exists.
 
 M8 is delivered through the sequential M8a–M8o submilestones in the accepted
 [M8 execution plan](m8-execution-plan.md). That plan is retained so the
-campaign can be resumed explicitly; it no longer blocks M11 through M13.
+campaign can be resumed explicitly; it no longer blocks M11 through M17.
 
 #### Completed submilestone: M8a — Freeze the experiment contract
 
@@ -458,7 +462,7 @@ Official counts remain zero.
 The first M8g launch correctly stopped before any official attempt because the
 required task-start gate fails for TypeScript UC-001: its public test output
 omits `TODO(UC-001)`. Do not repair or re-freeze this campaign as part of M11
-through M13. Resuming M8 requires an explicit maintainer decision, a corrected
+through M17. Resuming M8 requires an explicit maintainer decision, a corrected
 freeze, and a new pre-collection verification pass.
 
 #### Scope
@@ -614,75 +618,160 @@ fully covered by the five-construct contract.
 
 ### M12 — Comparable compiler-stack spikes
 
-**Status:** Active
+**Status:** Superseded
+
+[ADR 0004](decisions/0004-rust-compiler-stack.md) records the maintainer's
+direct Rust selection. No Rust/TypeScript comparison or disposable compiler
+candidate will be built. The M11 fixtures instead constrain the authoritative
+Rust implementation beginning in M14.
+
+### M13 — Compiler implementation-stack decision
+
+**Status:** Superseded
+
+The owner made the decision directly in
+[ADR 0004](decisions/0004-rust-compiler-stack.md): Rust is authoritative through
+the first production backend. M14 is the concrete successor implementation
+milestone.
+
+### M14 — Rust lossless syntax and canonical formatter
+
+**Status:** Complete
 
 #### Scope
 
-- The exact M11 five-construct parser, formatter, checker, diagnostic, revision,
-  and rename subset in Rust and TypeScript
-- OCaml only if maintainers agree to support it operationally
-- Identical M11 spike-subset fixtures and protocol examples for every candidate
-- Recorded implementation time, code size, test time, memory, recovery quality,
-  handle maintenance, packaging, and contributor friction
-- No candidate-specific change to semantics
-- One candidate-neutral command that runs every spike and compares its results
+- A root Cargo workspace and authoritative Rust compiler tree
+- A lossless lexer that represents every UTF-8 source byte exactly once
+- A typed syntax tree for the five M11 constructs
+- Half-open UTF-8 byte spans on tokens and syntax nodes
+- Deterministic `AIL.PARSE.EXPECTED_TOKEN` recovery for the M11 fixture
+- Canonical formatting for declarations, expressions, literals, and record
+  initializer order
+- A small `ailc` command for lossless reconstruction, checking, and formatting
+- Executable conformance tests backed by the frozen M11 fixtures
 
 #### Non-scope
 
-- Production compiler architecture
-- Large runtime or backend work
-- Features absent from the shared spike contract
+- Name resolution or type inference
+- Capability/effect checking
+- Revision storage, inspection, rename, or identity mapping
+- Function execution or the broader job-service core
+- Native lowering
 
 #### Focused verification
 
 ```bash
-python3 prototypes/check.py
+cargo fmt --all --check
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
 python3 specs/tools/core_contract.py check
 ```
 
 #### Exit criterion
 
-Every candidate passes the same fixtures and produces a complete scorecard
-against `docs/stack-evaluation.md`.
+Every M11 source reconstructs byte-for-byte from the lossless token stream.
+Every parseable fixture produces the declared canonical source, formatting is
+idempotent, and the recovery fixture emits the declared primary diagnostic at
+the deterministic insertion point.
 
-### M13 — Compiler implementation-stack decision
+### M15 — Rust static semantics and diagnostics
+
+**Status:** Active
+
+#### Scope
+
+- Top-level and function-local name resolution
+- Exact named-type checking
+- Local `let` inference
+- Record and closed-variant construction checks
+- Capability interface input and declared-effect checking
+- Structured diagnostics and elaborated type facts for all M11 static fixtures
+
+#### Non-scope
+
+- Revision transactions and rename
+- Function execution
+- Broader core constructs
+
+#### Focused verification
+
+```bash
+cargo test --workspace
+python3 specs/tools/core_contract.py check
+```
+
+#### Exit criterion
+
+The Rust compiler matches every M11 type result and primary static diagnostic
+without fixture-specific behavior.
+
+### M16 — Rust revision protocol and validated rename
 
 **Status:** Planned
 
 #### Scope
 
-- Review M12 evidence against the predeclared weights
-- Select the authoritative compiler implementation language
-- Record the decision, rejected alternatives, risks, and follow-up work in a new
-  stack-selection ADR that supersedes ADR 0001
-- Update the roadmap with implementation milestones for the semantic oracle
-  based on the chosen stack
+- Immutable revisions and revision-scoped handles
+- Elaborated inspection
+- Atomic validated rename
+- Canonical edits, stale-revision rejection, and complete identity mapping
+- Deterministic protocol ordering
 
 #### Non-scope
 
-- Starting the production source tree before the ADR is accepted
-- Changing evaluation weights after seeing results without a separate reviewed
-  rationale
+- General semantic diffs or structural refactors
+- Function execution
+- Transport selection
 
 #### Focused verification
 
 ```bash
-python3 prototypes/check.py
-python3 tools/check_docs.py
+cargo test --workspace
+python3 specs/tools/core_contract.py check
 ```
 
 #### Exit criterion
 
-The stack-selection ADR is accepted and supersedes ADR 0001, the selected stack
-can plausibly remain authoritative through the first production backend, and
-the next semantic-oracle milestone has a concrete scope and verification plan.
+The Rust compiler matches the M11 inspection, rename, stale-edit, edit-order,
+and identity-map fixtures through a transport-independent API.
+
+### M17 — Deterministic core interpreter
+
+**Status:** Planned
+
+#### Scope
+
+- Accept the next bounded language rules required to execute the reference
+  job-service core
+- Deterministic tree-walking execution
+- Supplied capability instances and ordered observable calls
+- Runtime faults and results required by the accepted fixtures
+- AIL execution against the shared language-independent job-service corpus
+
+#### Non-scope
+
+- Native code generation
+- General concurrency
+- Production I/O adapters
+
+#### Focused verification
+
+```bash
+cargo test --workspace
+python3 benchmarks/tools/harness.py verify --language ail --visibility public
+```
+
+#### Exit criterion
+
+The authoritative interpreter executes the accepted AIL reference service and
+matches the shared public oracle without weakening the frozen behavior.
 
 ## Deferred scaling candidate: architectural regression control
 
 [UC-007](use-cases/UC-007-architectural-regression-control.md), its
 [proposed requirements](requirements/architectural-health.md), and the
 [architectural health manifest](architecture-health.md) remain a separate
-candidate validation track. They are not part of M0–M13 and do not expand a
+candidate validation track. They are not part of M0–M17 and do not expand a
 milestone implicitly.
 
 After the semantic oracle and core protocol exist, maintainers may review
@@ -693,13 +782,13 @@ requirement set. Accepted work must be added as numbered milestones with
 explicit dependencies.
 
 Architectural-health implementation should follow the core semantic graph and
-revision protocol. It does not block M11 through M13.
+revision protocol. It does not block M14 through M17.
 
-## Long-range outlook after M13
+## Long-range outlook after M17
 
 This section records intended capability order but is not an operational
-roadmap. M13 must replace the next portion with numbered milestones, one active
-at a time, based on the selected implementation stack.
+roadmap. M14 through M17 own the current compiler path; later work must become
+numbered milestones one active at a time.
 
 1. **Broader semantic oracle:** expand the M11 spike subset to the accepted
    20–30 construct job-service core, then implement parser recovery and source
