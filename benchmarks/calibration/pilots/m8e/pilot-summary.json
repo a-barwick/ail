@@ -1,0 +1,72 @@
+{
+  "m8e_pilot_summary_format": 1,
+  "official": "no",
+  "campaign_id": "m8e-non-official-pilot",
+  "configuration_id": "m8-agent-experiment-v1",
+  "records": [
+    {
+      "language": "rust",
+      "kind": "warm",
+      "path": "records/warm-rust.json",
+      "sha256": "025932e3675ed5468ce25448bc99a0e2b4379f3f7d2ca0a1aefb93dfcd0d3475",
+      "status": "included",
+      "exclusion_reason": ""
+    },
+    {
+      "language": "rust",
+      "kind": "cold",
+      "path": "records/cold-rust.json",
+      "sha256": "7cb84d611fa932a4fae6148c479c5bf480eff90c625882e87b0c64ccb9b767e9",
+      "status": "included",
+      "exclusion_reason": ""
+    },
+    {
+      "language": "go",
+      "kind": "warm",
+      "path": "records/warm-go.json",
+      "sha256": "779b73602d288f8b5ec62a55c2f78b56a1286db9c5be3b1a4dea4280e4c5cf5d",
+      "status": "included",
+      "exclusion_reason": ""
+    },
+    {
+      "language": "go",
+      "kind": "cold",
+      "path": "records/cold-go.json",
+      "sha256": "9716646fce811a0f352fec3f67f0ef8cf6ae44ba5890953f140464fcdcef4628",
+      "status": "included",
+      "exclusion_reason": ""
+    },
+    {
+      "language": "python",
+      "kind": "warm",
+      "path": "records/warm-python.json",
+      "sha256": "ae9b1924b1634c85e765a291d56978a33faf33fda0d5dd91641d782703b5d6e3",
+      "status": "included",
+      "exclusion_reason": ""
+    },
+    {
+      "language": "python",
+      "kind": "cold",
+      "path": "records/cold-python.json",
+      "sha256": "94f24fbdc7ea24a537291a8ef666adffd022a36a39089a7dd5cda966f0f8dfaa",
+      "status": "included",
+      "exclusion_reason": ""
+    },
+    {
+      "language": "typescript",
+      "kind": "warm",
+      "path": "records/warm-typescript.json",
+      "sha256": "ae4d996370ae3b37b4f56caae6b13029dae5bf6b75772b47c2dc85ccae9b8661",
+      "status": "included",
+      "exclusion_reason": ""
+    },
+    {
+      "language": "typescript",
+      "kind": "cold",
+      "path": "records/cold-typescript.json",
+      "sha256": "947be17645bc4faaa80455599907be4252e1bfa5711f330ec63c42df31cf1d41",
+      "status": "included",
+      "exclusion_reason": ""
+    }
+  ]
+}

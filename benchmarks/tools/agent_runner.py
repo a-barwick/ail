@@ -3,11 +3,15 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
+import secrets
 import signal
+import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import tomllib
@@ -17,6 +21,7 @@ from pathlib import Path
 from typing import Any, Callable, NoReturn, Protocol
 
 import task_starts as task_start_tool
+from responses_recorder import LoopbackResponsesRecorder, RecorderFailure
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -221,6 +226,23 @@ def _profile(configuration: dict[str, Any]) -> dict[str, Any]:
             "benchmarks/baselines/typescript/node_modules",
         ],
     }
+    source_roots_by_language = {
+        "rust": ["benchmarks/baselines/rust/v2/src"],
+        "go": [
+            "benchmarks/baselines/go/v2/cmd/runner",
+            "benchmarks/baselines/go/v2/domain",
+            "benchmarks/baselines/go/v2/fixture",
+            "benchmarks/baselines/go/v2/service",
+            "benchmarks/baselines/go/v2/store",
+        ],
+        "python": ["benchmarks/baselines/python/v2"],
+        "typescript": ["benchmarks/baselines/typescript/v2"],
+    }
+    source_roots = (
+        source_roots_by_language[configuration["language"]]
+        if configuration["task"] == "UC-003"
+        else []
+    )
     return {
         "permission_profile_format": 1,
         "workspace_read": "all",
@@ -237,6 +259,7 @@ def _profile(configuration: dict[str, Any]) -> dict[str, Any]:
             "target",
             *generated_by_language[configuration["language"]],
         ],
+        "workspace_source_write_roots": source_roots,
         "protected_files": protected,
         "parent_repository_read": "denied",
         "private_package_read": "denied",
@@ -409,7 +432,10 @@ def check_write_permission(prepared: PreparedTrial, raw_path: str) -> bool:
         return True
     return any(
         normalized == root or normalized.startswith(root + "/")
-        for root in profile["workspace_generated_write_roots"]
+        for root in (
+            *profile["workspace_generated_write_roots"],
+            *profile["workspace_source_write_roots"],
+        )
     )
 
 
@@ -492,6 +518,8 @@ def materialize_codex_config(
         filesystem_lines.append(f'{_toml_string(path)} = "write"')
     for path in profile["workspace_generated_write_roots"]:
         filesystem_lines.append(f'{_toml_string(path + "/**")} = "write"')
+    for path in profile["workspace_source_write_roots"]:
+        filesystem_lines.append(f'{_toml_string(path + "/**")} = "write"')
     environment = environment_allowlist(prepared, tool_path)
     environment_lines = [
         f"{key} = {_toml_string(value)}" for key, value in sorted(environment.items())
@@ -527,13 +555,9 @@ def materialize_codex_config(
             "remote_plugin = false",
             "skill_mcp_dependency_install = false",
             "",
-            "[tools]",
-            "view_image = false",
-            "web_search = false",
-            "",
             "[agents]",
             "max_threads = 1",
-            "max_depth = 0",
+            "max_depth = 1",
             "",
             "[shell_environment_policy]",
             'inherit = "none"',
@@ -547,7 +571,7 @@ def materialize_codex_config(
             'name = "M8 loopback recorder"',
             f"base_url = {_toml_string(recorder_url)}",
             'wire_api = "responses"',
-            "requires_openai_auth = true",
+            'env_key = "AIL_RECORDER_CLIENT_TOKEN"',
             "request_max_retries = 0",
             "stream_max_retries = 0",
             "stream_idle_timeout_ms = 300000",
@@ -883,6 +907,7 @@ def spawn_agent(
     codex_path: Path,
     codex_home: Path,
     recorder_url: str,
+    recorder_client_token: str,
     tool_path: str,
     prestart_observations: dict[str, Any],
 ) -> tuple[subprocess.Popen[bytes], SpawnedProcessGroup]:
@@ -914,6 +939,7 @@ def spawn_agent(
         {
             "CODEX_HOME": str(codex_home),
             "AIL_RESPONSES_RECORDER": recorder_url,
+            "AIL_RECORDER_CLIENT_TOKEN": recorder_client_token,
         }
     )
     process = subprocess.Popen(
@@ -928,6 +954,7 @@ def spawn_agent(
     assert process.stdin is not None
     process.stdin.write(prepared.prompt)
     process.stdin.close()
+    process.stdin = None
     return process, SpawnedProcessGroup(process)
 
 
@@ -1086,7 +1113,7 @@ def verify_fake_and_dry_streams() -> list[tuple[str, str]]:
 
     with tempfile.TemporaryDirectory(prefix="ail-m8c-dry-") as raw:
         root = Path(raw)
-        prepared = prepare_trial("python", "UC-001", root / "workspace")
+        prepared = prepare_trial("python", "UC-003", root / "workspace")
         observations = expected_prestart_observations(prepared)
         verify_prestart_observations(prepared, observations)
         config_home = root / "codex-home"
@@ -1119,8 +1146,16 @@ def verify_fake_and_dry_streams() -> list[tuple[str, str]]:
             prepared, "benchmarks/baselines/python/v1/job_service.py"
         ):
             _raise("runner_self_test_failed", "editable source was denied")
+        if not check_write_permission(
+            prepared, "benchmarks/baselines/python/v2/domain.py"
+        ):
+            _raise("runner_self_test_failed", "required V2 source creation was denied")
         if check_write_permission(prepared, "TASK.md"):
             _raise("runner_self_test_failed", "protected task was writable")
+        if check_write_permission(
+            prepared, "benchmarks/baselines/python/tests/test_service.py"
+        ):
+            _raise("runner_self_test_failed", "protected test was writable")
         if check_read_permission(prepared, "../benchmarks/calibration"):
             _raise("runner_self_test_failed", "parent repository was readable")
         first = root / "first.zip"
@@ -1142,14 +1177,417 @@ def verify_fake_and_dry_streams() -> list[tuple[str, str]]:
     return outcomes
 
 
-def main() -> int:
-    outcomes = verify_fake_and_dry_streams()
-    print(
-        "M8c interactive runner passed: "
-        f"{len(outcomes)} stable fake/dry terminal outcomes."
+def _verify_codex_binary(codex_path: Path) -> tuple[str, str]:
+    contract = _load_object(EXPERIMENT_CONTRACT, "runner_manifest_gate_failed")
+    if not codex_path.is_file():
+        _raise("runner_configuration_invalid", f"Codex binary missing: {codex_path}")
+    completed = subprocess.run(
+        [str(codex_path), "--version"],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        timeout=30,
     )
-    return 0
+    version = completed.stdout.decode("utf-8", "replace").strip()
+    digest = _sha256(codex_path.resolve())
+    if completed.returncode != 0 or version != contract["agent"]["agent_version"]:
+        _raise(
+            "runner_configuration_invalid",
+            f"Codex version differs: {version!r}",
+        )
+    if digest != contract["agent"]["agent_sha256"]:
+        _raise("runner_configuration_invalid", "Codex binary digest differs")
+    return version, digest
+
+
+def _write_json(path: Path, value: Any) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    return _sha256(path)
+
+
+def run_live_trial(
+    *,
+    language: str,
+    task: str,
+    destination: Path,
+    api_key: str,
+    codex_path: Path,
+    tool_path: str,
+    upstream_base_url: str = "https://api.openai.com/v1",
+) -> dict[str, Any]:
+    """Run one non-official Codex pilot through the live loopback recorder."""
+
+    destination = destination.resolve()
+    if destination.exists() and any(destination.iterdir()):
+        _raise("runner_workspace_not_fresh", f"{destination} is not empty")
+    destination.mkdir(parents=True, exist_ok=True)
+    version, agent_digest = _verify_codex_binary(codex_path)
+    trial_id = (
+        f"readiness.{language}.{task.lower().replace('-', '')}."
+        f"{time.time_ns()}"
+    )
+    workspace = destination / "workspace"
+    prepared = prepare_trial(language, task, workspace, run_starting_state=True)
+    client_token = secrets.token_urlsafe(32)
+    limits = _load_object(EXPERIMENT_CONTRACT, "runner_manifest_gate_failed")[
+        "limits"
+    ]
+
+    with LoopbackResponsesRecorder(
+        upstream_base_url=upstream_base_url,
+        upstream_api_key=api_key,
+        client_token=client_token,
+        prompt_cache_key=_sha256_bytes(trial_id.encode("utf-8")),
+        token_limit=limits["cumulative_input_tokens"],
+    ) as recorder:
+        # A real endpoint probe turns the two readiness observations into evidence
+        # before Codex is spawned.
+        recorder.probe("gpt-5.6-sol")
+        observations = expected_prestart_observations(prepared)
+        process, process_group = spawn_agent(
+            prepared,
+            codex_path=codex_path,
+            codex_home=destination / "codex-home",
+            recorder_url=recorder.url,
+            recorder_client_token=client_token,
+            tool_path=tool_path,
+            prestart_observations=observations,
+        )
+        started_ns = time.monotonic_ns()
+        try:
+            stdout, stderr = process.communicate(timeout=limits["agent_wall_seconds"])
+        except subprocess.TimeoutExpired:
+            process_group.terminate()
+            try:
+                stdout, stderr = process.communicate(
+                    timeout=limits["termination_grace_seconds"]
+                )
+            except subprocess.TimeoutExpired:
+                process_group.kill()
+                stdout, stderr = process.communicate(
+                    timeout=limits["termination_grace_seconds"]
+                )
+            timed_out = True
+        else:
+            timed_out = False
+        stopped_ns = time.monotonic_ns()
+
+    (destination / "codex.stdout.jsonl").write_bytes(stdout)
+    (destination / "codex.stderr.txt").write_bytes(stderr)
+    archive_path = destination / "final-source.zip"
+    revision_sha256, archive_sha256 = capture_final_source(workspace, archive_path)
+
+    stream = InteractiveStream(
+        trial_id,
+        wall_limit_seconds=limits["agent_wall_seconds"],
+        token_limit=limits["cumulative_input_tokens"],
+        termination_grace_seconds=limits["termination_grace_seconds"],
+    )
+    stream.start()
+    for request in recorder.requests:
+        forwarded = stream.model_request(
+            request["request_id"],
+            preflight_input_tokens=request["preflight_input_tokens"],
+            provider_input_tokens=request["provider_input_tokens"],
+            cached_input_tokens=request["cached_input_tokens"],
+            protocol_overhead_tokens=request["protocol_overhead_tokens"],
+            categories=request["categories"],
+            body=request["body"],
+        )
+        if forwarded:
+            stream.model_response(request["request_id"], request["response"])
+    if stream.cause is None:
+        if timed_out:
+            stream.stop_for_limit("timed_out")
+        elif recorder.limit_reached:
+            stream.stop_for_limit("input_token_limit")
+        elif recorder.failure is not None:
+            stream.stop_for_limit("incomplete_evidence")
+        else:
+            stream.process_result(process.returncode)
+    result = stream.finish()
+    events_path = destination / "events.jsonl"
+    events_sha256 = stream.recorder.write_jsonl(events_path)
+    bundle = {
+        "live_trial_format": 1,
+        "official": "no",
+        "trial_id": trial_id,
+        "configuration_id": CONFIGURATION_ID,
+        "language": language,
+        "task": task,
+        "terminal": {
+            "class": result.terminal_class,
+            "cause": result.terminal_cause,
+        },
+        "model": {
+            "requested": "gpt-5.6-sol",
+            "reasoning_effort": "high",
+            "agent_version": version,
+            "agent_sha256": agent_digest,
+        },
+        "inputs": {
+            "task_start_tree_sha256": prepared.task_start_tree_sha256,
+            "rendered_prompt_sha256": _sha256_bytes(prepared.prompt),
+            "permission_profile_sha256": prepared.permission_profile_sha256,
+            "prestart_observations_sha256": _sha256_bytes(
+                _canonical_payload(observations)
+            ),
+        },
+        "timing": {
+            "started_monotonic_ns": started_ns,
+            "stopped_monotonic_ns": stopped_ns,
+            "elapsed_ns": stopped_ns - started_ns,
+        },
+        "token_accounting": result.token_accounting,
+        "recorder": {
+            "request_count": len(recorder.requests),
+            "failure": recorder.failure,
+            "limit_reached": recorder.limit_reached,
+            "authorization_evidence": "redacted",
+        },
+        "process": {
+            "exit_status": process.returncode,
+            "timed_out": timed_out,
+            "stdout_path": "codex.stdout.jsonl",
+            "stdout_sha256": _sha256(destination / "codex.stdout.jsonl"),
+            "stderr_path": "codex.stderr.txt",
+            "stderr_sha256": _sha256(destination / "codex.stderr.txt"),
+        },
+        "artifacts": {
+            "events_path": "events.jsonl",
+            "events_sha256": events_sha256,
+            "events_count": len(result.events),
+            "final_source_path": "final-source.zip",
+            "final_source_tree_sha256": revision_sha256,
+            "final_source_sha256": archive_sha256,
+        },
+    }
+    bundle_path = destination / "live-trial.json"
+    _write_json(bundle_path, bundle)
+    verify_live_trial_bundle(bundle_path)
+    return bundle
+
+
+def verify_live_trial_bundle(bundle_path: Path) -> dict[str, Any]:
+    """Verify the secret-free live bundle and every referenced local artifact."""
+
+    bundle = _load_object(bundle_path, "runner_live_evidence_invalid")
+    root = bundle_path.resolve().parent
+    if (
+        bundle.get("live_trial_format") != 1
+        or bundle.get("official") != "no"
+        or bundle.get("configuration_id") != CONFIGURATION_ID
+        or bundle.get("language") not in ("rust", "go", "python", "typescript")
+        or bundle.get("task") not in ("UC-001", "UC-003")
+    ):
+        _raise("runner_live_evidence_invalid", "live trial identity differs")
+    contract = _load_object(EXPERIMENT_CONTRACT, "runner_live_evidence_invalid")
+    model = bundle.get("model")
+    if not isinstance(model, dict) or model != {
+        "requested": contract["agent"]["model_request"],
+        "reasoning_effort": contract["agent"]["reasoning_effort"],
+        "agent_version": contract["agent"]["agent_version"],
+        "agent_sha256": contract["agent"]["agent_sha256"],
+    }:
+        _raise("runner_live_evidence_invalid", "model or agent identity differs")
+
+    accounting = bundle.get("token_accounting")
+    if not isinstance(accounting, dict):
+        _raise("runner_live_evidence_invalid", "token accounting is missing")
+    requests = accounting.get("requests")
+    if not isinstance(requests, list):
+        _raise("runner_live_evidence_invalid", "request accounting is missing")
+    categories = {category: 0 for category in TOKEN_CATEGORIES}
+    total_input = 0
+    total_cached = 0
+    for index, request in enumerate(requests, start=1):
+        if not isinstance(request, dict):
+            _raise("runner_live_evidence_invalid", f"request {index} is invalid")
+        per_category = request.get("categories")
+        if (
+            not isinstance(per_category, dict)
+            or tuple(per_category) != TOKEN_CATEGORIES
+        ):
+            _raise(
+                "runner_live_evidence_invalid",
+                f"request {index} categories differ",
+            )
+        values = tuple(per_category.values())
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in values
+        ):
+            _raise(
+                "runner_live_evidence_invalid",
+                f"request {index} category count is invalid",
+            )
+        preflight = request.get("preflight_input_tokens")
+        provider = request.get("provider_input_tokens")
+        cached = request.get("cached_input_tokens")
+        overhead = request.get("protocol_overhead_tokens")
+        if (
+            not all(
+                isinstance(value, int) and not isinstance(value, bool) and value >= 0
+                for value in (preflight, provider, cached, overhead)
+            )
+            or preflight != provider
+            or sum(values) + overhead != provider
+            or cached > provider
+        ):
+            _raise(
+                "runner_live_evidence_invalid",
+                f"request {index} token reconciliation differs",
+            )
+        total_input += provider
+        total_cached += cached
+        for category, value in per_category.items():
+            categories[category] += value
+    if (
+        accounting.get("total_input_tokens") != total_input
+        or accounting.get("cached_input_tokens") != total_cached
+        or accounting.get("categories") != categories
+        or total_input > contract["limits"]["cumulative_input_tokens"]
+    ):
+        _raise("runner_live_evidence_invalid", "cumulative accounting differs")
+
+    def checked_artifact(relative: Any, digest: Any) -> Path:
+        if not isinstance(relative, str) or Path(relative).is_absolute():
+            _raise("runner_live_evidence_invalid", "artifact path is invalid")
+        path = (root / relative).resolve()
+        try:
+            path.relative_to(root)
+        except ValueError:
+            _raise("runner_live_evidence_invalid", "artifact leaves bundle root")
+        if not path.is_file() or _sha256(path) != digest:
+            _raise(
+                "runner_live_evidence_invalid",
+                f"{relative}: artifact digest differs",
+            )
+        return path
+
+    process = bundle.get("process")
+    artifacts = bundle.get("artifacts")
+    if not isinstance(process, dict) or not isinstance(artifacts, dict):
+        _raise("runner_live_evidence_invalid", "artifact metadata is missing")
+    checked_artifact(process.get("stdout_path"), process.get("stdout_sha256"))
+    checked_artifact(process.get("stderr_path"), process.get("stderr_sha256"))
+    events_path = checked_artifact(
+        artifacts.get("events_path"), artifacts.get("events_sha256")
+    )
+    checked_artifact(
+        artifacts.get("final_source_path"),
+        artifacts.get("final_source_sha256"),
+    )
+    try:
+        events = [
+            json.loads(line)
+            for line in events_path.read_text(encoding="utf-8").splitlines()
+        ]
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        _raise("runner_live_evidence_invalid", f"raw events: {error}")
+    if len(events) != artifacts.get("events_count"):
+        _raise("runner_live_evidence_invalid", "raw event count differs")
+    for sequence, event in enumerate(events, start=1):
+        if (
+            not isinstance(event, dict)
+            or event.get("sequence") != sequence
+            or event.get("trial_id") != bundle.get("trial_id")
+            or event.get("configuration_id") != CONFIGURATION_ID
+            or event.get("payload_sha256")
+            != _sha256_bytes(_canonical_payload(event.get("payload")))
+        ):
+            _raise(
+                "runner_live_evidence_invalid",
+                f"raw event {sequence} differs",
+            )
+    terminal = bundle.get("terminal")
+    if (
+        not events
+        or events[0].get("kind") != "trial.started"
+        or events[-1].get("kind") != "trial.stopped"
+        or events[-1].get("payload") != terminal
+    ):
+        _raise("runner_live_evidence_invalid", "terminal event differs")
+    if terminal == {"class": "successful", "cause": "complete"} and not requests:
+        _raise("runner_live_evidence_invalid", "successful bundle has no request")
+    return bundle
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.add_parser("self-test", help="run fake/dry runner checks")
+    live = subparsers.add_parser(
+        "run-live-trial", help="run one non-official readiness pilot"
+    )
+    live.add_argument(
+        "--language",
+        required=True,
+        choices=("rust", "go", "python", "typescript"),
+    )
+    live.add_argument("--task", required=True, choices=("UC-001", "UC-003"))
+    live.add_argument("--output", required=True, type=Path)
+    live.add_argument(
+        "--codex",
+        type=Path,
+        default=Path(shutil.which("codex") or "codex"),
+    )
+    live.add_argument("--tool-path", default=os.environ.get("PATH", ""))
+    live.add_argument("--api-key-env", default="OPENAI_API_KEY")
+    live.add_argument(
+        "--upstream-base-url", default="https://api.openai.com/v1"
+    )
+    verify = subparsers.add_parser(
+        "verify-live-trial", help="verify one retained live trial bundle"
+    )
+    verify.add_argument("bundle", type=Path)
+    return parser
+
+
+def main() -> int:
+    arguments = _parser().parse_args()
+    if arguments.command in (None, "self-test"):
+        outcomes = verify_fake_and_dry_streams()
+        print(
+            "M8c interactive runner passed: "
+            f"{len(outcomes)} stable fake/dry terminal outcomes."
+        )
+        return 0
+    if arguments.command == "verify-live-trial":
+        bundle = verify_live_trial_bundle(arguments.bundle)
+        print(f"{bundle['trial_id']}: live trial evidence verified")
+        return 0
+    api_key = os.environ.get(arguments.api_key_env)
+    if not api_key:
+        _raise(
+            "runner_credential_missing",
+            f"export {arguments.api_key_env} with an OpenAI API key; "
+            "the key is retained only by the loopback recorder and is not "
+            "placed in the trial tool environment",
+        )
+    bundle = run_live_trial(
+        language=arguments.language,
+        task=arguments.task,
+        destination=arguments.output,
+        api_key=api_key,
+        codex_path=arguments.codex,
+        tool_path=arguments.tool_path,
+        upstream_base_url=arguments.upstream_base_url,
+    )
+    print(
+        f"{bundle['trial_id']}: "
+        f"{bundle['terminal']['class']}/{bundle['terminal']['cause']}"
+    )
+    return 0 if bundle["terminal"]["cause"] == "complete" else 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (RunnerError, RecorderFailure) as error:
+        print(error, file=sys.stderr)
+        raise SystemExit(2)

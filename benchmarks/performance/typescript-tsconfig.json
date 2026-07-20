@@ -1,0 +1,13 @@
+{
+  "extends": "../baselines/typescript/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "../baselines/typescript",
+    "typeRoots": [
+      "../baselines/typescript/node_modules/@types"
+    ]
+  },
+  "include": [
+    "../baselines/typescript/v2/performance-adapter.ts"
+  ]
+}

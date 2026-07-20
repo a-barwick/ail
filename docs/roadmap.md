@@ -47,10 +47,10 @@ becomes active.
 | M5 | Python baseline | Complete | M2 |
 | M6 | TypeScript baseline | Complete | M2 |
 | M7 | Cross-baseline parity and freeze | Complete | M3–M6 |
-| M8 | Baseline agent calibration | Active | M7 |
-| M9 | Frozen AIL success targets | Planned | M8 |
-| M10 | Illustrative AIL comparison | Planned | M9 |
-| M11 | Narrow language and protocol contract | Planned | M10 |
+| M8 | Baseline agent calibration | Deferred | M7 |
+| M9 | Frozen AIL success targets | Deferred | M8 campaign |
+| M10 | Illustrative AIL comparison | Deferred | — |
+| M11 | Compiler-stack spike contract | Active | M0, M7 |
 | M12 | Comparable compiler-stack spikes | Planned | M11 |
 | M13 | Compiler implementation-stack decision | Planned | M12 |
 
@@ -311,11 +311,18 @@ start.
 
 ### M8 — Baseline agent calibration
 
-**Status:** Active
+**Status:** Deferred
+
+Deferred after M8f.
+
+[ADR 0003](decisions/0003-prioritize-stack-decision.md) removes the remaining
+statistical campaign from the compiler-stack critical path. M8a through M8f are
+preserved as benchmark infrastructure and non-official pilot evidence. M8g
+through M8o are not active work and no official M8 evidence exists.
 
 M8 is delivered through the sequential M8a–M8o submilestones in the accepted
-[M8 execution plan](m8-execution-plan.md). Only one M8 submilestone is active
-at a time.
+[M8 execution plan](m8-execution-plan.md). That plan is retained so the
+campaign can be resumed explicitly; it no longer blocks M11 through M13.
 
 #### Completed submilestone: M8a — Freeze the experiment contract
 
@@ -382,7 +389,7 @@ python3 benchmarks/tools/harness.py verify-calibration
 python3 tools/check_docs.py
 ```
 
-#### Active submilestone: M8d — Implement correctness verification and replay
+#### Completed submilestone: M8d — Implement correctness verification and replay
 
 Run the full public and separately held private oracle against the retained
 final revision after the agent stops. Verify seeded consumers, protected
@@ -393,12 +400,66 @@ M8d must reject incomplete, answer-exposing, revision-mismatched, and seeded
 regression results. It may use fake and dry evidence but must not collect
 official trials.
 
+M8d delivered a verifier-only private-package boundary, canonical retained
+source validation, protected-file and permission enforcement, task-applicable
+public/private/seed coverage, revision-bound completion evidence, and
+functional replay from a second fresh extraction. Eight fake/dry outcomes and
+a campaign-level stale-completion mutation prove that false success is rejected.
+
 #### M8d focused verification
 
 ```bash
 python3 benchmarks/tools/harness.py verify-calibration
 python3 tools/check_docs.py
 ```
+
+#### Completed submilestone: M8e — Implement performance measurement
+
+Add equivalent per-language adapters for warm-up, readiness, the shared corpus,
+monotonic latency and throughput, percentile and variance derivation, process
+creation, cold readiness, idle and peak RSS, package identity, dependency
+identity, external-access attempts, and functional correctness.
+
+M8e may run one non-official warm and cold pilot per baseline. It must not
+freeze the campaign or collect official measurements.
+
+M8e delivered persistent Rust, Go, Python, and TypeScript adapters outside the
+frozen M7 checkpoint files plus one shared harness for corpus ordering,
+functional and trace comparison, native monotonic samples, warm-up,
+throughput, nearest-rank percentiles, integer variance, load, affinity, process
+creation, readiness, idle and peak RSS, package and dependency identity,
+network-denial events, and safety classification. One explicitly non-official
+warm and cold pilot per baseline passed; official counts remain zero.
+
+#### M8e focused verification
+
+```bash
+python3 benchmarks/tools/harness.py verify-calibration
+python3 tools/check_docs.py
+```
+
+#### Completed submilestone: M8f — Readiness and campaign freeze
+
+M8f proved the provider-backed runner with three successful UC-001 pilots
+across Python, Rust, and Go. Every request reconciled exactly with provider
+usage. Separate Rust and Go UC-003 pilots correctly stopped before exceeding
+the 500,000 cumulative-input safety limit. The pinned Codex fake-upstream
+integration, all task-start gates, all four warm/cold baseline pairs, the
+calibration verifier, and documentation checks pass.
+
+The accepted readiness amendment treated representative provider success plus
+an enforced live safety-limit path as the infrastructure gate. The frozen
+summary is
+[`benchmarks/calibration/readiness/m8f-summary.json`](../benchmarks/calibration/readiness/m8f-summary.json).
+Official counts remain zero.
+
+#### Deferred remainder: M8g–M8o
+
+The first M8g launch correctly stopped before any official attempt because the
+required task-start gate fails for TypeScript UC-001: its public test output
+omits `TODO(UC-001)`. Do not repair or re-freeze this campaign as part of M11
+through M13. Resuming M8 requires an explicit maintainer decision, a corrected
+freeze, and a new pre-collection verification pass.
 
 #### Scope
 
@@ -436,7 +497,12 @@ inputs.
 
 ### M9 — Frozen AIL success targets
 
-**Status:** Planned
+**Status:** Deferred
+
+Numeric targets are frozen only after maintainers explicitly resume and
+complete the M8 statistical campaign. They must be accepted before comparative
+AIL benchmark runs, but they do not gate the language contract, compiler
+spikes, stack decision, or semantic-oracle implementation.
 
 #### Scope
 
@@ -466,7 +532,11 @@ locked configuration to which they apply.
 
 ### M10 — Illustrative AIL comparison
 
-**Status:** Planned
+**Status:** Deferred
+
+Illustrative variants are no longer a delivery gate. M11 makes syntax choices
+as numbered proposed rules with canonical fixtures, so candidate aesthetics
+cannot silently establish semantics.
 
 #### Scope
 
@@ -499,39 +569,33 @@ Reviewers can compare the variants against the accepted requirements and M9
 targets, identify the required compiler support for each, and choose a narrow
 direction without relying on aesthetics alone.
 
-### M11 — Narrow language and protocol contract
+### M11 — Compiler-stack spike contract
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 
-- The first 20–30 language constructs needed by the accepted job service
-- Canonical grammar and formatting rules
-- Public and local type rules
-- Closed result and matching behavior
-- Minimal capability and effect rules for job storage
-- Deterministic evaluation and fault boundaries
-- Module and visibility rules
-- Numbered proposed language and protocol rules traceable to the accepted
+- Exactly five language constructs needed to test the compiler architecture
+- Canonical grammar and formatting rules for those constructs
+- The minimum public-signature, local-inference, and capability checks exercised
+  by the spike fixtures
+- Numbered proposed language and protocol rules traceable to accepted
   requirements
-- Ten to twenty proposed canonical fixtures with expected canonical text,
-  types, runtime results, storage calls, and diagnostics
-- A named five-construct spike subset and the exact fixtures and protocol
-  examples that exercise only that subset
+- Proposed canonical fixtures with expected canonical text, type results, and
+  primary diagnostics
 - A transport-independent compiler interface for revisions, handles,
-  inspection, diagnostics, impact reporting, rename, and identity mapping
-- The PROTO-004 contract shape for an atomic UC-003 priority evolution,
-  including stale-base rejection, rollback, canonical edits, semantic diff,
-  diagnostics, identity mapping, and validation summary
+  inspection, diagnostics, validated rename, and identity mapping
 - A dependency-free checker for rule identifiers, requirement traceability,
-  fixture coverage, expected-result fields, and spike-subset boundaries
+  fixture coverage, and expected-result fields
 
 #### Non-scope
 
+- The broader 20–30 construct job-service core
+- Full job-service execution or storage-call semantics
 - Native code generation
 - General concurrency
 - Production replay
-- Implementation of advanced transactional refactors
+- General semantic diff and advanced transactional refactors
 - A production source tree
 
 #### Focused verification
@@ -543,10 +607,10 @@ python3 specs/tools/core_contract.py check
 #### Exit criterion
 
 Two independent readers can predict each fixture's canonical text, type result,
-runtime result, storage calls, and primary diagnostic. The compiler interface
-can represent the required objects, express the PROTO-004 transaction contract,
-and reject stale edits without choosing a transport. The checker proves that the
-five-construct spike corpus is a closed subset of the larger contract.
+and primary diagnostic. The compiler interface can represent revisions,
+revision-scoped handles, a validated rename, stale-edit rejection, and identity
+mapping without choosing a transport. The checker proves that every fixture is
+fully covered by the five-construct contract.
 
 ### M12 — Comparable compiler-stack spikes
 
@@ -621,15 +685,15 @@ the next semantic-oracle milestone has a concrete scope and verification plan.
 candidate validation track. They are not part of M0–M13 and do not expand a
 milestone implicitly.
 
-After the job-service targets are frozen in M9, maintainers may review whether
-UC-007 should be the next scaling use case. Acceptance requires its starting
-workspace, cancel-job behavior, project policy, metric catalog, fixtures,
-baseline comparison, and budgets to satisfy the gate in its requirement set.
-Accepted work must be added as numbered milestones with explicit dependencies.
+After the semantic oracle and core protocol exist, maintainers may review
+whether UC-007 should be the next scaling use case. Acceptance requires its
+starting workspace, cancel-job behavior, project policy, metric catalog,
+fixtures, baseline comparison, and budgets to satisfy the gate in its
+requirement set. Accepted work must be added as numbered milestones with
+explicit dependencies.
 
-Architectural-health implementation should normally follow the core semantic
-graph and revision protocol. Earlier benchmark or design work requires an
-explicitly coordinated milestone and still does not block M10–M13.
+Architectural-health implementation should follow the core semantic graph and
+revision protocol. It does not block M11 through M13.
 
 ## Long-range outlook after M13
 
@@ -637,9 +701,11 @@ This section records intended capability order but is not an operational
 roadmap. M13 must replace the next portion with numbered milestones, one active
 at a time, based on the selected implementation stack.
 
-1. **Semantic oracle:** parser with recovery and source preservation, canonical
-   formatter, resolver, type and minimal effect checker, typed holes, structured
-   diagnostics, deterministic interpreter, and conformance harness.
+1. **Broader semantic oracle:** expand the M11 spike subset to the accepted
+   20–30 construct job-service core, then implement parser recovery and source
+   preservation, canonical formatting, resolution, type and minimal effect
+   checking, typed holes, structured diagnostics, deterministic interpretation,
+   and the conformance harness.
 2. **Core agent protocol:** versioned revisions and handles, semantic queries,
    elaborated views, validated rename, identity maps, atomic validation, and
    bounded semantic context.

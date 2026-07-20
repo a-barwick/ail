@@ -156,9 +156,16 @@ and partial campaigns, requires final counts for a campaign marked complete,
 and rejects changed, missing, inconsistent, mixed, or incorrectly summarized
 evidence. M8c implements and dry-tests the interactive runner, generated
 least-privilege configuration, pre-start gate, event and final-source capture,
-limit enforcement, and M2 activity accounting. M8d adds post-run correctness
-and replay, and M8f must pass all readiness configurations before any official
-trial counts.
+limit enforcement, and M2 activity accounting. M8d adds final-revision
+public/private correctness, seeded-role checks, protected-artifact checks,
+revision-bound completion evidence, and fresh functional replay. M8e adds
+four persistent language adapters and one shared warm/cold harness with
+functional and trace gating, native monotonic samples, percentile and variance
+derivation, throughput, process readiness, RSS, package identity, and
+network-denial observation. Its eight retained warm/cold pilots are explicitly
+non-official. M8f recorded representative provider-backed readiness and an
+enforced safety-limit path. ADR 0003 defers official collection after the first
+M8g pre-start check found a TypeScript UC-001 task-start failure.
 
 Run the M8b gate with:
 

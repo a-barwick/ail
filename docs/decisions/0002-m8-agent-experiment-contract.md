@@ -385,16 +385,22 @@ rejects the configuration.
 ### M8f readiness gate
 
 This is the selected candidate contract, but no official evidence may exist
-before M8f. M8f must demonstrate one non-official successful agent trial for
-each of the eight language/task configurations under this exact model,
-protocol, prompt, permission, accounting, and limit treatment.
+before M8f. M8f must demonstrate at least one non-official provider-backed
+successful trial with zero-difference token reconciliation and at least one
+provider-backed safety-limit classification. The pinned-agent fake-upstream
+integration, all eight task-start gates, all eight M8e warm/cold pilots, and the
+calibration verifier must also pass.
 
-If any configuration cannot succeed under 500,000 input tokens and 600 seconds,
-if token totals cannot reconcile, if filesystem isolation or network denial is
-incomplete, or if the selected model or agent identity cannot be verified, M8f
-must stop. Changing the contract requires a reviewed amendment to this ADR and
-any affected accepted requirement before a new readiness attempt. It must not
-silently relax the campaign.
+Per-configuration agent success is not duplicated as a readiness prerequisite.
+The official campaign records every success, failure, timeout, and limit
+classification and uses the accepted make-up rules to reach the required
+successful counts. Token mismatch, incomplete isolation, an unverifiable model
+or agent identity, or a failing deterministic evidence path still blocks M8f.
+
+This paragraph is the reviewed 2026-07-19 amendment authorized by the benchmark
+owner after live readiness showed that UC-003 could correctly reach the
+500,000-token safety limit while the provider, recorder, permissions, and
+evidence paths remained healthy.
 
 ## Consequences
 
@@ -457,6 +463,6 @@ agent loop, recorder, token reconciliation, limits, process termination,
 permissions, edit/validation/repair accounting, and classifications with fake
 or dry streams. M8d must prove final public/private correctness and replay.
 
-M8f is the empirical acceptance gate for this decision. Official collection
-cannot begin until all eight readiness trials and every calibration verifier
-check pass under the unchanged contract.
+M8f is the empirical infrastructure acceptance gate for this decision.
+Official collection cannot begin until the amended representative live gate
+and every deterministic calibration verifier check pass.

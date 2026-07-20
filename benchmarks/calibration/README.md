@@ -1,6 +1,6 @@
 # M8 calibration evidence contract
 
-Status: **M8c runner contract; no official evidence**
+Status: **M8f campaign freeze; no official evidence**
 
 This directory defines the machine-checkable evidence boundary for the M8
 baseline campaign. It implements the accepted
@@ -11,20 +11,69 @@ without running an agent or measuring a baseline.
 the two rendered prompts, the six token categories, permissions, limits,
 terminal classes, performance safety rules, and evidence schema registry.
 `contract-lock.json` locks that configuration, every calibration schema, the
-verifier, the interactive runner, its tests, and the synthetic campaign recipes
-by SHA-256.
+verifiers, the interactive and performance runners, the four performance
+adapters, their tests, and the synthetic campaign recipes by SHA-256.
 
 ## Interactive runner
 
-`../tools/agent_runner.py` implements the M8a agent workflow up to the M8d
-correctness boundary. It rebuilds and verifies a locked task workspace, checks
+`../tools/agent_runner.py` and `../tools/responses_recorder.py` implement the
+M8a agent workflow up to the M8d correctness boundary. The runner rebuilds and
+verifies a locked task workspace, checks
 the exact prompt and pre-start observations, derives a least-privilege
 permission profile, and generates an isolated Codex configuration whose
 Responses provider is the loopback recorder. Optional tools, network access,
 environment inheritance, retries, delegation, history, and update checks are
-disabled. The generated keys follow the official
+disabled. UC-003 may create files only under the selected language's V2 source
+roots; tests, fixtures, task text, tool configuration, parent paths, private
+inputs, and evidence remain unwritable. UC-001 remains limited to its explicitly
+editable source files. The generated keys follow the official
 [Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml);
-M8f must still validate them against the pinned 0.144.6 executable.
+The loopback recorder binds only `127.0.0.1`, authenticates the Codex control
+process with a trial-local token, and retains the upstream API credential
+outside the trial tool environment. Before it forwards each Responses request,
+it calls the input-token endpoint for the protocol skeleton, fixed request,
+and every cumulative input prefix. Because that endpoint rejects an empty
+`input` array, the frozen skeleton uses one empty user item as its protocol
+baseline; the subsequent prefix deltas still telescope exactly to the
+delivered provider total. The input-token request uses the endpoint's documented
+field subset; response-only controls such as `include`, `store`, `stream`, and
+`prompt_cache_key` remain unchanged on the forwarded request. Pinned Codex also
+emits a local `client_metadata`
+transport field that the public Responses API rejects; the recorder removes
+that non-model field before both preflight and forwarding. Serial tool calls and
+their required outputs are counted as one prefix step so every preflight remains
+a valid Responses input. The recorder rejects the request before forwarding
+when the cumulative 500,000-token limit would be exceeded, streams the provider
+response back to Codex, and reconciles the completed provider usage with zero
+tolerance.
+
+Run one non-official live readiness trial with:
+
+```bash
+export OPENAI_API_KEY='...'
+python3 benchmarks/tools/agent_runner.py run-live-trial \
+  --language python \
+  --task UC-001 \
+  --output /tmp/ail-m8f-python-uc001
+```
+
+Repeat with each of `rust`, `go`, `python`, and `typescript` and both `UC-001`
+and `UC-003`. The output directory is required to be new or empty and receives
+the redacted request evidence, Codex JSONL, deterministic final-source archive,
+and `live-trial.json`. The command verifies the pinned Codex version and binary
+digest, runs the locked starting-state check, probes the live input-token
+endpoint, and refuses to spawn Codex when the API credential is absent. A
+deterministic fake upstream integration test also runs the exact pinned Codex
+binary with `--strict-config`; this proves the recorder path and generated
+configuration without recording a model pilot.
+
+The command verifies its completed bundle before returning. A retained bundle
+can be checked again without a credential or model call:
+
+```bash
+python3 benchmarks/tools/agent_runner.py verify-live-trial \
+  /tmp/ail-m8f-python-uc001/live-trial.json
+```
 
 The runner records complete model, tool, edit, validation, permission, process,
 and terminal payloads. It enforces the 500,000 cumulative-input-token and
@@ -35,6 +84,48 @@ final source without local Git, dependency, cache, or build artifacts.
 M8c uses only fake and dry streams. Its runner outcome is not a successful M8
 trial until M8d supplies matching public/private correctness, seeded-consumer,
 protected-artifact, and completion-evidence results for the same final revision.
+
+## Correctness and replay
+
+`../tools/correctness.py` owns the post-run verifier boundary. The separately
+held private ZIP enters only this process. The verifier checks its M7 digest and
+canonical manifest, validates the retained M8c archive and source revision,
+rechecks every protected file, and rejects retained files outside the task's
+editable files and authorized language source roots.
+
+The functional oracle must return every applicable public case, private
+behavior category, and frozen seeded role with a result for the retained
+revision. UC-001 requires its UC-001 public cases and the private categories and
+seeds that apply to UC-001. UC-003 requires the complete evolved corpus and its
+applicable private categories and seeds. A success is replayed from a second
+fresh extraction of the same archive; the complete observation must match
+before revision-bound completion evidence is emitted.
+
+## Performance measurement
+
+`../tools/performance.py` owns one equivalent measurement policy around four
+persistent adapters. Each adapter loads the shared public corpus before
+readiness, runs cases in manifest order through the accepted V2 fixture
+boundary, and uses its runtime's monotonic nanosecond clock. The harness checks
+the complete functional result and ordered store trace before a measurement can
+be included.
+
+Warm records retain per-handler samples and record readiness, three corpus
+warm-up iterations, elapsed time, request count, throughput, p50/p95/p99,
+integer population variance, host load, and affinity. The campaign verifier
+recomputes the declared statistics from the retained sample artifact.
+
+Cold records separate process creation from readiness, observe idle and peak
+resident memory, run the functional corpus, record exit status, identify every
+checkpoint and adapter file plus the dependency lock, and run beneath the
+network-denial policy. A network denial is an attempted external access and
+excludes the record. Readiness over two seconds or peak RSS over 512 MiB is
+retained with the corresponding stable exclusion.
+
+The adapters are outside the M7 checkpoint file lists; instrumentation does not
+change the accepted baseline source digests. The eight records under
+`pilots/m8e/` are one non-official warm and cold pilot per baseline. They all
+pass, but count as zero official measurements.
 
 ## Evidence layout
 
@@ -87,9 +178,9 @@ category totals plus explicit protocol overhead must equal both the preflight
 count and provider-reported usage with zero tolerance. Cached input is recorded
 as a subset and never deducted. Repeated delivery is counted every time.
 
-M8f must still prove this exact rule against the selected Codex binary and all
-eight configurations before official collection. A mismatch is incomplete
-evidence, not a permitted approximation.
+M8f proved this exact rule against the selected Codex binary with
+provider-backed successes and retained live safety-limit classifications. A
+mismatch remains incomplete evidence, not a permitted approximation.
 
 ## Verification
 
@@ -123,3 +214,9 @@ non-zero exit, wall timeout, permission violation, input-token limit, and
 incomplete evidence. It checks M2 repair accounting, pre-start rejection,
 permission boundaries, deterministic source capture, isolated Codex
 configuration, and process-group termination without invoking Codex.
+The M8d matrix additionally proves that a complete dry oracle is replayable and
+that incomplete source, unexpected answer material, stale completion revision,
+seeded regression, and replay divergence cannot be successful.
+The M8e matrix derives a deterministic warm record and cold process record from
+a fake persistent adapter and validates their schemas, sample statistics,
+functional trace, RSS, package, and external-access fields.

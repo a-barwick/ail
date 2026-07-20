@@ -1,0 +1,62 @@
+{
+  "package_manifest_format": 1,
+  "language": "rust",
+  "dependency_lock": {
+    "path": "benchmarks/baselines/rust/Cargo.lock",
+    "sha256": "a10d82b6d842432670f8c2e700fb4de519e31376b067f77617e5541364ad13ec"
+  },
+  "files": [
+    {
+      "path": "benchmarks/baselines/rust/Cargo.lock",
+      "sha256": "a10d82b6d842432670f8c2e700fb4de519e31376b067f77617e5541364ad13ec"
+    },
+    {
+      "path": "benchmarks/baselines/rust/Cargo.toml",
+      "sha256": "41c080ece449319aa1984d2f7a868494ff0c325d730a73e18d8b32501e1f5696"
+    },
+    {
+      "path": "benchmarks/baselines/rust/rust-toolchain.toml",
+      "sha256": "88f0ad85480c9890237d1d475d05a9ff3c67cd568c5ba065ead6f0dda9304430"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/Cargo.toml",
+      "sha256": "c1d0fb3306344bdebc4d8e57008c5f496817e082cc8817966f7a746df3b64c16"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/examples/performance_adapter.rs",
+      "sha256": "cea132c67260aec5dd5b3f3e167d4c1a9433d4e244fb59a83dcef236b046d259"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/codec.rs",
+      "sha256": "1081265e4d90883bcba0c50cb9a19e12e158b5dae02412eba1b8c5c9109f58d9"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/domain.rs",
+      "sha256": "a2933f044d1b117641a9b7e7ae4f88b34aa187a9c22f00f679b32db499595cab"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/lib.rs",
+      "sha256": "de1808b137f016fb6a59daf3e78738829dcc8b847c550b52598fcb7ff4bec600"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/main.rs",
+      "sha256": "49c7899086470441a5c4ce16a9ce8b4d6de20738db2890aa02d761ca2e2045c3"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/service.rs",
+      "sha256": "1616943cd6f6ecce30e3d6b9045507daa54979cc06b1b916b00fa1e827159e3c"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/src/store.rs",
+      "sha256": "03f9496bd035e627e7cb60511362e5173255f5f2761d4d93c3384858436c6b13"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/tests/checkpoints.rs",
+      "sha256": "2910443639d33fe1c37d9093f08c90f8574483dc6bc5a78b2325d5b09a5648bd"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/tests/runner_cli.rs",
+      "sha256": "a525ad023653e160844280b74031bd83e4b23f886092805829de425b8c5cbda0"
+    }
+  ]
+}

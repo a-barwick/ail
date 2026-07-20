@@ -1,0 +1,89 @@
+{
+  "readiness_summary_format": 1,
+  "official": "no",
+  "milestone": "M8f",
+  "configuration_id": "m8-agent-experiment-v1",
+  "decision": "accepted",
+  "accepted_gate": {
+    "provider_backed_success_required": 1,
+    "provider_backed_safety_limit_path_required": 1,
+    "pinned_codex_fake_upstream_required": true,
+    "all_task_starts_required": true,
+    "all_baseline_performance_pilots_required": true,
+    "calibration_verifier_required": true
+  },
+  "provider_backed_successes": [
+    {
+      "trial_id": "readiness.python.uc001.1784519573545191000",
+      "language": "python",
+      "task": "UC-001",
+      "requests": 20,
+      "total_input_tokens": 361856,
+      "cached_input_tokens": 336916,
+      "bundle_sha256": "941be9fe15468680ad69517a16a7b6f2cb6e12b97e362328627065d038c9dcf4",
+      "events_sha256": "10e0b299ffafd2f115cdfa5f8aab0bc41059369a2a963b8cc05cc947b1728f42"
+    },
+    {
+      "trial_id": "readiness.rust.uc001.1784520111054457000",
+      "language": "rust",
+      "task": "UC-001",
+      "requests": 13,
+      "total_input_tokens": 242744,
+      "cached_input_tokens": 218400,
+      "bundle_sha256": "5712e3c4658e130a64a5c8a51c3170db11cfe1ed4075869b832d4578afd30ad0",
+      "events_sha256": "fc52f29b873f870fe6cf7dda9dddd496267cb36a6f70e2d55e62140a32e93dd6"
+    },
+    {
+      "trial_id": "readiness.go.uc001.1784520689199103000",
+      "language": "go",
+      "task": "UC-001",
+      "requests": 11,
+      "total_input_tokens": 150650,
+      "cached_input_tokens": 130426,
+      "bundle_sha256": "ba3f52f8c0cf588c905794d62b822f307cc6456bf138d5ef59d09e7c6a0e1389",
+      "events_sha256": "cb1413ba54dfec89cbd41c480296cbe824f37a92026b2d602a56fe2fd2d58dd5"
+    }
+  ],
+  "provider_backed_safety_limit_results": [
+    {
+      "trial_id": "readiness.rust.uc003.1784520353947883000",
+      "language": "rust",
+      "task": "UC-003",
+      "terminal_cause": "input_token_limit",
+      "requests": 11,
+      "total_input_tokens": 478571,
+      "bundle_sha256": "96844f705159e9f5426ae051e33253cc433f1dd5bf1dcb7e17c342434dfa7417",
+      "events_sha256": "398032b5aef5a170231a078a2029b210ea7b5d2a8d218bcf315d7d1d12b080d1"
+    },
+    {
+      "trial_id": "readiness.go.uc003.1784520917924044000",
+      "language": "go",
+      "task": "UC-003",
+      "terminal_cause": "input_token_limit",
+      "requests": 10,
+      "total_input_tokens": 427590,
+      "bundle_sha256": "cff1ed59161bad949998104d00c10ec053f756676991a7a8ce3bb3497a6df765",
+      "events_sha256": "3a20b5de4d07029912f5962962f128f260f5c1115b096735c184e29fd69a832d"
+    }
+  ],
+  "performance_pilot_summary": {
+    "path": "benchmarks/calibration/pilots/m8e/pilot-summary.json",
+    "sha256": "d2a828f88ffc9024b4837a0ddc69220653930e2a9e07d4a0bd5d1d026cad5d2c",
+    "warm_passes": 4,
+    "cold_passes": 4
+  },
+  "agent": {
+    "version": "codex-cli 0.144.6",
+    "sha256": "80a3933d11a9d13ef806aa24f7bb8afc9169cfe4e9b09d6da6a92922cbde9cff"
+  },
+  "official_counts": {
+    "agent_trials": 0,
+    "warm_measurements": 0,
+    "cold_measurements": 0
+  },
+  "notes": [
+    "The representative live successes prove forwarding, exact provider reconciliation, token attribution, limit enforcement, and retained evidence.",
+    "UC-003 limit classifications are retained as non-official diagnostics and do not block the campaign freeze.",
+    "Official collection records every success, failure, timeout, and limit classification without configuration changes."
+  ]
+}

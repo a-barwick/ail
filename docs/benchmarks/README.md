@@ -12,9 +12,11 @@ TypeScript, and eventually AIL:
 The benchmark tests whether AIL helps an agent finish a correct change with less
 searching and rework. It is not a contest to produce the shortest source file.
 
-Implementation is split across M1 through M9 in
-[the roadmap](../roadmap.md). The active handoff is in
-[the status file](../STATUS.md).
+The fixture, baseline, and parity foundation was delivered in M1 through M7.
+M8a through M8f added deferred calibration infrastructure. ADR 0003 moves the
+active project work to the compiler-stack contract; the statistical campaign
+resumes before comparative AIL benchmark runs, not before compiler
+implementation. The active handoff is in [the status file](../STATUS.md).
 
 ## Decisions
 
@@ -23,9 +25,9 @@ Implementation is split across M1 through M9 in
   build that it can inspect.
 - Impact reports separate code that definitely needs an edit from code that may
   need review.
-- The four baseline languages are measured before AIL targets are set.
+- The four baseline languages are measured before numeric AIL targets are set.
 - Correctness is required from the first run. Performance and agent-efficiency
-  targets are set only after baseline calibration.
+  targets are set after baseline calibration and before comparative AIL runs.
 
 ## What “everything in the current build” means
 

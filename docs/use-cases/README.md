@@ -36,8 +36,8 @@ The shared test format and comparison rules are under
 
 ## Future cases
 
-After M9 freezes the first reference benchmark and AIL success targets, choose
-the next scaling case from:
+After the semantic oracle and core protocol can execute the first reference
+slice, choose the next scaling case from:
 
 - **UC-002 — Outbound call control:** call a remote service with explicit
   authority, timeout, cancellation, and typed failure.

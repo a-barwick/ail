@@ -1,0 +1,78 @@
+{
+  "package_manifest_format": 1,
+  "language": "typescript",
+  "dependency_lock": {
+    "path": "benchmarks/baselines/typescript/package-lock.json",
+    "sha256": "abb5831a57b46e68648a55b41a08a990ac8fd9af6fb707cd52b3590caddee894"
+  },
+  "files": [
+    {
+      "path": "benchmarks/baselines/typescript/.prettierignore",
+      "sha256": "46fbb88cb13c2c62460f37d19c1cf23d7d74d504797ffac7a1a27d1adb8dda75"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/eslint.config.mjs",
+      "sha256": "e052dd6fcf7a6885f5a005d2141b549f16b586509f429b826a8868c63af5a734"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/package-lock.json",
+      "sha256": "abb5831a57b46e68648a55b41a08a990ac8fd9af6fb707cd52b3590caddee894"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/package.json",
+      "sha256": "384a9bd458a144c87099312f947d450fdc02b857d394f82eb4ce9b4224c54c84"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/contract.test.ts",
+      "sha256": "e89b44b0ac901b7201eb3b3f7a49e045edf5c2f9c669ba01596bab7f5ca042de"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/fixture.test.ts",
+      "sha256": "cb47a2f23f01b91a59cb99155641ba968e9af364d5d2fd95f23f4ec0d5f860b2"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/runner.test.ts",
+      "sha256": "afc2e47f3257bbba7470f9d940fca759acd8bb6654db0a911b1553cb2d120cae"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/service-store.test.ts",
+      "sha256": "1403878bf3e69efa49cf93ce8972311d1140dac94727885c08cd30d77993831c"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tests/support.ts",
+      "sha256": "35113735d5a82aa5493f82eaea4d457bec315a8820dc9c9d68fec98ec1115a22"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/tsconfig.json",
+      "sha256": "91ea3d5503b3844df32cddaf000f932a9e4fc6ba66bd9bc73a84e85e47af9498"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/domain.ts",
+      "sha256": "ab67cbada5e4b6f1bf863f74959aa0e5d36453dbd41f0d8726c5522357136523"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/fixture.ts",
+      "sha256": "5ee7ea5c295ee30959648f2f1bc1fc76c372eee7fcb8aa527087976378b9d3ff"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/performance-adapter.ts",
+      "sha256": "ca1817313c8aa82a7b09be2cb9f750ed62314988655756c961a24770c6e576c1"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/runner.ts",
+      "sha256": "93d420a053373860d40d6f1f2ada6c67a98ce231afb0100d141d281c58789f3e"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/service.ts",
+      "sha256": "13d5b85e8418af069486ddaf3b27191c51a46034076fa44eeb1fc7b7e70469e8"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/store.ts",
+      "sha256": "1a37e17fc51a6ff367e529a8199e0f01e8797e72ca301e575ac3b545dd84c785"
+    },
+    {
+      "path": "benchmarks/performance/typescript-tsconfig.json",
+      "sha256": "b818b84bb957e51a6013606318de70fbaa1be26a0c66ddc02f1a3b56737dd9e0"
+    }
+  ]
+}

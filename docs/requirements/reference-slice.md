@@ -558,7 +558,7 @@ the conditions rather than promising identical generated text.
 
 ### NFR-002 — Measure all context used
 
-Status: **Accepted 2026-07-18**
+Status: **Accepted 2026-07-18; statistical collection deferred 2026-07-19**
 
 Source use cases: UC-001 and UC-003.
 
@@ -574,8 +574,12 @@ Amendment accepted 2026-07-19: [ADR 0002](../decisions/0002-m8-agent-experiment-
 replaces the initial 100,000-token pilot limit. Two ordinary interactive pilot
 runs used 273,018 and 291,581 input tokens; the lower limit would select against
 normal discovery, validation, and repair. The 500,000-token limit must be
-enforced before each model request and must pass all eight M8f readiness
-configurations before official evidence is collected.
+enforced before each model request.
+
+[ADR 0003](../decisions/0003-prioritize-stack-decision.md) defers the official
+trial counts until an executable AIL comparator exists. This measurement
+requirement remains accepted, but it does not gate the language contract,
+compiler spikes, stack decision, or semantic-oracle implementation.
 
 Rationale and agent change cost: This tests context efficiency across the whole
 correct-change loop instead of rewarding short source that requires expensive
@@ -588,9 +592,9 @@ category totals to provider usage, and publish median, range, and category
 totals for successful and failed runs separately. Task correctness is a
 prerequisite; an incomplete low-token run does not count.
 
-Target milestone and scope: M8 baseline calibration and M9 AIL target decision,
-followed by the later empirical suite. Constrains measurement and agent protocol
-output budgeting, not source token count.
+Target milestone and scope: the resumed baseline calibration and AIL target
+decision before comparative AIL benchmark runs. Constrains measurement and
+agent protocol output budgeting, not source token count.
 
 Dependencies, conflicts, and open questions: Depends on NFR-001 and a stable
 agent execution harness. After the four baseline results are recorded, the
@@ -598,7 +602,7 @@ maintainers set the AIL context target before any AIL benchmark run begins.
 
 ### NFR-003 — Measure repairs and forbid missed changes
 
-Status: **Accepted 2026-07-18**
+Status: **Accepted 2026-07-18; statistical collection deferred 2026-07-19**
 
 Source use cases: UC-001 and UC-003.
 
@@ -617,9 +621,10 @@ category. Hidden tests seed affected consumers and UC-001 invariants. Reports
 separate incomplete runs, detected repairs, escaped regressions, and final
 success.
 
-Target milestone and scope: M2 repair-cycle contract, M8 baseline measurement,
-and M9 AIL target decision. Constrains benchmark and protocol diagnostic
-quality; it does not mandate a particular repair strategy.
+Target milestone and scope: M2 repair-cycle contract and the resumed baseline
+measurement and AIL target decision before comparative AIL benchmark runs.
+Constrains benchmark and protocol diagnostic quality; it does not mandate a
+particular repair strategy.
 
 Dependencies, conflicts, and open questions: Depends on NFR-001, PROTO-002, and
 PROTO-005. The run manifest defines how pre-edit agent checks are counted. After
@@ -628,7 +633,7 @@ before any AIL benchmark run begins.
 
 ### NFR-004 — Measure handler latency and throughput
 
-Status: **Accepted 2026-07-18**
+Status: **Accepted 2026-07-18; statistical collection deferred 2026-07-19**
 
 Source use cases: UC-001 and UC-003.
 
@@ -650,10 +655,9 @@ corpus, clock, affinity, load, and summary procedure. Report median throughput,
 p50/p95/p99 latency, variance, host/container identity, and profiler evidence
 for outliers for AIL and every baseline.
 
-Target milestone and scope: M8 baseline calibration and M9 AIL target decision,
-followed by a production-runtime milestone added after M13. Constrains benchmark
-procedure, not the initial semantic oracle interpreter's production
-performance.
+Target milestone and scope: the resumed baseline calibration and AIL target
+decision before production-runtime comparison. Constrains benchmark procedure,
+not the initial semantic oracle interpreter's production performance.
 
 Dependencies, conflicts, and open questions: Depends on NFR-001 and the shared
 corpus. After baseline measurement, the maintainers set the production AIL
@@ -662,7 +666,7 @@ concurrent load are deferred.
 
 ### NFR-005 — Measure startup and memory
 
-Status: **Accepted 2026-07-18**
+Status: **Accepted 2026-07-18; statistical collection deferred 2026-07-19**
 
 Source use cases: UC-001 and UC-003.
 
@@ -683,9 +687,9 @@ time, idle and peak RSS, exit status, package manifest, dependency lock, and
 attempted external access. Functional results and traces must match before
 resource measurements count.
 
-Target milestone and scope: M8 baseline calibration and M9 AIL target decision,
-followed by a production-runtime milestone added after M13. Constrains packaging
-and measurement, not static versus dynamic linking, memory management, artifact
+Target milestone and scope: the resumed baseline calibration and AIL target
+decision before production-runtime comparison. Constrains packaging and
+measurement, not static versus dynamic linking, memory management, artifact
 format, or baseline idioms.
 
 Dependencies, conflicts, and open questions: Depends on NFR-001 and a defined
@@ -696,17 +700,18 @@ and deployment target is selected.
 
 ## Acceptance and sequencing
 
-These requirements were accepted on 2026-07-18. They authorize the next
-artifacts, in order:
+These requirements were accepted on 2026-07-18. ADR 0003 changes their delivery
+order so stack selection and semantic-oracle implementation no longer wait for
+the full statistical campaign:
 
 1. a frozen language-independent fixture and trace corpus;
 2. a baseline benchmark protocol and equivalent Rust, Go, Python, and
    TypeScript reference implementations;
-3. baseline calibration runs and frozen AIL success targets;
-4. two or three explicitly labeled **Illustrative AIL** renderings evaluated
-   against these requirements; and
-5. selection of a narrow semantic slice, proposed language rules, and proposed
-   fixtures.
+3. a five-construct language and protocol contract for compiler-stack spikes;
+4. comparable compiler-stack spikes and a stack decision;
+5. semantic-oracle implementation; and
+6. resumed baseline calibration and frozen numeric targets before comparative
+   AIL benchmark runs.
 
 These requirements do not authorize a production source tree or settle the
 compiler implementation stack. The common compiler spikes remain gated by

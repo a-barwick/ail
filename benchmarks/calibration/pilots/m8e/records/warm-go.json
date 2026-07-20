@@ -1,0 +1,70 @@
+{
+  "warm_measurement_format": 1,
+  "measurement_id": "m8e.pilot.warm.go.00",
+  "schedule_id": "pilot.warm.go.00",
+  "campaign_id": "m8e-non-official-pilot",
+  "configuration_id": "m8-agent-experiment-v1",
+  "language": "go",
+  "official": "no",
+  "round": 0,
+  "status": "included",
+  "exclusion_reason": "",
+  "environment_sha256": "e10a9d3c70aca26c3132e2fdc4361eddff397d18bd92a42065b7977194ff8b10",
+  "package_sha256": "a3b42b676bf88081a9819b71c1e32dd7b29730d259e7212820ce437e0ac41314",
+  "dependency_lock_sha256": "af43b9aa489277f1e30da053323e833ebf6f44cf1765da983e7e7b39be2e86b0",
+  "readiness": {
+    "observed": "yes",
+    "elapsed_ns": 208149708,
+    "signal": "jsonl-ready-v1"
+  },
+  "warmup": {
+    "iterations": 3,
+    "request_count": 111,
+    "checksum": 8
+  },
+  "clock": {
+    "source": "time.Since-monotonic",
+    "unit": "nanosecond",
+    "monotonic": "yes"
+  },
+  "affinity": {
+    "policy": "single-sequential-unbound",
+    "binding_supported": "no",
+    "logical_cpu_count": 8
+  },
+  "load": {
+    "before": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    },
+    "after": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    }
+  },
+  "corpus": {
+    "manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "case_count": 37,
+    "request_count": 5032,
+    "elapsed_ns": 150367958,
+    "sample_stride": 10,
+    "status": "passed",
+    "trace": "passed",
+    "external_access_monitor": "sandbox-exec-deny-report+proc-pidtaskinfo",
+    "peak_rss_bytes": 4669440
+  },
+  "latency": {
+    "sample_count": 504,
+    "samples_path": "artifacts/warm-go-samples.txt",
+    "samples_sha256": "7836ed124866abd6a18ca7479fab62f06cd8df11c0c41ee0a9a4337321b9f3dc",
+    "p50_ns": 11916,
+    "p95_ns": 206708,
+    "p99_ns": 238958,
+    "variance_ns_squared": 2531952222
+  },
+  "throughput_milli_requests_per_second": 33464576
+}

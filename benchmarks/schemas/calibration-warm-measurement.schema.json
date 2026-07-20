@@ -106,7 +106,8 @@
         "samples_sha256",
         "p50_ns",
         "p95_ns",
-        "p99_ns"
+        "p99_ns",
+        "variance_ns_squared"
       ],
       "properties": {
         "sample_count": {
@@ -126,6 +127,9 @@
           "type": "integer"
         },
         "p99_ns": {
+          "type": "integer"
+        },
+        "variance_ns_squared": {
           "type": "integer"
         }
       },
