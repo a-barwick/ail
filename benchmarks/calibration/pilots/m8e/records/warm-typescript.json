@@ -1,0 +1,70 @@
+{
+  "warm_measurement_format": 1,
+  "measurement_id": "m8e.pilot.warm.typescript.00",
+  "schedule_id": "pilot.warm.typescript.00",
+  "campaign_id": "m8e-non-official-pilot",
+  "configuration_id": "m8-agent-experiment-v1",
+  "language": "typescript",
+  "official": "no",
+  "round": 0,
+  "status": "included",
+  "exclusion_reason": "",
+  "environment_sha256": "e10a9d3c70aca26c3132e2fdc4361eddff397d18bd92a42065b7977194ff8b10",
+  "package_sha256": "d46aaccb046ace9b24a6caf329eea6dcf3fe420e7cfb429e456f1160ce399fb1",
+  "dependency_lock_sha256": "abb5831a57b46e68648a55b41a08a990ac8fd9af6fb707cd52b3590caddee894",
+  "readiness": {
+    "observed": "yes",
+    "elapsed_ns": 49968000,
+    "signal": "jsonl-ready-v1"
+  },
+  "warmup": {
+    "iterations": 3,
+    "request_count": 111,
+    "checksum": 1142
+  },
+  "clock": {
+    "source": "process.hrtime.bigint",
+    "unit": "nanosecond",
+    "monotonic": "yes"
+  },
+  "affinity": {
+    "policy": "single-sequential-unbound",
+    "binding_supported": "no",
+    "logical_cpu_count": 8
+  },
+  "load": {
+    "before": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    },
+    "after": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    }
+  },
+  "corpus": {
+    "manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "case_count": 37,
+    "request_count": 30266,
+    "elapsed_ns": 150075208,
+    "sample_stride": 10,
+    "status": "passed",
+    "trace": "passed",
+    "external_access_monitor": "sandbox-exec-deny-report+proc-pidtaskinfo",
+    "peak_rss_bytes": 61095936
+  },
+  "latency": {
+    "sample_count": 3027,
+    "samples_path": "artifacts/warm-typescript-samples.txt",
+    "samples_sha256": "a7174b8686efe922f26097911ca111d3412f300802d461a4cde437623e7000ec",
+    "p50_ns": 1291,
+    "p95_ns": 22083,
+    "p99_ns": 27125,
+    "variance_ns_squared": 69436065
+  },
+  "throughput_milli_requests_per_second": 201672217
+}

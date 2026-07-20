@@ -1,0 +1,62 @@
+{
+  "package_manifest_format": 1,
+  "language": "go",
+  "dependency_lock": {
+    "path": "benchmarks/baselines/go/go.mod",
+    "sha256": "af43b9aa489277f1e30da053323e833ebf6f44cf1765da983e7e7b39be2e86b0"
+  },
+  "files": [
+    {
+      "path": "benchmarks/baselines/go/go.mod",
+      "sha256": "af43b9aa489277f1e30da053323e833ebf6f44cf1765da983e7e7b39be2e86b0"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/cmd/performance-adapter/main.go",
+      "sha256": "3c42c76c82550b4fc62e953e4587736b0909093d6d917234b6099adfd52b3724"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/cmd/runner/main.go",
+      "sha256": "82d4661dbf1de7132ec2dae6a015fc7f2a11087f7dcd6fc9676bbcab1b3e91cc"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/cmd/runner/main_test.go",
+      "sha256": "7c429d86f80453a800c466ba956fd8257279ae5b1228865478be6983a874b795"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/contract/checkpoints_test.go",
+      "sha256": "d96ef04ff507342cc61c0ab427839d334c83c373969e24d5fec9fde20920b11c"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/domain/domain.go",
+      "sha256": "a5a1913e6cf076bf38898a43661a8696ef72536545c39846a01c28924e73bbcc"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/domain/domain_test.go",
+      "sha256": "a4feb154e54d0f4c61dded7268a680bf974aa333c3e1b4d81657cee64e808775"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/fixture/codec.go",
+      "sha256": "aefee2bc16607b9e02692827b4122a40d21a4cc4195c1fd8fe46f30dc087352f"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/fixture/codec_test.go",
+      "sha256": "7808ec22fc5f1ceb0db27e0b85c0d418e21649a925ce57aa705eb9b72e598733"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/service/service.go",
+      "sha256": "0bccaebddeaa1465713fab99e400f7bfdf7b2cdcf4e8fb720f47555608d84319"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/service/service_test.go",
+      "sha256": "71dd622b603ad5bafaa4013158fe88b8422726b349ba28da6dfd374d04bf75c0"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/store/store.go",
+      "sha256": "8aa497b853debfafef1a006aebdcd677cd1fb2e3671f1d753068a732bf12d16a"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/store/store_test.go",
+      "sha256": "4bef5ca63cb9d126dc48dc4cf0b1cb07a69218569c3e889cb602e64671337578"
+    }
+  ]
+}

@@ -159,8 +159,12 @@ least-privilege configuration, pre-start gate, event and final-source capture,
 limit enforcement, and M2 activity accounting. M8d adds final-revision
 public/private correctness, seeded-role checks, protected-artifact checks,
 revision-bound completion evidence, and fresh functional replay. M8e adds
-performance measurement, and M8f must pass all readiness configurations before
-any official trial counts.
+four persistent language adapters and one shared warm/cold harness with
+functional and trace gating, native monotonic samples, percentile and variance
+derivation, throughput, process readiness, RSS, package identity, and
+network-denial observation. Its eight retained warm/cold pilots are explicitly
+non-official. M8f must pass all readiness configurations before any official
+trial or performance count.
 
 Run the M8b gate with:
 

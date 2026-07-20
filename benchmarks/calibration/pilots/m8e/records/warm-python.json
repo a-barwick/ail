@@ -1,0 +1,70 @@
+{
+  "warm_measurement_format": 1,
+  "measurement_id": "m8e.pilot.warm.python.00",
+  "schedule_id": "pilot.warm.python.00",
+  "campaign_id": "m8e-non-official-pilot",
+  "configuration_id": "m8-agent-experiment-v1",
+  "language": "python",
+  "official": "no",
+  "round": 0,
+  "status": "included",
+  "exclusion_reason": "",
+  "environment_sha256": "e10a9d3c70aca26c3132e2fdc4361eddff397d18bd92a42065b7977194ff8b10",
+  "package_sha256": "38ccb8ceb43b595fba402fd929aaa90c1e3849977924813bf318eeeba125f92e",
+  "dependency_lock_sha256": "51317d86e86dbd1497232d1c7e7e868f1f04ef225ba93d8016a7bf5ab1a60306",
+  "readiness": {
+    "observed": "yes",
+    "elapsed_ns": 57605458,
+    "signal": "jsonl-ready-v1"
+  },
+  "warmup": {
+    "iterations": 3,
+    "request_count": 111,
+    "checksum": 1142
+  },
+  "clock": {
+    "source": "time.perf_counter_ns",
+    "unit": "nanosecond",
+    "monotonic": "yes"
+  },
+  "affinity": {
+    "policy": "single-sequential-unbound",
+    "binding_supported": "no",
+    "logical_cpu_count": 8
+  },
+  "load": {
+    "before": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    },
+    "after": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    }
+  },
+  "corpus": {
+    "manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "case_count": 37,
+    "request_count": 13209,
+    "elapsed_ns": 150061292,
+    "sample_stride": 10,
+    "status": "passed",
+    "trace": "passed",
+    "external_access_monitor": "sandbox-exec-deny-report+proc-pidtaskinfo",
+    "peak_rss_bytes": 21577728
+  },
+  "latency": {
+    "sample_count": 1321,
+    "samples_path": "artifacts/warm-python-samples.txt",
+    "samples_sha256": "7b00324cd626a6675c2e19a97278f4b8e376802e961ca8617d3ad7c02299ccec",
+    "p50_ns": 8542,
+    "p95_ns": 37334,
+    "p99_ns": 40458,
+    "variance_ns_squared": 71329614
+  },
+  "throughput_milli_requests_per_second": 88024032
+}

@@ -95,10 +95,11 @@ its frozen public JSON fixtures, and its language-independent benchmark harness
 and task contract are accepted. The Rust, Go, Python, and TypeScript baselines
 are complete. M7 froze cross-baseline parity, the public and private benchmark
 inputs, and eight deterministic answer-free task starts. M8d now binds
-post-run correctness and replay to the retained final revision. The active work
-is M8e: implement equivalent warm-state and cold-process measurement adapters
-without collecting official evidence. No official evidence
-exists yet.
+post-run correctness and replay to the retained final revision. M8e added the
+equivalent warm-state and cold-process measurement boundary and passed one
+non-official warm and cold pilot per baseline. The active work is M8f: run
+every readiness configuration and freeze the campaign only if they all pass.
+No official evidence exists yet.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and
 accepted.

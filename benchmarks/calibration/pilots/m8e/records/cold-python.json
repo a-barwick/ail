@@ -1,0 +1,55 @@
+{
+  "cold_measurement_format": 1,
+  "measurement_id": "m8e.pilot.cold.python.00",
+  "schedule_id": "pilot.cold.python.00",
+  "campaign_id": "m8e-non-official-pilot",
+  "configuration_id": "m8-agent-experiment-v1",
+  "language": "python",
+  "official": "no",
+  "round": 0,
+  "status": "included",
+  "exclusion_reason": "",
+  "environment_sha256": "e10a9d3c70aca26c3132e2fdc4361eddff397d18bd92a42065b7977194ff8b10",
+  "package_manifest_path": "artifacts/cold-python-package.json",
+  "package_manifest_sha256": "38ccb8ceb43b595fba402fd929aaa90c1e3849977924813bf318eeeba125f92e",
+  "dependency_lock_sha256": "51317d86e86dbd1497232d1c7e7e868f1f04ef225ba93d8016a7bf5ab1a60306",
+  "clock": {
+    "source": "time.perf_counter_ns",
+    "unit": "nanosecond",
+    "monotonic": "yes"
+  },
+  "affinity": {
+    "policy": "single-sequential-unbound",
+    "binding_supported": "no",
+    "logical_cpu_count": 8
+  },
+  "load": {
+    "before": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    },
+    "after": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    }
+  },
+  "readiness_signal": "jsonl-ready-v1",
+  "process_creation_ns": 1914459,
+  "readiness_ns": 59764542,
+  "idle_rss_bytes": 21430272,
+  "peak_rss_bytes": 21610496,
+  "exit_status": 0,
+  "external_access_attempts": 0,
+  "corpus": {
+    "manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "case_count": 37,
+    "elapsed_ns": 1108708,
+    "status": "passed",
+    "trace": "passed",
+    "external_access_monitor": "sandbox-exec-deny-report+proc-pidtaskinfo"
+  }
+}

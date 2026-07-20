@@ -1,6 +1,6 @@
 # M8 calibration evidence contract
 
-Status: **M8d correctness and replay contract; no official evidence**
+Status: **M8e performance measurement contract; no official evidence**
 
 This directory defines the machine-checkable evidence boundary for the M8
 baseline campaign. It implements the accepted
@@ -11,8 +11,8 @@ without running an agent or measuring a baseline.
 the two rendered prompts, the six token categories, permissions, limits,
 terminal classes, performance safety rules, and evidence schema registry.
 `contract-lock.json` locks that configuration, every calibration schema, the
-verifier, the interactive runner, its tests, and the synthetic campaign recipes
-by SHA-256.
+verifiers, the interactive and performance runners, the four performance
+adapters, their tests, and the synthetic campaign recipes by SHA-256.
 
 ## Interactive runner
 
@@ -54,6 +54,32 @@ seeds that apply to UC-001. UC-003 requires the complete evolved corpus and its
 applicable private categories and seeds. A success is replayed from a second
 fresh extraction of the same archive; the complete observation must match
 before revision-bound completion evidence is emitted.
+
+## Performance measurement
+
+`../tools/performance.py` owns one equivalent measurement policy around four
+persistent adapters. Each adapter loads the shared public corpus before
+readiness, runs cases in manifest order through the accepted V2 fixture
+boundary, and uses its runtime's monotonic nanosecond clock. The harness checks
+the complete functional result and ordered store trace before a measurement can
+be included.
+
+Warm records retain per-handler samples and record readiness, three corpus
+warm-up iterations, elapsed time, request count, throughput, p50/p95/p99,
+integer population variance, host load, and affinity. The campaign verifier
+recomputes the declared statistics from the retained sample artifact.
+
+Cold records separate process creation from readiness, observe idle and peak
+resident memory, run the functional corpus, record exit status, identify every
+checkpoint and adapter file plus the dependency lock, and run beneath the
+network-denial policy. A network denial is an attempted external access and
+excludes the record. Readiness over two seconds or peak RSS over 512 MiB is
+retained with the corresponding stable exclusion.
+
+The adapters are outside the M7 checkpoint file lists; instrumentation does not
+change the accepted baseline source digests. The eight records under
+`pilots/m8e/` are one non-official warm and cold pilot per baseline. They all
+pass, but count as zero official measurements.
 
 ## Evidence layout
 
@@ -145,3 +171,6 @@ configuration, and process-group termination without invoking Codex.
 The M8d matrix additionally proves that a complete dry oracle is replayable and
 that incomplete source, unexpected answer material, stale completion revision,
 seeded regression, and replay divergence cannot be successful.
+The M8e matrix derives a deterministic warm record and cold process record from
+a fake persistent adapter and validates their schemas, sample statistics,
+functional trace, RSS, package, and external-access fields.

@@ -4,28 +4,30 @@ Last updated: 2026-07-19
 
 ## Active milestone
 
-M8 — Baseline agent calibration (M8e: performance measurement)
+M8 — Baseline agent calibration (M8f: readiness and campaign freeze)
 
 ## Current goal
 
-Implement equivalent warm-state and cold-process measurement adapters for all
-four baselines. Non-official pilots are allowed; no official agent or
-performance evidence exists yet.
+Run the complete non-official readiness matrix and freeze the campaign only if
+every language/task agent configuration and every baseline performance
+configuration passes under the locked limits. No official agent or performance
+evidence exists yet.
 
 The next agent should:
 
-- follow M8e in the
+- follow M8f in the
   [accepted M8 execution plan](m8-execution-plan.md);
-- implement readiness, warm-up, shared-corpus, monotonic timing, latency,
-  throughput, percentile, variance, load, and affinity recording;
-- implement process creation, cold readiness, idle and peak RSS, package and
-  dependency identity, external-access recording, and correctness gating;
-- run only the bounded non-official warm and cold pilots allowed by M8e; and
-- stop before the M8f readiness freeze or any official evidence.
+- run one non-official agent pilot for every language/task pair;
+- rerun one warm and cold pilot for every baseline under the accepted M8e
+  measurement boundary;
+- prove the exact M8a token rule against the pinned Codex executable;
+- freeze all configuration artifacts, digests, and the balanced trial order
+  only if every readiness path passes `verify-calibration`; and
+- stop before M8g or any official evidence.
 
 ## Starting point
 
-The following work is accepted and should not be redesigned in M8e:
+The following work is accepted and should not be redesigned in M8f:
 
 - [UC-001 request validation and persistence](use-cases/UC-001-request-validation-and-persistence.md)
 - [UC-003 public schema evolution](use-cases/UC-003-public-schema-evolution.md)
@@ -83,6 +85,7 @@ Key decisions:
 - M8b — Calibration evidence contracts and verifier
 - M8c — Interactive agent runner
 - M8d — Correctness verification and replay
+- M8e — Warm-state and cold-process performance measurement
 
 M1 delivered 37 canonical public JSON cases, a machine-readable schema, a
 dependency-free semantic checker and formatter, negative-path tool tests, and a
@@ -162,7 +165,23 @@ revisions, seeded regressions, and replay divergence. The campaign verifier
 also rejects stale completion artifacts. No model ran and no official evidence
 was recorded.
 
-## After M8e
+M8e added persistent per-language adapters outside the frozen M7 checkpoint
+files and one shared measurement harness. The harness verifies the complete
+37-case functional result and ordered traces before measuring; records native
+monotonic handler samples, warm-up, throughput, nearest-rank p50/p95/p99,
+integer variance, load, and affinity; and measures process creation, readiness,
+idle and peak RSS, package and dependency identity, exit status, and
+network-denial events. The calibration verifier derives latency statistics from
+the retained samples and checks package identity.
+
+One explicitly non-official warm and cold pilot per baseline passed. All eight
+records are retained under
+[`benchmarks/calibration/pilots/m8e`](../benchmarks/calibration/pilots/m8e);
+they match the functional output and trace oracle, report zero external-access
+attempts, and remain within the frozen cold-start and peak-RSS limits. Official
+counts remain zero.
+
+## Active next
 
 - M8f — Run readiness pilots and freeze the campaign
 - M9 — Frozen AIL success targets
@@ -172,7 +191,7 @@ was recorded.
 [UC-007 architectural regression control](use-cases/UC-007-architectural-regression-control.md),
 its [proposed requirements](requirements/architectural-health.md), and the
 [architectural health manifest](architecture-health.md) define a later scaling
-gate. They do not expand M8e or authorize implementation before review and
+gate. They do not expand M8f or authorize implementation before review and
 acceptance.
 
 ## Do not start yet
@@ -189,9 +208,9 @@ Those depend on later M8 submilestones or later roadmap milestones.
 
 ## Blockers
 
-None recorded for M8e. Performance adapters must preserve M8d correctness
-gating and the frozen M8a treatment while producing evidence that satisfies the
-M8b contracts.
+None recorded for M8f. The readiness gate must preserve the accepted M8a
+treatment, M8d correctness boundary, and M8e performance boundary. Any failed
+configuration stops the freeze and must be resolved before official collection.
 
 ## Handoff checklist
 
@@ -205,5 +224,5 @@ After meaningful work:
 - run `python3 tools/check_docs.py`; and
 - update the roadmap only when the milestone exit criterion passes.
 
-For M8e, keep official counts at zero, retain every non-official pilot
-classification, and leave a concise handoff for M8f.
+For M8f, keep official counts at zero, retain every readiness classification,
+and do not freeze the campaign unless every required path passes.

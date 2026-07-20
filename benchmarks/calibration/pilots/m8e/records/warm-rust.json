@@ -1,0 +1,70 @@
+{
+  "warm_measurement_format": 1,
+  "measurement_id": "m8e.pilot.warm.rust.00",
+  "schedule_id": "pilot.warm.rust.00",
+  "campaign_id": "m8e-non-official-pilot",
+  "configuration_id": "m8-agent-experiment-v1",
+  "language": "rust",
+  "official": "no",
+  "round": 0,
+  "status": "included",
+  "exclusion_reason": "",
+  "environment_sha256": "e10a9d3c70aca26c3132e2fdc4361eddff397d18bd92a42065b7977194ff8b10",
+  "package_sha256": "0aed4ac8c74fee04c607f9bb633e82e73eb8eb30fddc6d4a3354ab8ea3d2aad5",
+  "dependency_lock_sha256": "a10d82b6d842432670f8c2e700fb4de519e31376b067f77617e5541364ad13ec",
+  "readiness": {
+    "observed": "yes",
+    "elapsed_ns": 502435750,
+    "signal": "jsonl-ready-v1"
+  },
+  "warmup": {
+    "iterations": 3,
+    "request_count": 111,
+    "checksum": 8
+  },
+  "clock": {
+    "source": "std::time::Instant",
+    "unit": "nanosecond",
+    "monotonic": "yes"
+  },
+  "affinity": {
+    "policy": "single-sequential-unbound",
+    "binding_supported": "no",
+    "logical_cpu_count": 8
+  },
+  "load": {
+    "before": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    },
+    "after": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    }
+  },
+  "corpus": {
+    "manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "case_count": 37,
+    "request_count": 3256,
+    "elapsed_ns": 150859959,
+    "sample_stride": 10,
+    "status": "passed",
+    "trace": "passed",
+    "external_access_monitor": "sandbox-exec-deny-report+proc-pidtaskinfo",
+    "peak_rss_bytes": 4161536
+  },
+  "latency": {
+    "sample_count": 326,
+    "samples_path": "artifacts/warm-rust-samples.txt",
+    "samples_sha256": "855f84c38ea933350ab1d60e0436d47733dc5f86afc4e4351b8ceb2900d27e81",
+    "p50_ns": 32584,
+    "p95_ns": 152792,
+    "p99_ns": 208625,
+    "variance_ns_squared": 1463564159
+  },
+  "throughput_milli_requests_per_second": 21582930
+}

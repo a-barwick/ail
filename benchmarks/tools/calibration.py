@@ -70,12 +70,21 @@ LOCKED_ARTIFACTS = (
     "benchmarks/schemas/calibration-raw-event.schema.json",
     "benchmarks/schemas/calibration-report.schema.json",
     "benchmarks/schemas/calibration-warm-measurement.schema.json",
+    "benchmarks/baselines/go/v2/cmd/performance-adapter/main.go",
+    "benchmarks/baselines/python/performance_adapter.py",
+    "benchmarks/baselines/rust/v2/examples/performance_adapter.rs",
+    "benchmarks/baselines/typescript/v2/performance-adapter.ts",
+    "benchmarks/performance/README.md",
+    "benchmarks/performance/typescript-tsconfig.json",
     "benchmarks/tests/test_agent_runner.py",
     "benchmarks/tests/test_calibration.py",
     "benchmarks/tests/test_correctness.py",
+    "benchmarks/tests/test_performance.py",
+    "benchmarks/tests/support/fake_performance_adapter.py",
     "benchmarks/tools/agent_runner.py",
     "benchmarks/tools/calibration.py",
     "benchmarks/tools/correctness.py",
+    "benchmarks/tools/performance.py",
 )
 PROMPT_PREFIX = (
     "Complete the frozen task below in the supplied answer-free workspace.\n"
@@ -773,6 +782,7 @@ def _check_measurement(
     kind: str,
     campaign: dict[str, Any],
     artifacts: dict[str, dict[str, Any]],
+    paths: dict[str, Path],
 ) -> None:
     record_id = record["measurement_id"]
     if record["campaign_id"] != campaign["campaign_id"]:
@@ -790,7 +800,13 @@ def _check_measurement(
     if kind == "warm_measurement":
         reference_path = record["latency"]["samples_path"]
         reference_sha = record["latency"]["samples_sha256"]
-        for key in ("sample_count", "p50_ns", "p95_ns", "p99_ns"):
+        for key in (
+            "sample_count",
+            "p50_ns",
+            "p95_ns",
+            "p99_ns",
+            "variance_ns_squared",
+        ):
             _nonnegative_integer(
                 record["latency"][key], "warm_measurement_invalid", f"{record_id}.{key}"
             )
@@ -853,6 +869,55 @@ def _check_measurement(
     ]
     if len(matching) != 1 or matching[0]["sha256"] != reference_sha:
         _raise("evidence_artifact_missing", f"{reference_path}: not indexed")
+    artifact_path = paths[matching[0]["record_id"]]
+    if kind == "warm_measurement":
+        try:
+            samples = [
+                int(line)
+                for line in artifact_path.read_text(encoding="utf-8").splitlines()
+            ]
+        except (OSError, UnicodeDecodeError, ValueError) as error:
+            _raise("warm_measurement_invalid", f"{reference_path}: {error}")
+        if len(samples) != record["latency"]["sample_count"] or any(
+            sample < 0 for sample in samples
+        ):
+            _raise(
+                "warm_measurement_invalid",
+                f"{record_id}: sample count or value differs",
+            )
+        ordered = sorted(samples)
+
+        def percentile(value: int) -> int:
+            index = max(0, (value * len(ordered) + 99) // 100 - 1)
+            return ordered[index]
+
+        mean = sum(samples) // len(samples)
+        variance = sum((sample - mean) ** 2 for sample in samples) // len(samples)
+        if (
+            record["latency"]["p50_ns"] != percentile(50)
+            or record["latency"]["p95_ns"] != percentile(95)
+            or record["latency"]["p99_ns"] != percentile(99)
+            or record["latency"]["variance_ns_squared"] != variance
+        ):
+            _raise(
+                "warm_measurement_invalid",
+                f"{record_id}: percentile or variance differs from samples",
+            )
+    else:
+        package = _load_object(artifact_path, "cold_measurement_invalid")
+        if (
+            package.get("package_manifest_format") != 1
+            or package.get("language") != record["language"]
+            or not isinstance(package.get("dependency_lock"), dict)
+            or package["dependency_lock"].get("sha256")
+            != record["dependency_lock_sha256"]
+            or not isinstance(package.get("files"), list)
+            or not package["files"]
+        ):
+            _raise(
+                "cold_measurement_invalid",
+                f"{record_id}: package or dependency identity differs",
+            )
 
 
 def _derive_report(
@@ -1101,9 +1166,9 @@ def verify_campaign(
     for trial in trials:
         _check_trial(trial, campaign, contract, artifacts, paths, raw_by_id)
     for record in warm:
-        _check_measurement(record, "warm_measurement", campaign, artifacts)
+        _check_measurement(record, "warm_measurement", campaign, artifacts, paths)
     for record in cold:
-        _check_measurement(record, "cold_measurement", campaign, artifacts)
+        _check_measurement(record, "cold_measurement", campaign, artifacts, paths)
 
     scheduled = [entry["schedule_id"] for entry in campaign["ordering"]]
     if len(scheduled) != len(set(scheduled)):
@@ -1399,6 +1464,7 @@ def _synthetic_warm(
             "p50_ns": 110,
             "p95_ns": 120,
             "p99_ns": 120,
+            "variance_ns_squared": 66,
         },
         "throughput_milli_requests_per_second": 1_000_000,
     }
@@ -1419,8 +1485,23 @@ def _synthetic_cold(
     schedule_id = f"cold.{language}.{round_number:02d}"
     package = _blob(
         root,
-        f"artifacts/{measurement_id}.package.txt",
-        f"{language} synthetic package\n".encode(),
+        f"artifacts/{measurement_id}.package.json",
+        _canonical(
+            {
+                "package_manifest_format": 1,
+                "language": language,
+                "dependency_lock": {
+                    "path": f"synthetic/{language}.lock",
+                    "sha256": "5" * 64,
+                },
+                "files": [
+                    {
+                        "path": f"synthetic/{language}.source",
+                        "sha256": "6" * 64,
+                    }
+                ],
+            }
+        ).encode(),
     )
     record = {
         "cold_measurement_format": 1,
@@ -1771,13 +1852,18 @@ def verify_calibration() -> None:
     outcomes = verify_synthetic_campaigns(contract)
     import agent_runner as agent_runner_tool
     import correctness as correctness_tool
+    import performance as performance_tool
 
     runner_outcomes = agent_runner_tool.verify_fake_and_dry_streams()
     correctness_outcomes = correctness_tool.verify_fake_and_dry_correctness()
+    performance_outcomes = performance_tool.verify_fake_measurements()
+    pilot_outcomes = performance_tool.verify_retained_pilots()
     print(
         "M8 calibration verifier passed: "
         f"{len(LOCKED_ARTIFACTS)} contract artifacts and "
         f"{len(outcomes)} stable synthetic outcomes verified; "
         f"{len(runner_outcomes)} M8c runner and "
-        f"{len(correctness_outcomes)} M8d correctness outcomes verified."
+        f"{len(correctness_outcomes)} M8d correctness outcomes; and "
+        f"{len(performance_outcomes)} M8e performance outcomes plus "
+        f"{len(pilot_outcomes)} retained non-official pilots verified."
     )

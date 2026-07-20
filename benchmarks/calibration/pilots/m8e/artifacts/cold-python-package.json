@@ -1,0 +1,74 @@
+{
+  "package_manifest_format": 1,
+  "language": "python",
+  "dependency_lock": {
+    "path": "benchmarks/baselines/python/uv.lock",
+    "sha256": "51317d86e86dbd1497232d1c7e7e868f1f04ef225ba93d8016a7bf5ab1a60306"
+  },
+  "files": [
+    {
+      "path": "benchmarks/baselines/python/performance_adapter.py",
+      "sha256": "74b5b8daaf1f05e87aef710848ca7f47dc884ad15c2ba2d6a70857764a4c3772"
+    },
+    {
+      "path": "benchmarks/baselines/python/pyproject.toml",
+      "sha256": "2f0a8b4e2be8c4ef11c262aafc6d91df102a32459bbe4c1178447049215fbcd4"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/__init__.py",
+      "sha256": "f4df72a93e89c3771316c1d8606856adce414861b305717fd863ac03e0b799c9"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/conftest.py",
+      "sha256": "d08cd0d8e27e25b72c0e2b24925c20e1b04006465af27fa289ae2f94d494b57a"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_contract.py",
+      "sha256": "7ecacc1834fae705f3819271b5822747ff0abfd76a8a9be366bd1db05ff636a8"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_fixture.py",
+      "sha256": "b1c6799df5c474ea5c293ead5c39c42fb4ece911a69e37f6909edc79c81b4202"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_runner.py",
+      "sha256": "77f1fea2618603808cb679e9d5f3ee4739226ffdb5402bbdbd062fa3a83c42ff"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_service.py",
+      "sha256": "28b110be28babded23e6c5698256d88da2f09367d1f0a78ab84302c9b04240aa"
+    },
+    {
+      "path": "benchmarks/baselines/python/tests/test_store.py",
+      "sha256": "4423a5e77cb2d3b79e34fccfe81bf719ccb7c5cbc0a911b6e47af334169db5a1"
+    },
+    {
+      "path": "benchmarks/baselines/python/uv.lock",
+      "sha256": "51317d86e86dbd1497232d1c7e7e868f1f04ef225ba93d8016a7bf5ab1a60306"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/__init__.py",
+      "sha256": "21d850b7593c24e05aea9425fd7bd595aabb7ac20faccb0b88e6c9e5f71c77bf"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/domain.py",
+      "sha256": "c1490656b814b3b9a2480e75ef8fb65753b1fb10098fa7853c27687f9119f8ca"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/fixture.py",
+      "sha256": "3b95bda8b63178c22f5bd2d2554a4455b677054b5b9d0f5c12d6e20ea5f2b653"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/runner.py",
+      "sha256": "cc371b949ca3187ff0121245c766e9deb26c5eb9fbfcd80657fa66f515d7a437"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/service.py",
+      "sha256": "0a4a87d838e0f2743cc8237a823868add94a856e0169cb3249fa226a975ab326"
+    },
+    {
+      "path": "benchmarks/baselines/python/v2/store.py",
+      "sha256": "4a5150dbdfc0ad0a854d32d658fc463c2de28f208ce5fc3ca71a314e08c9eba0"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "cold_measurement_format": 1,
+  "measurement_id": "m8e.pilot.cold.rust.00",
+  "schedule_id": "pilot.cold.rust.00",
+  "campaign_id": "m8e-non-official-pilot",
+  "configuration_id": "m8-agent-experiment-v1",
+  "language": "rust",
+  "official": "no",
+  "round": 0,
+  "status": "included",
+  "exclusion_reason": "",
+  "environment_sha256": "e10a9d3c70aca26c3132e2fdc4361eddff397d18bd92a42065b7977194ff8b10",
+  "package_manifest_path": "artifacts/cold-rust-package.json",
+  "package_manifest_sha256": "0aed4ac8c74fee04c607f9bb633e82e73eb8eb30fddc6d4a3354ab8ea3d2aad5",
+  "dependency_lock_sha256": "a10d82b6d842432670f8c2e700fb4de519e31376b067f77617e5541364ad13ec",
+  "clock": {
+    "source": "time.perf_counter_ns",
+    "unit": "nanosecond",
+    "monotonic": "yes"
+  },
+  "affinity": {
+    "policy": "single-sequential-unbound",
+    "binding_supported": "no",
+    "logical_cpu_count": 8
+  },
+  "load": {
+    "before": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    },
+    "after": {
+      "available": "yes",
+      "one_minute_milli": 3735,
+      "five_minute_milli": 5353,
+      "fifteen_minute_milli": 4914
+    }
+  },
+  "readiness_signal": "jsonl-ready-v1",
+  "process_creation_ns": 1758250,
+  "readiness_ns": 13292500,
+  "idle_rss_bytes": 2605056,
+  "peak_rss_bytes": 4194304,
+  "exit_status": 0,
+  "external_access_attempts": 0,
+  "corpus": {
+    "manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "case_count": 37,
+    "elapsed_ns": 3517291,
+    "status": "passed",
+    "trace": "passed",
+    "external_access_monitor": "sandbox-exec-deny-report+proc-pidtaskinfo"
+  }
+}

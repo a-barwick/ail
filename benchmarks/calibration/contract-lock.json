@@ -3,7 +3,7 @@
   "artifacts": [
     {
       "path": "benchmarks/calibration/README.md",
-      "sha256": "140cfce2176e291c227219f7dc2a3d29e817f48fedb84f8b433d104606852b48"
+      "sha256": "f75536ed856d978afb4d42dc617f6f5c4f6ce5e66afc13db891aa9cec7885734"
     },
     {
       "path": "benchmarks/calibration/experiment-contract.json",
@@ -63,7 +63,31 @@
     },
     {
       "path": "benchmarks/schemas/calibration-warm-measurement.schema.json",
-      "sha256": "b8af360b8ee87d1a37d4a1bdaf2034c8be1a82190746909b033ff705e309863c"
+      "sha256": "09e477f1023b0fd9908282863e335eba67b0777b0afa7942436cf69c23d01f1b"
+    },
+    {
+      "path": "benchmarks/baselines/go/v2/cmd/performance-adapter/main.go",
+      "sha256": "3c42c76c82550b4fc62e953e4587736b0909093d6d917234b6099adfd52b3724"
+    },
+    {
+      "path": "benchmarks/baselines/python/performance_adapter.py",
+      "sha256": "74b5b8daaf1f05e87aef710848ca7f47dc884ad15c2ba2d6a70857764a4c3772"
+    },
+    {
+      "path": "benchmarks/baselines/rust/v2/examples/performance_adapter.rs",
+      "sha256": "cea132c67260aec5dd5b3f3e167d4c1a9433d4e244fb59a83dcef236b046d259"
+    },
+    {
+      "path": "benchmarks/baselines/typescript/v2/performance-adapter.ts",
+      "sha256": "ca1817313c8aa82a7b09be2cb9f750ed62314988655756c961a24770c6e576c1"
+    },
+    {
+      "path": "benchmarks/performance/README.md",
+      "sha256": "5ede5047e1a96bc47633c583abcf44bebafa03a9f7a73a01e974f73636d30d29"
+    },
+    {
+      "path": "benchmarks/performance/typescript-tsconfig.json",
+      "sha256": "b818b84bb957e51a6013606318de70fbaa1be26a0c66ddc02f1a3b56737dd9e0"
     },
     {
       "path": "benchmarks/tests/test_agent_runner.py",
@@ -78,16 +102,28 @@
       "sha256": "4e55300a77426b4c1869b200340aa8d11dfcf4f49cb0913a4323f1fe1bea6295"
     },
     {
+      "path": "benchmarks/tests/test_performance.py",
+      "sha256": "4e5941ca13bd0478705954380f9597429322216641ca726e3b91a33d2d246255"
+    },
+    {
+      "path": "benchmarks/tests/support/fake_performance_adapter.py",
+      "sha256": "32f13f9dd7e2f1d830c5711c14019447739448f31f5a6436b581a32e342479d9"
+    },
+    {
       "path": "benchmarks/tools/agent_runner.py",
       "sha256": "c39fe4c7769d8a7e9a79eee055ecc8f2b1796eef0e8c3cdb53c8a7118b6f7379"
     },
     {
       "path": "benchmarks/tools/calibration.py",
-      "sha256": "4f942f81fbdba1e939cb17913be073b6cf1cd95244ca244c6f4d7468ac43badf"
+      "sha256": "711c6941b1ab6325cfc25db3de8cebb37456f3d08d3f6ec756fd75d18c6f75ec"
     },
     {
       "path": "benchmarks/tools/correctness.py",
       "sha256": "58d15fcb6b56b8504e51466b26309eceb86c11f404eb0960249b76aeec732694"
+    },
+    {
+      "path": "benchmarks/tools/performance.py",
+      "sha256": "dffca2d647b91c0dfe4179d00db233a1d6c09ba9522c780261079512822a0483"
     }
   ]
 }

@@ -406,7 +406,7 @@ python3 benchmarks/tools/harness.py verify-calibration
 python3 tools/check_docs.py
 ```
 
-#### Active submilestone: M8e — Implement performance measurement
+#### Completed submilestone: M8e — Implement performance measurement
 
 Add equivalent per-language adapters for warm-up, readiness, the shared corpus,
 monotonic latency and throughput, percentile and variance derivation, process
@@ -416,12 +416,31 @@ identity, external-access attempts, and functional correctness.
 M8e may run one non-official warm and cold pilot per baseline. It must not
 freeze the campaign or collect official measurements.
 
+M8e delivered persistent Rust, Go, Python, and TypeScript adapters outside the
+frozen M7 checkpoint files plus one shared harness for corpus ordering,
+functional and trace comparison, native monotonic samples, warm-up,
+throughput, nearest-rank percentiles, integer variance, load, affinity, process
+creation, readiness, idle and peak RSS, package and dependency identity,
+network-denial events, and safety classification. One explicitly non-official
+warm and cold pilot per baseline passed; official counts remain zero.
+
 #### M8e focused verification
 
 ```bash
 python3 benchmarks/tools/harness.py verify-calibration
 python3 tools/check_docs.py
 ```
+
+#### Active submilestone: M8f — Run readiness pilots and freeze the campaign
+
+Run one non-official agent pilot for every language/task pair and one warm and
+cold pilot for every baseline. Prove the exact token-accounting rule against
+the pinned Codex executable, validate every evidence path, and freeze all
+configuration artifacts, digests, and the balanced official order only if
+every configuration succeeds under the locked limits.
+
+M8f is the final configuration-change boundary. It collects no official
+evidence.
 
 #### Scope
 
