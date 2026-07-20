@@ -1,0 +1,114 @@
+{
+  "fixture_format": 1,
+  "id": "capability-undeclared-effect",
+  "category": "capability-error",
+  "requirements": [
+    "APP-002",
+    "LANG-003",
+    "PROTO-005"
+  ],
+  "constructs": [
+    "record",
+    "variant",
+    "function",
+    "let",
+    "capability-call"
+  ],
+  "rules": [
+    "M11-LANG-005",
+    "M11-LANG-006",
+    "M11-LANG-007",
+    "M11-LANG-008",
+    "M11-LANG-009",
+    "M11-LANG-010",
+    "M11-LANG-014",
+    "M11-PROTO-003",
+    "M11-PROTO-004",
+    "M11-PROTO-010"
+  ],
+  "input": {
+    "revision": {
+      "workspace_id": "fixture-capability-error",
+      "revision_id": "capability-r1",
+      "source_digest": "sha256:094a55ae78b9dc9e8c8afd54296e8f6dbc3969c95663b179cba2231d644a07ee"
+    },
+    "path": "main.ail",
+    "source": "record Job {\n  job_id: Text;\n}\n\nvariant StoreOutcome {\n  Inserted;\n  Duplicate;\n}\n\nfn persist(job: Job, jobs: capability JobsStore) -> StoreOutcome {\n  let outcome = jobs.insert(job);\n  outcome\n}\n",
+    "environment": {
+      "capabilities": {
+        "JobsStore": {
+          "insert": {
+            "parameters": [
+              "Job"
+            ],
+            "result": "StoreOutcome"
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "canonical_source": "record Job {\n  job_id: Text;\n}\n\nvariant StoreOutcome {\n  Inserted;\n  Duplicate;\n}\n\nfn persist(job: Job, jobs: capability JobsStore) -> StoreOutcome {\n  let outcome = jobs.insert(job);\n  outcome\n}\n",
+    "type_result": {
+      "status": "ok",
+      "facts": [
+        {
+          "handle": {
+            "revision_id": "capability-r1",
+            "kind": "symbol",
+            "local_id": "outcome-binding"
+          },
+          "explicit_type": null,
+          "inferred_type": "StoreOutcome"
+        }
+      ]
+    },
+    "primary_diagnostic": {
+      "code": "AIL.CAPABILITY.UNDECLARED_EFFECT",
+      "revision_id": "capability-r1",
+      "category": "capability",
+      "primary_handle": {
+        "revision_id": "capability-r1",
+        "kind": "expression",
+        "local_id": "jobs-insert-call"
+      },
+      "expected": {
+        "declared_effects": []
+      },
+      "actual": {
+        "required_effect": "jobs.insert"
+      },
+      "related_handles": [
+        {
+          "revision_id": "capability-r1",
+          "kind": "symbol",
+          "local_id": "persist-function"
+        },
+        {
+          "revision_id": "capability-r1",
+          "kind": "symbol",
+          "local_id": "jobs-parameter"
+        }
+      ],
+      "causal_chain": [
+        {
+          "step": "resolve-capability-operation",
+          "handle": {
+            "revision_id": "capability-r1",
+            "kind": "expression",
+            "local_id": "jobs-insert-call"
+          }
+        },
+        {
+          "step": "compare-declared-effects",
+          "handle": {
+            "revision_id": "capability-r1",
+            "kind": "symbol",
+            "local_id": "persist-function"
+          }
+        }
+      ]
+    },
+    "protocol_result": null
+  }
+}

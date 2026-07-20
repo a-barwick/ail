@@ -1,6 +1,6 @@
 # Implementation stack evaluation
 
-Status: **Active after M11 contract**
+Status: **Active for M12**
 
 Decision owner: project maintainers
 

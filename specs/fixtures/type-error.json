@@ -1,0 +1,83 @@
+{
+  "fixture_format": 1,
+  "id": "type-record-field-mismatch",
+  "category": "type-error",
+  "requirements": [
+    "LANG-001",
+    "PROTO-005"
+  ],
+  "constructs": [
+    "record",
+    "function",
+    "let"
+  ],
+  "rules": [
+    "M11-LANG-003",
+    "M11-LANG-005",
+    "M11-LANG-007",
+    "M11-LANG-009",
+    "M11-LANG-010",
+    "M11-LANG-013",
+    "M11-LANG-014",
+    "M11-PROTO-004",
+    "M11-PROTO-010"
+  ],
+  "input": {
+    "revision": {
+      "workspace_id": "fixture-type-error",
+      "revision_id": "type-r1",
+      "source_digest": "sha256:d7728a13067954a06a2696d096e6cb6520c6b358e960b6bc1e69578b3ed165ea"
+    },
+    "path": "main.ail",
+    "source": "record Job {\n  job_id: Text;\n}\n\nfn make_job() -> Job {\n  let job = Job { job_id: 1 };\n  job\n}\n",
+    "environment": {
+      "capabilities": {}
+    }
+  },
+  "expected": {
+    "canonical_source": "record Job {\n  job_id: Text;\n}\n\nfn make_job() -> Job {\n  let job = Job { job_id: 1 };\n  job\n}\n",
+    "type_result": {
+      "status": "error",
+      "facts": []
+    },
+    "primary_diagnostic": {
+      "code": "AIL.TYPE.FIELD_MISMATCH",
+      "revision_id": "type-r1",
+      "category": "type",
+      "primary_handle": {
+        "revision_id": "type-r1",
+        "kind": "expression",
+        "local_id": "integer-one"
+      },
+      "expected": {
+        "type": "Text"
+      },
+      "actual": {
+        "type": "Int"
+      },
+      "related_handles": [
+        {
+          "revision_id": "type-r1",
+          "kind": "symbol",
+          "local_id": "job-record"
+        },
+        {
+          "revision_id": "type-r1",
+          "kind": "symbol",
+          "local_id": "job-id-field"
+        }
+      ],
+      "causal_chain": [
+        {
+          "step": "check-record-initializer",
+          "handle": {
+            "revision_id": "type-r1",
+            "kind": "expression",
+            "local_id": "job-record-expression"
+          }
+        }
+      ]
+    },
+    "protocol_result": null
+  }
+}

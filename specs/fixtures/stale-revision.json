@@ -1,0 +1,113 @@
+{
+  "fixture_format": 1,
+  "id": "rename-stale-revision",
+  "category": "stale-revision",
+  "requirements": [
+    "PROTO-003",
+    "PROTO-004",
+    "PROTO-005"
+  ],
+  "constructs": [
+    "record"
+  ],
+  "rules": [
+    "M11-PROTO-001",
+    "M11-PROTO-002",
+    "M11-PROTO-004",
+    "M11-PROTO-005",
+    "M11-PROTO-006",
+    "M11-PROTO-009",
+    "M11-PROTO-010"
+  ],
+  "input": {
+    "revision": {
+      "workspace_id": "fixture-stale",
+      "revision_id": "stale-r1",
+      "source_digest": "sha256:1ed2789aa5033f6167d7f27c9099db7284818b8d38df123f52a20055fcab430d"
+    },
+    "path": "main.ail",
+    "source": "record Job {\n  job_id: Text;\n}\n",
+    "environment": {
+      "capabilities": {}
+    },
+    "protocol_request": {
+      "operation": "rename",
+      "base_revision_id": "stale-r1",
+      "handle": {
+        "revision_id": "stale-r1",
+        "kind": "symbol",
+        "local_id": "job-record"
+      },
+      "new_name": "StoredJob",
+      "workspace_current_revision_id": "stale-r2"
+    }
+  },
+  "expected": {
+    "canonical_source": null,
+    "type_result": {
+      "status": "not-run",
+      "facts": []
+    },
+    "primary_diagnostic": {
+      "code": "AIL.PROTOCOL.STALE_REVISION",
+      "revision_id": "stale-r1",
+      "category": "protocol",
+      "primary_handle": {
+        "revision_id": "stale-r1",
+        "kind": "symbol",
+        "local_id": "job-record"
+      },
+      "expected": {
+        "current_revision_id": "stale-r2"
+      },
+      "actual": {
+        "base_revision_id": "stale-r1"
+      },
+      "related_handles": [],
+      "causal_chain": [
+        {
+          "step": "compare-current-revision",
+          "handle": {
+            "revision_id": "stale-r1",
+            "kind": "symbol",
+            "local_id": "job-record"
+          }
+        }
+      ]
+    },
+    "protocol_result": {
+      "operation": "rename",
+      "status": "rejected",
+      "base_revision_id": "stale-r1",
+      "current_revision_id": "stale-r2",
+      "diagnostic": {
+        "code": "AIL.PROTOCOL.STALE_REVISION",
+        "revision_id": "stale-r1",
+        "category": "protocol",
+        "primary_handle": {
+          "revision_id": "stale-r1",
+          "kind": "symbol",
+          "local_id": "job-record"
+        },
+        "expected": {
+          "current_revision_id": "stale-r2"
+        },
+        "actual": {
+          "base_revision_id": "stale-r1"
+        },
+        "related_handles": [],
+        "causal_chain": [
+          {
+            "step": "compare-current-revision",
+            "handle": {
+              "revision_id": "stale-r1",
+              "kind": "symbol",
+              "local_id": "job-record"
+            }
+          }
+        ]
+      },
+      "edits": []
+    }
+  }
+}

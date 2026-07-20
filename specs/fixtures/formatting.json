@@ -1,0 +1,71 @@
+{
+  "fixture_format": 1,
+  "id": "formatting-canonicalization",
+  "category": "formatting",
+  "requirements": [
+    "APP-005",
+    "LANG-001",
+    "NFR-001"
+  ],
+  "constructs": [
+    "record",
+    "variant",
+    "function",
+    "let",
+    "capability-call"
+  ],
+  "rules": [
+    "M11-LANG-001",
+    "M11-LANG-003",
+    "M11-LANG-004",
+    "M11-LANG-005",
+    "M11-LANG-006",
+    "M11-LANG-007",
+    "M11-LANG-008",
+    "M11-LANG-009",
+    "M11-LANG-011",
+    "M11-LANG-012",
+    "M11-LANG-013",
+    "M11-PROTO-010"
+  ],
+  "input": {
+    "revision": {
+      "workspace_id": "fixture-formatting",
+      "revision_id": "formatting-r1",
+      "source_digest": "sha256:f1022198ab00e227bffd3bd01240114c1d0da832cba00bc4628841cf7fb0ad52"
+    },
+    "path": "main.ail",
+    "source": "record   Job{task:Text;job_id:Text;}\nvariant Result{Created(Job);Failed;}\nfn make(job_id:Text,jobs:capability JobsStore)->Result effects{jobs.insert}{let job=Job{task:\"run\",job_id:job_id};let outcome=jobs.insert(job);Result::Created(job)}\n",
+    "environment": {
+      "capabilities": {
+        "JobsStore": {
+          "insert": {
+            "parameters": [
+              "Job"
+            ],
+            "result": "Result"
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "canonical_source": "record Job {\n  task: Text;\n  job_id: Text;\n}\n\nvariant Result {\n  Created(Job);\n  Failed;\n}\n\nfn make(job_id: Text, jobs: capability JobsStore) -> Result effects { jobs.insert } {\n  let job = Job { task: \"run\", job_id: job_id };\n  let outcome = jobs.insert(job);\n  Result::Created(job)\n}\n",
+    "type_result": {
+      "status": "ok",
+      "facts": [
+        {
+          "handle": {
+            "revision_id": "formatting-r1",
+            "kind": "symbol",
+            "local_id": "job-binding"
+          },
+          "explicit_type": null,
+          "inferred_type": "Job"
+        }
+      ]
+    },
+    "primary_diagnostic": null,
+    "protocol_result": null
+  }
+}
