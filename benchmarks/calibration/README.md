@@ -16,8 +16,9 @@ adapters, their tests, and the synthetic campaign recipes by SHA-256.
 
 ## Interactive runner
 
-`../tools/agent_runner.py` implements the M8a agent workflow up to the M8d
-correctness boundary. It rebuilds and verifies a locked task workspace, checks
+`../tools/agent_runner.py` and `../tools/responses_recorder.py` implement the
+M8a agent workflow up to the M8d correctness boundary. The runner rebuilds and
+verifies a locked task workspace, checks
 the exact prompt and pre-start observations, derives a least-privilege
 permission profile, and generates an isolated Codex configuration whose
 Responses provider is the loopback recorder. Optional tools, network access,
@@ -27,7 +28,42 @@ roots; tests, fixtures, task text, tool configuration, parent paths, private
 inputs, and evidence remain unwritable. UC-001 remains limited to its explicitly
 editable source files. The generated keys follow the official
 [Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml);
-M8f must still validate them against the pinned 0.144.6 executable.
+The loopback recorder binds only `127.0.0.1`, authenticates the Codex control
+process with a trial-local token, and retains the upstream API credential
+outside the trial tool environment. Before it forwards each Responses request,
+it calls the input-token endpoint for the protocol skeleton, fixed request,
+and every cumulative input prefix. It rejects the request before forwarding
+when the cumulative 500,000-token limit would be exceeded, streams the provider
+response back to Codex, and reconciles the completed provider usage with zero
+tolerance.
+
+Run one non-official live readiness trial with:
+
+```bash
+export OPENAI_API_KEY='...'
+python3 benchmarks/tools/agent_runner.py run-live-trial \
+  --language python \
+  --task UC-001 \
+  --output /tmp/ail-m8f-python-uc001
+```
+
+Repeat with each of `rust`, `go`, `python`, and `typescript` and both `UC-001`
+and `UC-003`. The output directory is required to be new or empty and receives
+the redacted request evidence, Codex JSONL, deterministic final-source archive,
+and `live-trial.json`. The command verifies the pinned Codex version and binary
+digest, runs the locked starting-state check, probes the live input-token
+endpoint, and refuses to spawn Codex when the API credential is absent. A
+deterministic fake upstream integration test also runs the exact pinned Codex
+binary with `--strict-config`; this proves the recorder path and generated
+configuration without recording a model pilot.
+
+The command verifies its completed bundle before returning. A retained bundle
+can be checked again without a credential or model call:
+
+```bash
+python3 benchmarks/tools/agent_runner.py verify-live-trial \
+  /tmp/ail-m8f-python-uc001/live-trial.json
+```
 
 The runner records complete model, tool, edit, validation, permission, process,
 and terminal payloads. It enforces the 500,000 cumulative-input-token and

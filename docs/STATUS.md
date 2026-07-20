@@ -181,6 +181,19 @@ they match the functional output and trace oracle, report zero external-access
 attempts, and remain within the frozen cold-start and peak-RSS limits. Official
 counts remain zero.
 
+A scoped predecessor correction after M8e added the previously missing live
+Responses path. The loopback-only recorder now preflights the protocol
+skeleton, fixed request, and every cumulative input prefix through
+`/v1/responses/input_tokens`, attributes each delta once, enforces the live
+500,000-token limit before forwarding, streams Responses events to the pinned
+Codex process, and reconciles provider usage. The runnable
+`run-live-trial` command retains redacted request, Codex, token, and final-source
+evidence. Its deterministic fake-upstream integration check exercises the
+exact pinned Codex binary and strict configuration. The reference environment
+does not currently expose `OPENAI_API_KEY`, so no provider-backed readiness
+pilot was created by the correction; M8f collection starts after that
+credential is exported.
+
 ## Active next
 
 - M8f — Run readiness pilots and freeze the campaign

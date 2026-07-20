@@ -85,6 +85,7 @@ LOCKED_ARTIFACTS = (
     "benchmarks/tools/calibration.py",
     "benchmarks/tools/correctness.py",
     "benchmarks/tools/performance.py",
+    "benchmarks/tools/responses_recorder.py",
 )
 PROMPT_PREFIX = (
     "Complete the frozen task below in the supplied answer-free workspace.\n"
