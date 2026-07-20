@@ -1,0 +1,278 @@
+{
+  "core_contract_version": 1,
+  "status": "Proposed",
+  "documents": [
+    "README.md",
+    "core.md",
+    "protocol.md",
+    "protocol.json"
+  ],
+  "constructs": [
+    {
+      "id": "record",
+      "title": "Record declaration and construction",
+      "required_facets": [
+        "grammar",
+        "formatting",
+        "typing",
+        "inspection",
+        "rename"
+      ]
+    },
+    {
+      "id": "variant",
+      "title": "Closed variant declaration and construction",
+      "required_facets": [
+        "grammar",
+        "formatting",
+        "typing",
+        "inspection"
+      ]
+    },
+    {
+      "id": "function",
+      "title": "Function declaration with explicit public signature",
+      "required_facets": [
+        "grammar",
+        "formatting",
+        "typing",
+        "inspection",
+        "rename"
+      ]
+    },
+    {
+      "id": "let",
+      "title": "Local let binding with inferred type",
+      "required_facets": [
+        "grammar",
+        "formatting",
+        "typing",
+        "inference",
+        "inspection"
+      ]
+    },
+    {
+      "id": "capability-call",
+      "title": "Capability operation call",
+      "required_facets": [
+        "grammar",
+        "formatting",
+        "typing",
+        "capability",
+        "inspection"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "M11-LANG-001",
+      "kind": "language",
+      "title": "Lossless source representation",
+      "requirements": ["LANG-001", "PROTO-001", "PROTO-003", "PROTO-005"],
+      "constructs": ["record", "variant", "function", "let", "capability-call"],
+      "facets": ["grammar", "inspection"]
+    },
+    {
+      "id": "M11-LANG-002",
+      "kind": "language",
+      "title": "Deterministic recovery",
+      "requirements": ["APP-005", "PROTO-005"],
+      "constructs": ["record"],
+      "facets": ["grammar", "diagnostic"]
+    },
+    {
+      "id": "M11-LANG-003",
+      "kind": "language",
+      "title": "Record declaration and construction",
+      "requirements": ["LANG-001", "LANG-005", "PROTO-001"],
+      "constructs": ["record"],
+      "facets": ["grammar", "formatting", "typing", "inspection", "rename"]
+    },
+    {
+      "id": "M11-LANG-004",
+      "kind": "language",
+      "title": "Closed variant declaration and construction",
+      "requirements": ["APP-003", "LANG-001", "LANG-002", "PROTO-001"],
+      "constructs": ["variant"],
+      "facets": ["grammar", "formatting", "typing", "inspection"]
+    },
+    {
+      "id": "M11-LANG-005",
+      "kind": "language",
+      "title": "Explicit function boundary",
+      "requirements": ["APP-003", "LANG-001", "LANG-003", "PROTO-001"],
+      "constructs": ["function"],
+      "facets": ["grammar", "formatting", "typing", "inspection", "rename"]
+    },
+    {
+      "id": "M11-LANG-006",
+      "kind": "language",
+      "title": "Declared capability effects",
+      "requirements": ["APP-002", "LANG-003", "PROTO-001"],
+      "constructs": ["function", "capability-call"],
+      "facets": ["grammar", "formatting", "capability", "inspection"]
+    },
+    {
+      "id": "M11-LANG-007",
+      "kind": "language",
+      "title": "Local let inference",
+      "requirements": ["LANG-001", "PROTO-001"],
+      "constructs": ["let"],
+      "facets": ["grammar", "formatting", "typing", "inference", "inspection"]
+    },
+    {
+      "id": "M11-LANG-008",
+      "kind": "language",
+      "title": "Capability call checking",
+      "requirements": ["APP-002", "LANG-003", "LANG-004", "PROTO-005"],
+      "constructs": ["capability-call"],
+      "facets": ["grammar", "formatting", "typing", "capability", "inspection", "diagnostic"]
+    },
+    {
+      "id": "M11-LANG-009",
+      "kind": "language",
+      "title": "Name resolution",
+      "requirements": ["LANG-001", "LANG-005", "PROTO-001", "PROTO-003"],
+      "constructs": ["record", "variant", "function", "let", "capability-call"],
+      "facets": ["typing", "rename"]
+    },
+    {
+      "id": "M11-LANG-010",
+      "kind": "language",
+      "title": "Type equality and primary type diagnostic",
+      "requirements": ["LANG-001", "LANG-003", "PROTO-005"],
+      "constructs": ["record", "variant", "function", "let", "capability-call"],
+      "facets": ["typing", "diagnostic"]
+    },
+    {
+      "id": "M11-LANG-011",
+      "kind": "language",
+      "title": "Canonical declaration formatting",
+      "requirements": ["APP-005", "LANG-001", "NFR-001"],
+      "constructs": ["record", "variant", "function"],
+      "facets": ["formatting"]
+    },
+    {
+      "id": "M11-LANG-012",
+      "kind": "language",
+      "title": "Canonical expression formatting",
+      "requirements": ["APP-005", "LANG-001", "PROTO-004"],
+      "constructs": ["record", "variant", "function", "let", "capability-call"],
+      "facets": ["formatting"]
+    },
+    {
+      "id": "M11-LANG-013",
+      "kind": "language",
+      "title": "Canonical literals",
+      "requirements": ["LANG-001", "LANG-004"],
+      "constructs": ["record", "function", "let"],
+      "facets": ["formatting", "typing"]
+    },
+    {
+      "id": "M11-LANG-014",
+      "kind": "language",
+      "title": "Static checking boundary",
+      "requirements": ["APP-005", "PROTO-001", "PROTO-005"],
+      "constructs": ["record", "variant", "function", "let", "capability-call"],
+      "facets": ["typing", "inspection"]
+    },
+    {
+      "id": "M11-PROTO-001",
+      "kind": "protocol",
+      "title": "Immutable explicit revisions",
+      "requirements": ["APP-005", "PROTO-001", "PROTO-003", "PROTO-004"],
+      "constructs": [],
+      "facets": ["revision"]
+    },
+    {
+      "id": "M11-PROTO-002",
+      "kind": "protocol",
+      "title": "Revision-scoped handles",
+      "requirements": ["PROTO-003"],
+      "constructs": [],
+      "facets": ["handle"]
+    },
+    {
+      "id": "M11-PROTO-003",
+      "kind": "protocol",
+      "title": "Elaborated inspection",
+      "requirements": ["LANG-001", "LANG-003", "PROTO-001"],
+      "constructs": ["record", "variant", "function", "let", "capability-call"],
+      "facets": ["inspection"]
+    },
+    {
+      "id": "M11-PROTO-004",
+      "kind": "protocol",
+      "title": "Structured diagnostics",
+      "requirements": ["APP-005", "PROTO-005"],
+      "constructs": [],
+      "facets": ["diagnostic"]
+    },
+    {
+      "id": "M11-PROTO-005",
+      "kind": "protocol",
+      "title": "Rename preconditions",
+      "requirements": ["LANG-005", "PROTO-002", "PROTO-003", "PROTO-004"],
+      "constructs": ["record", "function"],
+      "facets": ["rename"]
+    },
+    {
+      "id": "M11-PROTO-006",
+      "kind": "protocol",
+      "title": "Atomic validated rename",
+      "requirements": ["APP-005", "PROTO-004", "PROTO-005"],
+      "constructs": ["record", "function"],
+      "facets": ["rename", "validation"]
+    },
+    {
+      "id": "M11-PROTO-007",
+      "kind": "protocol",
+      "title": "Canonical edit representation",
+      "requirements": ["APP-005", "PROTO-004"],
+      "constructs": ["record", "function"],
+      "facets": ["rename"]
+    },
+    {
+      "id": "M11-PROTO-008",
+      "kind": "protocol",
+      "title": "Complete identity map",
+      "requirements": ["APP-005", "PROTO-003"],
+      "constructs": ["record", "function"],
+      "facets": ["identity-map", "rename"]
+    },
+    {
+      "id": "M11-PROTO-009",
+      "kind": "protocol",
+      "title": "Stale revision rejection",
+      "requirements": ["PROTO-003", "PROTO-004", "PROTO-005"],
+      "constructs": [],
+      "facets": ["revision", "diagnostic", "rename"]
+    },
+    {
+      "id": "M11-PROTO-010",
+      "kind": "protocol",
+      "title": "Deterministic protocol ordering",
+      "requirements": ["LANG-004", "NFR-001", "PROTO-001", "PROTO-005"],
+      "constructs": [],
+      "facets": ["ordering"]
+    }
+  ],
+  "required_fixture_categories": [
+    "positive",
+    "formatting",
+    "recovery",
+    "type-error",
+    "capability-error",
+    "rename",
+    "stale-revision"
+  ],
+  "fixtures": [
+    "fixtures/positive.json",
+    "fixtures/formatting.json",
+    "fixtures/recovery.json",
+    "fixtures/type-error.json",
+    "fixtures/capability-error.json",
+    "fixtures/rename.json",
+    "fixtures/stale-revision.json"
+  ]
+}

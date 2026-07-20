@@ -1,0 +1,85 @@
+{
+  "fixture_format": 1,
+  "id": "recovery-missing-record-colon",
+  "category": "recovery",
+  "requirements": [
+    "APP-005",
+    "PROTO-005"
+  ],
+  "constructs": [
+    "record",
+    "function"
+  ],
+  "rules": [
+    "M11-LANG-001",
+    "M11-LANG-002",
+    "M11-LANG-011",
+    "M11-PROTO-004",
+    "M11-PROTO-010"
+  ],
+  "input": {
+    "revision": {
+      "workspace_id": "fixture-recovery",
+      "revision_id": "recovery-r1",
+      "source_digest": "sha256:ded8a24047f0be1b04303a293f5684b4a858ab813115acfa9f2a4f6c3a84dc33"
+    },
+    "path": "main.ail",
+    "source": "record Job {\n  job_id Text;\n  task: Text;\n}\n\nfn echo(job_id: Text) -> Text {\n  job_id\n}\n",
+    "environment": {
+      "capabilities": {}
+    }
+  },
+  "expected": {
+    "canonical_source": null,
+    "type_result": {
+      "status": "not-run",
+      "facts": []
+    },
+    "primary_diagnostic": {
+      "code": "AIL.PARSE.EXPECTED_TOKEN",
+      "revision_id": "recovery-r1",
+      "category": "parse",
+      "primary_handle": {
+        "revision_id": "recovery-r1",
+        "kind": "syntax",
+        "local_id": "missing-colon-after-job-id"
+      },
+      "expected": {
+        "token": ":"
+      },
+      "actual": {
+        "token": "Text"
+      },
+      "related_handles": [
+        {
+          "revision_id": "recovery-r1",
+          "kind": "syntax",
+          "local_id": "job-id-field"
+        }
+      ],
+      "causal_chain": [
+        {
+          "step": "parse-record-field",
+          "handle": {
+            "revision_id": "recovery-r1",
+            "kind": "syntax",
+            "local_id": "job-id-field"
+          }
+        }
+      ]
+    },
+    "protocol_result": {
+      "operation": "parse",
+      "status": "recovered",
+      "inserted_tokens": [
+        {
+          "token": ":",
+          "utf8_byte": 21
+        }
+      ],
+      "retained_following_fields": [
+        "task"
+      ]
+    }
+  }
+}

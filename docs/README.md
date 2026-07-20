@@ -19,7 +19,7 @@ syntax.
 | Derived requirements | [requirements/README.md](requirements/README.md) | What observable capabilities and constraints follow from the use cases? | Proposed until explicitly accepted |
 | Benchmark policy | [benchmarks/README.md](benchmarks/README.md) | How are AIL and strong baselines compared fairly? | Accepted measurement policy and language-independent test data; non-normative for AIL |
 | Language design | [design-direction.md](design-direction.md) and [architectural health manifest](architecture-health.md) | Which language and compiler ideas may satisfy the requirements? | Design input; non-normative |
-| Normative specification | Planned | What exact source, static semantics, dynamic semantics, diagnostics, and protocol behavior are required? | Numbered accepted rules and conformance fixtures |
+| Normative specification | [M11 spike contract](../specs/README.md) | What exact source, static semantics, diagnostics, and protocol behavior are required? | Proposed rules and fixtures binding on M12 candidates; not yet accepted as the broader AIL core |
 | Implementation evidence | [stack-evaluation.md](stack-evaluation.md) and `../prototypes/` | Can a design be implemented, and in which stack? | Evidence only; cannot create semantics |
 
 Architecture decision records under `decisions/` explain why consequential
@@ -99,10 +99,12 @@ inputs, and eight deterministic answer-free task starts. M8a through M8f built
 calibration, replay, measurement, and provider-readiness infrastructure, but no
 official evidence exists. ADR 0003 defers the remaining calibration campaign,
 numeric benchmark targets, and illustrative syntax variants because they do not
-inform the compiler-stack decision. The active work is M11: write the
-five-construct shared contract used by the Rust and TypeScript compiler spikes.
+inform the compiler-stack decision. M11 completed the proposed five-construct
+shared contract. The active work is M12: implement that unchanged contract in
+Rust and TypeScript and collect the predeclared stack-comparison evidence.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and
 accepted.
 
-There is no accepted AIL syntax or normative language specification yet.
+There is no accepted broad AIL syntax or normative language core yet. The M11
+subset is proposed and fixed only for the M12 compiler-stack comparison.

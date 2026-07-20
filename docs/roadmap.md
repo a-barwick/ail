@@ -50,8 +50,8 @@ becomes active.
 | M8 | Baseline agent calibration | Deferred | M7 |
 | M9 | Frozen AIL success targets | Deferred | M8 campaign |
 | M10 | Illustrative AIL comparison | Deferred | — |
-| M11 | Compiler-stack spike contract | Active | M0, M7 |
-| M12 | Comparable compiler-stack spikes | Planned | M11 |
+| M11 | Compiler-stack spike contract | Complete | M0, M7 |
+| M12 | Comparable compiler-stack spikes | Active | M11 |
 | M13 | Compiler implementation-stack decision | Planned | M12 |
 
 ## Delivery milestones
@@ -571,7 +571,7 @@ direction without relying on aesthetics alone.
 
 ### M11 — Compiler-stack spike contract
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -614,7 +614,7 @@ fully covered by the five-construct contract.
 
 ### M12 — Comparable compiler-stack spikes
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 

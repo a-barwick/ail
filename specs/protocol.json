@@ -1,0 +1,123 @@
+{
+  "protocol_contract_version": 1,
+  "status": "Proposed",
+  "transport": "independent",
+  "handle_kinds": [
+    "symbol",
+    "syntax",
+    "expression"
+  ],
+  "identity_classifications": [
+    "surviving",
+    "replaced",
+    "removed",
+    "unmapped"
+  ],
+  "shapes": {
+    "Revision": {
+      "required": [
+        "workspace_id",
+        "revision_id",
+        "source_digest"
+      ],
+      "optional": [
+        "parent_revision_id"
+      ]
+    },
+    "Handle": {
+      "required": [
+        "revision_id",
+        "kind",
+        "local_id"
+      ],
+      "optional": []
+    },
+    "Diagnostic": {
+      "required": [
+        "code",
+        "revision_id",
+        "category",
+        "primary_handle",
+        "expected",
+        "actual",
+        "related_handles",
+        "causal_chain"
+      ],
+      "optional": [
+        "cascade_of",
+        "message"
+      ]
+    },
+    "InspectionRequest": {
+      "required": [
+        "revision_id",
+        "handle"
+      ],
+      "optional": []
+    },
+    "InspectionResult": {
+      "required": [
+        "revision_id",
+        "handle",
+        "semantic_kind",
+        "explicit_type",
+        "inferred_type",
+        "effects",
+        "capabilities",
+        "dependencies"
+      ],
+      "optional": []
+    },
+    "RenameRequest": {
+      "required": [
+        "base_revision_id",
+        "handle",
+        "new_name"
+      ],
+      "optional": []
+    },
+    "RenameSuccess": {
+      "required": [
+        "status",
+        "base_revision_id",
+        "revision",
+        "edits",
+        "identity_map",
+        "diagnostics",
+        "validation"
+      ],
+      "optional": []
+    },
+    "RenameFailure": {
+      "required": [
+        "status",
+        "base_revision_id",
+        "current_revision_id",
+        "diagnostic",
+        "edits"
+      ],
+      "optional": []
+    },
+    "IdentityMap": {
+      "required": [
+        "from_revision_id",
+        "to_revision_id",
+        "entries",
+        "new_handles"
+      ],
+      "optional": []
+    }
+  },
+  "operations": {
+    "inspect": {
+      "request": "InspectionRequest",
+      "success": "InspectionResult",
+      "failure": "Diagnostic"
+    },
+    "rename": {
+      "request": "RenameRequest",
+      "success": "RenameSuccess",
+      "failure": "RenameFailure"
+    }
+  }
+}

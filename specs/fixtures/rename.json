@@ -1,0 +1,190 @@
+{
+  "fixture_format": 1,
+  "id": "rename-record-symbol",
+  "category": "rename",
+  "requirements": [
+    "APP-005",
+    "LANG-005",
+    "PROTO-003",
+    "PROTO-004",
+    "PROTO-005"
+  ],
+  "constructs": [
+    "record",
+    "function",
+    "let"
+  ],
+  "rules": [
+    "M11-LANG-001",
+    "M11-LANG-003",
+    "M11-LANG-005",
+    "M11-LANG-009",
+    "M11-LANG-011",
+    "M11-LANG-012",
+    "M11-LANG-014",
+    "M11-PROTO-001",
+    "M11-PROTO-002",
+    "M11-PROTO-003",
+    "M11-PROTO-004",
+    "M11-PROTO-005",
+    "M11-PROTO-006",
+    "M11-PROTO-007",
+    "M11-PROTO-008",
+    "M11-PROTO-010"
+  ],
+  "input": {
+    "revision": {
+      "workspace_id": "fixture-rename",
+      "revision_id": "rename-r1",
+      "source_digest": "sha256:73455c0444e33980fc0ecc3ba3ba81ed0bd6220201a0f1477fa3251b631e67de"
+    },
+    "path": "main.ail",
+    "source": "record Job {\n  job_id: Text;\n}\n\nfn echo(job: Job) -> Job {\n  let copy = Job { job_id: \"job-1\" };\n  copy\n}\n",
+    "environment": {
+      "capabilities": {}
+    },
+    "protocol_request": {
+      "operation": "rename",
+      "base_revision_id": "rename-r1",
+      "handle": {
+        "revision_id": "rename-r1",
+        "kind": "symbol",
+        "local_id": "job-record"
+      },
+      "new_name": "StoredJob"
+    }
+  },
+  "expected": {
+    "canonical_source": "record StoredJob {\n  job_id: Text;\n}\n\nfn echo(job: StoredJob) -> StoredJob {\n  let copy = StoredJob { job_id: \"job-1\" };\n  copy\n}\n",
+    "type_result": {
+      "status": "ok",
+      "facts": [
+        {
+          "handle": {
+            "revision_id": "rename-r2",
+            "kind": "symbol",
+            "local_id": "copy-binding"
+          },
+          "explicit_type": null,
+          "inferred_type": "StoredJob"
+        }
+      ]
+    },
+    "primary_diagnostic": null,
+    "protocol_result": {
+      "operation": "rename",
+      "status": "committed",
+      "base_revision_id": "rename-r1",
+      "revision": {
+        "workspace_id": "fixture-rename",
+        "revision_id": "rename-r2",
+        "parent_revision_id": "rename-r1",
+        "source_digest": "sha256:d171c4811de068a2c67afd3c53c7bcbd9f8740d72e03d95ab73618c6917a9fe1"
+      },
+      "edits": [
+        {
+          "path": "main.ail",
+          "start_utf8_byte": 7,
+          "end_utf8_byte": 10,
+          "replacement": "StoredJob"
+        },
+        {
+          "path": "main.ail",
+          "start_utf8_byte": 45,
+          "end_utf8_byte": 48,
+          "replacement": "StoredJob"
+        },
+        {
+          "path": "main.ail",
+          "start_utf8_byte": 53,
+          "end_utf8_byte": 56,
+          "replacement": "StoredJob"
+        },
+        {
+          "path": "main.ail",
+          "start_utf8_byte": 72,
+          "end_utf8_byte": 75,
+          "replacement": "StoredJob"
+        }
+      ],
+      "identity_map": {
+        "from_revision_id": "rename-r1",
+        "to_revision_id": "rename-r2",
+        "entries": [
+          {
+            "old_handle": {
+              "revision_id": "rename-r1",
+              "kind": "symbol",
+              "local_id": "job-record"
+            },
+            "classification": "surviving",
+            "new_handle": {
+              "revision_id": "rename-r2",
+              "kind": "symbol",
+              "local_id": "job-record"
+            }
+          },
+          {
+            "old_handle": {
+              "revision_id": "rename-r1",
+              "kind": "syntax",
+              "local_id": "job-declaration-name"
+            },
+            "classification": "replaced",
+            "new_handle": {
+              "revision_id": "rename-r2",
+              "kind": "syntax",
+              "local_id": "stored-job-declaration-name"
+            }
+          },
+          {
+            "old_handle": {
+              "revision_id": "rename-r1",
+              "kind": "syntax",
+              "local_id": "job-parameter-type"
+            },
+            "classification": "replaced",
+            "new_handle": {
+              "revision_id": "rename-r2",
+              "kind": "syntax",
+              "local_id": "stored-job-parameter-type"
+            }
+          },
+          {
+            "old_handle": {
+              "revision_id": "rename-r1",
+              "kind": "syntax",
+              "local_id": "job-result-type"
+            },
+            "classification": "replaced",
+            "new_handle": {
+              "revision_id": "rename-r2",
+              "kind": "syntax",
+              "local_id": "stored-job-result-type"
+            }
+          },
+          {
+            "old_handle": {
+              "revision_id": "rename-r1",
+              "kind": "syntax",
+              "local_id": "job-constructor-reference"
+            },
+            "classification": "replaced",
+            "new_handle": {
+              "revision_id": "rename-r2",
+              "kind": "syntax",
+              "local_id": "stored-job-constructor-reference"
+            }
+          }
+        ],
+        "new_handles": []
+      },
+      "diagnostics": [],
+      "validation": {
+        "parse": "ok",
+        "types": "ok",
+        "capabilities": "ok"
+      }
+    }
+  }
+}

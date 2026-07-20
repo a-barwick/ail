@@ -4,56 +4,58 @@ Last updated: 2026-07-19
 
 ## Active milestone
 
-M11 — Compiler-stack spike contract
+M12 — Comparable compiler-stack spikes
 
 ## Current goal
 
-Write the smallest normative contract that lets Rust and TypeScript implement
-and compare the same compiler work. The project is now on the direct path to
-the implementation-stack decision:
+Implement the exact M11 five-construct contract in Rust and TypeScript, then
+compare the two compiler stacks using the weights frozen before implementation.
+The execution path is:
 
 ```text
-M11 five-construct contract
-  -> M12 Rust and TypeScript spikes
+M11 five-construct contract (complete)
+  -> M12 Rust and TypeScript spikes (active)
   -> M13 stack decision
   -> semantic-oracle implementation
 ```
 
 The next agent should:
 
-- read [ADR 0003](decisions/0003-prioritize-stack-decision.md);
-- select exactly five constructs that exercise lossless parsing, canonical
-  formatting, local inference, one capability error, and symbol rename;
-- write numbered proposed language and protocol rules for only that subset;
-- add canonical positive, formatting, recovery, type, capability, rename, and
-  stale-revision fixtures;
-- define the transport-independent revision, handle, diagnostic, rename, and
-  identity-map shapes;
-- implement `python3 specs/tools/core_contract.py check`; and
-- stop before implementing either candidate spike.
+- read the [M11 contract](../specs/README.md) and
+  [stack evaluation](stack-evaluation.md);
+- create disposable candidates under `prototypes/rust/` and
+  `prototypes/typescript/` without adding a production source tree or root
+  package manager;
+- implement the same lossless parser, canonical formatter, bounded checker,
+  structured diagnostics, revision-scoped handles, inspection, validated
+  rename, and identity-map behavior in both candidates;
+- add one candidate-neutral `python3 prototypes/check.py` command that runs the
+  shared fixtures against both implementations;
+- record implementation time, source size, test time, memory, recovery quality,
+  handle maintenance, packaging, and contributor friction; and
+- stop before choosing the authoritative compiler stack.
 
-## Why the sequence changed
+## M11 result
 
-M0 through M7 already established the accepted workload, behavior oracle, four
-strong language baselines, private regressions, and answer-free task starts.
-M8a through M8f added reusable agent-runner, evidence, correctness, replay, and
-performance infrastructure, but no official campaign result.
+M11 delivered exactly five constructs:
 
-The remaining M8 plan required at least 80 successful agent trials plus 240
-performance measurements before any AIL language contract could be written.
-That evidence is useful for validating AIL later, but it does not determine
-whether Rust or TypeScript is the better compiler implementation stack.
+1. records;
+2. closed variants;
+3. functions with explicit public signatures;
+4. local `let` inference; and
+5. capability operation calls.
 
-The first M8g launch also found that the M8f freeze is not launchable:
+The contract contains 24 numbered proposed language and protocol rules, seven
+canonical fixture categories, nine transport-independent protocol shapes, and
+a dependency-free checker. The checker verifies rule identifiers, accepted
+requirement traceability, exact construct count, fixture fields and coverage,
+source digests, structured diagnostics, rename edits, stale-revision rejection,
+and identity maps. Its built-in mutations prove rejection of a sixth construct,
+unknown requirement, missing protocol shape, incomplete expected result, and
+changed source.
 
-```text
-ERROR [task_start_check_failed]:
-typescript/UC-001/public-task-tests: output omitted 'TODO(UC-001)'
-```
-
-No official trial started. Per ADR 0003, M8g through M8o, M9 numeric targets,
-and M10 illustrative syntax variants are deferred. Do not repair the
-calibration campaign while executing M11 through M13.
+The M11 subset is fixed for comparing M12 candidates. It is proposed language
+and protocol material, not the accepted broader 20–30 construct AIL core.
 
 ## Accepted foundation
 
@@ -64,8 +66,9 @@ calibration campaign while executing M11 through M13.
 - Rust, Go, Python, and TypeScript V1/V2 reference implementations
 - Cross-language normalized parity
 - Eight digest-locked answer-free task starts
-- Stack-evaluation weights and Rust/TypeScript candidate set
 - M8a–M8f calibration infrastructure and non-official pilot evidence
+- M11 shared compiler-spike contract and fixtures
+- Stack-evaluation weights and Rust/TypeScript candidate set
 
 ## Completed
 
@@ -78,6 +81,7 @@ calibration campaign while executing M11 through M13.
 - M6 — TypeScript baseline
 - M7 — Cross-baseline parity and freeze
 - M8a–M8f — Calibration preparation and readiness infrastructure
+- M11 — Compiler-stack spike contract
 
 ## Deferred
 
@@ -87,30 +91,29 @@ calibration campaign while executing M11 through M13.
 - UC-007 — Architectural regression control
 
 These items require an explicit maintainer decision to resume. They do not
-block M11, M12, M13, or the first semantic-oracle implementation milestone.
+block M12, M13, or the first semantic-oracle implementation milestone.
 
 ## Do not start yet
 
-- Rust or TypeScript spike implementation before the M11 contract passes
+- M13 stack selection before both M12 candidates and their scorecard pass
 - A production source tree or root package manager before M13 selects the stack
+- Candidate-specific syntax, semantics, diagnostics, or fixture changes
 - The broader 20–30 construct language core
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
 ## Blockers
 
-None. M11 can proceed from the accepted requirements and M7 fixtures without
-the deferred calibration campaign.
+None. Both M12 candidates can start from the same checked M11 contract.
 
 ## Handoff checklist
 
 After meaningful work:
 
-- keep the M11 subset to exactly five constructs;
-- distinguish proposed rules from illustrative examples;
-- make every fixture deterministic and machine-checkable;
-- keep candidate-specific choices out of the shared contract;
-- add executable checks for every delivered contract rule;
+- keep both candidates disposable and behaviorally identical;
+- run every shared fixture through both candidates;
+- report candidate friction as evidence instead of changing the contract;
+- run `python3 prototypes/check.py`;
 - run `python3 specs/tools/core_contract.py check`;
 - run `python3 tools/check_docs.py`; and
-- update this file and the roadmap only when the M11 exit criterion passes.
+- update this file and the roadmap only when the M12 exit criterion passes.

@@ -1,0 +1,143 @@
+{
+  "fixture_format": 1,
+  "id": "positive-five-constructs",
+  "category": "positive",
+  "requirements": [
+    "APP-002",
+    "APP-003",
+    "LANG-001",
+    "LANG-002",
+    "LANG-003",
+    "PROTO-001"
+  ],
+  "constructs": [
+    "record",
+    "variant",
+    "function",
+    "let",
+    "capability-call"
+  ],
+  "rules": [
+    "M11-LANG-001",
+    "M11-LANG-003",
+    "M11-LANG-004",
+    "M11-LANG-005",
+    "M11-LANG-006",
+    "M11-LANG-007",
+    "M11-LANG-008",
+    "M11-LANG-009",
+    "M11-LANG-010",
+    "M11-LANG-011",
+    "M11-LANG-012",
+    "M11-LANG-014",
+    "M11-PROTO-001",
+    "M11-PROTO-002",
+    "M11-PROTO-003",
+    "M11-PROTO-004",
+    "M11-PROTO-010"
+  ],
+  "input": {
+    "revision": {
+      "workspace_id": "fixture-positive",
+      "revision_id": "positive-r1",
+      "source_digest": "sha256:4e0320e2450dc7e42f74d5393ad12989968d58c9ab6e58cd5a23160173f73f08"
+    },
+    "path": "main.ail",
+    "source": "record Job {\n  job_id: Text;\n}\n\nvariant StoreOutcome {\n  Inserted;\n  Duplicate;\n}\n\nvariant CreateJobResult {\n  Created(Job);\n  AlreadyExists(Text);\n}\n\nfn create_job(job_id: Text, jobs: capability JobsStore) -> CreateJobResult effects { jobs.insert } {\n  let job = Job { job_id: job_id };\n  let outcome = jobs.insert(job);\n  CreateJobResult::Created(job)\n}\n",
+    "environment": {
+      "capabilities": {
+        "JobsStore": {
+          "insert": {
+            "parameters": [
+              "Job"
+            ],
+            "result": "StoreOutcome"
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "canonical_source": "record Job {\n  job_id: Text;\n}\n\nvariant StoreOutcome {\n  Inserted;\n  Duplicate;\n}\n\nvariant CreateJobResult {\n  Created(Job);\n  AlreadyExists(Text);\n}\n\nfn create_job(job_id: Text, jobs: capability JobsStore) -> CreateJobResult effects { jobs.insert } {\n  let job = Job { job_id: job_id };\n  let outcome = jobs.insert(job);\n  CreateJobResult::Created(job)\n}\n",
+    "type_result": {
+      "status": "ok",
+      "facts": [
+        {
+          "handle": {
+            "revision_id": "positive-r1",
+            "kind": "symbol",
+            "local_id": "job-binding"
+          },
+          "explicit_type": null,
+          "inferred_type": "Job"
+        },
+        {
+          "handle": {
+            "revision_id": "positive-r1",
+            "kind": "symbol",
+            "local_id": "outcome-binding"
+          },
+          "explicit_type": null,
+          "inferred_type": "StoreOutcome"
+        },
+        {
+          "handle": {
+            "revision_id": "positive-r1",
+            "kind": "symbol",
+            "local_id": "create-job-function"
+          },
+          "explicit_type": "fn(Text, capability JobsStore) -> CreateJobResult effects { jobs.insert }",
+          "inferred_type": null
+        }
+      ]
+    },
+    "primary_diagnostic": null,
+    "protocol_result": {
+      "operation": "inspect",
+      "status": "ok",
+      "results": [
+        {
+          "revision_id": "positive-r1",
+          "handle": {
+            "revision_id": "positive-r1",
+            "kind": "symbol",
+            "local_id": "create-job-function"
+          },
+          "semantic_kind": "function",
+          "explicit_type": "fn(Text, capability JobsStore) -> CreateJobResult effects { jobs.insert }",
+          "inferred_type": null,
+          "effects": [
+            "jobs.insert"
+          ],
+          "capabilities": [
+            "jobs:JobsStore"
+          ],
+          "dependencies": [
+            "CreateJobResult",
+            "Job",
+            "JobsStore",
+            "StoreOutcome",
+            "Text"
+          ]
+        },
+        {
+          "revision_id": "positive-r1",
+          "handle": {
+            "revision_id": "positive-r1",
+            "kind": "symbol",
+            "local_id": "job-binding"
+          },
+          "semantic_kind": "let-binding",
+          "explicit_type": null,
+          "inferred_type": "Job",
+          "effects": [],
+          "capabilities": [],
+          "dependencies": [
+            "Job",
+            "Text"
+          ]
+        }
+      ]
+    }
+  }
+}
