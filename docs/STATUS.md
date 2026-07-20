@@ -4,30 +4,27 @@ Last updated: 2026-07-19
 
 ## Active milestone
 
-M8 — Baseline agent calibration (M8f: readiness and campaign freeze)
+M8 — Baseline agent calibration (M8g: official agent rounds 1–2)
 
 ## Current goal
 
-Run the complete non-official readiness matrix and freeze the campaign only if
-every language/task agent configuration and every baseline performance
-configuration passes under the locked limits. No official agent or performance
+Run the first two balanced official agent rounds: 16 sequential attempts across
+the eight frozen language/task configurations. No official agent or performance
 evidence exists yet.
 
 The next agent should:
 
-- follow M8f in the
+- follow M8g in the
   [accepted M8 execution plan](m8-execution-plan.md);
-- run one non-official agent pilot for every language/task pair;
-- rerun one warm and cold pilot for every baseline under the accepted M8e
-  measurement boundary;
-- prove the exact M8a token rule against the pinned Codex executable;
-- freeze all configuration artifacts, digests, and the balanced trial order
-  only if every readiness path passes `verify-calibration`; and
-- stop before M8g or any official evidence.
+- verify every frozen input before the first attempt;
+- run rounds 1 and 2 sequentially in the predeclared balanced order;
+- append all successes, failures, timeouts, and safety-limit classifications;
+- run `verify-calibration` against the accumulated campaign; and
+- stop before M8h.
 
 ## Starting point
 
-The following work is accepted and should not be redesigned in M8f:
+The following work is accepted and frozen for M8g:
 
 - [UC-001 request validation and persistence](use-cases/UC-001-request-validation-and-persistence.md)
 - [UC-003 public schema evolution](use-cases/UC-003-public-schema-evolution.md)
@@ -86,6 +83,7 @@ Key decisions:
 - M8c — Interactive agent runner
 - M8d — Correctness verification and replay
 - M8e — Warm-state and cold-process performance measurement
+- M8f — Readiness and campaign freeze
 
 M1 delivered 37 canonical public JSON cases, a machine-readable schema, a
 dependency-free semantic checker and formatter, negative-path tool tests, and a
@@ -140,8 +138,8 @@ oracles, task starts, and baseline source trees did not change.
 
 M8b used the exact Responses input-token count endpoint with ordered
 cumulative-prefix deltas for category attribution and zero reconciliation
-tolerance. M8f must still prove that rule with the selected agent before the
-campaign freeze.
+tolerance. M8f proved that rule with the selected agent before the campaign
+freeze.
 
 M8c added a task-start-derived interactive runner with a complete pre-start
 observation gate, isolated Codex and loopback-provider configuration,
@@ -189,14 +187,23 @@ skeleton, fixed request, and every cumulative input prefix through
 Codex process, and reconciles provider usage. The runnable
 `run-live-trial` command retains redacted request, Codex, token, and final-source
 evidence. Its deterministic fake-upstream integration check exercises the
-exact pinned Codex binary and strict configuration. The reference environment
-does not currently expose `OPENAI_API_KEY`, so no provider-backed readiness
-pilot was created by the correction; M8f collection starts after that
-credential is exported.
+exact pinned Codex binary and strict configuration. The predecessor correction
+itself created no provider-backed readiness pilot.
+
+M8f added compatibility handling for the public input-token endpoint and
+atomic serial tool-call/output prefix accounting. Three provider-backed UC-001
+pilots completed across Python, Rust, and Go with exact request-by-request
+reconciliation. Rust and Go UC-003 pilots correctly stopped at the cumulative
+input-token safety boundary. Under the benchmark owner's accepted readiness
+amendment, representative live success plus a live enforced-limit path replaces
+the redundant requirement for eight pre-campaign successes. The pinned Codex
+fake-upstream path, all task starts, the eight M8e warm/cold pilots, calibration
+verification, and documentation checks pass. The campaign is frozen and
+official counts remain zero.
 
 ## Active next
 
-- M8f — Run readiness pilots and freeze the campaign
+- M8g — Run official agent rounds 1–2
 - M9 — Frozen AIL success targets
 
 ## Proposed future validation
@@ -204,7 +211,7 @@ credential is exported.
 [UC-007 architectural regression control](use-cases/UC-007-architectural-regression-control.md),
 its [proposed requirements](requirements/architectural-health.md), and the
 [architectural health manifest](architecture-health.md) define a later scaling
-gate. They do not expand M8f or authorize implementation before review and
+gate. They do not expand M8g or authorize implementation before review and
 acceptance.
 
 ## Do not start yet
@@ -212,18 +219,15 @@ acceptance.
 - AIL syntax design
 - AIL compiler implementation
 - Compiler-stack prototypes
-- Agent benchmark runs
 - Official performance measurements
-- M8 evidence collection
 - Production performance targets
 
 Those depend on later M8 submilestones or later roadmap milestones.
 
 ## Blockers
 
-None recorded for M8f. The readiness gate must preserve the accepted M8a
-treatment, M8d correctness boundary, and M8e performance boundary. Any failed
-configuration stops the freeze and must be resolved before official collection.
+None recorded for M8g. Configuration is frozen; M8g is append-only official
+evidence collection.
 
 ## Handoff checklist
 
@@ -237,5 +241,5 @@ After meaningful work:
 - run `python3 tools/check_docs.py`; and
 - update the roadmap only when the milestone exit criterion passes.
 
-For M8f, keep official counts at zero, retain every readiness classification,
-and do not freeze the campaign unless every required path passes.
+For M8g, retain every official classification and keep configuration artifacts
+unchanged.

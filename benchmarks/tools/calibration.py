@@ -56,6 +56,7 @@ SCHEMAS = {
 LOCKED_ARTIFACTS = (
     "benchmarks/calibration/README.md",
     "benchmarks/calibration/experiment-contract.json",
+    "benchmarks/calibration/readiness/m8f-summary.json",
     "benchmarks/calibration/synthetic/complete.json",
     "benchmarks/calibration/synthetic/empty.json",
     "benchmarks/calibration/synthetic/malformed.json",

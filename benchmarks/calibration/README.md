@@ -1,6 +1,6 @@
 # M8 calibration evidence contract
 
-Status: **M8e performance measurement contract; no official evidence**
+Status: **M8f campaign freeze; no official evidence**
 
 This directory defines the machine-checkable evidence boundary for the M8
 baseline campaign. It implements the accepted
@@ -32,7 +32,17 @@ The loopback recorder binds only `127.0.0.1`, authenticates the Codex control
 process with a trial-local token, and retains the upstream API credential
 outside the trial tool environment. Before it forwards each Responses request,
 it calls the input-token endpoint for the protocol skeleton, fixed request,
-and every cumulative input prefix. It rejects the request before forwarding
+and every cumulative input prefix. Because that endpoint rejects an empty
+`input` array, the frozen skeleton uses one empty user item as its protocol
+baseline; the subsequent prefix deltas still telescope exactly to the
+delivered provider total. The input-token request uses the endpoint's documented
+field subset; response-only controls such as `include`, `store`, `stream`, and
+`prompt_cache_key` remain unchanged on the forwarded request. Pinned Codex also
+emits a local `client_metadata`
+transport field that the public Responses API rejects; the recorder removes
+that non-model field before both preflight and forwarding. Serial tool calls and
+their required outputs are counted as one prefix step so every preflight remains
+a valid Responses input. The recorder rejects the request before forwarding
 when the cumulative 500,000-token limit would be exceeded, streams the provider
 response back to Codex, and reconciles the completed provider usage with zero
 tolerance.
@@ -168,9 +178,9 @@ category totals plus explicit protocol overhead must equal both the preflight
 count and provider-reported usage with zero tolerance. Cached input is recorded
 as a subset and never deducted. Repeated delivery is counted every time.
 
-M8f must still prove this exact rule against the selected Codex binary and all
-eight configurations before official collection. A mismatch is incomplete
-evidence, not a permitted approximation.
+M8f proved this exact rule against the selected Codex binary with
+provider-backed successes and retained live safety-limit classifications. A
+mismatch remains incomplete evidence, not a permitted approximation.
 
 ## Verification
 

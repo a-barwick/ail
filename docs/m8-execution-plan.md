@@ -198,14 +198,16 @@ safety-limit classification.
 
 ### M8f — Run readiness pilots and freeze the campaign
 
-Run one non-official agent pilot for every language/task pair and one warm and
-cold pilot for every baseline. Freeze all configuration artifacts, digests, and
-the predeclared balanced trial order.
+Run enough non-official pilots to prove the provider-backed runner and its
+safety boundary, plus one warm and cold pilot for every baseline. Freeze all
+configuration artifacts, digests, and the predeclared balanced trial order.
 
-Exit criterion: every configuration demonstrates that a successful run under
-the locked limits is possible and every evidence path passes
-`verify-calibration`. If not, stop and revise the design before official
-collection.
+Exit criterion: at least one provider-backed agent pilot completes with exact
+token reconciliation, at least one provider-backed pilot proves the enforced
+safety-limit path, the pinned-agent fake-upstream integration and all task-start
+checks pass, every baseline warm/cold pilot passes, and `verify-calibration`
+passes. Per-configuration success is measured by the official campaign rather
+than duplicated as a readiness prerequisite.
 
 ## Official agent campaign
 
@@ -365,7 +367,7 @@ the exact blocker. It must not repair a previous task implicitly.
 | `Launch M8c` | M8b accepted; Sol High | Complete **M8c**: implement the interactive agent runner and its event, edit, validation, repair, limit, and permission accounting. | Commit only; dry and fake streams only. |
 | `Launch M8d` | M8c accepted; Sol High | Complete **M8d**: implement post-run public/private correctness, seeded-role, protected-artifact, completion-evidence, and replay verification. | Commit only; no official evidence. |
 | `Launch M8e` | M8d accepted; Terra High | Complete **M8e**: implement warm-state plus cold-start, RSS, package, and external-access measurement with non-official pilots. | Commit only; no campaign collection. |
-| `Launch M8f` | M8e accepted; Sol High | Complete **M8f**: run readiness pilots for every configuration and freeze the campaign only if every readiness exit criterion passes. | Commit only; this is the final configuration-change boundary. |
+| `Launch M8f` | M8e accepted; Sol High | Complete **M8f**: run the amended representative live readiness gate and freeze the campaign only if every readiness exit criterion passes. | Commit only; this is the final configuration-change boundary. |
 | `Launch M8g` | M8f frozen; Terra Medium | Complete agent rounds 1–2: 16 sequential, evidence-only attempts across the eight frozen configurations. | Commit append-only evidence only. |
 | `Launch M8h` | M8g accepted; Terra Medium | Complete agent rounds 3–4 under the unchanged M8f configuration. | Commit append-only evidence only. |
 | `Launch M8i` | M8h accepted; Terra Medium | Complete agent rounds 5–6 under the unchanged M8f configuration. | Commit append-only evidence only. |

@@ -3,11 +3,15 @@
   "artifacts": [
     {
       "path": "benchmarks/calibration/README.md",
-      "sha256": "cb4615b63501a35247cd4edb4fbd9505f11a814b750efab8a206041c64f8e401"
+      "sha256": "7d8e09b90cc495a0e854e4d17f0c7dc0c021233d0421b166a7ca2757462aaddc"
     },
     {
       "path": "benchmarks/calibration/experiment-contract.json",
       "sha256": "52d146ad672ab3b93a31083f8907e3d8c6db970da14e3dc3ddd30ace739adbce"
+    },
+    {
+      "path": "benchmarks/calibration/readiness/m8f-summary.json",
+      "sha256": "170bfb796a3a2f526bc95efc46eb874e5716cda04edd11be0223bbbe9d4c0279"
     },
     {
       "path": "benchmarks/calibration/synthetic/complete.json",
@@ -91,7 +95,7 @@
     },
     {
       "path": "benchmarks/tests/test_agent_runner.py",
-      "sha256": "13785775cd281af8c457d4455b87dbab184e112eccf9e09e32208d1552d562ec"
+      "sha256": "cefd33ab519585f17a4f63dfa26bd0f48b2cc91f6de59333240c1c4d9ae76010"
     },
     {
       "path": "benchmarks/tests/test_calibration.py",
@@ -115,7 +119,7 @@
     },
     {
       "path": "benchmarks/tools/calibration.py",
-      "sha256": "42623586ff2099b5a6eba71d080bc1ab5f337ee9d823c90b536047112ad5fadd"
+      "sha256": "41e11cb1bcfda405f8848cd9ebf7e0d908126b2fa44500acc3223c472db4a6b4"
     },
     {
       "path": "benchmarks/tools/correctness.py",
@@ -127,7 +131,7 @@
     },
     {
       "path": "benchmarks/tools/responses_recorder.py",
-      "sha256": "3a5440896196b4dc05d377e6a408209eeead3382d0023369b6a277d132ca7f04"
+      "sha256": "d0edd9ba5622fa0e0de4f7f8d79941af1ee5108497df4428e152830214a8a21e"
     }
   ]
 }

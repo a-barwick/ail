@@ -27,6 +27,8 @@ import responses_recorder
 
 class FakeResponsesUpstream:
     def __init__(self) -> None:
+        self.count_bodies: list[dict[str, object]] = []
+        self.response_bodies: list[dict[str, object]] = []
         owner = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -42,9 +44,11 @@ class FakeResponsesUpstream:
                     body.get("input", [])
                 )
                 if self.path == "/v1/responses/input_tokens":
+                    owner.count_bodies.append(body)
                     raw = json.dumps({"input_tokens": count}).encode()
                     content_type = "application/json"
                 elif self.path == "/v1/responses":
+                    owner.response_bodies.append(body)
                     completed = {
                         "id": "resp_fake",
                         "object": "response",
@@ -192,18 +196,21 @@ class InteractiveAgentRunnerTests(unittest.TestCase):
             "input": [
                 {"role": "user", "content": "task"},
                 {
-                    "type": "function_call",
+                    "type": "custom_tool_call",
                     "call_id": "call-1",
-                    "name": "exec_command",
-                    "arguments": json.dumps({"cmd": "pytest -q"}),
+                    "name": "exec",
+                    "input": 'await tools.exec_command({cmd: "pytest -q"})',
                 },
                 {
-                    "type": "function_call_output",
+                    "type": "custom_tool_call_output",
                     "call_id": "call-1",
                     "output": "passed",
                 },
             ],
             "stream": True,
+            "include": ["reasoning.encrypted_content"],
+            "store": False,
+            "client_metadata": {"origin": "codex_cli"},
         }
         with FakeResponsesUpstream() as upstream:
             with responses_recorder.LoopbackResponsesRecorder(
@@ -237,6 +244,21 @@ class InteractiveAgentRunnerTests(unittest.TestCase):
         )
         self.assertGreater(recorded["categories"]["build_and_test_output"], 0)
         self.assertEqual(recorded["redaction"], "authorization-and-cookies-removed")
+        self.assertNotIn("client_metadata", recorded["body"])
+        self.assertTrue(upstream.count_bodies)
+        self.assertTrue(upstream.response_bodies)
+        for counted in upstream.count_bodies:
+            self.assertNotIn("client_metadata", counted)
+            self.assertNotIn("include", counted)
+            self.assertNotIn("store", counted)
+            self.assertNotIn("stream", counted)
+            self.assertNotIn("prompt_cache_key", counted)
+        forwarded = upstream.response_bodies[0]
+        self.assertNotIn("client_metadata", forwarded)
+        self.assertEqual(forwarded["include"], ["reasoning.encrypted_content"])
+        self.assertFalse(forwarded["store"])
+        self.assertTrue(forwarded["stream"])
+        self.assertEqual(forwarded["prompt_cache_key"], "trial-cache")
 
     def test_loopback_recorder_denies_before_forwarding_at_token_limit(self) -> None:
         with FakeResponsesUpstream() as upstream:

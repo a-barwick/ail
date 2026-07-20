@@ -21,6 +21,21 @@ TOKEN_CATEGORIES = (
     "build_and_test_output",
     "other_tool_output",
 )
+TOKEN_BASELINE_INPUT = [{"role": "user", "content": ""}]
+TOKEN_COUNT_FIELDS = (
+    "conversation",
+    "input",
+    "instructions",
+    "model",
+    "parallel_tool_calls",
+    "previous_response_id",
+    "reasoning",
+    "style",
+    "text",
+    "tool_choice",
+    "tools",
+    "truncation",
+)
 
 
 class RecorderFailure(Exception):
@@ -54,10 +69,18 @@ def _input_token_count(payload: dict[str, Any]) -> int:
 def _tool_commands(items: list[Any]) -> dict[str, str]:
     commands: dict[str, str] = {}
     for item in items:
-        if not isinstance(item, dict) or item.get("type") != "function_call":
+        if not isinstance(item, dict) or item.get("type") not in {
+            "function_call",
+            "custom_tool_call",
+        }:
             continue
         call_id = item.get("call_id")
         if not isinstance(call_id, str):
+            continue
+        if item.get("type") == "custom_tool_call":
+            custom_input = item.get("input")
+            if isinstance(custom_input, str):
+                commands[call_id] = custom_input
             continue
         arguments = item.get("arguments")
         parsed: Any = {}
@@ -109,12 +132,51 @@ def classify_input_item(item: Any, commands: dict[str, str]) -> str:
 
     if not isinstance(item, dict):
         return "initial_context"
-    if item.get("type") == "function_call_output":
+    if item.get("type") in {"function_call_output", "custom_tool_call_output"}:
         call_id = item.get("call_id")
         command = commands.get(call_id, "") if isinstance(call_id, str) else ""
         return _tool_output_category(command)
     # User/task input and model-produced replay are both initial context.
     return "initial_context"
+
+
+def _input_groups(
+    items: list[Any], commands: dict[str, str]
+) -> list[tuple[list[Any], str]]:
+    """Keep serial tool calls and their required outputs in valid count prefixes."""
+
+    groups: list[tuple[list[Any], str]] = []
+    index = 0
+    while index < len(items):
+        item = items[index]
+        if not isinstance(item, dict) or item.get("type") not in {
+            "function_call",
+            "custom_tool_call",
+        }:
+            groups.append(([item], classify_input_item(item, commands)))
+            index += 1
+            continue
+
+        call_id = item.get("call_id")
+        output_type = (
+            "custom_tool_call_output"
+            if item.get("type") == "custom_tool_call"
+            else "function_call_output"
+        )
+        if (
+            not isinstance(call_id, str)
+            or index + 1 >= len(items)
+            or not isinstance(items[index + 1], dict)
+            or items[index + 1].get("type") != output_type
+            or items[index + 1].get("call_id") != call_id
+        ):
+            raise RecorderFailure(
+                "serial tool call is not followed by its required output"
+            )
+        output = items[index + 1]
+        groups.append(([item, output], classify_input_item(output, commands)))
+        index += 2
+    return groups
 
 
 class LoopbackResponsesRecorder:
@@ -231,7 +293,18 @@ class LoopbackResponsesRecorder:
         )
 
     def _count(self, body: dict[str, Any]) -> int:
-        status, _headers, raw = self._upstream("/responses/input_tokens", body)
+        # The public input-token endpoint intentionally accepts only the
+        # documented token-count request schema, which is narrower than the
+        # Responses create schema. Response-only controls such as include,
+        # store, stream, and prompt_cache_key remain on the forwarded request.
+        count_body = {
+            key: copy.deepcopy(body[key])
+            for key in TOKEN_COUNT_FIELDS
+            if key in body
+        }
+        status, _headers, raw = self._upstream(
+            "/responses/input_tokens", count_body
+        )
         if status != 200:
             raise RecorderFailure(
                 f"input-token preflight returned HTTP {status}: "
@@ -250,7 +323,7 @@ class LoopbackResponsesRecorder:
     def probe(self, model: str) -> int:
         """Prove that the live input-token endpoint is reachable before spawn."""
 
-        return self._count({"model": model, "input": []})
+        return self._count({"model": model, "input": TOKEN_BASELINE_INPUT})
 
     def _account(self, body: dict[str, Any]) -> dict[str, Any]:
         items = body.get("input", [])
@@ -259,10 +332,13 @@ class LoopbackResponsesRecorder:
         if not isinstance(items, list):
             raise RecorderFailure("Responses input must be a string or array")
 
-        skeleton = {"model": body.get("model"), "input": []}
+        # The live endpoint rejects an empty input array. A single empty user
+        # item is therefore the frozen protocol baseline; cumulative prefix
+        # deltas still telescope exactly to the delivered request total.
+        skeleton = {"model": body.get("model"), "input": TOKEN_BASELINE_INPUT}
         protocol_overhead = self._count(skeleton)
         fixed = copy.deepcopy(body)
-        fixed["input"] = []
+        fixed["input"] = TOKEN_BASELINE_INPUT
         previous = self._count(fixed)
         if previous < protocol_overhead:
             raise RecorderFailure(
@@ -271,13 +347,14 @@ class LoopbackResponsesRecorder:
         categories = {category: 0 for category in TOKEN_CATEGORIES}
         categories["initial_context"] = previous - protocol_overhead
         commands = _tool_commands(items)
-        for index, item in enumerate(items, start=1):
+        prefix_items: list[Any] = []
+        for group, category in _input_groups(items, commands):
+            prefix_items.extend(group)
             prefix = copy.deepcopy(body)
-            prefix["input"] = items[:index]
+            prefix["input"] = prefix_items
             current = self._count(prefix)
             if current < previous:
                 raise RecorderFailure("cumulative prefix token count decreased")
-            category = classify_input_item(item, commands)
             categories[category] += current - previous
             previous = current
         return {
@@ -297,6 +374,10 @@ class LoopbackResponsesRecorder:
                 )
                 return
             body = self._read_body(handler)
+            # Pinned Codex adds local client metadata understood by its hosted
+            # transport but rejected by the public Responses API. It is not
+            # model input, so remove it before both preflight and forwarding.
+            body.pop("client_metadata", None)
             if self.prompt_cache_key is not None:
                 body["prompt_cache_key"] = self.prompt_cache_key
             accounting = self._account(body)

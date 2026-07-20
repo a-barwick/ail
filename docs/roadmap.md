@@ -431,16 +431,27 @@ python3 benchmarks/tools/harness.py verify-calibration
 python3 tools/check_docs.py
 ```
 
-#### Active submilestone: M8f — Run readiness pilots and freeze the campaign
+#### Completed submilestone: M8f — Readiness and campaign freeze
 
-Run one non-official agent pilot for every language/task pair and one warm and
-cold pilot for every baseline. Prove the exact token-accounting rule against
-the pinned Codex executable, validate every evidence path, and freeze all
-configuration artifacts, digests, and the balanced official order only if
-every configuration succeeds under the locked limits.
+M8f proved the provider-backed runner with three successful UC-001 pilots
+across Python, Rust, and Go. Every request reconciled exactly with provider
+usage. Separate Rust and Go UC-003 pilots correctly stopped before exceeding
+the 500,000 cumulative-input safety limit. The pinned Codex fake-upstream
+integration, all task-start gates, all four warm/cold baseline pairs, the
+calibration verifier, and documentation checks pass.
 
-M8f is the final configuration-change boundary. It collects no official
-evidence.
+The accepted readiness requirement now treats representative provider success
+plus an enforced live safety-limit path as the infrastructure gate.
+Per-configuration success remains an official campaign outcome rather than a
+duplicated pre-campaign requirement. The frozen summary is
+[`benchmarks/calibration/readiness/m8f-summary.json`](../benchmarks/calibration/readiness/m8f-summary.json).
+Official counts remain zero.
+
+#### Active submilestone: M8g — Agent rounds 1–2
+
+Run the first two balanced official agent rounds: 16 sequential attempts across
+the eight frozen language/task configurations. Append evidence only; record
+every terminal classification and do not change configuration.
 
 #### Scope
 
