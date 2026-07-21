@@ -102,9 +102,10 @@ numeric benchmark targets, and illustrative syntax variants because they do not
 inform the compiler-stack decision. M11 completed the proposed five-construct
 shared contract. ADR 0004 selects Rust directly and supersedes the M12/M13
 comparison path. M14 delivered lossless syntax, deterministic recovery, and
-canonical formatting. The active work is M15: implement name resolution, local
-inference, capability checking, and structured diagnostics in the authoritative
-Rust compiler.
+canonical formatting. M15 delivered name resolution, local inference,
+capability checking, and structured diagnostics in the authoritative Rust
+compiler. The active work is M16: immutable revisions, inspection, validated
+rename, and identity mapping.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and
 accepted.

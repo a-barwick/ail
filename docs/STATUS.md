@@ -1,22 +1,22 @@
 # Current status
 
-Last updated: 2026-07-19
+Last updated: 2026-07-20
 
 ## Active milestone
 
-M15 — Rust static semantics and diagnostics
+M16 — Rust revision protocol and validated rename
 
 ## Current goal
 
-Add the first semantic layer to the authoritative Rust compiler. The execution
-path is:
+Implement the first revision-safe compiler protocol surface over the completed
+M15 semantic layer. The execution path is:
 
 ```text
 M11 five-construct contract (complete)
   -> ADR 0004 Rust decision (accepted)
   -> M14 lossless syntax and formatter (complete)
-  -> M15 static semantics and diagnostics (active)
-  -> M16 revision protocol and validated rename
+  -> M15 static semantics and diagnostics (complete)
+  -> M16 revision protocol and validated rename (active)
   -> M17 deterministic core interpreter
 ```
 
@@ -25,17 +25,18 @@ candidate scorecard.
 
 The next agent should:
 
-- extend the existing typed syntax tree rather than reparsing canonical text;
-- build deterministic top-level and function-local symbol tables;
-- implement exact named-type checks for records, variants, functions, locals,
-  and capability calls;
-- accept capability interfaces as compiler input and verify declared effects;
-- return inferred local types and the exact structured diagnostics required by
-  the M11 fixtures;
-- preserve M14 losslessness, spans, recovery, formatter behavior, and CLI
-  commands; and
-- keep revisions, rename, execution, broader constructs, and lowering outside
-  M15.
+- build immutable revision storage around the M15 semantic-checking API rather
+  than reparsing canonical text;
+- assign deterministic revision-scoped handles for declarations, syntax, and
+  expressions, and expose elaborated inspection results;
+- implement atomic validated rename for the complete M11 source unit,
+  including canonical edits and complete identity mapping;
+- reject stale base revisions, invalid handles, invalid names, and collisions
+  without publishing a partial revision;
+- preserve M14 losslessness and formatting plus M15 type facts, diagnostics,
+  deterministic ordering, and CLI commands; and
+- keep execution, broader constructs, general semantic diffs, and other
+  refactors outside M16.
 
 ## M14 result
 
@@ -54,9 +55,21 @@ delivered:
 - seven focused conformance tests backed by all seven M11 fixture inputs and
   the three CLI operations.
 
-The compiler intentionally performs no name or type checking yet. The
-capability-error and type-error fixtures parse and format in M14; M15 must
-produce their declared semantic diagnostics.
+## M15 result
+
+M15 extended the existing M14 typed syntax tree with deterministic semantic
+checking. The compiler now resolves top-level and function-local names; checks
+exact named types for records, closed variants, function results, local
+bindings, and capability calls; accepts capability interfaces as compiler
+input; verifies declared effects; and returns inferred local types with
+structured diagnostics.
+
+The M11 type-error and capability-error fixtures produce
+`AIL.TYPE.FIELD_MISMATCH` and `AIL.CAPABILITY.UNDECLARED_EFFECT` with their
+required expected/actual facts, related identities, and causal chains. Parsing
+still blocks static checking. The new `check_source` API is deliberately
+revision-input-only; immutable revision storage, inspection requests, rename,
+and identity maps are M16 work.
 
 ## Stack decision
 
@@ -94,6 +107,7 @@ but it is the fixed conformance boundary for M14 through M16.
 - M11 language/protocol contract and fixtures
 - ADR 0004 Rust compiler decision
 - M14 Rust lossless syntax and canonical formatter
+- M15 Rust static semantics and diagnostics
 
 ## Completed
 
@@ -108,6 +122,7 @@ but it is the fixed conformance boundary for M14 through M16.
 - M8a–M8f — Calibration preparation and readiness infrastructure
 - M11 — Five-construct language and protocol contract
 - M14 — Rust lossless syntax and canonical formatter
+- M15 — Rust static semantics and diagnostics
 
 ## Superseded
 
@@ -126,7 +141,6 @@ block compiler implementation.
 
 ## Do not start yet
 
-- M16 revision transactions or rename before M15 passes
 - The broader 20–30 construct language core before its rules are accepted
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
@@ -146,4 +160,5 @@ After meaningful work:
 - run `cargo clippy --workspace --all-targets -- -D warnings`;
 - run `python3 specs/tools/core_contract.py check`;
 - run `python3 tools/check_docs.py`; and
-- update this file and the roadmap only when the M15 exit criterion passes.
+- update this file and the roadmap only when the active milestone's exit
+  criterion passes.

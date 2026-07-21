@@ -54,8 +54,8 @@ becomes active.
 | M12 | Comparable compiler-stack spikes | Superseded | M11 |
 | M13 | Compiler implementation-stack decision | Superseded | M11 |
 | M14 | Rust lossless syntax and canonical formatter | Complete | M11, ADR 0004 |
-| M15 | Rust static semantics and diagnostics | Active | M14 |
-| M16 | Rust revision protocol and validated rename | Planned | M15 |
+| M15 | Rust static semantics and diagnostics | Complete | M14 |
+| M16 | Rust revision protocol and validated rename | Active | M15 |
 | M17 | Deterministic core interpreter | Planned | M16 |
 
 ## Delivery milestones
@@ -676,7 +676,7 @@ the deterministic insertion point.
 
 ### M15 — Rust static semantics and diagnostics
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -705,9 +705,20 @@ python3 specs/tools/core_contract.py check
 The Rust compiler matches every M11 type result and primary static diagnostic
 without fixture-specific behavior.
 
+#### Delivered
+
+- Deterministic top-level and function-local name resolution over the M14
+  syntax tree
+- Exact named-type checks for records, closed variants, function results,
+  local bindings, and capability operation arguments
+- Caller-supplied capability interfaces and declared-effect checking
+- Revision-scoped elaborated type facts and structured static diagnostics
+- Executable coverage for M11 static fixtures, diagnostic causality, closed
+  construction, local scope, and primary-diagnostic ordering
+
 ### M16 — Rust revision protocol and validated rename
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 

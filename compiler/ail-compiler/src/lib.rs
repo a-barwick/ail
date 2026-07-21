@@ -1,18 +1,23 @@
 //! Authoritative AIL compiler library.
 //!
-//! M14 implements the lossless syntax and canonical formatting boundary from
-//! the fixed M11 contract. Static semantics and revision operations belong to
-//! later milestones.
+//! M15 adds static semantics and structured diagnostics over the M14 lossless
+//! syntax tree. Revision operations remain a later milestone.
 
 mod diagnostic;
 mod formatter;
 mod lexer;
 mod parser;
+mod semantics;
 mod syntax;
 
 pub use diagnostic::Diagnostic;
 pub use lexer::{Keyword, Span, Token, TokenKind, lex, reconstruct};
 pub use parser::{ParseResult, parse};
+pub use semantics::{
+    CapabilityEnvironment, CapabilityInterface, CapabilityOperation, CausalStep, CheckResult,
+    DiagnosticValue, HandleKind, SemanticHandle, StructuredDiagnostic, TypeCheckResult,
+    TypeCheckStatus, TypeFact, check_source,
+};
 pub use syntax::{
     Block, Declaration, Effect, Expr, Field, FunctionDecl, LetBinding, Parameter, ParameterType,
     RecordDecl, RecordFieldValue, SourceUnit, VariantCase, VariantDecl,
