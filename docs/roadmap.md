@@ -280,6 +280,8 @@ normalized results match the shared oracle.
 - Compare response, final state, and ordered storage calls case by case
 - Resolve behavioral differences without weakening the accepted oracle
 - Freeze V1 task starts and V2 reference results by source-tree digest
+- Package and freeze answer-free starting workspaces for both M8 tasks in each
+  baseline language
 - Instantiate the M2 hidden seed categories in each baseline and prove that
   their behavior and oracle did not change
 - Lock tool versions, task text, public and hidden tests, source trees, and run
@@ -302,12 +304,18 @@ python3 benchmarks/tools/fixtures.py manifest --check
 #### Exit criterion
 
 Every language produces the same normalized behavior for every public and
-hidden case, and all benchmark inputs are locked by digest before measurements
+hidden case. All eight agent-visible task starts are answer-free, deterministic,
+and locked by digest. All other benchmark inputs are locked before measurements
 start.
 
 ### M8 — Baseline agent calibration
 
 **Status:** Planned
+
+M8 is delivered through the sequential M8a–M8o submilestones in the accepted
+[M8 execution plan](m8-execution-plan.md). M7 must first complete the P0
+task-start correction and closure in that plan. Only one M8 submilestone is
+active at a time.
 
 #### Scope
 

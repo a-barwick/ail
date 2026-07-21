@@ -34,6 +34,10 @@ does not make the content of a planned artifact normative.
 The [current status](STATUS.md) names the active milestone and gives the next
 agent its immediate handoff.
 
+The accepted [M8 execution plan](m8-execution-plan.md) decomposes baseline
+calibration into reviewable sequential tasks. It is an operational delivery
+plan, not benchmark policy or language semantics.
+
 ## Required flow
 
 Material decisions should be traceable through these layers:
@@ -87,9 +91,9 @@ Every example must use one of these labels:
 The job-service reference workload, its two use cases, its first requirements,
 its frozen public JSON fixtures, and its language-independent benchmark harness
 and task contract are accepted. The Rust, Go, Python, and TypeScript baselines
-are complete, and the active task is M7: verify cross-baseline parity and freeze
-the benchmark inputs. Architectural regression control is a separate proposed scaling use
-case and feature specification; it does not expand the active slice until
-reviewed and accepted.
+are complete, and the active task is M7: correct and close the cross-baseline
+freeze with answer-free starting workspaces for both agent tasks. Architectural
+regression control is a separate proposed scaling use case and feature
+specification; it does not expand the active slice until reviewed and accepted.
 
 There is no accepted AIL syntax or normative language specification yet.

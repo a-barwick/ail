@@ -8,17 +8,26 @@ M7 — Cross-baseline parity and freeze
 
 ## Current goal
 
-Run the completed Rust, Go, Python, and TypeScript implementations through one
-parity gate, instantiate the frozen hidden seed categories consistently, and
-freeze the V1 task starts and V2 reference results by digest before M8 records
+Correct the M7 task-start freeze and formally close M7 before M8 records any
 agent or performance measurements.
 
 The next agent should:
 
-- provision the frozen Go 1.26, CPython 3.13.5, and Node.js 23.10 toolchains;
-- run `python3 benchmarks/tools/harness.py verify-all` with the separately
-  held `AIL_HIDDEN_PACKAGE`; and
-- mark M7 complete and advance to M8 only after all four real baselines pass.
+- follow prerequisite P0 in the
+  [accepted M8 execution plan](m8-execution-plan.md);
+- preserve `codex/m8-baseline-calibration` and its untracked pilot artifacts as
+  non-authoritative evidence;
+- create and freeze eight deterministic, answer-free task starts from a clean
+  `main` worktree;
+- rerun `python3 benchmarks/tools/harness.py verify-all` with the exact frozen
+  tools and separately held `AIL_HIDDEN_PACKAGE`; and
+- mark M7 complete and make M8a active only after the corrected freeze and full
+  parity gate pass.
+
+For this benchmark, a user can say `Launch P0` or `Launch M8a` through
+`Launch M8o`. The agent must resolve that directive through the launch table in
+[the M8 execution plan](m8-execution-plan.md#launch-directives), rather than
+requiring a copied task prompt.
 
 ## Starting point
 
@@ -92,9 +101,21 @@ publishes a 42-case parity report (37 public and 5 private) and a 28-artifact
 freeze lock. The private ZIP is outside the repository and is identified only
 by its SHA-256 digest in the locked manifests.
 
+The M7 parity implementation and candidate freeze are merged on `main`, but M7
+remains active because its V1 checkpoints contain working UC-001
+implementations and do not yet provide a genuine answer-free starting workspace
+for that task. P0 corrects this before any official calibration result exists.
+
+The uncommitted `codex/m8-baseline-calibration` pilot built experimental task
+starts and recorded five Python trials. Two interactive trials exceeded the
+100,000-input-token safety limit; later trials changed to a one-pass protocol
+that cannot measure normal tool use or repair cycles. These records are useful
+readiness evidence but count as zero official M8 trials.
+
 ## Planned next
 
-- M8 — Baseline agent calibration
+- M8a–M8o — Baseline agent calibration, sequenced in
+  [docs/m8-execution-plan.md](m8-execution-plan.md)
 - M9 — Frozen AIL success targets
 
 ## Proposed future validation
@@ -110,17 +131,18 @@ acceptance.
 - AIL syntax design
 - AIL compiler implementation
 - Compiler-stack prototypes
-- Agent benchmark runs
+- Official agent benchmark runs
 - Production performance targets
 
 Those depend on later milestones.
 
 ## Blockers
 
-The local verification host has Rust 1.88.0, but does not have the frozen Go
-1.26, CPython 3.13.5, or Node.js 23 toolchains. The M7 harness unit suite and
-the Rust public-and-private parity run pass; the remaining three real baseline
-runs require those provisioned tools before M7 can meet its exit criterion.
+The blocking issue is repository state, not a known missing external input: M7
+does not yet freeze answer-free starts for both tasks in all four languages.
+The previous M8 pilot found the frozen tools and private package locally and
+rechecked parity, but P0 must reproduce that result from a clean worktree and
+commit the corrected task-start freeze before M7 can meet its exit criterion.
 
 ## Handoff checklist
 
@@ -133,3 +155,6 @@ After meaningful work:
 - run the active milestone's verification commands;
 - run `python3 tools/check_docs.py`; and
 - update the roadmap only when the milestone exit criterion passes.
+
+For M8, also preserve the submilestone, model, branch, evidence, and
+configuration rules in [the accepted execution plan](m8-execution-plan.md).
