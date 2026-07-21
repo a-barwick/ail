@@ -1,0 +1,57 @@
+{
+  "task_start_lock_format": 1,
+  "generator": {
+    "path": "benchmarks/tools/calibration.py",
+    "sha256": "6eb0d05ae449755ef1c9866a7eabedca1e0c4655740cd01909c9a4ddab666f91"
+  },
+  "configurations": [
+    {
+      "language": "rust",
+      "task": "UC-001",
+      "source_tree_sha256": "ea5b5e59e7a58dc76dc352c8aecf301b55b04decd5b2f5f7c235a5a236de54db",
+      "file_count": 50
+    },
+    {
+      "language": "rust",
+      "task": "UC-003",
+      "source_tree_sha256": "0c02110837fd49c790ec6d923b4f7d6c9d06dac38198dd4c362873f709a7d246",
+      "file_count": 51
+    },
+    {
+      "language": "go",
+      "task": "UC-001",
+      "source_tree_sha256": "ab046a0db86430768ac3939675afe2afd8025bd8654617a78e2c7528c57c88ee",
+      "file_count": 48
+    },
+    {
+      "language": "go",
+      "task": "UC-003",
+      "source_tree_sha256": "5919f4c71d2b4577807b10d01b32a3b68ef06a71a82de74380695bed0f5c29a7",
+      "file_count": 53
+    },
+    {
+      "language": "python",
+      "task": "UC-001",
+      "source_tree_sha256": "6aa90293cd8cd2536769ea61db73aedf60787944bf1c7318f62bd5408de4cb1e",
+      "file_count": 52
+    },
+    {
+      "language": "python",
+      "task": "UC-003",
+      "source_tree_sha256": "2ada25a806ab70e7472ded7f3fa954773ba2e1aa4f144dd9c88e7b7467133fca",
+      "file_count": 56
+    },
+    {
+      "language": "typescript",
+      "task": "UC-001",
+      "source_tree_sha256": "ebf40602aef9164f0a2ba52ba36cf32de61bb4f5f7844963cc44b4e44a0d2d61",
+      "file_count": 53
+    },
+    {
+      "language": "typescript",
+      "task": "UC-003",
+      "source_tree_sha256": "c21b4dc98f2d900a0e883e0c908e3055c2c724d8757af5b5ba175455c9acf64e",
+      "file_count": 56
+    }
+  ]
+}

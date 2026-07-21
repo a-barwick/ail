@@ -1,0 +1,101 @@
+{
+  "agent_trial_format": 1,
+  "trial_id": "002",
+  "configuration": {
+    "language": "python",
+    "task": "UC-001"
+  },
+  "task_start_sha256": "6aa90293cd8cd2536769ea61db73aedf60787944bf1c7318f62bd5408de4cb1e",
+  "model": {
+    "provider": "openai",
+    "name": "gpt-5.6-terra",
+    "reasoning_effort": "low",
+    "agent": "codex-cli 0.145.0-alpha.18"
+  },
+  "environment": {
+    "reference_host": "Austins-MacBook-Pro.local",
+    "operating_system": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "architecture": "arm64",
+    "container_image": "native-macos-not-containerized",
+    "network": "denied-to-agent-tools"
+  },
+  "limits": {
+    "run_seconds": 300,
+    "input_tokens": 100000
+  },
+  "agent_result": {
+    "return_code": 0,
+    "timed_out": false,
+    "elapsed_ms": 70636,
+    "thread_id": "019f7bd7-b201-7151-a63d-89ddbd18cb5b",
+    "input_tokens": 273018,
+    "cached_input_tokens": 247808,
+    "output_tokens": 2781,
+    "reasoning_output_tokens": 828,
+    "edit_count": 1,
+    "validation_attempts": 1,
+    "incomplete_validation_attempts": 0,
+    "event_count": 28
+  },
+  "changes": {
+    "final_source_tree_sha256": "b4e50d5ab1f0e4e9a09ae42dac6ff08b048f441b2bb21c817f061efab72aced2",
+    "protected_changes": []
+  },
+  "checks": [
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "format",
+        "--check",
+        "."
+      ],
+      "return_code": 0,
+      "timed_out": false,
+      "elapsed_ms": 42,
+      "stdout": "5 files already formatted\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "check",
+        "."
+      ],
+      "return_code": 0,
+      "timed_out": false,
+      "elapsed_ms": 20,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        ".venv/bin/mypy"
+      ],
+      "return_code": 0,
+      "timed_out": false,
+      "elapsed_ms": 422,
+      "stdout": "Success: no issues found in 3 source files\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        ".venv/bin/pytest"
+      ],
+      "return_code": 0,
+      "timed_out": false,
+      "elapsed_ms": 291,
+      "stdout": "============================= test session starts ==============================\nplatform darwin -- Python 3.13.5, pytest-8.4.1, pluggy-1.6.0\nrootdir: /private/tmp/ail-m8-trials/python-uc-001-002/benchmarks/baselines/python\nconfigfile: pyproject.toml\ntestpaths: tests\nplugins: cov-6.2.1\ncollected 19 items\n\ntests/test_v1.py ...................                                     [100%]\n\n============================== 19 passed in 0.03s ==============================\n",
+      "stderr": ""
+    }
+  ],
+  "classification": "input_token_limit",
+  "all_classifications": [
+    "input_token_limit"
+  ],
+  "successful": false,
+  "raw_events": {
+    "path": "benchmarks/calibration/evidence/raw/python/uc-001/002.jsonl.gz",
+    "sha256": "ed804385f139b6f4a0546ae2a562451be4450e746904056e4ac4e63337e57a34"
+  },
+  "attempted_external_access": false
+}

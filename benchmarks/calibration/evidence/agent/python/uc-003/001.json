@@ -1,0 +1,119 @@
+{
+  "agent_trial_format": 1,
+  "trial_id": "001",
+  "configuration": {
+    "language": "python",
+    "task": "UC-003"
+  },
+  "task_start_sha256": "bb2f59aa884efb9c6354d514741a042c335b346e88796242f17a1ce340e58e20",
+  "model": {
+    "provider": "openai",
+    "name": "gpt-5.6-sol",
+    "reasoning_effort": "high",
+    "agent": "codex-cli 0.145.0-alpha.18"
+  },
+  "environment": {
+    "reference_host": "Austins-MacBook-Pro.local",
+    "operating_system": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "architecture": "arm64",
+    "container_image": "native-macos-not-containerized",
+    "network": "denied-to-agent-tools"
+  },
+  "limits": {
+    "run_seconds": 300,
+    "input_tokens": 100000
+  },
+  "agent_result": {
+    "return_code": 0,
+    "timed_out": false,
+    "elapsed_ms": 188554,
+    "thread_id": "019f7bde-4173-75e3-bbad-179316150638",
+    "input_tokens": 17611,
+    "cached_input_tokens": 0,
+    "output_tokens": 8878,
+    "reasoning_output_tokens": 3248,
+    "edit_count": 0,
+    "validation_attempts": 0,
+    "incomplete_validation_attempts": 0,
+    "event_count": 4,
+    "generated_file_edits": 7
+  },
+  "changes": {
+    "final_source_tree_sha256": "bc6e6d93aaa30e3b5c5d9a00479239c02c01be4593b3f2df608952955aef9b55",
+    "protected_changes": []
+  },
+  "checks": [
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "format",
+        "."
+      ],
+      "return_code": 0,
+      "timed_out": false,
+      "elapsed_ms": 672,
+      "stdout": "1 file reformatted, 16 files left unchanged\n",
+      "stderr": "",
+      "phase": "automatic_formatter"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "format",
+        "--check",
+        "."
+      ],
+      "return_code": 0,
+      "timed_out": false,
+      "elapsed_ms": 13,
+      "stdout": "17 files already formatted\n",
+      "stderr": "",
+      "phase": "verification"
+    },
+    {
+      "command": [
+        ".venv/bin/ruff",
+        "check",
+        "."
+      ],
+      "return_code": 1,
+      "timed_out": false,
+      "elapsed_ms": 18,
+      "stdout": "v2/fixture.py:129:30: RUF100 [*] Unused `noqa` directive (non-enabled: `PLC0415`)\n    |\n127 |     result: object,\n128 | ) -> dict[str, object]:\n129 |     from v2.domain import (  # noqa: PLC0415\n    |                              ^^^^^^^^^^^^^^^ RUF100\n130 |         AlreadyExists,\n131 |         Created,\n    |\n    = help: Remove unused `noqa` directive\n\nv2/store.py:7:1: UP035 [*] Import from `collections.abc` instead: `Iterable`\n  |\n5 | from dataclasses import dataclass\n6 | from enum import IntEnum\n7 | from typing import Iterable\n  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^ UP035\n8 |\n9 | from v2.domain import InsertOutcome, Job, Priority\n  |\n  = help: Import from `collections.abc`\n\nFound 2 errors.\n[*] 2 fixable with the `--fix` option.\n",
+      "stderr": "",
+      "phase": "verification"
+    },
+    {
+      "command": [
+        ".venv/bin/mypy"
+      ],
+      "return_code": 1,
+      "timed_out": false,
+      "elapsed_ms": 2995,
+      "stdout": "v2/fixture.py:174: error: \"object\" has no attribute \"request\"  [attr-defined]\nv2/fixture.py:176: error: \"object\" has no attribute \"api_version\"  [attr-defined]\nFound 2 errors in 1 file (checked 17 source files)\n",
+      "stderr": "",
+      "phase": "verification"
+    },
+    {
+      "command": [
+        ".venv/bin/pytest"
+      ],
+      "return_code": 1,
+      "timed_out": false,
+      "elapsed_ms": 726,
+      "stdout": "cts/hidden-contract.json'\n\n/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:537: FileNotFoundError\n_____________ test_every_public_fixture_matches_the_shared_oracle ______________\n\nrepository_root = PosixPath('/private/tmp/ail-m8-trials/python-uc-003-001')\n\n    def test_every_public_fixture_matches_the_shared_oracle(\n        repository_root: Path,\n    ) -> None:\n        manifest = cast(\n            \"dict[str, Any]\",\n            load(repository_root / \"benchmarks/fixtures/manifest.json\"),\n        )\n        fixtures = cast(\"list[dict[str, str]]\", manifest[\"fixtures\"])\n        assert len(fixtures) == 37\n        for entry in fixtures:\n            fixture = cast(\"dict[str, Any]\", load(repository_root / entry[\"path\"]))\n            result = run_case(fixture)\n            assert result[\"case_id\"] == fixture[\"case_id\"]\n            assert result[\"operation\"] == fixture[\"operation\"]\n>           assert result[\"actual\"] == fixture[\"expected\"], entry[\"path\"]\nE           AssertionError: benchmarks/fixtures/public/create_job/uc001-v1-created-empty-payload.json\nE           assert {'final_jobs'...'task': 'x'}]} == {'final_jobs'..._if_absent'}]}\nE             \nE             Omitting 1 identical items, use -vv to show\nE             Differing items:\nE             {'store_calls': [{'job_id': 'a', 'payload_base64': '', 'record_version': 1, 'task': 'x'}]} != {'store_calls': [{'job': {'job_id': 'a', 'payload_base64': '', 'record_version': 1, 'task': 'x'}, 'operation': 'insert_if_absent'}]}\nE             {'response': {'api_version': 1, 'job': {'job_id': 'a', 'payload_base64': '', 'task': 'x'}, 'result': 'created'}} != {'response': {'api_version': 1, 'result': {'job': {'job_id': 'a', 'payload_base64': '', 'task': 'x'}, 'kind': 'created'}}}\nE             Use -v to get more diff\n\ntests/test_fixture.py:31: AssertionError\n____________ test_corpus_preserves_manifest_digest_count_and_order _____________\n\nrepository_root = PosixPath('/private/tmp/ail-m8-trials/python-uc-003-001')\n\n    def test_corpus_preserves_manifest_digest_count_and_order(\n        repository_root: Path,\n    ) -> None:\n>       result = run((\"--corpus\", \"benchmarks/fixtures/manifest.json\"))\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_runner.py:48: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nv2/runner.py:85: in run\n    return _run_corpus(arguments[1])\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\nv2/runner.py:71: in _run_corpus\n    results.append(_run_one(fixture_path))\n                   ^^^^^^^^^^^^^^^^^^^^^^\nv2/runner.py:45: in _run_one\n    return run_case(_read_json(_resolve(path_value)))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nv2/fixture.py:201: in run_case\n    actual = _create_case(fixture)\n             ^^^^^^^^^^^^^^^^^^^^^\nv2/fixture.py:163: in _create_case\n    outcome = _decode_outcome(fixture.get(\"store_outcome\"))\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nv2/fixture.py:93: in _decode_outcome\n    raw = _string(value, \"store_outcome\")\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nvalue = None, label = 'store_outcome'\n\n    def _string(value: object, label: str) -> str:\n        if not isinstance(value, str):\n>           raise FixtureError(f\"{label} must be a string\")\nE           v2.fixture.FixtureError: store_outcome must be a string\n\nv2/fixture.py:36: FixtureError\n=========================== short test summary info ============================\nFAILED tests/test_contract.py::test_checkpoint_source_trees_match_frozen_digests\nFAILED tests/test_contract.py::test_seed_locations_cover_every_frozen_category_once\nFAILED tests/test_fixture.py::test_every_public_fixture_matches_the_shared_oracle\nFAILED tests/test_runner.py::test_corpus_preserves_manifest_digest_count_and_order\n========================= 4 failed, 57 passed in 0.24s =========================\n",
+      "stderr": "",
+      "phase": "verification"
+    }
+  ],
+  "classification": "final_checks_failed",
+  "all_classifications": [
+    "final_checks_failed"
+  ],
+  "successful": false,
+  "raw_events": {
+    "path": "benchmarks/calibration/evidence/raw/python/uc-003/001.jsonl.gz",
+    "sha256": "4e2844d6fb36d8826c12211906902a175e97d85cbbc60c8be835767c2e9f438d"
+  },
+  "attempted_external_access": false
+}
