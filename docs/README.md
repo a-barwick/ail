@@ -104,8 +104,9 @@ shared contract. ADR 0004 selects Rust directly and supersedes the M12/M13
 comparison path. M14 delivered lossless syntax, deterministic recovery, and
 canonical formatting. M15 delivered name resolution, local inference,
 capability checking, and structured diagnostics in the authoritative Rust
-compiler. The active work is M16: immutable revisions, inspection, validated
-rename, and identity mapping.
+compiler. M16 delivered immutable revisions, deterministic revision-scoped
+inspection, validated rename, canonical edits, and identity mapping. The active
+work is M17: deterministic interpretation of the next accepted core slice.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and
 accepted.

@@ -52,7 +52,7 @@ impl CapabilityInterface {
         self.operations.insert(name.into(), operation)
     }
 
-    fn operation(&self, name: &str) -> Option<&CapabilityOperation> {
+    pub(crate) fn operation(&self, name: &str) -> Option<&CapabilityOperation> {
         self.operations.get(name)
     }
 }
@@ -79,7 +79,7 @@ impl CapabilityEnvironment {
         self.interfaces.insert(name.into(), interface)
     }
 
-    fn interface(&self, name: &str) -> Option<&CapabilityInterface> {
+    pub(crate) fn interface(&self, name: &str) -> Option<&CapabilityInterface> {
         self.interfaces.get(name)
     }
 }
@@ -203,10 +203,22 @@ pub fn check_source(
     capabilities: &CapabilityEnvironment,
 ) -> CheckResult {
     let parsed = parse(source);
+    check_parsed_source(&parsed, revision_id, capabilities)
+}
+
+/// Check a source unit that has already been parsed for one immutable revision.
+///
+/// The revision protocol uses this entry point so revision creation retains one
+/// lossless parse tree for both semantic checking and later handle indexing.
+pub(crate) fn check_parsed_source(
+    parsed: &crate::ParseResult,
+    revision_id: &str,
+    capabilities: &CapabilityEnvironment,
+) -> CheckResult {
     if !parsed.diagnostics.is_empty() {
         return CheckResult {
             canonical_source: None,
-            parse_diagnostics: parsed.diagnostics,
+            parse_diagnostics: parsed.diagnostics.clone(),
             type_result: TypeCheckResult {
                 status: TypeCheckStatus::NotRun,
                 facts: Vec::new(),

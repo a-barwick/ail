@@ -7,12 +7,18 @@ mod diagnostic;
 mod formatter;
 mod lexer;
 mod parser;
+mod protocol;
 mod semantics;
 mod syntax;
 
 pub use diagnostic::Diagnostic;
 pub use lexer::{Keyword, Span, Token, TokenKind, lex, reconstruct};
 pub use parser::{ParseResult, parse};
+pub use protocol::{
+    CanonicalEdit, IdentityClassification, IdentityMap, IdentityMapEntry, InspectionRequest,
+    InspectionResult, RenameFailure, RenameRequest, RenameResponse, RenameSuccess,
+    RenameValidation, Revision, RevisionBuildFailure, Workspace, source_digest,
+};
 pub use semantics::{
     CapabilityEnvironment, CapabilityInterface, CapabilityOperation, CausalStep, CheckResult,
     DiagnosticValue, HandleKind, SemanticHandle, StructuredDiagnostic, TypeCheckResult,

@@ -1,23 +1,23 @@
 # Current status
 
-Last updated: 2026-07-20
+Last updated: 2026-07-21
 
 ## Active milestone
 
-M16 — Rust revision protocol and validated rename
+M17 — Deterministic core interpreter
 
 ## Current goal
 
-Implement the first revision-safe compiler protocol surface over the completed
-M15 semantic layer. The execution path is:
+Implement a deterministic tree-walking interpreter for the next accepted
+bounded core rules. The execution path is:
 
 ```text
 M11 five-construct contract (complete)
   -> ADR 0004 Rust decision (accepted)
   -> M14 lossless syntax and formatter (complete)
   -> M15 static semantics and diagnostics (complete)
-  -> M16 revision protocol and validated rename (active)
-  -> M17 deterministic core interpreter
+  -> M16 revision protocol and validated rename (complete)
+  -> M17 deterministic core interpreter (active)
 ```
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
@@ -25,18 +25,18 @@ candidate scorecard.
 
 The next agent should:
 
-- build immutable revision storage around the M15 semantic-checking API rather
-  than reparsing canonical text;
-- assign deterministic revision-scoped handles for declarations, syntax, and
-  expressions, and expose elaborated inspection results;
-- implement atomic validated rename for the complete M11 source unit,
-  including canonical edits and complete identity mapping;
-- reject stale base revisions, invalid handles, invalid names, and collisions
-  without publishing a partial revision;
-- preserve M14 losslessness and formatting plus M15 type facts, diagnostics,
-  deterministic ordering, and CLI commands; and
-- keep execution, broader constructs, general semantic diffs, and other
-  refactors outside M16.
+- accept the smallest additional numbered language and runtime rules necessary
+  to execute the first reference-service core; do not infer them from use-case
+  examples or the existing fixtures;
+- build deterministic tree-walking execution over the accepted syntax and
+  static semantics, with supplied capability instances and ordered observable
+  calls;
+- preserve immutable revisions, canonical source, inspection, rename, and
+  identity maps from M16 while adding execution results;
+- run the shared job-service corpus only after its AIL source and runtime rules
+  are accepted; and
+- keep native lowering, general concurrency, production I/O adapters, semantic
+  diffs, and broader unaccepted constructs outside M17.
 
 ## M14 result
 
@@ -70,6 +70,23 @@ required expected/actual facts, related identities, and causal chains. Parsing
 still blocks static checking. The new `check_source` API is deliberately
 revision-input-only; immutable revision storage, inspection requests, rename,
 and identity maps are M16 work.
+
+## M16 result
+
+M16 added a transport-independent `Workspace` API around the completed M15
+checker. Each stored revision is immutable, canonical, and SHA-256 identified.
+The API assigns deterministic revision-scoped handles to declarations, syntax,
+and expressions; returns elaborated inspection results; and validates complete
+M11 rename transactions.
+
+A successful rename produces ordered canonical UTF-8 byte edits, reparses and
+statically checks the complete candidate unit, publishes one child revision,
+and returns a complete deterministic identity map. A stale base, stale or
+non-symbol handle, invalid identifier, collision, or validation failure returns
+one structured diagnostic with no edits and does not publish a partial revision.
+The M16 tests cover canonical source and digest retention, function and local
+inspection, edit replay, surviving and replaced identity mappings, rejection
+paths, stale edit rejection, and repeated deterministic results.
 
 ## Stack decision
 
@@ -123,6 +140,7 @@ but it is the fixed conformance boundary for M14 through M16.
 - M11 — Five-construct language and protocol contract
 - M14 — Rust lossless syntax and canonical formatter
 - M15 — Rust static semantics and diagnostics
+- M16 — Rust revision protocol and validated rename
 
 ## Superseded
 

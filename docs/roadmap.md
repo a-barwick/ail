@@ -55,8 +55,8 @@ becomes active.
 | M13 | Compiler implementation-stack decision | Superseded | M11 |
 | M14 | Rust lossless syntax and canonical formatter | Complete | M11, ADR 0004 |
 | M15 | Rust static semantics and diagnostics | Complete | M14 |
-| M16 | Rust revision protocol and validated rename | Active | M15 |
-| M17 | Deterministic core interpreter | Planned | M16 |
+| M16 | Rust revision protocol and validated rename | Complete | M15 |
+| M17 | Deterministic core interpreter | Active | M16 |
 
 ## Delivery milestones
 
@@ -718,7 +718,7 @@ without fixture-specific behavior.
 
 ### M16 — Rust revision protocol and validated rename
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -746,9 +746,25 @@ python3 specs/tools/core_contract.py check
 The Rust compiler matches the M11 inspection, rename, stale-edit, edit-order,
 and identity-map fixtures through a transport-independent API.
 
+#### Delivered
+
+- Immutable canonical source revisions with SHA-256 source digests and
+  deterministic revision identifiers
+- Deterministic revision-scoped handles for declarations, syntax, and
+  expressions, with elaborated inspection results
+- Atomic validated rename across resolved M11 references, ordered canonical
+  byte edits, and child-revision publication only after parse and static checks
+- Rejection of stale bases, stale or non-symbol handles, invalid names, and
+  collisions without changing the current revision
+- Complete deterministic identity maps that classify every indexed base handle
+  and report child-only handles
+- Executable coverage for inspection, immutable source retention, canonical
+  edit replay, rename validation, stale rejection, and repeated deterministic
+  protocol results
+
 ### M17 — Deterministic core interpreter
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 
