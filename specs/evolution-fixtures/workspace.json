@@ -1,0 +1,281 @@
+{
+  "fixture_format": 1,
+  "id": "m19-uc003-impact",
+  "requirements": [
+    "APP-004",
+    "APP-005",
+    "LANG-001",
+    "LANG-005",
+    "PROTO-001",
+    "PROTO-002",
+    "PROTO-003",
+    "PROTO-005"
+  ],
+  "rules": [
+    "M19-LANG-001",
+    "M19-LANG-002",
+    "M19-LANG-003",
+    "M19-PROTO-001",
+    "M19-PROTO-002",
+    "M19-PROTO-003",
+    "M19-PROTO-004",
+    "M19-PROTO-010"
+  ],
+  "revisions": {
+    "r1": {
+      "workspace_id": "m19-job-service",
+      "revision_id": "schema-r1",
+      "source_set_digest": "sha256:c9809f483df5bddc8503e3312b0154aea87c1a6aebf932cb59d5a2d37b45bd96",
+      "sources": [
+        {
+          "path": "adapters.ail",
+          "sha256": "cfc25cd03126d4b1345a96404ae9b47dfda38ef33334d33340214bf19531d0ca"
+        },
+        {
+          "path": "contracts.ail",
+          "sha256": "6b23cd047befb0a8ff1aabc51dc3e536ee4194705e11a9bed1ca9aa5ad643d5b"
+        },
+        {
+          "path": "persistence.ail",
+          "sha256": "260d86c35818cd3c482032dde910b0822bd0e27a6a2f7a339c88c7d7a9bdd60b"
+        },
+        {
+          "path": "projections.ail",
+          "sha256": "9e9b330d9f4757c0bb887707d0129de3e34dcf62c601a9f6718bb3a042b90b85"
+        },
+        {
+          "path": "service.ail",
+          "sha256": "5564a35445ef2b337814f32f865ec065088081e2b81c84bcf39c19d9c1d356c9"
+        }
+      ]
+    },
+    "r2": {
+      "workspace_id": "m19-job-service",
+      "revision_id": "schema-r2",
+      "parent_revision_id": "schema-r1",
+      "source_set_digest": "sha256:3f9b4ee6e2d6fd91a58fa8eeb5c0bd593f67212e3b89411fa22ba22f8eac5431",
+      "sources": [
+        {
+          "path": "adapters.ail",
+          "sha256": "f291ea324be403d06a06ccc80621e570aa1477b04a8d85f6cbc225c93b45e6a9"
+        },
+        {
+          "path": "contracts.ail",
+          "sha256": "17ffa8237c806421ef301ec9e44ef240c202d36789d9f895ebb4d004af4846dc"
+        },
+        {
+          "path": "persistence.ail",
+          "sha256": "d9183f75cb55f790c3b017cdc29b63d4b33ba3be212457ae478ac08e8dca132f"
+        },
+        {
+          "path": "projections.ail",
+          "sha256": "24c444c9a712087bc629a8d6d59fc5e04eb842fddd4c8b76fef4de8af867cbba"
+        },
+        {
+          "path": "service.ail",
+          "sha256": "ff5b025ec445dea917c9f596be9d6ba425f7a288a8c804d1d6f534f77cce69f5"
+        }
+      ]
+    }
+  },
+  "relationship_kinds_exercised": [
+    "declares-member",
+    "signature-input",
+    "signature-output",
+    "constructs",
+    "reads-field",
+    "matches-case",
+    "capability-argument",
+    "declares-effect",
+    "adapts-from",
+    "projects-to",
+    "verifies",
+    "source-artifact"
+  ],
+  "impact": {
+    "request": {
+      "base_revision_id": "schema-r1",
+      "change": {
+        "kind": "add-required-field-with-version-successor",
+        "subject_identity": "job.create-request.v1",
+        "successor_identity": "job.create-request.v2",
+        "member": {
+          "display_name": "priority",
+          "identity": "priority",
+          "type": "Priority"
+        }
+      }
+    },
+    "expected": {
+      "revision_id": "schema-r1",
+      "must_change": [
+        {
+          "id": "request-contract",
+          "location": "contracts.ail#CreateJobRequest",
+          "role": "request-schema",
+          "reason": "version successor requires priority",
+          "path": [
+            "job.create-request.v1",
+            "declares-member"
+          ]
+        },
+        {
+          "id": "stored-contract",
+          "location": "contracts.ail#Job",
+          "role": "stored-schema",
+          "reason": "persisted job propagates priority",
+          "path": [
+            "job.create-request.v1",
+            "constructs",
+            "job.stored.v1"
+          ]
+        },
+        {
+          "id": "priority-contract",
+          "location": "contracts.ail#eof",
+          "role": "closed-priority-schema",
+          "reason": "new required field type must be declared",
+          "path": [
+            "job.create-request.v1",
+            "declares-member",
+            "job.priority.v1"
+          ]
+        },
+        {
+          "id": "request-adapter",
+          "location": "adapters.ail#decode_request_v1",
+          "role": "v1-request-adapter",
+          "reason": "v1 input must select Normal",
+          "path": [
+            "job.create-request.v1",
+            "adapts-from"
+          ]
+        },
+        {
+          "id": "stored-adapter",
+          "location": "adapters.ail#decode_stored_job_v1",
+          "role": "v1-stored-adapter",
+          "reason": "v1 stored job must select Normal",
+          "path": [
+            "job.stored.v1",
+            "adapts-from"
+          ]
+        },
+        {
+          "id": "handler-construction",
+          "location": "service.ail#create_job.Job",
+          "role": "handler",
+          "reason": "Job construction requires priority",
+          "path": [
+            "job.create-request.v1",
+            "reads-field",
+            "constructs",
+            "job.stored.v1"
+          ]
+        },
+        {
+          "id": "store-contract",
+          "location": "environment#JobsStore.insert_if_absent",
+          "role": "store-capability",
+          "reason": "capability argument advances to Job v2",
+          "path": [
+            "job.stored.v1",
+            "capability-argument"
+          ]
+        },
+        {
+          "id": "stored-encoder",
+          "location": "persistence.ail#encode_stored_job_v1",
+          "role": "persisted-encoder",
+          "reason": "new writes use Job v2",
+          "path": [
+            "job.stored.v1",
+            "constructs"
+          ]
+        },
+        {
+          "id": "v1-projection",
+          "location": "projections.ail#project_created_v1",
+          "role": "v1-response-projection",
+          "reason": "projection must deliberately omit priority",
+          "path": [
+            "job.stored.v1",
+            "projects-to",
+            "job.created.v1"
+          ]
+        },
+        {
+          "id": "v2-projection",
+          "location": "projections.ail#project_created_v1.after",
+          "role": "v2-response-projection",
+          "reason": "v2 response must preserve priority",
+          "path": [
+            "job.stored.v1",
+            "projects-to",
+            "job.created.v2"
+          ]
+        },
+        {
+          "id": "v2-fixture",
+          "location": "projections.ail#fixture_request_v1",
+          "role": "v2-request-fixture",
+          "reason": "v2 producer must supply explicit priority",
+          "path": [
+            "job.create-request.v1",
+            "verifies"
+          ]
+        },
+        {
+          "id": "completion-artifact",
+          "location": "evolution-fixtures/transaction.json",
+          "role": "completion-evidence",
+          "reason": "evidence must account for schema consequence",
+          "path": [
+            "job.create-request.v1",
+            "source-artifact"
+          ]
+        }
+      ],
+      "review": [
+        {
+          "id": "result-contract",
+          "location": "contracts.ail#CreateJobResult",
+          "role": "result-schema",
+          "reason": "payload schema changes transitively",
+          "path": [
+            "job.stored.v1",
+            "signature-output"
+          ]
+        },
+        {
+          "id": "match-consumer",
+          "location": "service.ail#InsertOutcome.match",
+          "role": "closed-outcome-consumer",
+          "reason": "confirm outcome set remains unchanged",
+          "path": [
+            "job.insert-outcome.v1",
+            "matches-case"
+          ]
+        }
+      ],
+      "unchecked": [
+        {
+          "identity": "external:job-api-clients",
+          "reason": "client source unavailable"
+        }
+      ],
+      "analyzed_paths": [
+        "adapters.ail",
+        "contracts.ail",
+        "persistence.ail",
+        "projections.ail",
+        "service.ail"
+      ],
+      "effect_summary": {
+        "capabilities": "unchanged",
+        "effects": "unchanged",
+        "ordering": "unchanged"
+      }
+    }
+  }
+}

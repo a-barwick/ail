@@ -58,8 +58,8 @@ becomes active.
 | M16 | Rust revision protocol and validated rename | Complete | M15 |
 | M17 | Deterministic core interpreter | Complete | M16 |
 | M18 | Next validation-slice selection | Complete | M17 |
-| M19 | UC-003 schema-evolution contract | Active | M18 |
-| M20 | Workspace semantic graph and impact query | Planned | M19 |
+| M19 | UC-003 schema-evolution contract | Complete | M18 |
+| M20 | Workspace semantic graph and impact query | Active | M19 |
 | M21 | Atomic schema evolution and completion evidence | Planned | M20 |
 
 ## Delivery milestones
@@ -858,7 +858,7 @@ milestone without inferring scope from the long-range outlook.
 
 ### M19 — UC-003 schema-evolution contract
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -902,9 +902,27 @@ behavior is traceable to accepted UC-003 requirements, and M20 can implement
 the contract without choosing identity, traversal, coverage, or ordering
 semantics.
 
+#### Delivered
+
+- Accepted three language rules and ten protocol rules for explicit schema
+  identities, ordered source-set revisions, semantic relationships, categorized
+  impact, atomic candidate validation, semantic diff, and completion evidence
+- Fixed canonical identity grammar, source-set digest encoding, relationship
+  kinds, traversal order, impact bounds, and stable rejection codes
+- Froze five-path canonical R1 and R2 workspaces containing the request,
+  persistence, handler, capability, adapter, projection, fixture, and evidence
+  roles required by UC-003
+- Froze an exact 12-entry `must_change` report, two-entry `review` report, and
+  explicit unavailable external-client boundary
+- Froze one successful whole-workspace transaction and stale, missed-consumer,
+  incompatible-identity, effect-growth, and behavior-mismatch rejections
+- Extended the dependency-free checker across 13 rules, 16 protocol shapes,
+  seven fixture scenarios, deterministic digests, rule coverage, and five
+  rejection mutations
+
 ### M20 — Workspace semantic graph and impact query
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 

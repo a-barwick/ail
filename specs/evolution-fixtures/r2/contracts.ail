@@ -1,0 +1,87 @@
+record CreateJobRequestV1 identity "job.create-request.v1" {
+  job_id identity "job-id": Text;
+  task identity "task": Text;
+  payload identity "payload": Bytes;
+}
+
+record CreateJobRequest identity "job.create-request.v2" {
+  job_id identity "job-id": Text;
+  task identity "task": Text;
+  payload identity "payload": Bytes;
+  priority identity "priority": PriorityOption;
+}
+
+record JobV1 identity "job.stored.v1" {
+  job_id identity "job-id": Text;
+  task identity "task": Text;
+  payload identity "payload": Bytes;
+}
+
+record Job identity "job.stored.v2" {
+  job_id identity "job-id": Text;
+  task identity "task": Text;
+  payload identity "payload": Bytes;
+  priority identity "priority": Priority;
+}
+
+record CreatedV1 identity "job.created.v1" {
+  job identity "job": JobV1;
+}
+
+record CreatedV2 identity "job.created.v2" {
+  job identity "job": Job;
+}
+
+record ValidationIssue identity "job.validation-issue.v1" {
+  field identity "field": ValidationField;
+  reason identity "reason": ValidationReason;
+}
+
+record IssueNode identity "job.validation-issue-node.v1" {
+  issue identity "issue": ValidationIssue;
+  rest identity "rest": ValidationIssues;
+}
+
+variant Priority identity "job.priority.v1" {
+  Low identity "low";
+  Normal identity "normal";
+  High identity "high";
+}
+
+variant PriorityOption identity "job.priority-option.v1" {
+  Some identity "some"(Priority);
+  None identity "none";
+}
+
+variant ValidationField identity "job.validation-field.v2" {
+  JobId identity "job-id";
+  Task identity "task";
+  Payload identity "payload";
+  Priority identity "priority";
+}
+
+variant ValidationReason identity "job.validation-reason.v1" {
+  Missing identity "missing";
+  InvalidFormat identity "invalid-format";
+  TooLong identity "too-long";
+  ControlCharacter identity "control-character";
+  PayloadTooLarge identity "payload-too-large";
+}
+
+variant ValidationIssues identity "job.validation-issues.v1" {
+  Empty identity "empty";
+  More identity "more"(IssueNode);
+}
+
+variant InsertOutcome identity "job.insert-outcome.v1" {
+  Inserted identity "inserted";
+  Duplicate identity "duplicate";
+  UnavailableBeforeCommit identity "unavailable-before-commit";
+}
+
+variant CreateJobResult identity "job.create-result.v2" {
+  Created identity "created"(Job);
+  Invalid identity "invalid"(ValidationIssues);
+  AlreadyExists identity "already-exists"(Text);
+  PersistenceUnavailable identity "persistence-unavailable";
+}

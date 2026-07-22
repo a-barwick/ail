@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the M11 five-construct language and protocol contract."""
+"""Verify the M11, M17, and M19 language and protocol contracts."""
 
 from __future__ import annotations
 
@@ -19,6 +19,9 @@ CONTRACT_PATH = SPECS / "core-contract.json"
 PROTOCOL_PATH = SPECS / "protocol.json"
 RUNTIME_CONTRACT_PATH = SPECS / "runtime-contract.json"
 RUNTIME_PROTOCOL_PATH = SPECS / "runtime-protocol.json"
+EVOLUTION_CONTRACT_PATH = SPECS / "evolution-contract.json"
+EVOLUTION_PROTOCOL_PATH = SPECS / "evolution-protocol.json"
+EVOLUTION_FIXTURE_ROOT = SPECS / "evolution-fixtures"
 REQUIREMENTS_PATH = ROOT / "docs" / "requirements" / "reference-slice.md"
 
 EXPECTED_CONSTRUCTS = (
@@ -103,6 +106,32 @@ RUNTIME_CASES = (
     "revision-scoped-retained-parent",
     "stable-malformed-argument-fault",
 )
+EVOLUTION_RELATIONSHIP_KINDS = (
+    "declares-member",
+    "signature-input",
+    "signature-output",
+    "constructs",
+    "reads-field",
+    "matches-case",
+    "capability-argument",
+    "declares-effect",
+    "adapts-from",
+    "projects-to",
+    "verifies",
+    "source-artifact",
+)
+EVOLUTION_FIXTURES = (
+    "evolution-fixtures/workspace.json",
+    "evolution-fixtures/transaction.json",
+    "evolution-fixtures/rejections.json",
+)
+EVOLUTION_REJECTIONS = {
+    "stale-base": ("revision", "AIL.PROTOCOL.STALE_REVISION"),
+    "missed-consumer": ("impact", "AIL.IMPACT.MISSED_CONSUMER"),
+    "incompatible-identity": ("schema", "AIL.SCHEMA.IDENTITY_INCOMPATIBLE"),
+    "effect-growth": ("capabilities", "AIL.CAPABILITY.EFFECT_GROWTH"),
+    "behavior-mismatch": ("public-behavior", "AIL.VALIDATION.BEHAVIOR_MISMATCH"),
+}
 
 
 class ContractError(Exception):
@@ -1434,6 +1463,521 @@ def _runtime_self_test(
     return len(mutations)
 
 
+def _source_set_digest(directory: Path, sources: list[dict[str, Any]]) -> str:
+    digest = hashlib.sha256()
+    paths = [source.get("path") for source in sources]
+    _require(
+        all(isinstance(path, str) and path for path in paths),
+        "evolution_source_path",
+        directory.relative_to(ROOT).as_posix(),
+    )
+    _require(paths == sorted(paths), "evolution_source_order", str(paths))
+    _require(len(paths) == len(set(paths)), "evolution_source_duplicate", str(paths))
+    for source in sources:
+        path_text = source["path"]
+        path = directory / path_text
+        _require(path.is_file(), "evolution_source_missing", path_text)
+        parts = Path(path_text).parts
+        _require(
+            path_text == Path(path_text).as_posix()
+            and not path_text.startswith("/")
+            and all(part not in {"", ".", ".."} for part in parts),
+            "evolution_source_path",
+            path_text,
+        )
+        data = path.read_bytes()
+        _require(data.endswith(b"\n"), "evolution_source_newline", path_text)
+        _require(
+            source.get("sha256") == hashlib.sha256(data).hexdigest(),
+            "evolution_source_sha256",
+            path_text,
+        )
+        encoded_path = path_text.encode("utf-8")
+        digest.update(encoded_path)
+        digest.update(b"\0")
+        digest.update(str(len(data)).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(data)
+    return "sha256:" + digest.hexdigest()
+
+
+def _validate_evolution_revision(
+    revision: Any, name: str, parent: str | None = None
+) -> list[str]:
+    _require(isinstance(revision, dict), "evolution_revision", name)
+    required = {"workspace_id", "revision_id", "source_set_digest", "sources"}
+    optional = {"parent_revision_id"}
+    _require(
+        required <= set(revision) <= required | optional,
+        "evolution_revision_fields",
+        name,
+    )
+    _require(
+        revision["workspace_id"] == "m19-job-service"
+        and revision["revision_id"] == f"schema-{name}",
+        "evolution_revision_identity",
+        name,
+    )
+    if parent is None:
+        _require("parent_revision_id" not in revision, "evolution_parent", name)
+    else:
+        _require(revision.get("parent_revision_id") == parent, "evolution_parent", name)
+    sources = revision["sources"]
+    _require(
+        isinstance(sources, list) and len(sources) == 5,
+        "evolution_sources",
+        name,
+    )
+    for source in sources:
+        _require(
+            isinstance(source, dict) and set(source) == {"path", "sha256"},
+            "evolution_source_fields",
+            name,
+        )
+    expected_digest = _source_set_digest(EVOLUTION_FIXTURE_ROOT / name, sources)
+    _require(
+        revision["source_set_digest"] == expected_digest,
+        "evolution_source_set_digest",
+        f"{name}: expected {expected_digest}",
+    )
+    return [source["path"] for source in sources]
+
+
+def _validate_evolution_identity_source(directory: Path) -> set[str]:
+    declaration = re.compile(
+        r"^(?:record|variant)\s+[A-Za-z_][A-Za-z0-9_]*\s+identity\s+\"([^\"]+)\"\s+\{",
+        re.MULTILINE,
+    )
+    identity_pattern = re.compile(
+        r"^[a-z][a-z0-9]*(?:[.-][a-z][a-z0-9]*)*$"
+    )
+    identities: set[str] = set()
+    for path in sorted(directory.glob("*.ail")):
+        text = path.read_text(encoding="utf-8")
+        for identity in declaration.findall(text):
+            _require(
+                identity_pattern.fullmatch(identity) is not None,
+                "evolution_identity_syntax",
+                identity,
+            )
+            _require(
+                identity not in identities,
+                "evolution_identity_duplicate",
+                identity,
+            )
+            identities.add(identity)
+        in_schema = False
+        for line_number, line in enumerate(text.splitlines(), 1):
+            if re.match(
+                r"^(?:record|variant)\s+[A-Za-z_][A-Za-z0-9_]*\s+identity\s+\"",
+                line,
+            ):
+                in_schema = True
+                continue
+            if in_schema and line == "}":
+                in_schema = False
+                continue
+            if in_schema and re.match(r"^  [A-Za-z_][A-Za-z0-9_]*", line):
+                _require(
+                    " identity \"" in line,
+                    "evolution_member_identity_missing",
+                    f"{path.name}:{line_number}",
+                )
+    _require(identities, "evolution_identities_missing", directory.name)
+    return identities
+
+
+def _validate_evolution_protocol(protocol: dict[str, Any]) -> int:
+    _require(
+        protocol.get("evolution_protocol_version") == 1
+        and protocol.get("status") == "Accepted"
+        and protocol.get("transport") == "independent",
+        "evolution_protocol_header",
+        "expected accepted version 1 transport-independent contract",
+    )
+    _require(
+        tuple(protocol.get("relationship_kinds", ()))
+        == EVOLUTION_RELATIONSHIP_KINDS,
+        "evolution_relationship_kinds",
+        "set or order changed",
+    )
+    shapes = protocol.get("shapes")
+    _require(
+        isinstance(shapes, dict) and len(shapes) == 16,
+        "evolution_protocol_shapes",
+        "expected 16 shapes",
+    )
+    for name, shape in shapes.items():
+        _require(
+            isinstance(shape, dict) and set(shape) == {"required", "optional"},
+            "evolution_protocol_shape",
+            name,
+        )
+        required = _string_list(
+            shape["required"], "evolution_protocol_shape", name, allow_empty=False
+        )
+        optional = _string_list(
+            shape["optional"], "evolution_protocol_shape", name
+        )
+        _require(
+            not set(required) & set(optional), "evolution_protocol_shape", name
+        )
+    _require(
+        protocol.get("operations")
+        == {
+            "impact": {"request": "ImpactRequest", "success": "ImpactReport"},
+            "validate_change": {
+                "request": "CandidateChangeRequest",
+                "success": "ChangeSuccess",
+                "failure": "ChangeFailure",
+            },
+        },
+        "evolution_protocol_operations",
+        "operation contract changed",
+    )
+    return len(shapes)
+
+
+def _validate_evolution_contract_metadata(
+    contract: dict[str, Any], accepted_requirements: set[str]
+) -> dict[str, dict[str, Any]]:
+    _require(
+        contract.get("evolution_contract_version") == 1
+        and contract.get("status") == "Accepted"
+        and contract.get("extends") == ["M11", "M17"],
+        "evolution_contract_header",
+        "expected accepted M11/M17 extension",
+    )
+    _require(
+        contract.get("documents") == ["evolution.md", "evolution-protocol.json"],
+        "evolution_documents",
+        "document set or order changed",
+    )
+    _require(
+        tuple(contract.get("fixtures", ())) == EVOLUTION_FIXTURES,
+        "evolution_fixtures",
+        "fixture set or order changed",
+    )
+    rules = contract.get("rules")
+    _require(isinstance(rules, list) and len(rules) == 13, "evolution_rules", "count")
+    by_id: dict[str, dict[str, Any]] = {}
+    sequences: dict[str, list[int]] = {"LANG": [], "PROTO": []}
+    for rule in rules:
+        _require(
+            isinstance(rule, dict)
+            and set(rule) == {"id", "kind", "title", "requirements"},
+            "evolution_rule_fields",
+            str(rule),
+        )
+        rule_id = rule["id"]
+        match = re.fullmatch(r"M19-(LANG|PROTO)-(\d{3})", str(rule_id))
+        _require(
+            match is not None and rule_id not in by_id,
+            "evolution_rule_id",
+            str(rule_id),
+        )
+        prefix = match.group(1)
+        _require(
+            rule["kind"] == ("language" if prefix == "LANG" else "protocol"),
+            "evolution_rule_kind",
+            rule_id,
+        )
+        requirements = _string_list(
+            rule["requirements"],
+            "evolution_rule_requirements",
+            rule_id,
+            allow_empty=False,
+        )
+        _require(
+            set(requirements) <= accepted_requirements,
+            "evolution_rule_requirement_unknown",
+            rule_id,
+        )
+        sequences[prefix].append(int(match.group(2)))
+        by_id[rule_id] = rule
+    for prefix, numbers in sequences.items():
+        _require(
+            numbers == list(range(1, len(numbers) + 1)),
+            "evolution_rule_sequence",
+            f"{prefix}: {numbers}",
+        )
+    document = (SPECS / "evolution.md").read_text(encoding="utf-8")
+    documented = set(
+        re.findall(r"^### (M19-(?:LANG|PROTO)-\d{3}) — ", document, re.MULTILINE)
+    )
+    _require(
+        documented == set(by_id),
+        "evolution_rule_document_mismatch",
+        f"metadata-only={sorted(set(by_id) - documented)}, document-only={sorted(documented - set(by_id))}",
+    )
+    return by_id
+
+
+def _validate_evolution_fixtures(
+    contract: dict[str, Any], protocol: dict[str, Any], rules: dict[str, dict[str, Any]]
+) -> int:
+    values = [_load_json(SPECS / path) for path in contract["fixtures"]]
+    for path_text, value in zip(contract["fixtures"], values):
+        _require_canonical_json(SPECS / path_text, value)
+    workspace, transaction, rejections = values
+    _require(
+        set(workspace)
+        == {
+            "fixture_format",
+            "id",
+            "requirements",
+            "rules",
+            "revisions",
+            "relationship_kinds_exercised",
+            "impact",
+        }
+        and workspace["fixture_format"] == 1,
+        "evolution_workspace_fixture",
+        "unexpected shape",
+    )
+    referenced_rules: set[str] = set()
+    for fixture in values:
+        fixture_rules = _string_list(
+            fixture.get("rules"),
+            "evolution_fixture_rules",
+            fixture.get("id", "fixture"),
+            allow_empty=False,
+        )
+        _require(
+            set(fixture_rules) <= set(rules),
+            "evolution_fixture_rules",
+            fixture["id"],
+        )
+        referenced_rules.update(fixture_rules)
+    _require(
+        referenced_rules == set(rules),
+        "evolution_rule_fixture_coverage",
+        f"uncovered={sorted(set(rules) - referenced_rules)}",
+    )
+    revisions = workspace["revisions"]
+    _require(set(revisions) == {"r1", "r2"}, "evolution_revisions", "r1/r2")
+    r1_paths = _validate_evolution_revision(revisions["r1"], "r1")
+    r2_paths = _validate_evolution_revision(revisions["r2"], "r2", "schema-r1")
+    _require(r1_paths == r2_paths, "evolution_source_path_change", str(r2_paths))
+    r1_identities = _validate_evolution_identity_source(EVOLUTION_FIXTURE_ROOT / "r1")
+    r2_identities = _validate_evolution_identity_source(EVOLUTION_FIXTURE_ROOT / "r2")
+    _require(
+        {"job.create-request.v1", "job.stored.v1"} <= r1_identities,
+        "evolution_r1_identity_coverage",
+        str(sorted(r1_identities)),
+    )
+    _require(
+        {"job.create-request.v2", "job.stored.v2", "job.priority.v1"}
+        <= r2_identities,
+        "evolution_r2_identity_coverage",
+        str(sorted(r2_identities)),
+    )
+    _require(
+        tuple(workspace["relationship_kinds_exercised"])
+        == EVOLUTION_RELATIONSHIP_KINDS
+        == tuple(protocol["relationship_kinds"]),
+        "evolution_relationship_coverage",
+        "all kinds must be exercised in order",
+    )
+    impact = workspace["impact"]
+    _require(set(impact) == {"request", "expected"}, "evolution_impact", "shape")
+    request = impact["request"]
+    expected = impact["expected"]
+    _require(
+        request.get("base_revision_id") == "schema-r1"
+        and request.get("change", {}).get("subject_identity")
+        == "job.create-request.v1"
+        and request["change"].get("successor_identity") == "job.create-request.v2",
+        "evolution_impact_request",
+        "subject or successor",
+    )
+    must_change = expected.get("must_change")
+    review = expected.get("review")
+    unchecked = expected.get("unchecked")
+    _require(
+        isinstance(must_change, list) and len(must_change) == 12,
+        "evolution_must_change",
+        "expected 12 exact entries",
+    )
+    _require(
+        isinstance(review, list) and len(review) <= 2,
+        "evolution_review_bound",
+        "at most two entries",
+    )
+    _require(
+        isinstance(unchecked, list) and unchecked,
+        "evolution_unchecked",
+        "external boundary required",
+    )
+    impact_ids = [entry.get("id") for entry in must_change]
+    _require(
+        len(impact_ids) == len(set(impact_ids))
+        and all(isinstance(item, str) and item for item in impact_ids),
+        "evolution_impact_ids",
+        str(impact_ids),
+    )
+    _require(
+        expected.get("analyzed_paths") == r1_paths,
+        "evolution_analyzed_paths",
+        "must equal R1 source set",
+    )
+    _require(
+        expected.get("effect_summary")
+        == {"capabilities": "unchanged", "effects": "unchanged", "ordering": "unchanged"},
+        "evolution_effect_summary",
+        "authority or ordering changed",
+    )
+
+    _require(
+        set(transaction)
+        == {"fixture_format", "id", "requirements", "rules", "request", "expected"}
+        and transaction["fixture_format"] == 1,
+        "evolution_transaction_fixture",
+        "unexpected shape",
+    )
+    transaction_request = transaction["request"]
+    transaction_expected = transaction["expected"]
+    _require(
+        transaction_request.get("required_impact_ids") == impact_ids,
+        "evolution_transaction_impact",
+        "must account for exact impact list",
+    )
+    _require(
+        transaction_request.get("candidate_source_set_digest")
+        == revisions["r2"]["source_set_digest"]
+        == transaction_expected.get("source_set_digest"),
+        "evolution_transaction_digest",
+        "candidate digest mismatch",
+    )
+    edits = transaction_expected.get("edits")
+    _require(
+        isinstance(edits, list)
+        and [edit.get("path") for edit in edits] == r1_paths,
+        "evolution_transaction_edits",
+        "one ordered replacement per path required",
+    )
+    for edit in edits:
+        old = (EVOLUTION_FIXTURE_ROOT / "r1" / edit["path"]).read_bytes()
+        replacement = EVOLUTION_FIXTURE_ROOT / edit.get("replacement_source", "")
+        _require(
+            edit.get("start_utf8_byte") == 0
+            and edit.get("end_utf8_byte") == len(old)
+            and replacement.is_file(),
+            "evolution_transaction_edit",
+            edit["path"],
+        )
+    identities = transaction_expected.get("persistent_identities")
+    _require(
+        isinstance(identities, dict)
+        and set(identities) == {"preserved", "added", "retired"},
+        "evolution_transaction_identities",
+        "classification shape",
+    )
+    for classification, items in identities.items():
+        _require(
+            isinstance(items, list) and items == sorted(items),
+            "evolution_identity_order",
+            classification,
+        )
+    semantic_diff = transaction_expected.get("semantic_diff", {})
+    _require(
+        semantic_diff.get("effect_summary", {}).get("before")
+        == semantic_diff.get("effect_summary", {}).get("after")
+        and semantic_diff.get("capability_summary", {}).get("before")
+        == semantic_diff.get("capability_summary", {}).get("after"),
+        "evolution_semantic_diff_authority",
+        "effect or capability growth",
+    )
+    _require(
+        transaction_expected.get("validation")
+        == {
+            "revision_id": "schema-r2",
+            "parse": "ok",
+            "types": "ok",
+            "capabilities": "ok",
+            "impact": "complete",
+            "public_behavior": "37-public-cases-pass",
+        },
+        "evolution_validation_summary",
+        "validation contract changed",
+    )
+
+    _require(
+        set(rejections)
+        == {"fixture_format", "id", "requirements", "rules", "cases"}
+        and rejections["fixture_format"] == 1,
+        "evolution_rejection_fixture",
+        "unexpected shape",
+    )
+    cases = rejections["cases"]
+    _require(
+        isinstance(cases, list)
+        and [case.get("id") for case in cases] == list(EVOLUTION_REJECTIONS),
+        "evolution_rejection_cases",
+        "case set or order changed",
+    )
+    for case in cases:
+        phase, code = EVOLUTION_REJECTIONS[case["id"]]
+        _require(
+            case.get("phase") == phase
+            and case.get("code") == code
+            and isinstance(case.get("mutation"), dict)
+            and bool(case["mutation"])
+            and case.get("edits") == []
+            and case.get("published_revision") is None,
+            "evolution_rejection_result",
+            case["id"],
+        )
+    return 2 + len(cases)
+
+
+def validate_evolution_contract(
+    contract: dict[str, Any], protocol: dict[str, Any]
+) -> tuple[int, int, int]:
+    shape_count = _validate_evolution_protocol(protocol)
+    rules = _validate_evolution_contract_metadata(contract, _accepted_requirements())
+    fixture_case_count = _validate_evolution_fixtures(contract, protocol, rules)
+    return len(rules), fixture_case_count, shape_count
+
+
+def _load_repository_evolution_contract() -> tuple[dict[str, Any], dict[str, Any]]:
+    contract = _load_json(EVOLUTION_CONTRACT_PATH)
+    protocol = _load_json(EVOLUTION_PROTOCOL_PATH)
+    _require_canonical_json(EVOLUTION_CONTRACT_PATH, contract)
+    _require_canonical_json(EVOLUTION_PROTOCOL_PATH, protocol)
+    return contract, protocol
+
+
+def _evolution_self_test(
+    contract: dict[str, Any], protocol: dict[str, Any]
+) -> int:
+    mutations: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
+    unaccepted = copy.deepcopy(contract)
+    unaccepted["status"] = "Proposed"
+    mutations.append(("unaccepted", unaccepted, protocol))
+    unknown_requirement = copy.deepcopy(contract)
+    unknown_requirement["rules"][0]["requirements"].append("LANG-999")
+    mutations.append(("unknown-requirement", unknown_requirement, protocol))
+    reordered_edges = copy.deepcopy(protocol)
+    reordered_edges["relationship_kinds"][0:2] = reversed(
+        reordered_edges["relationship_kinds"][0:2]
+    )
+    mutations.append(("relationship-order", contract, reordered_edges))
+    missing_shape = copy.deepcopy(protocol)
+    del missing_shape["shapes"]["ImpactReport"]
+    mutations.append(("missing-shape", contract, missing_shape))
+    changed_operation = copy.deepcopy(protocol)
+    changed_operation["operations"]["impact"]["success"] = "SemanticDiff"
+    mutations.append(("changed-operation", contract, changed_operation))
+    for name, changed_contract, changed_protocol in mutations:
+        try:
+            validate_evolution_contract(changed_contract, changed_protocol)
+        except ContractError:
+            continue
+        _raise("evolution_self_test_failed", f"mutation {name!r} was accepted")
+    return len(mutations)
+
+
 def check() -> None:
     contract, protocol, fixtures = _load_repository_contract()
     construct_count, rule_count, fixture_count = validate_contract(
@@ -1445,6 +1989,13 @@ def check() -> None:
         validate_runtime_contract(runtime_contract, runtime_protocol)
     )
     runtime_mutation_count = _runtime_self_test(runtime_contract, runtime_protocol)
+    evolution_contract, evolution_protocol = _load_repository_evolution_contract()
+    evolution_rule_count, evolution_fixture_count, evolution_shape_count = (
+        validate_evolution_contract(evolution_contract, evolution_protocol)
+    )
+    evolution_mutation_count = _evolution_self_test(
+        evolution_contract, evolution_protocol
+    )
     print(
         "M11 core contract passed: "
         f"{construct_count} constructs, {rule_count} numbered rules, "
@@ -1456,6 +2007,13 @@ def check() -> None:
         f"{runtime_rule_count} numbered rules, {runtime_fixture_count} fixture cases, "
         f"{runtime_shape_count} protocol shapes, and "
         f"{runtime_mutation_count} rejection mutations verified."
+    )
+    print(
+        "M19 evolution contract passed: "
+        f"{evolution_rule_count} numbered rules, "
+        f"{evolution_fixture_count} fixture scenarios, "
+        f"{evolution_shape_count} protocol shapes, and "
+        f"{evolution_mutation_count} rejection mutations verified."
     )
 
 

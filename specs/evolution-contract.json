@@ -1,0 +1,160 @@
+{
+  "evolution_contract_version": 1,
+  "status": "Accepted",
+  "extends": [
+    "M11",
+    "M17"
+  ],
+  "documents": [
+    "evolution.md",
+    "evolution-protocol.json"
+  ],
+  "rules": [
+    {
+      "id": "M19-LANG-001",
+      "kind": "language",
+      "title": "Explicit stable schema identities",
+      "requirements": [
+        "APP-004",
+        "LANG-001",
+        "LANG-005",
+        "PROTO-003"
+      ]
+    },
+    {
+      "id": "M19-LANG-002",
+      "kind": "language",
+      "title": "One analyzable source-set namespace",
+      "requirements": [
+        "LANG-001",
+        "LANG-005",
+        "PROTO-001",
+        "PROTO-002"
+      ]
+    },
+    {
+      "id": "M19-LANG-003",
+      "kind": "language",
+      "title": "Schema changes preserve explicit consequences",
+      "requirements": [
+        "APP-004",
+        "LANG-002",
+        "LANG-005",
+        "PROTO-002"
+      ]
+    },
+    {
+      "id": "M19-PROTO-001",
+      "kind": "protocol",
+      "title": "Immutable ordered source-set revisions",
+      "requirements": [
+        "APP-005",
+        "PROTO-001",
+        "PROTO-003"
+      ]
+    },
+    {
+      "id": "M19-PROTO-002",
+      "kind": "protocol",
+      "title": "Deterministic semantic graph",
+      "requirements": [
+        "LANG-005",
+        "PROTO-001",
+        "PROTO-002",
+        "PROTO-005"
+      ]
+    },
+    {
+      "id": "M19-PROTO-003",
+      "kind": "protocol",
+      "title": "Exact categorized impact",
+      "requirements": [
+        "APP-004",
+        "APP-005",
+        "PROTO-002",
+        "PROTO-005"
+      ]
+    },
+    {
+      "id": "M19-PROTO-004",
+      "kind": "protocol",
+      "title": "Honest analysis coverage",
+      "requirements": [
+        "APP-005",
+        "PROTO-002",
+        "PROTO-005"
+      ]
+    },
+    {
+      "id": "M19-PROTO-005",
+      "kind": "protocol",
+      "title": "Atomic candidate source-set validation",
+      "requirements": [
+        "APP-004",
+        "APP-005",
+        "PROTO-003",
+        "PROTO-004",
+        "PROTO-005"
+      ]
+    },
+    {
+      "id": "M19-PROTO-006",
+      "kind": "protocol",
+      "title": "Derived canonical edits and identity map",
+      "requirements": [
+        "APP-005",
+        "PROTO-003",
+        "PROTO-004"
+      ]
+    },
+    {
+      "id": "M19-PROTO-007",
+      "kind": "protocol",
+      "title": "Typed semantic diff",
+      "requirements": [
+        "APP-004",
+        "APP-005",
+        "PROTO-001",
+        "PROTO-004"
+      ]
+    },
+    {
+      "id": "M19-PROTO-008",
+      "kind": "protocol",
+      "title": "Revision-bound validation and completion evidence",
+      "requirements": [
+        "APP-005",
+        "PROTO-004",
+        "PROTO-005",
+        "NFR-001"
+      ]
+    },
+    {
+      "id": "M19-PROTO-009",
+      "kind": "protocol",
+      "title": "Stable rejection causes",
+      "requirements": [
+        "APP-005",
+        "PROTO-003",
+        "PROTO-004",
+        "PROTO-005"
+      ]
+    },
+    {
+      "id": "M19-PROTO-010",
+      "kind": "protocol",
+      "title": "Deterministic result ordering",
+      "requirements": [
+        "LANG-004",
+        "PROTO-001",
+        "PROTO-005",
+        "NFR-001"
+      ]
+    }
+  ],
+  "fixtures": [
+    "evolution-fixtures/workspace.json",
+    "evolution-fixtures/transaction.json",
+    "evolution-fixtures/rejections.json"
+  ]
+}

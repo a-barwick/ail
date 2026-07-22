@@ -1,0 +1,86 @@
+{
+  "fixture_format": 1,
+  "id": "m19-uc003-rejections",
+  "requirements": [
+    "APP-004",
+    "APP-005",
+    "PROTO-003",
+    "PROTO-004",
+    "PROTO-005"
+  ],
+  "rules": [
+    "M19-PROTO-005",
+    "M19-PROTO-008",
+    "M19-PROTO-009",
+    "M19-PROTO-010"
+  ],
+  "cases": [
+    {
+      "id": "stale-base",
+      "base_revision_id": "schema-r1",
+      "current_revision_id": "schema-r2",
+      "phase": "revision",
+      "code": "AIL.PROTOCOL.STALE_REVISION",
+      "location": "workspace:schema-r1",
+      "mutation": {
+        "request_base_revision_id": "schema-r1",
+        "workspace_current_revision_id": "schema-r2"
+      },
+      "edits": [],
+      "published_revision": null
+    },
+    {
+      "id": "missed-consumer",
+      "base_revision_id": "schema-r1",
+      "current_revision_id": "schema-r1",
+      "phase": "impact",
+      "code": "AIL.IMPACT.MISSED_CONSUMER",
+      "location": "service.ail#create_job.Job",
+      "mutation": {
+        "omitted_impact_id": "handler-construction"
+      },
+      "edits": [],
+      "published_revision": null
+    },
+    {
+      "id": "incompatible-identity",
+      "base_revision_id": "schema-r1",
+      "current_revision_id": "schema-r1",
+      "phase": "schema",
+      "code": "AIL.SCHEMA.IDENTITY_INCOMPATIBLE",
+      "location": "contracts.ail#CreateJobRequest",
+      "mutation": {
+        "reused_identity": "job.create-request.v1",
+        "incompatible_change": "required priority field"
+      },
+      "edits": [],
+      "published_revision": null
+    },
+    {
+      "id": "effect-growth",
+      "base_revision_id": "schema-r1",
+      "current_revision_id": "schema-r1",
+      "phase": "capabilities",
+      "code": "AIL.CAPABILITY.EFFECT_GROWTH",
+      "location": "service.ail#create_job",
+      "mutation": {
+        "added_effect": "clock.now"
+      },
+      "edits": [],
+      "published_revision": null
+    },
+    {
+      "id": "behavior-mismatch",
+      "base_revision_id": "schema-r1",
+      "current_revision_id": "schema-r1",
+      "phase": "public-behavior",
+      "code": "AIL.VALIDATION.BEHAVIOR_MISMATCH",
+      "location": "projections.ail#project_created_v1",
+      "mutation": {
+        "failing_case": "uc003-v1-request-created"
+      },
+      "edits": [],
+      "published_revision": null
+    }
+  ]
+}

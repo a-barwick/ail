@@ -215,7 +215,71 @@
     },
     {
       "path": "specs/README.md",
-      "sha256": "2e607bd046ab286787c2cee1302268418549b2fe3f03c8ff6ad99e7515712088"
+      "sha256": "95acc92684db1263557d3b3ee76935f55322d45d5253034e75296bbf95d573b2"
+    },
+    {
+      "path": "specs/evolution-contract.json",
+      "sha256": "b7ca4b335520a4bc7d49a405bb930b6f90baaff940b943ec4d82e0b1a5ccc29b"
+    },
+    {
+      "path": "specs/evolution-fixtures/r1/adapters.ail",
+      "sha256": "cfc25cd03126d4b1345a96404ae9b47dfda38ef33334d33340214bf19531d0ca"
+    },
+    {
+      "path": "specs/evolution-fixtures/r1/contracts.ail",
+      "sha256": "6b23cd047befb0a8ff1aabc51dc3e536ee4194705e11a9bed1ca9aa5ad643d5b"
+    },
+    {
+      "path": "specs/evolution-fixtures/r1/persistence.ail",
+      "sha256": "260d86c35818cd3c482032dde910b0822bd0e27a6a2f7a339c88c7d7a9bdd60b"
+    },
+    {
+      "path": "specs/evolution-fixtures/r1/projections.ail",
+      "sha256": "9e9b330d9f4757c0bb887707d0129de3e34dcf62c601a9f6718bb3a042b90b85"
+    },
+    {
+      "path": "specs/evolution-fixtures/r1/service.ail",
+      "sha256": "5564a35445ef2b337814f32f865ec065088081e2b81c84bcf39c19d9c1d356c9"
+    },
+    {
+      "path": "specs/evolution-fixtures/r2/adapters.ail",
+      "sha256": "f291ea324be403d06a06ccc80621e570aa1477b04a8d85f6cbc225c93b45e6a9"
+    },
+    {
+      "path": "specs/evolution-fixtures/r2/contracts.ail",
+      "sha256": "17ffa8237c806421ef301ec9e44ef240c202d36789d9f895ebb4d004af4846dc"
+    },
+    {
+      "path": "specs/evolution-fixtures/r2/persistence.ail",
+      "sha256": "d9183f75cb55f790c3b017cdc29b63d4b33ba3be212457ae478ac08e8dca132f"
+    },
+    {
+      "path": "specs/evolution-fixtures/r2/projections.ail",
+      "sha256": "24c444c9a712087bc629a8d6d59fc5e04eb842fddd4c8b76fef4de8af867cbba"
+    },
+    {
+      "path": "specs/evolution-fixtures/r2/service.ail",
+      "sha256": "ff5b025ec445dea917c9f596be9d6ba425f7a288a8c804d1d6f534f77cce69f5"
+    },
+    {
+      "path": "specs/evolution-fixtures/rejections.json",
+      "sha256": "35a1a293621f9915a6aa0d4baeaeeeb8927683e62f65cddfd8aa53b194dcb96c"
+    },
+    {
+      "path": "specs/evolution-fixtures/transaction.json",
+      "sha256": "f26d93784f6540db7471c0beffa309a6970719f6d68feeb80d0bfa54ebe72b5a"
+    },
+    {
+      "path": "specs/evolution-fixtures/workspace.json",
+      "sha256": "61fc75f864c789f33607a1b13e3bd79dae04dbecb64d3124f1657541008b8671"
+    },
+    {
+      "path": "specs/evolution-protocol.json",
+      "sha256": "84d19ffc2b9b30f7f72cae361492a2fe58b30e19183a98f702cef83de28bc793"
+    },
+    {
+      "path": "specs/evolution.md",
+      "sha256": "5da0adf4ef3079b12f10170a6a8e596724c1f5cfb5da250bbbd1057e570b28dc"
     },
     {
       "path": "specs/runtime-contract.json",
@@ -243,7 +307,7 @@
     },
     {
       "path": "specs/tools/core_contract.py",
-      "sha256": "0a90a39b3123973ca24a2c1aa8f6ac1d9937cd7b2f358a6bc86a79903c9a4d1b"
+      "sha256": "d1d059cd90aab2894667e40bc979c017ed8c26d9102f0845a42a351428cf29fb"
     }
   ]
 }

@@ -24,6 +24,13 @@ its [runtime protocol shapes](runtime-protocol.json),
 `runtime-fixtures/`. These additions extend M11 without changing its fixed
 five-construct contract.
 
+M19 adds the accepted bounded
+[compiler-guided schema-evolution contract](evolution.md), its
+[protocol shapes](evolution-protocol.json),
+[machine-readable rules](evolution-contract.json), and canonical R1/R2,
+impact, transaction, and rejection fixtures under `evolution-fixtures/`. These
+rules fix the contract for M20 and M21; they do not implement it.
+
 Run the dependency-free contract check with:
 
 ```bash
@@ -33,4 +40,5 @@ python3 specs/tools/core_contract.py check
 [ADR 0004](../docs/decisions/0004-rust-compiler-stack.md) now authorizes the
 production Rust compiler tree. M11 still does not authorize fixture-specific
 extensions. M17 authorizes only the additional numbered behavior in
-`runtime.md`.
+`runtime.md`; M19 authorizes only the schema-evolution behavior in
+`evolution.md`.

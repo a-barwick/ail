@@ -30,9 +30,10 @@ artifact.
 The [roadmap](roadmap.md) sequences work across layers. M14–M17 are the completed
 authoritative compiler sequence through the deterministic interpreter. M18
 selected compiler-guided UC-003 priority evolution as the next validation
-slice. M19 is the active contract milestone before the M20–M21 implementation
-sequence; the long-range outlook is not active work. A roadmap entry does not
-make planned behavior normative.
+slice. M19 accepted its bounded contract, and M20 is the active semantic-graph
+and impact-query implementation milestone before M21 atomic change; the
+long-range outlook is not active work. A roadmap entry does not make planned
+behavior normative.
 
 The [current status](STATUS.md) names the active milestone and gives the next
 agent its immediate handoff.
@@ -112,9 +113,10 @@ inspection, validated rename, canonical edits, and identity mapping. M17
 delivered the accepted bounded runtime rules, canonical reference service,
 deterministic revision-scoped interpreter, and a locked AIL runner that matches
 all 37 public job-service fixtures. M18 selected compiler-guided UC-003 priority
-evolution in [ADR 0005](decisions/0005-next-validation-slice.md). M19 now freezes
-the bounded schema-identity, impact-query, transaction, semantic-diff, and
-completion-evidence contract before implementation.
+evolution in [ADR 0005](decisions/0005-next-validation-slice.md). M19 froze the
+bounded schema-identity, impact-query, transaction, semantic-diff, and
+completion-evidence contract. M20 now implements only its semantic graph and
+impact query.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and
 accepted.

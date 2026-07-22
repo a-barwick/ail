@@ -1,0 +1,3 @@
+fn encode_stored_job_v1(job: Job) -> Job {
+  Job { job_id: job.job_id, task: job.task, payload: job.payload }
+}

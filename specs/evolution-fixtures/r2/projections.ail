@@ -1,0 +1,11 @@
+fn project_created_v1(job: Job) -> CreatedV1 {
+  CreatedV1 { job: JobV1 { job_id: job.job_id, task: job.task, payload: job.payload } }
+}
+
+fn project_created_v2(job: Job) -> CreatedV2 {
+  CreatedV2 { job: Job { job_id: job.job_id, task: job.task, payload: job.payload, priority: job.priority } }
+}
+
+fn fixture_request_v2(payload: Bytes) -> CreateJobRequest {
+  CreateJobRequest { job_id: "fixture", task: "run", payload: payload, priority: PriorityOption::Some(Priority::High) }
+}

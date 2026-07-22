@@ -1,0 +1,179 @@
+{
+  "fixture_format": 1,
+  "id": "m19-uc003-transaction",
+  "requirements": [
+    "APP-004",
+    "APP-005",
+    "PROTO-003",
+    "PROTO-004",
+    "PROTO-005"
+  ],
+  "rules": [
+    "M19-PROTO-005",
+    "M19-PROTO-006",
+    "M19-PROTO-007",
+    "M19-PROTO-008",
+    "M19-PROTO-010"
+  ],
+  "request": {
+    "base_revision_id": "schema-r1",
+    "candidate_revision": "schema-r2",
+    "candidate_source_set_digest": "sha256:3f9b4ee6e2d6fd91a58fa8eeb5c0bd593f67212e3b89411fa22ba22f8eac5431",
+    "required_impact_ids": [
+      "request-contract",
+      "stored-contract",
+      "priority-contract",
+      "request-adapter",
+      "stored-adapter",
+      "handler-construction",
+      "store-contract",
+      "stored-encoder",
+      "v1-projection",
+      "v2-projection",
+      "v2-fixture",
+      "completion-artifact"
+    ]
+  },
+  "expected": {
+    "status": "committed",
+    "base_revision_id": "schema-r1",
+    "revision_id": "schema-r2",
+    "parent_revision_id": "schema-r1",
+    "source_set_digest": "sha256:3f9b4ee6e2d6fd91a58fa8eeb5c0bd593f67212e3b89411fa22ba22f8eac5431",
+    "edits": [
+      {
+        "path": "adapters.ail",
+        "start_utf8_byte": 0,
+        "end_utf8_byte": 134,
+        "replacement_source": "r2/adapters.ail"
+      },
+      {
+        "path": "contracts.ail",
+        "start_utf8_byte": 0,
+        "end_utf8_byte": 1661,
+        "replacement_source": "r2/contracts.ail"
+      },
+      {
+        "path": "persistence.ail",
+        "start_utf8_byte": 0,
+        "end_utf8_byte": 112,
+        "replacement_source": "r2/persistence.ail"
+      },
+      {
+        "path": "projections.ail",
+        "start_utf8_byte": 0,
+        "end_utf8_byte": 270,
+        "replacement_source": "r2/projections.ail"
+      },
+      {
+        "path": "service.ail",
+        "start_utf8_byte": 0,
+        "end_utf8_byte": 2742,
+        "replacement_source": "r2/service.ail"
+      }
+    ],
+    "persistent_identities": {
+      "preserved": [
+        "job.create-request.v1",
+        "job.created.v1",
+        "job.insert-outcome.v1",
+        "job.stored.v1",
+        "job.validation-issue-node.v1",
+        "job.validation-issue.v1",
+        "job.validation-issues.v1",
+        "job.validation-reason.v1"
+      ],
+      "added": [
+        "job.create-request.v2",
+        "job.create-result.v2",
+        "job.created.v2",
+        "job.priority-option.v1",
+        "job.priority.v1",
+        "job.stored.v2",
+        "job.validation-field.v2"
+      ],
+      "retired": [
+        "job.create-result.v1",
+        "job.validation-field.v1"
+      ]
+    },
+    "semantic_diff": {
+      "changes": [
+        {
+          "kind": "schema-added",
+          "identity": "job.priority.v1",
+          "before": null,
+          "after": "Low|Normal|High"
+        },
+        {
+          "kind": "schema-added",
+          "identity": "job.priority-option.v1",
+          "before": null,
+          "after": "Some(job.priority.v1)|None"
+        },
+        {
+          "kind": "schema-successor",
+          "identity": "job.create-request.v2",
+          "before": "job.create-request.v1",
+          "after": "required priority:job.priority.v1"
+        },
+        {
+          "kind": "schema-successor",
+          "identity": "job.stored.v2",
+          "before": "job.stored.v1",
+          "after": "required priority:job.priority.v1"
+        },
+        {
+          "kind": "adapter-added",
+          "identity": "adapt_request_v1",
+          "before": null,
+          "after": "priority=normal"
+        },
+        {
+          "kind": "adapter-added",
+          "identity": "adapt_stored_job_v1",
+          "before": null,
+          "after": "priority=normal"
+        },
+        {
+          "kind": "projection-added",
+          "identity": "job.created.v2",
+          "before": null,
+          "after": "priority preserved"
+        }
+      ],
+      "effect_summary": {
+        "before": [
+          "jobs.insert_if_absent"
+        ],
+        "after": [
+          "jobs.insert_if_absent"
+        ],
+        "ordering": "unchanged"
+      },
+      "capability_summary": {
+        "before": [
+          "JobsStore"
+        ],
+        "after": [
+          "JobsStore"
+        ],
+        "authority": "unchanged"
+      }
+    },
+    "validation": {
+      "revision_id": "schema-r2",
+      "parse": "ok",
+      "types": "ok",
+      "capabilities": "ok",
+      "impact": "complete",
+      "public_behavior": "37-public-cases-pass"
+    },
+    "unchecked": [
+      {
+        "identity": "external:job-api-clients",
+        "reason": "client source unavailable"
+      }
+    ]
+  }
+}

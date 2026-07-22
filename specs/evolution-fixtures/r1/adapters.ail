@@ -1,0 +1,7 @@
+fn decode_request_v1(request: CreateJobRequest) -> CreateJobRequest {
+  request
+}
+
+fn decode_stored_job_v1(job: Job) -> Job {
+  job
+}

@@ -12,8 +12,9 @@ The compiler is delivered in conformance slices:
 - M17: deterministic interpretation of the accepted core (complete).
 
 M18 selected compiler-guided UC-003 priority evolution as the next validation
-slice. M19 is defining its conformance contract; no schema-evolution compiler
-behavior is authorized until those numbered rules and fixtures are accepted.
+slice. M19 accepted its conformance contract, and M20 now implements the ordered
+source-set semantic graph and impact query. Atomic schema evolution remains M21
+work.
 
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
 behavior. Implementation details do not create language semantics.

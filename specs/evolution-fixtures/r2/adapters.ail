@@ -1,0 +1,7 @@
+fn adapt_request_v1(request: CreateJobRequestV1) -> CreateJobRequest {
+  CreateJobRequest { job_id: request.job_id, task: request.task, payload: request.payload, priority: PriorityOption::Some(Priority::Normal) }
+}
+
+fn adapt_stored_job_v1(job: JobV1) -> Job {
+  Job { job_id: job.job_id, task: job.task, payload: job.payload, priority: Priority::Normal }
+}

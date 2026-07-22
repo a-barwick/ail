@@ -4,12 +4,12 @@ Last updated: 2026-07-21
 
 ## Active milestone
 
-M19 — UC-003 schema-evolution contract
+M20 — Workspace semantic graph and impact query
 
 ## Current goal
 
-Freeze the bounded contract for compiler-guided UC-003 priority evolution
-before extending the compiler. The execution path is:
+Implement the accepted M19 source-set, identity, semantic-graph, and impact
+contract in the authoritative Rust compiler. The execution path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -19,8 +19,8 @@ M11 five-construct contract (complete)
   -> M16 revision protocol and validated rename (complete)
   -> M17 deterministic core interpreter (complete)
   -> M18 next validation-slice selection (complete)
-  -> M19 UC-003 schema-evolution contract (active)
-  -> M20 workspace semantic graph and impact query (planned)
+  -> M19 UC-003 schema-evolution contract (complete)
+  -> M20 workspace semantic graph and impact query (active)
   -> M21 atomic schema evolution and completion evidence (planned)
 ```
 
@@ -29,17 +29,32 @@ candidate scorecard.
 
 The next agent should:
 
-- implement only the M19 contract and fixture scope defined in the roadmap and
-  [ADR 0005](decisions/0005-next-validation-slice.md);
-- define stable schema identities separately from revision-scoped handles and
-  fix exact deterministic source-set digest and graph-ordering rules;
-- freeze canonical R1 and R2 workspaces plus impact, transaction, rejection,
-  semantic-diff, validation, and completion-evidence results;
-- extend the dependency-free contract checker over every new rule, shape, and
-  fixture; and
-- keep Rust implementation, UC-007, native lowering, general concurrency,
-  production I/O adapters, broad collections, and unrelated language expansion
-  outside M19 unless the maintainer explicitly changes scope.
+- implement only the M20 source-set revision, stable identity, semantic graph,
+  inspection, coverage, and impact-query scope defined in the roadmap and M19
+  contract;
+- preserve every M11, M16, and M17 single-source API behavior while adding the
+  ordered multi-source revision path;
+- match the exact M19 R1 graph and impact results, including retained-parent,
+  stale-request, deterministic-order, and incomplete-coverage behavior;
+- add `compiler/ail-compiler/tests/m20_impact.rs` as the focused executable
+  conformance gate; and
+- keep candidate commits, schema transactions, semantic diffs, completion
+  evidence, UC-007, lowering, concurrency, and unrelated language expansion
+  outside M20.
+
+## M19 result
+
+M19 accepted three language and ten protocol rules for the selected UC-003
+change loop. The contract fixes explicit stable schema identities, ordered
+source-set digests, twelve semantic relationship kinds, exact impact
+categorization, honest coverage, whole-workspace candidate validation, semantic
+diff, completion evidence, and five stable rejection causes.
+
+Canonical R1 and R2 workspaces contain all required semantic roles. The fixture
+set freezes twelve exact `must_change` locations, two `review` locations, one
+unchecked external boundary, one successful transaction, and five rejection
+scenarios. The dependency-free checker validates 13 rules, 16 protocol shapes,
+seven scenarios, and five rejection mutations.
 
 ## M18 result
 
@@ -177,6 +192,7 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M16 — Rust revision protocol and validated rename
 - M17 — Deterministic core interpreter
 - M18 — Next validation-slice selection
+- M19 — UC-003 schema-evolution contract
 
 ## Superseded
 
@@ -195,8 +211,8 @@ block compiler implementation.
 
 ## Do not start yet
 
-- M20 or M21 compiler implementation before M19 accepts the bounded rules and
-  fixtures
+- M21 schema transaction implementation before M20 completes the accepted
+  graph and impact query
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
@@ -208,9 +224,8 @@ None.
 
 After meaningful work:
 
-- keep M19 focused on accepting the bounded UC-003 schema-evolution contract;
-- tie every rule and fixture to accepted UC-003 requirements and avoid
-  implementation-defined semantics;
+- keep M20 focused on the accepted semantic graph and impact-query contract;
+- do not implement M21 transaction or completion behavior early;
 - run `cargo fmt --all --check`;
 - run `cargo test --workspace`;
 - run `cargo clippy --workspace --all-targets -- -D warnings`;

@@ -1,0 +1,188 @@
+{
+  "evolution_protocol_version": 1,
+  "status": "Accepted",
+  "transport": "independent",
+  "relationship_kinds": [
+    "declares-member",
+    "signature-input",
+    "signature-output",
+    "constructs",
+    "reads-field",
+    "matches-case",
+    "capability-argument",
+    "declares-effect",
+    "adapts-from",
+    "projects-to",
+    "verifies",
+    "source-artifact"
+  ],
+  "shapes": {
+    "SourceFile": {
+      "required": [
+        "path",
+        "source",
+        "sha256"
+      ],
+      "optional": []
+    },
+    "SourceSetRevision": {
+      "required": [
+        "workspace_id",
+        "revision_id",
+        "source_set_digest",
+        "sources"
+      ],
+      "optional": [
+        "parent_revision_id"
+      ]
+    },
+    "PersistentIdentity": {
+      "required": [
+        "kind",
+        "identity",
+        "display_name",
+        "handle"
+      ],
+      "optional": [
+        "parent_identity"
+      ]
+    },
+    "RelationshipEdge": {
+      "required": [
+        "source",
+        "kind",
+        "target",
+        "site"
+      ],
+      "optional": []
+    },
+    "ProposedSchemaChange": {
+      "required": [
+        "kind",
+        "subject_identity",
+        "successor_identity",
+        "member"
+      ],
+      "optional": []
+    },
+    "ImpactRequest": {
+      "required": [
+        "base_revision_id",
+        "change"
+      ],
+      "optional": []
+    },
+    "ImpactEntry": {
+      "required": [
+        "location",
+        "role",
+        "reason",
+        "path"
+      ],
+      "optional": []
+    },
+    "UncheckedBoundary": {
+      "required": [
+        "identity",
+        "reason"
+      ],
+      "optional": []
+    },
+    "ImpactReport": {
+      "required": [
+        "revision_id",
+        "change",
+        "must_change",
+        "review",
+        "unchecked",
+        "analyzed_paths",
+        "effect_summary"
+      ],
+      "optional": []
+    },
+    "CandidateChangeRequest": {
+      "required": [
+        "base_revision_id",
+        "candidate_sources",
+        "required_impact_ids"
+      ],
+      "optional": []
+    },
+    "SemanticChange": {
+      "required": [
+        "kind",
+        "identity",
+        "before",
+        "after"
+      ],
+      "optional": []
+    },
+    "SemanticDiff": {
+      "required": [
+        "from_revision_id",
+        "to_revision_id",
+        "changes",
+        "effect_summary",
+        "capability_summary"
+      ],
+      "optional": []
+    },
+    "ValidationSummary": {
+      "required": [
+        "revision_id",
+        "parse",
+        "types",
+        "capabilities",
+        "impact",
+        "public_behavior"
+      ],
+      "optional": []
+    },
+    "CompletionEvidence": {
+      "required": [
+        "base_revision_id",
+        "revision_id",
+        "impact_report",
+        "edits",
+        "identity_map",
+        "persistent_identities",
+        "semantic_diff",
+        "validation",
+        "analyzed_paths",
+        "unchecked"
+      ],
+      "optional": []
+    },
+    "ChangeSuccess": {
+      "required": [
+        "status",
+        "base_revision_id",
+        "revision",
+        "completion"
+      ],
+      "optional": []
+    },
+    "ChangeFailure": {
+      "required": [
+        "status",
+        "base_revision_id",
+        "current_revision_id",
+        "phase",
+        "diagnostic",
+        "edits"
+      ],
+      "optional": []
+    }
+  },
+  "operations": {
+    "impact": {
+      "request": "ImpactRequest",
+      "success": "ImpactReport"
+    },
+    "validate_change": {
+      "request": "CandidateChangeRequest",
+      "success": "ChangeSuccess",
+      "failure": "ChangeFailure"
+    }
+  }
+}
