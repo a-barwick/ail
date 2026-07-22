@@ -4,6 +4,7 @@
 //! syntax tree. Revision operations remain a later milestone.
 
 mod diagnostic;
+mod evolution;
 mod formatter;
 mod interpreter;
 mod lexer;
@@ -13,6 +14,12 @@ mod semantics;
 mod syntax;
 
 pub use diagnostic::Diagnostic;
+pub use evolution::{
+    EffectSummary, EvolutionBuildFailure, EvolutionCoverage, EvolutionSource, EvolutionWorkspace,
+    ImpactEntry, ImpactFailure, ImpactReport, ImpactRequest, PersistentIdentity,
+    ProposedSchemaChange, RelationshipEdge, SemanticLocation, SourceArtifact, SourceFileMetadata,
+    SourceSetRevision, UncheckedBoundary, relationship_kinds,
+};
 pub use interpreter::{CapabilityProvider, ObservedCapabilityCall, RuntimeFault, RuntimeValue};
 pub use lexer::{Keyword, Span, Token, TokenKind, lex, reconstruct};
 pub use parser::{ParseResult, parse};

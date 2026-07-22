@@ -69,6 +69,7 @@ impl Parser {
     fn parse_record(&mut self) -> Option<RecordDecl> {
         let start = self.advance().span.start;
         let name = self.take_identifier()?;
+        let identity = self.parse_identity()?;
         self.expect(TokenKind::LeftBrace, "{");
         let mut fields = Vec::new();
 
@@ -79,6 +80,7 @@ impl Parser {
                 self.consume_if(TokenKind::Semicolon);
                 continue;
             };
+            let identity = self.parse_identity()?;
 
             if !self.consume_if(TokenKind::Colon) {
                 let at = self.previous().span.end;
@@ -93,6 +95,7 @@ impl Parser {
                 };
                 fields.push(Field {
                     name: field_name,
+                    identity,
                     ty: "<missing>".to_owned(),
                     span: Span::new(field_start, end),
                 });
@@ -103,6 +106,7 @@ impl Parser {
             self.expect(TokenKind::Semicolon, ";");
             fields.push(Field {
                 name: field_name,
+                identity,
                 ty,
                 span: Span::new(field_start, self.previous().span.end),
             });
@@ -110,6 +114,7 @@ impl Parser {
         self.expect(TokenKind::RightBrace, "}");
         Some(RecordDecl {
             name,
+            identity,
             fields,
             span: Span::new(start, self.previous().span.end),
         })
@@ -118,11 +123,13 @@ impl Parser {
     fn parse_variant(&mut self) -> Option<VariantDecl> {
         let start = self.advance().span.start;
         let name = self.take_identifier()?;
+        let identity = self.parse_identity()?;
         self.expect(TokenKind::LeftBrace, "{");
         let mut cases = Vec::new();
         while !self.at(TokenKind::RightBrace) && !self.at(TokenKind::Eof) {
             let case_start = self.current().span.start;
             let case_name = self.take_identifier()?;
+            let identity = self.parse_identity()?;
             let payload = if self.consume_if(TokenKind::LeftParen) {
                 let payload = self.take_identifier()?;
                 self.expect(TokenKind::RightParen, ")");
@@ -133,6 +140,7 @@ impl Parser {
             self.expect(TokenKind::Semicolon, ";");
             cases.push(VariantCase {
                 name: case_name,
+                identity,
                 payload,
                 span: Span::new(case_start, self.previous().span.end),
             });
@@ -140,9 +148,25 @@ impl Parser {
         self.expect(TokenKind::RightBrace, "}");
         Some(VariantDecl {
             name,
+            identity,
             cases,
             span: Span::new(start, self.previous().span.end),
         })
+    }
+
+    #[allow(clippy::option_option)]
+    fn parse_identity(&mut self) -> Option<Option<String>> {
+        if !self.at(TokenKind::Identifier) || self.current().text != "identity" {
+            return Some(None);
+        }
+        self.advance();
+        if !self.at(TokenKind::Text) {
+            self.report_expected("identity string");
+            return None;
+        }
+        let token = self.advance().clone();
+        let identity = serde_json::from_str(&token.text).ok()?;
+        Some(Some(identity))
     }
 
     fn parse_function(&mut self) -> Option<FunctionDecl> {

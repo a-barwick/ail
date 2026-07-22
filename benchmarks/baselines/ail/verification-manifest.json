@@ -178,8 +178,12 @@
       "sha256": "ad52fdab164014c9241c0fab835be3c91ac537c1f99308c67859c3e4e50e33b5"
     },
     {
+      "path": "compiler/ail-compiler/src/evolution.rs",
+      "sha256": "c863a08e2045922ad7d3dcb7fcbddfc8434c15ced405a9be79c55a5a0cb318c4"
+    },
+    {
       "path": "compiler/ail-compiler/src/formatter.rs",
-      "sha256": "ef45137b96d1bbe6b3c824c56c3f12212d13b4751ee600f9c7fbc3d82fa17d4d"
+      "sha256": "1e06adc0024b7803e9efc102129cf7a4ac9d23e5e4597e12f0a952d267befb4b"
     },
     {
       "path": "compiler/ail-compiler/src/interpreter.rs",
@@ -191,11 +195,11 @@
     },
     {
       "path": "compiler/ail-compiler/src/lib.rs",
-      "sha256": "b99937082dcd3186aec214c41d15a074d4320787a88a9bf052fee4fafad5c97e"
+      "sha256": "39d2b678045f064192b32fff4833871e5e680bbf5d38455be9a3361bf94dd74e"
     },
     {
       "path": "compiler/ail-compiler/src/parser.rs",
-      "sha256": "01f69b560e396bda6e2b1f8198cf0e024638ba32f0d573a972db77b91fa1bdaa"
+      "sha256": "54a3a5ce7ba073062cde7813d16510ab594ff160f761c1fb2f3959182ceb2964"
     },
     {
       "path": "compiler/ail-compiler/src/protocol.rs",
@@ -207,15 +211,19 @@
     },
     {
       "path": "compiler/ail-compiler/src/syntax.rs",
-      "sha256": "f60f2de3e51a2e25cdf538180f12331dc3bbf51a430dea65b38c944ecb8ffc75"
+      "sha256": "01c9e7d1f2ad022e93e56205d97df6eb8b2905e0b844f82acf32725571a4a945"
     },
     {
       "path": "compiler/ail-compiler/tests/m17_runtime.rs",
       "sha256": "b62e9b846d22cdb3f29a2ab969dc682ef5f4ff2d619f00fd511eea7073441885"
     },
     {
+      "path": "compiler/ail-compiler/tests/m20_impact.rs",
+      "sha256": "f8f3a3fbf613c79cc0145d958d3f98a7aa98a66e6a3cde7a96e88f4fc150fa78"
+    },
+    {
       "path": "specs/README.md",
-      "sha256": "95acc92684db1263557d3b3ee76935f55322d45d5253034e75296bbf95d573b2"
+      "sha256": "34f5edaf7fd0c6bdd729562293ba5d027fbf856f7eaa8e20651b065549881377"
     },
     {
       "path": "specs/evolution-contract.json",
@@ -279,7 +287,7 @@
     },
     {
       "path": "specs/evolution.md",
-      "sha256": "5da0adf4ef3079b12f10170a6a8e596724c1f5cfb5da250bbbd1057e570b28dc"
+      "sha256": "48fb9314988d2416f29bc1ae09ae64f984f8b6729846e0548464098bb97645ae"
     },
     {
       "path": "specs/runtime-contract.json",

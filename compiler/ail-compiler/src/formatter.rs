@@ -38,23 +38,42 @@ pub(crate) fn format(unit: &SourceUnit) -> String {
 }
 
 fn format_record(output: &mut String, record: &RecordDecl) {
-    writeln!(output, "record {} {{", record.name).expect("writing to String cannot fail");
+    write!(output, "record {}", record.name).expect("writing to String cannot fail");
+    format_identity(output, record.identity.as_deref());
+    output.push_str(" {\n");
     for field in &record.fields {
-        writeln!(output, "  {}: {};", field.name, field.ty).expect("writing to String cannot fail");
+        write!(output, "  {}", field.name).expect("writing to String cannot fail");
+        format_identity(output, field.identity.as_deref());
+        writeln!(output, ": {};", field.ty).expect("writing to String cannot fail");
     }
     output.push_str("}\n");
 }
 
 fn format_variant(output: &mut String, variant: &VariantDecl) {
-    writeln!(output, "variant {} {{", variant.name).expect("writing to String cannot fail");
+    write!(output, "variant {}", variant.name).expect("writing to String cannot fail");
+    format_identity(output, variant.identity.as_deref());
+    output.push_str(" {\n");
     for case in &variant.cases {
+        write!(output, "  {}", case.name).expect("writing to String cannot fail");
+        format_identity(output, case.identity.as_deref());
         if let Some(payload) = &case.payload {
-            writeln!(output, "  {}({payload});", case.name).expect("writing to String cannot fail");
+            writeln!(output, "({payload});").expect("writing to String cannot fail");
         } else {
-            writeln!(output, "  {};", case.name).expect("writing to String cannot fail");
+            writeln!(output, ";").expect("writing to String cannot fail");
         }
     }
     output.push_str("}\n");
+}
+
+fn format_identity(output: &mut String, identity: Option<&str>) {
+    if let Some(identity) = identity {
+        write!(
+            output,
+            " identity {}",
+            serde_json::to_string(identity).expect("a Rust string always encodes as JSON")
+        )
+        .expect("writing to String cannot fail");
+    }
 }
 
 fn format_function(

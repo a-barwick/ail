@@ -31,6 +31,10 @@ M19 adds the accepted bounded
 impact, transaction, and rejection fixtures under `evolution-fixtures/`. These
 rules fix the contract for M20 and M21; they do not implement it.
 
+M20 implements the identity, source-set, semantic-graph, inspection, coverage,
+and impact-query portion of that contract. M21 owns candidate publication,
+canonical edits, semantic diff, and completion evidence.
+
 Run the dependency-free contract check with:
 
 ```bash

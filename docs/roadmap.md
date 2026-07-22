@@ -59,8 +59,8 @@ becomes active.
 | M17 | Deterministic core interpreter | Complete | M16 |
 | M18 | Next validation-slice selection | Complete | M17 |
 | M19 | UC-003 schema-evolution contract | Complete | M18 |
-| M20 | Workspace semantic graph and impact query | Active | M19 |
-| M21 | Atomic schema evolution and completion evidence | Planned | M20 |
+| M20 | Workspace semantic graph and impact query | Complete | M19 |
+| M21 | Atomic schema evolution and completion evidence | Active | M20 |
 
 ## Delivery milestones
 
@@ -922,7 +922,7 @@ semantics.
 
 ### M20 — Workspace semantic graph and impact query
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -960,9 +960,29 @@ keeps bounded reasoned entries in `review`, lists unavailable consumers in
 `unchecked`, and reports unchanged storage authority and effect ordering.
 Repeated requests and retained parent-revision requests are identical.
 
+#### Delivered
+
+- Added contextual schema identity syntax to records, variants, fields, and
+  cases without reserving `identity` outside those positions
+- Added immutable canonical ordered source-set revisions with the accepted
+  digest encoding and path validation
+- Kept persistent schema identities separate from revision-scoped handles and
+  rejected missing, malformed, or duplicate schema identities
+- Built the twelve-kind deterministic semantic relationship graph from checked
+  declarations, signatures, constructions, field reads, matches, capabilities,
+  effects, adapters, projections, verification functions, and declared source
+  artifacts
+- Implemented revision-bound exact impact categorization with explicit analyzed
+  paths, unchecked boundaries, unchanged authority facts, and incomplete-
+  coverage rejection
+- Preserved retained parent snapshots and every M11–M17 single-source behavior
+- Added six focused M20 tests for digests, identities, graph coverage and order,
+  exact impact, revision retention, repeatability, stale requests, and coverage
+  gaps
+
 ### M21 — Atomic schema evolution and completion evidence
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 

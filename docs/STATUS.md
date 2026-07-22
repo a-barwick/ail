@@ -4,12 +4,13 @@ Last updated: 2026-07-21
 
 ## Active milestone
 
-M20 — Workspace semantic graph and impact query
+M21 — Atomic schema evolution and completion evidence
 
 ## Current goal
 
-Implement the accepted M19 source-set, identity, semantic-graph, and impact
-contract in the authoritative Rust compiler. The execution path is:
+Implement the accepted M19 atomic candidate validation, canonical edits,
+identity mapping, semantic diff, and completion-evidence contract. The execution
+path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -20,8 +21,8 @@ M11 five-construct contract (complete)
   -> M17 deterministic core interpreter (complete)
   -> M18 next validation-slice selection (complete)
   -> M19 UC-003 schema-evolution contract (complete)
-  -> M20 workspace semantic graph and impact query (active)
-  -> M21 atomic schema evolution and completion evidence (planned)
+  -> M20 workspace semantic graph and impact query (complete)
+  -> M21 atomic schema evolution and completion evidence (active)
 ```
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
@@ -29,18 +30,29 @@ candidate scorecard.
 
 The next agent should:
 
-- implement only the M20 source-set revision, stable identity, semantic graph,
-  inspection, coverage, and impact-query scope defined in the roadmap and M19
-  contract;
-- preserve every M11, M16, and M17 single-source API behavior while adding the
-  ordered multi-source revision path;
-- match the exact M19 R1 graph and impact results, including retained-parent,
-  stale-request, deterministic-order, and incomplete-coverage behavior;
-- add `compiler/ail-compiler/tests/m20_impact.rs` as the focused executable
-  conformance gate; and
-- keep candidate commits, schema transactions, semantic diffs, completion
-  evidence, UC-007, lowering, concurrency, and unrelated language expansion
-  outside M20.
+- implement only the M21 whole-workspace candidate transaction and evidence
+  scope fixed by the M19 contract;
+- require the current base revision, exact M20 impact accounting, complete
+  canonical candidate sources, and all validation phases before publication;
+- derive per-path canonical edits, complete revision identity mapping,
+  persistent identity classifications, semantic diff, and completion evidence;
+- match the successful M19 R1-to-R2 transaction and all five rejection fixtures
+  in `compiler/ail-compiler/tests/m21_schema_transaction.rs`; and
+- keep general refactors, hidden or official agent runs, migrations, production
+  adapters, lowering, concurrency, and UC-007 outside M21.
+
+## M20 result
+
+M20 implemented contextual schema identities, immutable ordered source-set
+revisions, the twelve-kind semantic relationship graph, and exact revision-bound
+impact queries in the authoritative Rust compiler. Persistent identities remain
+separate from source-revision handles, and incomplete declared coverage cannot
+produce a clean impact report.
+
+The focused tests match the M19 R1 digest and exact impact categories, exercise
+every relationship kind in deterministic order, retain parent snapshots, reject
+stale requests and incomplete coverage, and preserve repeated results. All
+M11–M17 tests remain unchanged and passing.
 
 ## M19 result
 
@@ -193,6 +205,7 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M17 — Deterministic core interpreter
 - M18 — Next validation-slice selection
 - M19 — UC-003 schema-evolution contract
+- M20 — Workspace semantic graph and impact query
 
 ## Superseded
 
@@ -211,8 +224,7 @@ block compiler implementation.
 
 ## Do not start yet
 
-- M21 schema transaction implementation before M20 completes the accepted
-  graph and impact query
+- Work beyond the bounded M21 atomic schema-evolution transaction
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
@@ -224,8 +236,8 @@ None.
 
 After meaningful work:
 
-- keep M20 focused on the accepted semantic graph and impact-query contract;
-- do not implement M21 transaction or completion behavior early;
+- keep M21 focused on the accepted atomic schema-evolution transaction;
+- do not expand into general refactoring or new language/runtime features;
 - run `cargo fmt --all --check`;
 - run `cargo test --workspace`;
 - run `cargo clippy --workspace --all-targets -- -D warnings`;

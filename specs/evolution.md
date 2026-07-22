@@ -20,7 +20,8 @@ variant-case = Identifier [identity] ["(" type ")"] ";" ;
 identity     = "identity" String ;
 ```
 
-An identity string matches
+`identity` is contextual in these four positions and remains an ordinary
+identifier elsewhere. An identity string matches
 `[a-z][a-z0-9]*(?:[.-][a-z][a-z0-9]*)*`. A declaration identity is unique in
 the build. Field and case identities are unique within their declaration. The
 complete identity of a field or case is its declaration identity, `/`, and its

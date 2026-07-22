@@ -17,6 +17,7 @@ pub enum Declaration {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RecordDecl {
     pub name: String,
+    pub identity: Option<String>,
     pub fields: Vec<Field>,
     pub span: Span,
 }
@@ -24,6 +25,7 @@ pub struct RecordDecl {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Field {
     pub name: String,
+    pub identity: Option<String>,
     pub ty: String,
     pub span: Span,
 }
@@ -31,6 +33,7 @@ pub struct Field {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VariantDecl {
     pub name: String,
+    pub identity: Option<String>,
     pub cases: Vec<VariantCase>,
     pub span: Span,
 }
@@ -38,6 +41,7 @@ pub struct VariantDecl {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VariantCase {
     pub name: String,
+    pub identity: Option<String>,
     pub payload: Option<String>,
     pub span: Span,
 }
