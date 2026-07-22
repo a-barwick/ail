@@ -9,12 +9,23 @@ use std::fmt::Write;
 
 use crate::semantics::check_parsed_source;
 use crate::{
-    CapabilityEnvironment, Declaration, Diagnostic, DiagnosticValue, Expr, FunctionDecl,
-    HandleKind, ParameterType, RecordDecl, SemanticHandle, SourceUnit, Span, StructuredDiagnostic,
-    TypeCheckStatus, VariantDecl, parse,
+    CapabilityEnvironment, CapabilityProvider, Declaration, Diagnostic, DiagnosticValue, Expr,
+    FunctionDecl, HandleKind, ObservedCapabilityCall, ParameterType, RecordDecl, RuntimeFault,
+    RuntimeValue, SemanticHandle, SourceUnit, Span, StructuredDiagnostic, TypeCheckStatus,
+    VariantDecl, parse,
 };
 
-const RESERVED_NAMES: [&str; 6] = ["record", "variant", "fn", "let", "capability", "effects"];
+const RESERVED_NAMES: [&str; 9] = [
+    "record",
+    "variant",
+    "fn",
+    "let",
+    "capability",
+    "effects",
+    "if",
+    "else",
+    "match",
+];
 
 /// Immutable source identity returned by protocol operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -172,6 +183,43 @@ pub enum RenameResponse {
     Rejected(RenameFailure),
 }
 
+/// Invoke one function in an immutable source revision.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExecutionRequest {
+    pub revision_id: String,
+    pub function: String,
+    /// Arguments for ordinary value parameters, in declaration order.
+    /// Capability parameters are supplied separately by the host provider.
+    pub arguments: Vec<RuntimeValue>,
+}
+
+/// Successful deterministic execution.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExecutionSuccess {
+    pub status: &'static str,
+    pub revision_id: String,
+    pub function_handle: SemanticHandle,
+    pub value: RuntimeValue,
+    pub calls: Vec<ObservedCapabilityCall>,
+}
+
+/// Failed deterministic execution, including effects observed before failure.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExecutionFailure {
+    pub status: &'static str,
+    pub revision_id: String,
+    pub function: String,
+    pub fault: RuntimeFault,
+    pub calls: Vec<ObservedCapabilityCall>,
+}
+
+/// Revision-scoped execution outcome.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ExecutionResponse {
+    Completed(ExecutionSuccess),
+    Failed(ExecutionFailure),
+}
+
 /// Failure to establish an immutable revision because parsing did not complete.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RevisionBuildFailure {
@@ -308,6 +356,82 @@ impl Workspace {
             )));
         };
         Ok(node.inspection())
+    }
+
+    /// Execute a statically valid function from one retained immutable revision.
+    #[must_use]
+    pub fn execute(
+        &self,
+        request: ExecutionRequest,
+        capabilities: &mut dyn CapabilityProvider,
+    ) -> ExecutionResponse {
+        let Some(revision) = self.revisions.get(&request.revision_id) else {
+            return ExecutionResponse::Failed(ExecutionFailure {
+                status: "failed",
+                revision_id: request.revision_id,
+                function: request.function,
+                fault: RuntimeFault::new(
+                    "AIL.RUNTIME.UNKNOWN_REVISION",
+                    Span::empty(0),
+                    [("revision", "retained")],
+                    [("revision", "unknown")],
+                ),
+                calls: Vec::new(),
+            });
+        };
+        if !revision.check.diagnostics.is_empty()
+            || !matches!(revision.check.type_result.status, TypeCheckStatus::Ok)
+        {
+            return ExecutionResponse::Failed(ExecutionFailure {
+                status: "failed",
+                revision_id: request.revision_id,
+                function: request.function,
+                fault: RuntimeFault::new(
+                    "AIL.RUNTIME.STATIC_CHECK_REQUIRED",
+                    Span::empty(0),
+                    [("static_check", "ok")],
+                    [("static_check", "error")],
+                ),
+                calls: Vec::new(),
+            });
+        }
+        let Some(function_handle) = revision.index.function_handle(&request.function) else {
+            return ExecutionResponse::Failed(ExecutionFailure {
+                status: "failed",
+                revision_id: request.revision_id,
+                function: request.function.clone(),
+                fault: RuntimeFault::new(
+                    "AIL.RUNTIME.UNKNOWN_FUNCTION",
+                    Span::empty(0),
+                    [("function", request.function)],
+                    std::iter::empty::<(&str, String)>(),
+                ),
+                calls: Vec::new(),
+            });
+        };
+        let result = crate::interpreter::interpret(
+            &revision.unit,
+            &request.function,
+            request.arguments,
+            &self.capabilities,
+            capabilities,
+        );
+        match result {
+            Ok(result) => ExecutionResponse::Completed(ExecutionSuccess {
+                status: "completed",
+                revision_id: request.revision_id,
+                function_handle,
+                value: result.value,
+                calls: result.calls,
+            }),
+            Err(result) => ExecutionResponse::Failed(ExecutionFailure {
+                status: "failed",
+                revision_id: request.revision_id,
+                function: request.function,
+                fault: result.fault,
+                calls: result.calls,
+            }),
+        }
     }
 
     /// Atomically rename one symbol in the current complete M11 source unit.
@@ -538,6 +662,7 @@ struct StoredRevision {
     path: String,
     source: String,
     check: crate::CheckResult,
+    unit: SourceUnit,
     index: HandleIndex,
 }
 
@@ -584,6 +709,7 @@ impl StoredRevision {
             path,
             source: canonical,
             check,
+            unit: parsed.unit,
             index,
         })
     }
@@ -655,6 +781,16 @@ impl HandleIndex {
             handle != requested && symbol.scope == scope && symbol.declared_name == name
         })
     }
+
+    fn function_handle(&self, name: &str) -> Option<SemanticHandle> {
+        self.symbols.iter().find_map(|(handle, symbol)| {
+            let node = self.node(handle)?;
+            (symbol.scope == "top"
+                && symbol.declared_name == name
+                && node.semantic_kind == "function")
+                .then(|| handle.clone())
+        })
+    }
 }
 
 struct IndexBuilder<'a> {
@@ -662,6 +798,7 @@ struct IndexBuilder<'a> {
     unit: &'a SourceUnit,
     capabilities: &'a CapabilityEnvironment,
     records: BTreeMap<&'a str, (&'a RecordDecl, usize)>,
+    variants: BTreeMap<&'a str, &'a VariantDecl>,
     top_symbols: BTreeMap<String, SemanticHandle>,
     field_symbols: BTreeMap<(String, String), SemanticHandle>,
     case_symbols: BTreeMap<(String, String), SemanticHandle>,
@@ -675,12 +812,16 @@ impl<'a> IndexBuilder<'a> {
         capabilities: &'a CapabilityEnvironment,
     ) -> Self {
         let mut records = BTreeMap::new();
+        let mut variants = BTreeMap::new();
         for (declaration_index, declaration) in unit.declarations.iter().enumerate() {
             match declaration {
                 Declaration::Record(record) => {
                     records.insert(record.name.as_str(), (record, declaration_index));
                 }
-                Declaration::Variant(_) | Declaration::Function(_) => {}
+                Declaration::Variant(variant) => {
+                    variants.insert(variant.name.as_str(), variant);
+                }
+                Declaration::Function(_) => {}
             }
         }
         Self {
@@ -688,6 +829,7 @@ impl<'a> IndexBuilder<'a> {
             unit,
             capabilities,
             records,
+            variants,
             top_symbols: BTreeMap::new(),
             field_symbols: BTreeMap::new(),
             case_symbols: BTreeMap::new(),
@@ -930,7 +1072,7 @@ impl<'a> IndexBuilder<'a> {
 
         for (binding_index, binding) in function.body.bindings.iter().enumerate() {
             let name_span = identifier_after(&self.unit.tokens, binding.span.start, 0);
-            let value_type = expression_type(&binding.value, &locals, self.capabilities);
+            let value_type = self.expression_type(&binding.value, &locals);
             let dependencies = self.expression_dependencies(&binding.value, &locals);
             let handle =
                 self.symbol_handle(&format!("symbol:let:{declaration_index}:{binding_index}"));
@@ -992,7 +1134,7 @@ impl<'a> IndexBuilder<'a> {
             span,
             expression_kind(expression),
             identity_key.to_owned(),
-            expression_type(expression, locals, self.capabilities),
+            self.expression_type(expression, locals),
             self.expression_dependencies(expression, locals),
         );
         match expression {
@@ -1074,7 +1216,239 @@ impl<'a> IndexBuilder<'a> {
                     );
                 }
             }
+            Expr::FieldAccess { target, .. } => {
+                self.index_expression(target, &format!("{identity_key}:target"), locals);
+            }
+            Expr::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => self.index_if(condition, then_branch, else_branch, identity_key, locals),
+            Expr::Match {
+                scrutinee, arms, ..
+            } => self.index_match(scrutinee, arms, identity_key, locals),
         }
+    }
+
+    fn index_if(
+        &mut self,
+        condition: &Expr,
+        then_branch: &crate::Block,
+        else_branch: &crate::Block,
+        identity_key: &str,
+        locals: &BTreeMap<String, LocalBindingIndex>,
+    ) {
+        self.index_expression(condition, &format!("{identity_key}:condition"), locals);
+        self.index_nested_block(then_branch, &format!("{identity_key}:then"), locals);
+        self.index_nested_block(else_branch, &format!("{identity_key}:else"), locals);
+    }
+
+    fn index_match(
+        &mut self,
+        scrutinee: &Expr,
+        arms: &[crate::MatchArm],
+        identity_key: &str,
+        locals: &BTreeMap<String, LocalBindingIndex>,
+    ) {
+        self.index_expression(scrutinee, &format!("{identity_key}:scrutinee"), locals);
+        let scrutinee_type = self.expression_type(scrutinee, locals);
+        for (arm_index, arm) in arms.iter().enumerate() {
+            let mut arm_locals = locals.clone();
+            if let (Some(binding), Some(variant_name)) = (&arm.binding, scrutinee_type.as_deref()) {
+                let payload_type = self
+                    .variants
+                    .get(variant_name)
+                    .and_then(|variant| variant.cases.iter().find(|case| case.name == arm.case))
+                    .and_then(|case| case.payload.clone());
+                if let Some(payload_type) = payload_type {
+                    self.index_match_binding(
+                        arm,
+                        binding,
+                        &payload_type,
+                        identity_key,
+                        arm_index,
+                        &mut arm_locals,
+                    );
+                }
+            }
+            self.index_nested_block(
+                &arm.body,
+                &format!("{identity_key}:arm:{arm_index}"),
+                &arm_locals,
+            );
+        }
+    }
+
+    fn index_match_binding(
+        &mut self,
+        arm: &crate::MatchArm,
+        binding: &str,
+        payload_type: &str,
+        identity_key: &str,
+        arm_index: usize,
+        locals: &mut BTreeMap<String, LocalBindingIndex>,
+    ) {
+        let binding_span = identifier_after(&self.unit.tokens, arm.span.start, 2);
+        let handle =
+            self.symbol_handle(&format!("symbol:match-binding:{identity_key}:{arm_index}"));
+        self.add_symbol(
+            handle.clone(),
+            binding_span,
+            "match-binding",
+            format!("{identity_key}:arm:{arm_index}:binding"),
+            format!("match:{identity_key}:{arm_index}"),
+            binding.to_owned(),
+            None,
+            Some(payload_type.to_owned()),
+            Vec::new(),
+            Vec::new(),
+            vec![payload_type.to_owned()],
+        );
+        self.add_syntax(
+            binding_span,
+            "match-binding-name",
+            format!("{identity_key}:arm:{arm_index}:binding-name"),
+        );
+        locals.insert(
+            binding.to_owned(),
+            LocalBindingIndex {
+                handle,
+                value_type: Some(payload_type.to_owned()),
+                capability: None,
+            },
+        );
+    }
+
+    fn index_nested_block(
+        &mut self,
+        block: &crate::Block,
+        identity_key: &str,
+        outer: &BTreeMap<String, LocalBindingIndex>,
+    ) {
+        let mut locals = outer.clone();
+        for (binding_index, binding) in block.bindings.iter().enumerate() {
+            let value_type = self.expression_type(&binding.value, &locals);
+            let dependencies = self.expression_dependencies(&binding.value, &locals);
+            let name_span = identifier_after(&self.unit.tokens, binding.span.start, 0);
+            let handle =
+                self.symbol_handle(&format!("symbol:nested-let:{identity_key}:{binding_index}"));
+            self.add_symbol(
+                handle.clone(),
+                name_span,
+                "let-binding",
+                format!("{identity_key}:let:{binding_index}"),
+                format!("block:{identity_key}"),
+                binding.name.clone(),
+                None,
+                value_type.clone(),
+                Vec::new(),
+                Vec::new(),
+                dependencies,
+            );
+            self.add_syntax(
+                name_span,
+                "let-binding-name",
+                format!("{identity_key}:let:{binding_index}:name"),
+            );
+            self.index_expression(
+                &binding.value,
+                &format!("{identity_key}:let:{binding_index}:value"),
+                &locals,
+            );
+            locals.insert(
+                binding.name.clone(),
+                LocalBindingIndex {
+                    handle,
+                    value_type,
+                    capability: None,
+                },
+            );
+        }
+        self.index_expression(&block.tail, &format!("{identity_key}:tail"), &locals);
+    }
+
+    fn expression_type(
+        &self,
+        expression: &Expr,
+        locals: &BTreeMap<String, LocalBindingIndex>,
+    ) -> Option<String> {
+        match expression {
+            Expr::Text { .. } => Some("Text".to_owned()),
+            Expr::Integer { .. } => Some("Int".to_owned()),
+            Expr::Name { name, .. } => locals
+                .get(name)
+                .and_then(|binding| binding.value_type.clone()),
+            Expr::Record { name, .. } => Some(name.clone()),
+            Expr::Variant { type_name, .. } => Some(type_name.clone()),
+            Expr::CapabilityCall {
+                receiver,
+                operation,
+                ..
+            } => crate::semantics::intrinsic_signature(receiver, operation)
+                .map(|(_, result)| result.to_owned())
+                .or_else(|| {
+                    locals
+                        .get(receiver)
+                        .and_then(|binding| binding.capability.as_deref())
+                        .and_then(|interface| self.capabilities.interface(interface))
+                        .and_then(|interface| interface.operation(operation))
+                        .map(|operation| operation.result.clone())
+                }),
+            Expr::FieldAccess { target, field, .. } => {
+                let target_type = self.expression_type(target, locals)?;
+                self.records
+                    .get(target_type.as_str())
+                    .and_then(|(record, _)| record.fields.iter().find(|item| item.name == *field))
+                    .map(|field| field.ty.clone())
+            }
+            Expr::If { then_branch, .. } => self.block_type(then_branch, locals),
+            Expr::Match {
+                scrutinee, arms, ..
+            } => {
+                let scrutinee_type = self.expression_type(scrutinee, locals)?;
+                let variant = self.variants.get(scrutinee_type.as_str())?;
+                let arm = arms.first()?;
+                let mut arm_locals = locals.clone();
+                if let Some(binding) = &arm.binding {
+                    let payload = variant
+                        .cases
+                        .iter()
+                        .find(|case| case.name == arm.case)?
+                        .payload
+                        .clone()?;
+                    arm_locals.insert(
+                        binding.clone(),
+                        LocalBindingIndex {
+                            handle: self.symbol_handle("expression-type:match-binding"),
+                            value_type: Some(payload),
+                            capability: None,
+                        },
+                    );
+                }
+                self.block_type(&arm.body, &arm_locals)
+            }
+        }
+    }
+
+    fn block_type(
+        &self,
+        block: &crate::Block,
+        outer: &BTreeMap<String, LocalBindingIndex>,
+    ) -> Option<String> {
+        let mut locals = outer.clone();
+        for binding in &block.bindings {
+            let value_type = self.expression_type(&binding.value, &locals);
+            locals.insert(
+                binding.name.clone(),
+                LocalBindingIndex {
+                    handle: self.symbol_handle("expression-type:let"),
+                    value_type,
+                    capability: None,
+                },
+            );
+        }
+        self.expression_type(&block.tail, &locals)
     }
 
     fn expression_dependencies(
@@ -1142,7 +1516,74 @@ impl<'a> IndexBuilder<'a> {
                     self.collect_expression_dependencies(argument, locals, dependencies);
                 }
             }
+            Expr::FieldAccess { target, .. } => {
+                self.collect_expression_dependencies(target, locals, dependencies);
+            }
+            Expr::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => {
+                self.collect_expression_dependencies(condition, locals, dependencies);
+                self.collect_block_dependencies(then_branch, locals, dependencies);
+                self.collect_block_dependencies(else_branch, locals, dependencies);
+            }
+            Expr::Match {
+                scrutinee, arms, ..
+            } => {
+                self.collect_expression_dependencies(scrutinee, locals, dependencies);
+                let scrutinee_type = self.expression_type(scrutinee, locals);
+                for arm in arms {
+                    dependencies.insert(arm.type_name.clone());
+                    let mut arm_locals = locals.clone();
+                    if let (Some(binding), Some(variant_name)) =
+                        (&arm.binding, scrutinee_type.as_deref())
+                    {
+                        if let Some(payload_type) = self
+                            .variants
+                            .get(variant_name)
+                            .and_then(|variant| {
+                                variant.cases.iter().find(|case| case.name == arm.case)
+                            })
+                            .and_then(|case| case.payload.clone())
+                        {
+                            arm_locals.insert(
+                                binding.clone(),
+                                LocalBindingIndex {
+                                    handle: self.symbol_handle("dependency:match-binding"),
+                                    value_type: Some(payload_type),
+                                    capability: None,
+                                },
+                            );
+                        }
+                    }
+                    self.collect_block_dependencies(&arm.body, &arm_locals, dependencies);
+                }
+            }
         }
+    }
+
+    fn collect_block_dependencies(
+        &self,
+        block: &crate::Block,
+        locals: &BTreeMap<String, LocalBindingIndex>,
+        dependencies: &mut BTreeSet<String>,
+    ) {
+        let mut locals = locals.clone();
+        for binding in &block.bindings {
+            self.collect_expression_dependencies(&binding.value, &locals, dependencies);
+            let value_type = self.expression_type(&binding.value, &locals);
+            locals.insert(
+                binding.name.clone(),
+                LocalBindingIndex {
+                    handle: self.symbol_handle("dependency:let"),
+                    value_type,
+                    capability: None,
+                },
+            );
+        }
+        self.collect_expression_dependencies(&block.tail, &locals, dependencies);
     }
 
     fn function_dependencies(
@@ -1159,10 +1600,7 @@ impl<'a> IndexBuilder<'a> {
             }
         }
         dependencies.insert(function.result_type.clone());
-        for binding in &function.body.bindings {
-            self.collect_expression_dependencies(&binding.value, locals, &mut dependencies);
-        }
-        self.collect_expression_dependencies(&function.body.tail, locals, &mut dependencies);
+        self.collect_block_dependencies(&function.body, locals, &mut dependencies);
         dependencies.into_iter().collect()
     }
 
@@ -1331,32 +1769,9 @@ fn expression_kind(expression: &Expr) -> &'static str {
         Expr::Record { .. } => "record-construction",
         Expr::Variant { .. } => "variant-construction",
         Expr::CapabilityCall { .. } => "capability-call",
-    }
-}
-
-fn expression_type(
-    expression: &Expr,
-    locals: &BTreeMap<String, LocalBindingIndex>,
-    capabilities: &CapabilityEnvironment,
-) -> Option<String> {
-    match expression {
-        Expr::Text { .. } => Some("Text".to_owned()),
-        Expr::Integer { .. } => Some("Int".to_owned()),
-        Expr::Name { name, .. } => locals
-            .get(name)
-            .and_then(|binding| binding.value_type.clone()),
-        Expr::Record { name, .. } => Some(name.clone()),
-        Expr::Variant { type_name, .. } => Some(type_name.clone()),
-        Expr::CapabilityCall {
-            receiver,
-            operation,
-            ..
-        } => locals
-            .get(receiver)
-            .and_then(|binding| binding.capability.as_deref())
-            .and_then(|interface| capabilities.interface(interface))
-            .and_then(|interface| interface.operation(operation))
-            .map(|operation| operation.result.clone()),
+        Expr::FieldAccess { .. } => "field-access",
+        Expr::If { .. } => "if-expression",
+        Expr::Match { .. } => "match-expression",
     }
 }
 

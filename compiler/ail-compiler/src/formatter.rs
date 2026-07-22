@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fmt::Write;
 
 use crate::{
-    Block, Declaration, Effect, Expr, FunctionDecl, Parameter, ParameterType, RecordDecl,
+    Block, Declaration, Effect, Expr, FunctionDecl, MatchArm, Parameter, ParameterType, RecordDecl,
     RecordFieldValue, SourceUnit, VariantDecl,
 };
 
@@ -71,7 +71,7 @@ fn format_function(
         output.push_str(" }");
     }
     output.push_str(" {\n");
-    format_block(output, &function.body, records);
+    format_block_body(output, &function.body, records, 1);
     output.push_str("}\n");
 }
 
@@ -92,18 +92,29 @@ fn format_effect(output: &mut String, effect: &Effect) {
         .expect("writing to String cannot fail");
 }
 
-fn format_block(output: &mut String, block: &Block, records: &BTreeMap<&str, Vec<&str>>) {
+fn format_block_body(
+    output: &mut String,
+    block: &Block,
+    records: &BTreeMap<&str, Vec<&str>>,
+    indent: usize,
+) {
     for binding in &block.bindings {
-        write!(output, "  let {} = ", binding.name).expect("writing to String cannot fail");
-        format_expression(output, &binding.value, records);
+        write_indent(output, indent);
+        write!(output, "let {} = ", binding.name).expect("writing to String cannot fail");
+        format_expression(output, &binding.value, records, indent);
         output.push_str(";\n");
     }
-    output.push_str("  ");
-    format_expression(output, &block.tail, records);
+    write_indent(output, indent);
+    format_expression(output, &block.tail, records, indent);
     output.push('\n');
 }
 
-fn format_expression(output: &mut String, expression: &Expr, records: &BTreeMap<&str, Vec<&str>>) {
+fn format_expression(
+    output: &mut String,
+    expression: &Expr,
+    records: &BTreeMap<&str, Vec<&str>>,
+    indent: usize,
+) {
     match expression {
         Expr::Text { value, .. } => {
             output.push_str(
@@ -129,7 +140,7 @@ fn format_expression(output: &mut String, expression: &Expr, records: &BTreeMap<
                 });
             }
             format_joined(output, &ordered, |output, field| {
-                format_record_field(output, field, records);
+                format_record_field(output, field, records, indent);
             });
             output.push_str(" }");
         }
@@ -142,7 +153,7 @@ fn format_expression(output: &mut String, expression: &Expr, records: &BTreeMap<
             write!(output, "{type_name}::{case}").expect("writing to String cannot fail");
             if let Some(payload) = payload {
                 output.push('(');
-                format_expression(output, payload, records);
+                format_expression(output, payload, records, indent);
                 output.push(')');
             }
         }
@@ -154,9 +165,41 @@ fn format_expression(output: &mut String, expression: &Expr, records: &BTreeMap<
         } => {
             write!(output, "{receiver}.{operation}(").expect("writing to String cannot fail");
             format_joined(output, arguments, |output, argument| {
-                format_expression(output, argument, records);
+                format_expression(output, argument, records, indent);
             });
             output.push(')');
+        }
+        Expr::FieldAccess { target, field, .. } => {
+            format_expression(output, target, records, indent);
+            write!(output, ".{field}").expect("writing to String cannot fail");
+        }
+        Expr::If {
+            condition,
+            then_branch,
+            else_branch,
+            ..
+        } => {
+            output.push_str("if ");
+            format_expression(output, condition, records, indent);
+            output.push_str(" {\n");
+            format_block_body(output, then_branch, records, indent + 1);
+            write_indent(output, indent);
+            output.push_str("} else {\n");
+            format_block_body(output, else_branch, records, indent + 1);
+            write_indent(output, indent);
+            output.push('}');
+        }
+        Expr::Match {
+            scrutinee, arms, ..
+        } => {
+            output.push_str("match ");
+            format_expression(output, scrutinee, records, indent);
+            output.push_str(" {\n");
+            for arm in arms {
+                format_match_arm(output, arm, records, indent + 1);
+            }
+            write_indent(output, indent);
+            output.push('}');
         }
     }
 }
@@ -165,9 +208,33 @@ fn format_record_field(
     output: &mut String,
     field: &RecordFieldValue,
     records: &BTreeMap<&str, Vec<&str>>,
+    indent: usize,
 ) {
     write!(output, "{}: ", field.name).expect("writing to String cannot fail");
-    format_expression(output, &field.value, records);
+    format_expression(output, &field.value, records, indent);
+}
+
+fn format_match_arm(
+    output: &mut String,
+    arm: &MatchArm,
+    records: &BTreeMap<&str, Vec<&str>>,
+    indent: usize,
+) {
+    write_indent(output, indent);
+    write!(output, "{}::{}", arm.type_name, arm.case).expect("writing to String cannot fail");
+    if let Some(binding) = &arm.binding {
+        write!(output, "({binding})").expect("writing to String cannot fail");
+    }
+    output.push_str(" => {\n");
+    format_block_body(output, &arm.body, records, indent + 1);
+    write_indent(output, indent);
+    output.push_str("},\n");
+}
+
+fn write_indent(output: &mut String, indent: usize) {
+    for _ in 0..indent {
+        output.push_str("  ");
+    }
 }
 
 fn format_joined<T>(output: &mut String, values: &[T], mut formatter: impl FnMut(&mut String, &T)) {

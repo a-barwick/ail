@@ -98,6 +98,17 @@ python3 benchmarks/tools/harness.py verify \
 The completed Rust, Go, Python, and TypeScript implementations and their setup,
 build, test, coverage, and run instructions are under `baselines/`.
 
+M17 adds `baselines/ail/runner.json` and its locked verification manifest. The
+runner invokes the authoritative interpreter and passes all 37 public cases:
+
+```bash
+python3 benchmarks/tools/harness.py verify --language ail --visibility public
+```
+
+The runner owns fixture JSON/Base64 decoding, deterministic capability state,
+and versioned response projection. Canonical AIL source owns request validation,
+V1 adaptation, priority propagation, the store call, and outcome mapping.
+
 ## M7 parity freeze
 
 M7 verifies the four baseline runners together. It checks the locked V1 and V2

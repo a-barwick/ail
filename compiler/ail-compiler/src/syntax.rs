@@ -87,6 +87,15 @@ pub struct LetBinding {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MatchArm {
+    pub type_name: String,
+    pub case: String,
+    pub binding: Option<String>,
+    pub body: Block,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
     Text {
         value: String,
@@ -117,6 +126,22 @@ pub enum Expr {
         arguments: Vec<Expr>,
         span: Span,
     },
+    FieldAccess {
+        target: Box<Expr>,
+        field: String,
+        span: Span,
+    },
+    If {
+        condition: Box<Expr>,
+        then_branch: Box<Block>,
+        else_branch: Box<Block>,
+        span: Span,
+    },
+    Match {
+        scrutinee: Box<Expr>,
+        arms: Vec<MatchArm>,
+        span: Span,
+    },
 }
 
 impl Expr {
@@ -128,7 +153,10 @@ impl Expr {
             | Self::Name { span, .. }
             | Self::Record { span, .. }
             | Self::Variant { span, .. }
-            | Self::CapabilityCall { span, .. } => *span,
+            | Self::CapabilityCall { span, .. }
+            | Self::FieldAccess { span, .. }
+            | Self::If { span, .. }
+            | Self::Match { span, .. } => *span,
         }
     }
 }

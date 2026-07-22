@@ -1,0 +1,111 @@
+{
+  "fixture_format": 1,
+  "id": "m17-reference-execution",
+  "source": {
+    "path": "runtime-fixtures/job-service.ail",
+    "sha256": "034b50e9d72e23b84fb2aae45f5278dd5d8c38beef20df9c6497c40a1b6bf3a2",
+    "canonical": true,
+    "format_idempotent": true,
+    "static_status": "ok"
+  },
+  "environment": {
+    "capabilities": {
+      "JobsStore": {
+        "insert_if_absent": {
+          "parameters": [
+            "Job"
+          ],
+          "result": "InsertOutcome"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "invalid-zero-calls",
+      "rules": [
+        "M17-LANG-001",
+        "M17-LANG-002",
+        "M17-RUNTIME-001",
+        "M17-RUNTIME-002"
+      ],
+      "function": "create_job",
+      "provider_outcome": "Inserted",
+      "result_case": "Invalid",
+      "call_count": 0
+    },
+    {
+      "id": "inserted",
+      "rules": [
+        "M17-LANG-003",
+        "M17-RUNTIME-001",
+        "M17-RUNTIME-002",
+        "M17-PROTO-002"
+      ],
+      "function": "create_job",
+      "provider_outcome": "Inserted",
+      "result_case": "Created",
+      "call_count": 1
+    },
+    {
+      "id": "duplicate",
+      "rules": [
+        "M17-LANG-003",
+        "M17-RUNTIME-002"
+      ],
+      "function": "create_job",
+      "provider_outcome": "Duplicate",
+      "result_case": "AlreadyExists",
+      "call_count": 1
+    },
+    {
+      "id": "unavailable-before-commit",
+      "rules": [
+        "M17-LANG-003",
+        "M17-RUNTIME-002"
+      ],
+      "function": "create_job",
+      "provider_outcome": "UnavailableBeforeCommit",
+      "result_case": "PersistenceUnavailable",
+      "call_count": 1
+    },
+    {
+      "id": "v1-request-priority-adaptation",
+      "rules": [
+        "M17-LANG-004",
+        "M17-RUNTIME-001"
+      ],
+      "function": "adapt_create_job_request_v1",
+      "expected_priority": "Normal",
+      "call_count": 0
+    },
+    {
+      "id": "v1-stored-job-adaptation",
+      "rules": [
+        "M17-LANG-004",
+        "M17-RUNTIME-001"
+      ],
+      "function": "adapt_stored_job",
+      "expected_priority": "Normal",
+      "call_count": 0
+    },
+    {
+      "id": "revision-scoped-retained-parent",
+      "rules": [
+        "M17-PROTO-001"
+      ],
+      "expected": "parent-and-child-execute-independently"
+    },
+    {
+      "id": "stable-malformed-argument-fault",
+      "rules": [
+        "M17-RUNTIME-003",
+        "M17-PROTO-002"
+      ],
+      "fault": "AIL.RUNTIME.ARGUMENT_TYPE",
+      "repetitions": 2,
+      "equal_results": true,
+      "call_count": 0
+    }
+  ]
+}

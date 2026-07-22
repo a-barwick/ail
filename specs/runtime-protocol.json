@@ -1,0 +1,73 @@
+{
+  "runtime_protocol_version": 1,
+  "status": "Accepted",
+  "transport": "independent",
+  "shapes": {
+    "RuntimeValue": {
+      "required": [
+        "kind",
+        "value"
+      ],
+      "optional": [
+        "type_name",
+        "case",
+        "fields",
+        "payload"
+      ]
+    },
+    "RuntimeFault": {
+      "required": [
+        "code",
+        "span",
+        "expected",
+        "actual"
+      ],
+      "optional": []
+    },
+    "ObservedCapabilityCall": {
+      "required": [
+        "receiver",
+        "interface",
+        "operation",
+        "arguments",
+        "result"
+      ],
+      "optional": []
+    },
+    "ExecutionRequest": {
+      "required": [
+        "revision_id",
+        "function",
+        "arguments"
+      ],
+      "optional": []
+    },
+    "ExecutionSuccess": {
+      "required": [
+        "status",
+        "revision_id",
+        "function_handle",
+        "value",
+        "calls"
+      ],
+      "optional": []
+    },
+    "ExecutionFailure": {
+      "required": [
+        "status",
+        "revision_id",
+        "function",
+        "fault",
+        "calls"
+      ],
+      "optional": []
+    }
+  },
+  "operations": {
+    "execute": {
+      "request": "ExecutionRequest",
+      "success": "ExecutionSuccess",
+      "failure": "ExecutionFailure"
+    }
+  }
+}

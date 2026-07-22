@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SPECS = ROOT / "specs"
 CONTRACT_PATH = SPECS / "core-contract.json"
 PROTOCOL_PATH = SPECS / "protocol.json"
+RUNTIME_CONTRACT_PATH = SPECS / "runtime-contract.json"
+RUNTIME_PROTOCOL_PATH = SPECS / "runtime-protocol.json"
 REQUIREMENTS_PATH = ROOT / "docs" / "requirements" / "reference-slice.md"
 
 EXPECTED_CONSTRUCTS = (
@@ -78,6 +80,29 @@ REQUIRED_DIAGNOSTIC_FIELDS = {
     "related_handles",
     "causal_chain",
 }
+RUNTIME_PROTOCOL_SHAPES = {
+    "RuntimeValue",
+    "RuntimeFault",
+    "ObservedCapabilityCall",
+    "ExecutionRequest",
+    "ExecutionSuccess",
+    "ExecutionFailure",
+}
+RUNTIME_DIAGNOSTICS = {
+    "non-exhaustive-match": "AIL.TYPE.NON_EXHAUSTIVE_MATCH",
+    "if-branch-mismatch": "AIL.TYPE.IF_BRANCH_MISMATCH",
+    "match-arm-mismatch": "AIL.TYPE.MATCH_ARM_MISMATCH",
+}
+RUNTIME_CASES = (
+    "invalid-zero-calls",
+    "inserted",
+    "duplicate",
+    "unavailable-before-commit",
+    "v1-request-priority-adaptation",
+    "v1-stored-job-adaptation",
+    "revision-scoped-retained-parent",
+    "stable-malformed-argument-fault",
+)
 
 
 class ContractError(Exception):
@@ -976,6 +1001,351 @@ def validate_contract(
     return len(constructs), len(rules), len(fixture_values)
 
 
+def _require_canonical_json(path: Path, value: dict[str, Any]) -> None:
+    expected = json.dumps(value, ensure_ascii=False, indent=2) + "\n"
+    _require(
+        path.read_text(encoding="utf-8") == expected,
+        "runtime_json_not_canonical",
+        path.relative_to(ROOT).as_posix(),
+    )
+
+
+def _validate_runtime_protocol(protocol: dict[str, Any]) -> None:
+    _require(
+        protocol.get("runtime_protocol_version") == 1,
+        "runtime_protocol_version",
+        "expected version 1",
+    )
+    _require(
+        protocol.get("status") == "Accepted",
+        "runtime_protocol_status",
+        "expected Accepted",
+    )
+    _require(
+        protocol.get("transport") == "independent",
+        "runtime_protocol_transport",
+        "must remain independent",
+    )
+    shapes = protocol.get("shapes")
+    _require(
+        isinstance(shapes, dict) and set(shapes) == RUNTIME_PROTOCOL_SHAPES,
+        "runtime_protocol_shapes",
+        "shape set mismatch",
+    )
+    for name, shape in shapes.items():
+        _require(
+            isinstance(shape, dict) and set(shape) == {"required", "optional"},
+            "runtime_protocol_shape",
+            name,
+        )
+        required = _string_list(
+            shape["required"],
+            "runtime_protocol_shape",
+            f"{name}.required",
+            allow_empty=False,
+        )
+        optional = _string_list(
+            shape["optional"], "runtime_protocol_shape", f"{name}.optional"
+        )
+        _require(
+            not set(required) & set(optional), "runtime_protocol_shape", name
+        )
+    _require(
+        protocol.get("operations")
+        == {
+            "execute": {
+                "request": "ExecutionRequest",
+                "success": "ExecutionSuccess",
+                "failure": "ExecutionFailure",
+            }
+        },
+        "runtime_protocol_operation",
+        "expected execute",
+    )
+
+
+def _validate_runtime_rules(
+    contract: dict[str, Any], accepted_requirements: set[str]
+) -> dict[str, dict[str, Any]]:
+    rules = contract.get("rules")
+    _require(
+        isinstance(rules, list) and rules,
+        "runtime_rules_invalid",
+        "expected rules",
+    )
+    by_id: dict[str, dict[str, Any]] = {}
+    sequences: dict[str, list[int]] = {"LANG": [], "RUNTIME": [], "PROTO": []}
+    for rule in rules:
+        _require(
+            isinstance(rule, dict)
+            and set(rule) == {"id", "kind", "title", "requirements"},
+            "runtime_rule_fields",
+            str(rule),
+        )
+        rule_id = rule["id"]
+        match = re.fullmatch(r"M17-(LANG|RUNTIME|PROTO)-(\d{3})", rule_id)
+        _require(
+            match is not None and rule_id not in by_id,
+            "runtime_rule_id",
+            str(rule_id),
+        )
+        prefix = match.group(1)
+        expected_kind = {
+            "LANG": "language",
+            "RUNTIME": "runtime",
+            "PROTO": "protocol",
+        }[prefix]
+        _require(
+            rule["kind"] == expected_kind,
+            "runtime_rule_kind",
+            rule_id,
+        )
+        _require(
+            isinstance(rule["title"], str) and rule["title"],
+            "runtime_rule_title",
+            rule_id,
+        )
+        requirements = _string_list(
+            rule["requirements"],
+            "runtime_rule_requirements",
+            rule_id,
+            allow_empty=False,
+        )
+        _require(
+            set(requirements) <= accepted_requirements,
+            "runtime_rule_requirement_unknown",
+            rule_id,
+        )
+        sequences[prefix].append(int(match.group(2)))
+        by_id[rule_id] = rule
+    for prefix, numbers in sequences.items():
+        _require(
+            numbers == list(range(1, len(numbers) + 1)),
+            "runtime_rule_sequence",
+            f"{prefix}: {numbers}",
+        )
+    document = (SPECS / "runtime.md").read_text(encoding="utf-8")
+    documented = set(
+        re.findall(r"^### (M17-(?:LANG|RUNTIME|PROTO)-\d{3}) — ", document, re.MULTILINE)
+    )
+    _require(
+        documented == set(by_id),
+        "runtime_rule_document_mismatch",
+        f"metadata-only={sorted(set(by_id) - documented)}, document-only={sorted(documented - set(by_id))}",
+    )
+    return by_id
+
+
+def _validate_runtime_fixtures(
+    contract: dict[str, Any], rules: dict[str, dict[str, Any]]
+) -> int:
+    expected_paths = [
+        "runtime-fixtures/diagnostics.json",
+        "runtime-fixtures/execution.json",
+    ]
+    _require(
+        contract.get("fixtures") == expected_paths,
+        "runtime_fixture_paths",
+        "fixture path set or order changed",
+    )
+    diagnostics_path = SPECS / expected_paths[0]
+    execution_path = SPECS / expected_paths[1]
+    diagnostics = _load_json(diagnostics_path)
+    execution = _load_json(execution_path)
+    _require_canonical_json(diagnostics_path, diagnostics)
+    _require_canonical_json(execution_path, execution)
+
+    _require(
+        set(diagnostics) == {"fixture_format", "id", "rules", "cases"}
+        and diagnostics["fixture_format"] == 1,
+        "runtime_diagnostic_fixture",
+        "unexpected shape",
+    )
+    diagnostic_rules = _string_list(
+        diagnostics["rules"],
+        "runtime_fixture_rules",
+        "diagnostics.rules",
+        allow_empty=False,
+    )
+    _require(
+        set(diagnostic_rules) <= set(rules),
+        "runtime_fixture_rules",
+        "unknown diagnostic rule",
+    )
+    cases = diagnostics["cases"]
+    _require(
+        isinstance(cases, list)
+        and [case.get("id") for case in cases] == list(RUNTIME_DIAGNOSTICS),
+        "runtime_diagnostic_cases",
+        "case set or order changed",
+    )
+    for case in cases:
+        _require(
+            set(case) == {"id", "source", "primary_diagnostic"},
+            "runtime_diagnostic_case",
+            str(case.get("id")),
+        )
+        _require(
+            isinstance(case["source"], str) and case["source"].endswith("\n"),
+            "runtime_diagnostic_source",
+            case["id"],
+        )
+        _require(
+            case["primary_diagnostic"] == RUNTIME_DIAGNOSTICS[case["id"]],
+            "runtime_diagnostic_code",
+            case["id"],
+        )
+
+    _require(
+        set(execution) == {"fixture_format", "id", "source", "environment", "cases"}
+        and execution["fixture_format"] == 1,
+        "runtime_execution_fixture",
+        "unexpected shape",
+    )
+    source = execution["source"]
+    _require(
+        source
+        == {
+            "path": "runtime-fixtures/job-service.ail",
+            "sha256": source.get("sha256"),
+            "canonical": True,
+            "format_idempotent": True,
+            "static_status": "ok",
+        },
+        "runtime_source_metadata",
+        "unexpected source contract",
+    )
+    source_path = SPECS / source["path"]
+    _require(source_path.is_file(), "runtime_source_missing", source["path"])
+    _require(
+        hashlib.sha256(source_path.read_bytes()).hexdigest() == source["sha256"],
+        "runtime_source_digest",
+        source["path"],
+    )
+    _require(
+        execution["environment"]
+        == {
+            "capabilities": {
+                "JobsStore": {
+                    "insert_if_absent": {
+                        "parameters": ["Job"],
+                        "result": "InsertOutcome",
+                    }
+                }
+            }
+        },
+        "runtime_environment",
+        "JobsStore signature changed",
+    )
+    execution_cases = execution["cases"]
+    _require(
+        isinstance(execution_cases, list)
+        and tuple(case.get("id") for case in execution_cases) == RUNTIME_CASES,
+        "runtime_execution_cases",
+        "case set or order changed",
+    )
+    referenced_rules = set(diagnostic_rules)
+    for case in execution_cases:
+        case_rules = _string_list(
+            case.get("rules"),
+            "runtime_fixture_rules",
+            case.get("id", "case"),
+            allow_empty=False,
+        )
+        _require(
+            set(case_rules) <= set(rules),
+            "runtime_fixture_rules",
+            case["id"],
+        )
+        referenced_rules.update(case_rules)
+        if "call_count" in case:
+            _require(
+                case["call_count"] in {0, 1},
+                "runtime_call_count",
+                case["id"],
+            )
+    _require(
+        referenced_rules == set(rules),
+        "runtime_rule_fixture_coverage",
+        f"uncovered={sorted(set(rules) - referenced_rules)}",
+    )
+    return len(cases) + len(execution_cases)
+
+
+def validate_runtime_contract(
+    contract: dict[str, Any], protocol: dict[str, Any]
+) -> tuple[int, int, int]:
+    _validate_runtime_protocol(protocol)
+    _require(
+        contract.get("runtime_contract_version") == 1,
+        "runtime_contract_version",
+        "expected version 1",
+    )
+    _require(
+        contract.get("status") == "Accepted" and contract.get("extends") == "M11",
+        "runtime_contract_status",
+        "must be accepted M11 extension",
+    )
+    documents = _string_list(
+        contract.get("documents"),
+        "runtime_documents",
+        "documents",
+        allow_empty=False,
+    )
+    _require(
+        documents == ["runtime.md", "runtime-protocol.json"],
+        "runtime_documents",
+        "document set or order changed",
+    )
+    for document in documents:
+        _require((SPECS / document).is_file(), "runtime_document_missing", document)
+    intrinsics = contract.get("intrinsics")
+    _require(
+        isinstance(intrinsics, dict)
+        and set(intrinsics)
+        == {
+            "bytes.length_gt",
+            "text.byte_length_between",
+            "text.contains_control",
+            "text.first_ascii_alphanumeric",
+            "text.is_empty",
+            "text.rest_ascii_alphanumeric_or",
+            "text.scalar_count_gt",
+        },
+        "runtime_intrinsics",
+        "intrinsic set changed",
+    )
+    for name, signature in intrinsics.items():
+        _require(
+            isinstance(signature, dict)
+            and set(signature) == {"parameters", "result"}
+            and signature["result"] == "Bool",
+            "runtime_intrinsic_signature",
+            name,
+        )
+        _require(
+            isinstance(signature["parameters"], list)
+            and bool(signature["parameters"])
+            and all(
+                isinstance(parameter, str) and parameter
+                for parameter in signature["parameters"]
+            ),
+            "runtime_intrinsic_signature",
+            name,
+        )
+    rules = _validate_runtime_rules(contract, _accepted_requirements())
+    fixture_count = _validate_runtime_fixtures(contract, rules)
+    return len(rules), fixture_count, len(protocol["shapes"])
+
+
+def _load_repository_runtime_contract() -> tuple[dict[str, Any], dict[str, Any]]:
+    contract = _load_json(RUNTIME_CONTRACT_PATH)
+    protocol = _load_json(RUNTIME_PROTOCOL_PATH)
+    _require_canonical_json(RUNTIME_CONTRACT_PATH, contract)
+    _require_canonical_json(RUNTIME_PROTOCOL_PATH, protocol)
+    return contract, protocol
+
+
 def _load_repository_contract() -> tuple[
     dict[str, Any], dict[str, Any], list[tuple[Path, dict[str, Any]]]
 ]:
@@ -1038,17 +1408,54 @@ def _self_test(
     return len(mutations)
 
 
+def _runtime_self_test(
+    contract: dict[str, Any], protocol: dict[str, Any]
+) -> int:
+    mutations: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
+
+    changed_status = copy.deepcopy(contract)
+    changed_status["status"] = "Proposed"
+    mutations.append(("unaccepted-runtime", changed_status, protocol))
+
+    unknown_requirement = copy.deepcopy(contract)
+    unknown_requirement["rules"][0]["requirements"].append("LANG-999")
+    mutations.append(("runtime-unknown-requirement", unknown_requirement, protocol))
+
+    missing_shape = copy.deepcopy(protocol)
+    del missing_shape["shapes"]["RuntimeFault"]
+    mutations.append(("runtime-missing-shape", contract, missing_shape))
+
+    for name, changed_contract, changed_protocol in mutations:
+        try:
+            validate_runtime_contract(changed_contract, changed_protocol)
+        except ContractError:
+            continue
+        _raise("runtime_self_test_failed", f"mutation {name!r} was accepted")
+    return len(mutations)
+
+
 def check() -> None:
     contract, protocol, fixtures = _load_repository_contract()
     construct_count, rule_count, fixture_count = validate_contract(
         contract, protocol, fixtures
     )
     mutation_count = _self_test(contract, protocol, fixtures)
+    runtime_contract, runtime_protocol = _load_repository_runtime_contract()
+    runtime_rule_count, runtime_fixture_count, runtime_shape_count = (
+        validate_runtime_contract(runtime_contract, runtime_protocol)
+    )
+    runtime_mutation_count = _runtime_self_test(runtime_contract, runtime_protocol)
     print(
         "M11 core contract passed: "
         f"{construct_count} constructs, {rule_count} numbered rules, "
         f"{fixture_count} canonical fixtures, {len(protocol['shapes'])} protocol shapes, "
         f"and {mutation_count} rejection mutations verified."
+    )
+    print(
+        "M17 runtime contract passed: "
+        f"{runtime_rule_count} numbered rules, {runtime_fixture_count} fixture cases, "
+        f"{runtime_shape_count} protocol shapes, and "
+        f"{runtime_mutation_count} rejection mutations verified."
     )
 
 

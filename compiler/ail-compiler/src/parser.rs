@@ -1,7 +1,7 @@
 use crate::{
     Block, Declaration, Diagnostic, Effect, Expr, Field, FunctionDecl, Keyword, LetBinding,
-    Parameter, ParameterType, RecordDecl, RecordFieldValue, SourceUnit, Span, Token, TokenKind,
-    VariantCase, VariantDecl, lex,
+    MatchArm, Parameter, ParameterType, RecordDecl, RecordFieldValue, SourceUnit, Span, Token,
+    TokenKind, VariantCase, VariantDecl, lex,
 };
 
 #[derive(Debug, Clone)]
@@ -251,44 +251,159 @@ impl Parser {
     }
 
     fn parse_expression(&mut self) -> Option<Expr> {
+        if self.at(TokenKind::Keyword(Keyword::If)) {
+            return self.parse_if_expression();
+        }
+        if self.at(TokenKind::Keyword(Keyword::Match)) {
+            return self.parse_match_expression();
+        }
         let token = self.current().clone();
-        match token.kind {
+        let expression = match token.kind {
             TokenKind::Text => {
                 self.advance();
                 let value =
                     serde_json::from_str(&token.text).unwrap_or_else(|_| token.text.clone());
-                Some(Expr::Text {
+                Expr::Text {
                     value,
                     span: token.span,
-                })
+                }
             }
             TokenKind::Integer => {
                 self.advance();
-                Some(Expr::Integer {
+                Expr::Integer {
                     spelling: token.text,
                     span: token.span,
-                })
+                }
             }
             TokenKind::Identifier => {
                 self.advance();
                 let name = token.text;
                 if self.consume_if(TokenKind::LeftBrace) {
-                    self.parse_record_expression(name, token.span.start)
+                    return self.parse_record_expression(name, token.span.start);
                 } else if self.consume_if(TokenKind::ColonColon) {
-                    self.parse_variant_expression(name, token.span.start)
-                } else if self.consume_if(TokenKind::Dot) {
-                    self.parse_capability_call(name, token.span.start)
-                } else {
-                    Some(Expr::Name {
-                        name,
-                        span: token.span,
-                    })
+                    return self.parse_variant_expression(name, token.span.start);
+                }
+                Expr::Name {
+                    name,
+                    span: token.span,
                 }
             }
             _ => {
                 self.report_expected("expression");
-                None
+                return None;
             }
+        };
+        self.parse_postfix_expression(expression)
+    }
+
+    fn parse_postfix_expression(&mut self, mut expression: Expr) -> Option<Expr> {
+        while self.consume_if(TokenKind::Dot) {
+            let field = self.take_identifier()?;
+            if self.consume_if(TokenKind::LeftParen) {
+                let start = expression.span().start;
+                let Expr::Name { name: receiver, .. } = expression else {
+                    self.report_expected("intrinsic or capability receiver");
+                    return None;
+                };
+                let mut arguments = Vec::new();
+                if !self.at(TokenKind::RightParen) {
+                    loop {
+                        arguments.push(self.parse_expression()?);
+                        if !self.consume_if(TokenKind::Comma) {
+                            break;
+                        }
+                        if self.at(TokenKind::RightParen) {
+                            break;
+                        }
+                    }
+                }
+                self.expect(TokenKind::RightParen, ")");
+                expression = Expr::CapabilityCall {
+                    receiver,
+                    operation: field,
+                    arguments,
+                    span: Span::new(start, self.previous().span.end),
+                };
+            } else {
+                let start = expression.span().start;
+                expression = Expr::FieldAccess {
+                    target: Box::new(expression),
+                    field,
+                    span: Span::new(start, self.previous().span.end),
+                };
+            }
+        }
+        Some(expression)
+    }
+
+    fn parse_if_expression(&mut self) -> Option<Expr> {
+        let start = self.advance().span.start;
+        let condition = Box::new(self.parse_expression_before_block()?);
+        let then_branch = self.parse_block()?;
+        self.expect(TokenKind::Keyword(Keyword::Else), "else");
+        let else_branch = self.parse_block()?;
+        let end = else_branch.span.end;
+        Some(Expr::If {
+            condition,
+            then_branch: Box::new(then_branch),
+            else_branch: Box::new(else_branch),
+            span: Span::new(start, end),
+        })
+    }
+
+    fn parse_match_expression(&mut self) -> Option<Expr> {
+        let start = self.advance().span.start;
+        let scrutinee = Box::new(self.parse_expression_before_block()?);
+        self.expect(TokenKind::LeftBrace, "{");
+        let mut arms = Vec::new();
+        while !self.at(TokenKind::RightBrace) && !self.at(TokenKind::Eof) {
+            let arm_start = self.current().span.start;
+            let type_name = self.take_identifier()?;
+            self.expect(TokenKind::ColonColon, "::");
+            let case = self.take_identifier()?;
+            let binding = if self.consume_if(TokenKind::LeftParen) {
+                let binding = self.take_identifier()?;
+                self.expect(TokenKind::RightParen, ")");
+                Some(binding)
+            } else {
+                None
+            };
+            self.expect(TokenKind::FatArrow, "=>");
+            let body = self.parse_block()?;
+            let end = body.span.end;
+            arms.push(MatchArm {
+                type_name,
+                case,
+                binding,
+                body,
+                span: Span::new(arm_start, end),
+            });
+            if !self.consume_if(TokenKind::Comma) && !self.at(TokenKind::RightBrace) {
+                self.expect(TokenKind::Comma, ",");
+            }
+        }
+        self.expect(TokenKind::RightBrace, "}");
+        Some(Expr::Match {
+            scrutinee,
+            arms,
+            span: Span::new(start, self.previous().span.end),
+        })
+    }
+
+    fn parse_expression_before_block(&mut self) -> Option<Expr> {
+        if self.at(TokenKind::Identifier)
+            && self
+                .tokens
+                .get(self.cursor + 1)
+                .is_some_and(|token| token.kind == TokenKind::LeftBrace)
+        {
+            let token = self.advance();
+            Some(Expr::Name {
+                name: token.text,
+                span: token.span,
+            })
+        } else {
+            self.parse_expression()
         }
     }
 
@@ -334,30 +449,6 @@ impl Parser {
             type_name,
             case,
             payload,
-            span: Span::new(start, self.previous().span.end),
-        })
-    }
-
-    fn parse_capability_call(&mut self, receiver: String, start: usize) -> Option<Expr> {
-        let operation = self.take_identifier()?;
-        self.expect(TokenKind::LeftParen, "(");
-        let mut arguments = Vec::new();
-        if !self.at(TokenKind::RightParen) {
-            loop {
-                arguments.push(self.parse_expression()?);
-                if !self.consume_if(TokenKind::Comma) {
-                    break;
-                }
-                if self.at(TokenKind::RightParen) {
-                    break;
-                }
-            }
-        }
-        self.expect(TokenKind::RightParen, ")");
-        Some(Expr::CapabilityCall {
-            receiver,
-            operation,
-            arguments,
             span: Span::new(start, self.previous().span.end),
         })
     }

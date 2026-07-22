@@ -1,0 +1,249 @@
+{
+  "manifest_format": 1,
+  "benchmark_id": "ail-job-service",
+  "configuration_id": "m17-ail-interpreter-public-verification",
+  "source": {
+    "language": "ail",
+    "repository": "specs/runtime-fixtures/job-service.ail",
+    "start_revision": "ail-m17-034b50e9d72e23b8",
+    "dependency_revision": "9e1ac17ead0517103c875a4aed2f5ae86d7f9f6827b8d6736f39ca585cf6f4da",
+    "source_tree_sha256": "034b50e9d72e23b84fb2aae45f5278dd5d8c38beef20df9c6497c40a1b6bf3a2"
+  },
+  "runner": {
+    "descriptor_path": "benchmarks/baselines/ail/runner.json",
+    "descriptor_sha256": "4454c81b4bd5e5066fb607bd21e1657b15d896533d4d4970966f56a17676a07d"
+  },
+  "task": {
+    "task_id": "UC-003",
+    "path": "benchmarks/tasks/uc003-add-priority.md",
+    "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6",
+    "initial_context": [
+      "specs/runtime-fixtures/job-service.ail",
+      "specs/runtime.md"
+    ]
+  },
+  "tests": {
+    "public_fixture_manifest": "benchmarks/fixtures/manifest.json",
+    "public_fixture_manifest_sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5",
+    "hidden_package": "external:ail-job-service-m7-hidden.zip",
+    "hidden_package_sha256": "c2b16b96f5710a6b8d9bb00f95011d337b064fa2d5f1f94b024bb54c33454752"
+  },
+  "tools": [
+    {
+      "name": "rustc",
+      "version": "1.87.0",
+      "command": [
+        "rustc"
+      ]
+    },
+    {
+      "name": "cargo",
+      "version": "1.87.0",
+      "command": [
+        "cargo"
+      ]
+    },
+    {
+      "name": "ailc",
+      "version": "m17",
+      "command": [
+        "cargo",
+        "run",
+        "--bin",
+        "ailc"
+      ]
+    }
+  ],
+  "model": {
+    "provider": "not-applicable",
+    "name": "reference-interpreter-verification",
+    "version": "m17",
+    "agent": "not-an-agent-benchmark-run",
+    "sampling": {
+      "parameters": {},
+      "unavailable": [
+        "This manifest verifies the M17 interpreter and records no agent run."
+      ]
+    }
+  },
+  "environment": {
+    "container_image": "not-applicable-for-m17-reference-verification",
+    "reference_host": "local-rust-interpreter-verification",
+    "operating_system": "Darwin",
+    "architecture": "arm64"
+  },
+  "permissions": {
+    "network": "denied",
+    "filesystem_read": [
+      "benchmarks",
+      "compiler",
+      "specs"
+    ],
+    "filesystem_write": [
+      "target"
+    ],
+    "subprocess": "allowlisted"
+  },
+  "limits": {
+    "run_seconds": 300,
+    "functional_corpus_seconds": 30,
+    "input_tokens": 100000,
+    "startup_seconds": 5,
+    "peak_memory_mib": 512
+  },
+  "retry_policy": {
+    "max_attempts": 1,
+    "retryable_failures": []
+  },
+  "token_accounting": {
+    "tokenizer": "not-applicable-for-m17-reference-verification",
+    "categories": [
+      "initial_context",
+      "source_reads",
+      "semantic_tool_output",
+      "diagnostics",
+      "build_and_test_output",
+      "other_tool_output"
+    ],
+    "repeated_context": "count_every_delivery"
+  },
+  "repair_policy": {
+    "definition_version": 1,
+    "pre_edit_checks_count": false
+  },
+  "correctness": {
+    "required_visibility": "public",
+    "required_checks": [
+      "response",
+      "final_jobs",
+      "store_calls",
+      "uc001_regression",
+      "v1_compatibility",
+      "v2_priority"
+    ],
+    "final_revision_evidence": true
+  },
+  "outputs": {
+    "events": "artifacts/ail/events.jsonl",
+    "results": "artifacts/ail/results.json",
+    "measurements": "artifacts/ail/measurements.json"
+  },
+  "artifact_locks": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "9e1ac17ead0517103c875a4aed2f5ae86d7f9f6827b8d6736f39ca585cf6f4da"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "4d81b0edb0b60aa1b4fa49ea5b0d21fbf28017031a94f3b9041c0e71dd76d0de"
+    },
+    {
+      "path": "benchmarks/baselines/ail/runner.json",
+      "sha256": "4454c81b4bd5e5066fb607bd21e1657b15d896533d4d4970966f56a17676a07d"
+    },
+    {
+      "path": "benchmarks/contracts/contract-lock.json",
+      "sha256": "25a57959be218a53bcd71dc1864b50f3d582cd8fa7084d47910867a5da634ce7"
+    },
+    {
+      "path": "benchmarks/fixtures/manifest.json",
+      "sha256": "33b8369ca3680367b5371811ce52ef639a878696698f70765def0f6c9e8c1eb5"
+    },
+    {
+      "path": "benchmarks/schemas/run-manifest.schema.json",
+      "sha256": "09288aa3ebf0346a9fe0107e3a685365f9d1048e13de242f1c2c6f0f76ce7a27"
+    },
+    {
+      "path": "benchmarks/schemas/runner-result.schema.json",
+      "sha256": "6c7be400e77276ec6d8cec4a026be5dea255e2e59f917f7d0b79c3f2ce0f7018"
+    },
+    {
+      "path": "benchmarks/tasks/uc003-add-priority.md",
+      "sha256": "f540353fa948fda0d3c6880e8c4b69e79133f0a63abb6978e22f3e12d86fecd6"
+    },
+    {
+      "path": "benchmarks/tools/harness.py",
+      "sha256": "84c3c4fd54b9924b8b36820b8533263ff6dff92f6de30ab3262091ac43f81f40"
+    },
+    {
+      "path": "compiler/ail-compiler/Cargo.toml",
+      "sha256": "56018ad31f22bd01008189a9ae08f73a0f24a945b8ca2b3b51e5865f1e4e56e9"
+    },
+    {
+      "path": "compiler/ail-compiler/src/bin/ail-benchmark.rs",
+      "sha256": "ab512ed4785dc808d74eca637a6bb3e078051f79dc27ab86c7059417be5d8d48"
+    },
+    {
+      "path": "compiler/ail-compiler/src/diagnostic.rs",
+      "sha256": "ad52fdab164014c9241c0fab835be3c91ac537c1f99308c67859c3e4e50e33b5"
+    },
+    {
+      "path": "compiler/ail-compiler/src/formatter.rs",
+      "sha256": "ef45137b96d1bbe6b3c824c56c3f12212d13b4751ee600f9c7fbc3d82fa17d4d"
+    },
+    {
+      "path": "compiler/ail-compiler/src/interpreter.rs",
+      "sha256": "b633dc4ad1ab7b07bc4fd44f52c3aac24245337535b3a581acafc169c3ff587c"
+    },
+    {
+      "path": "compiler/ail-compiler/src/lexer.rs",
+      "sha256": "bba88a7dfbde0e8af1758cc697dc8992093c94acfd1f746f6ec2fba8606c9a75"
+    },
+    {
+      "path": "compiler/ail-compiler/src/lib.rs",
+      "sha256": "b99937082dcd3186aec214c41d15a074d4320787a88a9bf052fee4fafad5c97e"
+    },
+    {
+      "path": "compiler/ail-compiler/src/parser.rs",
+      "sha256": "01f69b560e396bda6e2b1f8198cf0e024638ba32f0d573a972db77b91fa1bdaa"
+    },
+    {
+      "path": "compiler/ail-compiler/src/protocol.rs",
+      "sha256": "13a78428d2b21de289e6e714e3c9072ce7395964d97f8e584b4d86030fed1172"
+    },
+    {
+      "path": "compiler/ail-compiler/src/semantics.rs",
+      "sha256": "8b557ba097a94064a44cc63243392fb78d20880814c4632b159b035964a7e5ca"
+    },
+    {
+      "path": "compiler/ail-compiler/src/syntax.rs",
+      "sha256": "f60f2de3e51a2e25cdf538180f12331dc3bbf51a430dea65b38c944ecb8ffc75"
+    },
+    {
+      "path": "compiler/ail-compiler/tests/m17_runtime.rs",
+      "sha256": "b62e9b846d22cdb3f29a2ab969dc682ef5f4ff2d619f00fd511eea7073441885"
+    },
+    {
+      "path": "specs/README.md",
+      "sha256": "2e607bd046ab286787c2cee1302268418549b2fe3f03c8ff6ad99e7515712088"
+    },
+    {
+      "path": "specs/runtime-contract.json",
+      "sha256": "b62c5f40912d4b3352c56f108e0122d02285f80f84b5f0e8d89f029f027a8816"
+    },
+    {
+      "path": "specs/runtime-fixtures/diagnostics.json",
+      "sha256": "cf23a138f0dbefab2877d360b34caab75e6be8dc32872eeb2b22a90452f03d8b"
+    },
+    {
+      "path": "specs/runtime-fixtures/execution.json",
+      "sha256": "3f69d880ea736bf8cb4c43ee52a222f3687be8f161411116e65d1607a1b20bfb"
+    },
+    {
+      "path": "specs/runtime-fixtures/job-service.ail",
+      "sha256": "034b50e9d72e23b84fb2aae45f5278dd5d8c38beef20df9c6497c40a1b6bf3a2"
+    },
+    {
+      "path": "specs/runtime-protocol.json",
+      "sha256": "9fe1b17410d6720625d9ad2696ecab38baf6fc9359ae684fc57542552177eafd"
+    },
+    {
+      "path": "specs/runtime.md",
+      "sha256": "eab75b3fe437b2f09a7e583f7861a07a4261223fcd47cac6aeaf14c17c9e56fe"
+    },
+    {
+      "path": "specs/tools/core_contract.py",
+      "sha256": "0a90a39b3123973ca24a2c1aa8f6ac1d9937cd7b2f358a6bc86a79903c9a4d1b"
+    }
+  ]
+}

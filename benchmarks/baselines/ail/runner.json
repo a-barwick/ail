@@ -1,0 +1,19 @@
+{
+  "runner_contract": 1,
+  "language": "ail",
+  "command": [
+    "cargo",
+    "run",
+    "--quiet",
+    "--offline",
+    "--locked",
+    "--bin",
+    "ail-benchmark",
+    "--"
+  ],
+  "working_directory": ".",
+  "environment": {
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  }
+}

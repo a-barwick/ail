@@ -27,9 +27,11 @@ choices were made. Reviews such as [spec-review.md](spec-review.md) assess the
 state of another artifact at a point in time; they do not silently update that
 artifact.
 
-The [roadmap](roadmap.md) sequences work across layers. M14–M17 are the current
-compiler implementation sequence; the long-range outlook is not active work. A
-roadmap entry does not make planned behavior normative.
+The [roadmap](roadmap.md) sequences work across layers. M14–M17 are the completed
+authoritative compiler sequence through the deterministic interpreter. M18 is
+the active gate for selecting and accepting the next validation slice; the
+long-range outlook is not active work. A roadmap entry does not make planned
+behavior normative.
 
 The [current status](STATUS.md) names the active milestone and gives the next
 agent its immediate handoff.
@@ -105,8 +107,11 @@ comparison path. M14 delivered lossless syntax, deterministic recovery, and
 canonical formatting. M15 delivered name resolution, local inference,
 capability checking, and structured diagnostics in the authoritative Rust
 compiler. M16 delivered immutable revisions, deterministic revision-scoped
-inspection, validated rename, canonical edits, and identity mapping. The active
-work is M17: deterministic interpretation of the next accepted core slice.
+inspection, validated rename, canonical edits, and identity mapping. M17
+delivered the accepted bounded runtime rules, canonical reference service,
+deterministic revision-scoped interpreter, and a locked AIL runner that matches
+all 37 public job-service fixtures. M18 now selects the next validation slice
+before further language or runtime implementation.
 Architectural regression control is a separate proposed scaling use case and
 feature specification; it does not expand the active slice until reviewed and
 accepted.

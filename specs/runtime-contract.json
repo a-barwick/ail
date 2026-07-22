@@ -1,0 +1,162 @@
+{
+  "runtime_contract_version": 1,
+  "status": "Accepted",
+  "extends": "M11",
+  "documents": [
+    "runtime.md",
+    "runtime-protocol.json"
+  ],
+  "intrinsics": {
+    "bytes.length_gt": {
+      "parameters": [
+        "Bytes",
+        "Int"
+      ],
+      "result": "Bool"
+    },
+    "text.byte_length_between": {
+      "parameters": [
+        "Text",
+        "Int",
+        "Int"
+      ],
+      "result": "Bool"
+    },
+    "text.contains_control": {
+      "parameters": [
+        "Text"
+      ],
+      "result": "Bool"
+    },
+    "text.first_ascii_alphanumeric": {
+      "parameters": [
+        "Text"
+      ],
+      "result": "Bool"
+    },
+    "text.is_empty": {
+      "parameters": [
+        "Text"
+      ],
+      "result": "Bool"
+    },
+    "text.rest_ascii_alphanumeric_or": {
+      "parameters": [
+        "Text",
+        "Text"
+      ],
+      "result": "Bool"
+    },
+    "text.scalar_count_gt": {
+      "parameters": [
+        "Text",
+        "Int"
+      ],
+      "result": "Bool"
+    }
+  },
+  "rules": [
+    {
+      "id": "M17-LANG-001",
+      "kind": "language",
+      "title": "Values, fields, and fixed pure intrinsics",
+      "requirements": [
+        "APP-001",
+        "LANG-001",
+        "LANG-003",
+        "LANG-004"
+      ]
+    },
+    {
+      "id": "M17-LANG-002",
+      "kind": "language",
+      "title": "Typed conditional expressions",
+      "requirements": [
+        "APP-001",
+        "LANG-001",
+        "LANG-004",
+        "PROTO-005"
+      ]
+    },
+    {
+      "id": "M17-LANG-003",
+      "kind": "language",
+      "title": "Closed exhaustive matching",
+      "requirements": [
+        "APP-003",
+        "LANG-002",
+        "LANG-004",
+        "PROTO-005"
+      ]
+    },
+    {
+      "id": "M17-LANG-004",
+      "kind": "language",
+      "title": "Canonical and statically valid executable source",
+      "requirements": [
+        "APP-001",
+        "APP-004",
+        "APP-005",
+        "LANG-001",
+        "NFR-001"
+      ]
+    },
+    {
+      "id": "M17-RUNTIME-001",
+      "kind": "runtime",
+      "title": "Deterministic left-to-right evaluation",
+      "requirements": [
+        "APP-005",
+        "LANG-004",
+        "NFR-001"
+      ]
+    },
+    {
+      "id": "M17-RUNTIME-002",
+      "kind": "runtime",
+      "title": "Supplied capabilities and ordered calls",
+      "requirements": [
+        "APP-001",
+        "APP-002",
+        "LANG-003",
+        "LANG-004"
+      ]
+    },
+    {
+      "id": "M17-RUNTIME-003",
+      "kind": "runtime",
+      "title": "Stable uncaught runtime faults",
+      "requirements": [
+        "APP-003",
+        "APP-005",
+        "PROTO-005"
+      ]
+    },
+    {
+      "id": "M17-PROTO-001",
+      "kind": "protocol",
+      "title": "Revision-scoped execution",
+      "requirements": [
+        "APP-005",
+        "PROTO-001",
+        "PROTO-003"
+      ]
+    },
+    {
+      "id": "M17-PROTO-002",
+      "kind": "protocol",
+      "title": "Structured deterministic execution results",
+      "requirements": [
+        "APP-005",
+        "LANG-004",
+        "NFR-001",
+        "PROTO-001",
+        "PROTO-005"
+      ]
+    }
+  ],
+  "fixtures": [
+    "runtime-fixtures/diagnostics.json",
+    "runtime-fixtures/execution.json"
+  ]
+}

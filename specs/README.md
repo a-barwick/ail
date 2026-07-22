@@ -6,7 +6,7 @@ This directory contains the smallest fixed contract for the first authoritative
 Rust compiler milestones. It is deliberately narrower than the eventual AIL
 core.
 
-The M11 contract consists of:
+The fixed M11 contract consists of:
 
 - [the five-construct language rules](core.md);
 - [the transport-independent compiler protocol](protocol.md);
@@ -18,6 +18,12 @@ The JSON files are a conformance-fixture encoding, not a selected compiler
 transport. The Rust implementation must match the same rules and expected
 results. It may not use implementation behavior to fill a gap in this contract.
 
+M17 adds the accepted bounded [deterministic interpreter contract](runtime.md),
+its [runtime protocol shapes](runtime-protocol.json),
+[machine-readable rules](runtime-contract.json), and runtime fixtures under
+`runtime-fixtures/`. These additions extend M11 without changing its fixed
+five-construct contract.
+
 Run the dependency-free contract check with:
 
 ```bash
@@ -26,5 +32,5 @@ python3 specs/tools/core_contract.py check
 
 [ADR 0004](../docs/decisions/0004-rust-compiler-stack.md) now authorizes the
 production Rust compiler tree. M11 still does not authorize fixture-specific
-extensions, an interpreter, runtime behavior, or semantics beyond its numbered
-rules.
+extensions. M17 authorizes only the additional numbered behavior in
+`runtime.md`.

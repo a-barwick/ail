@@ -25,6 +25,9 @@ pub enum Keyword {
     Let,
     Capability,
     Effects,
+    If,
+    Else,
+    Match,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -46,6 +49,7 @@ pub enum TokenKind {
     Dot,
     Equal,
     Arrow,
+    FatArrow,
     ColonColon,
     Invalid,
     Eof,
@@ -71,6 +75,9 @@ impl TokenKind {
             Self::Keyword(Keyword::Let) => "let",
             Self::Keyword(Keyword::Capability) => "capability",
             Self::Keyword(Keyword::Effects) => "effects",
+            Self::Keyword(Keyword::If) => "if",
+            Self::Keyword(Keyword::Else) => "else",
+            Self::Keyword(Keyword::Match) => "match",
             Self::Identifier => "Identifier",
             Self::Text => "TextLiteral",
             Self::Integer => "IntLiteral",
@@ -84,6 +91,7 @@ impl TokenKind {
             Self::Dot => ".",
             Self::Equal => "=",
             Self::Arrow => "->",
+            Self::FatArrow => "=>",
             Self::ColonColon => "::",
             Self::Invalid => "invalid token",
             Self::Eof => "EOF",
@@ -189,6 +197,9 @@ fn scan_token(source: &str, start: usize) -> (TokenKind, usize) {
     } else if rest.starts_with("->") {
         cursor += 2;
         TokenKind::Arrow
+    } else if rest.starts_with("=>") {
+        cursor += 2;
+        TokenKind::FatArrow
     } else if rest.starts_with("::") {
         cursor += 2;
         TokenKind::ColonColon
@@ -232,6 +243,9 @@ fn keyword_or_identifier(text: &str) -> TokenKind {
         "let" => TokenKind::Keyword(Keyword::Let),
         "capability" => TokenKind::Keyword(Keyword::Capability),
         "effects" => TokenKind::Keyword(Keyword::Effects),
+        "if" => TokenKind::Keyword(Keyword::If),
+        "else" => TokenKind::Keyword(Keyword::Else),
+        "match" => TokenKind::Keyword(Keyword::Match),
         _ => TokenKind::Identifier,
     }
 }

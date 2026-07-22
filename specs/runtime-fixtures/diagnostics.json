@@ -1,0 +1,25 @@
+{
+  "fixture_format": 1,
+  "id": "m17-static-diagnostics",
+  "rules": [
+    "M17-LANG-002",
+    "M17-LANG-003"
+  ],
+  "cases": [
+    {
+      "id": "non-exhaustive-match",
+      "source": "variant Choice {\n  A;\n  B;\n}\n\nfn choose(value: Choice) -> Text {\n  match value {\n    Choice::A => {\n      \"a\"\n    },\n  }\n}\n",
+      "primary_diagnostic": "AIL.TYPE.NON_EXHAUSTIVE_MATCH"
+    },
+    {
+      "id": "if-branch-mismatch",
+      "source": "fn choose(flag: Bool) -> Text {\n  if flag {\n    \"a\"\n  } else {\n    1\n  }\n}\n",
+      "primary_diagnostic": "AIL.TYPE.IF_BRANCH_MISMATCH"
+    },
+    {
+      "id": "match-arm-mismatch",
+      "source": "variant Choice {\n  A;\n  B;\n}\n\nfn choose(value: Choice) -> Text {\n  match value {\n    Choice::A => {\n      \"a\"\n    },\n    Choice::B => {\n      1\n    },\n  }\n}\n",
+      "primary_diagnostic": "AIL.TYPE.MATCH_ARM_MISMATCH"
+    }
+  ]
+}

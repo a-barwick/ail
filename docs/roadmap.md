@@ -56,7 +56,8 @@ becomes active.
 | M14 | Rust lossless syntax and canonical formatter | Complete | M11, ADR 0004 |
 | M15 | Rust static semantics and diagnostics | Complete | M14 |
 | M16 | Rust revision protocol and validated rename | Complete | M15 |
-| M17 | Deterministic core interpreter | Active | M16 |
+| M17 | Deterministic core interpreter | Complete | M16 |
+| M18 | Next validation-slice selection | Active | M17 |
 
 ## Delivery milestones
 
@@ -764,7 +765,7 @@ and identity-map fixtures through a transport-independent API.
 
 ### M17 — Deterministic core interpreter
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -792,6 +793,53 @@ python3 benchmarks/tools/harness.py verify --language ail --visibility public
 
 The authoritative interpreter executes the accepted AIL reference service and
 matches the shared public oracle without weakening the frozen behavior.
+
+#### Delivered
+
+- Accepted nine bounded M17 language, runtime, and protocol rules without
+  changing the fixed M11 contract
+- Canonical checked AIL source for validation, V1 request and stored-job
+  adaptation, priority propagation, one store capability call, and closed
+  outcome mapping
+- Deterministic revision-scoped tree-walking execution with structured runtime
+  values, faults, supplied capabilities, and ordered observed calls
+- Focused formatting, static-diagnostic, immutable-revision, capability-order,
+  adaptation, outcome, fault, and repeated-result tests
+- A host runner that keeps JSON/Base64 decoding and versioned result projection
+  outside the AIL service boundary
+- A digest-locked AIL verification manifest whose one-case and corpus commands
+  pass all 37 frozen public fixtures
+
+### M18 — Next validation-slice selection
+
+**Status:** Active
+
+#### Scope
+
+- Review the completed M17 semantic-oracle evidence and the remaining accepted
+  application and protocol gaps
+- Select one next validation slice through the use-case and requirements gate
+- Add concrete numbered implementation milestones with explicit dependencies,
+  non-scope, focused checks, and exit criteria
+
+#### Non-scope
+
+- Compiler or runtime implementation before the next rules are accepted
+- Implicit expansion of UC-007 or its architectural-health proposal
+- Native lowering, general concurrency, production I/O, or broad collection
+  syntax without an accepted use case and requirements
+
+#### Focused verification
+
+```bash
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The repository identifies one accepted next validation slice and a bounded
+numbered implementation sequence. An agent can begin the first implementation
+milestone without inferring scope from the long-range outlook.
 
 ## Deferred scaling candidate: architectural regression control
 

@@ -5,7 +5,7 @@ use crate::{
     Span, VariantDecl, parse,
 };
 
-const BUILTIN_TYPES: [&str; 3] = ["Text", "Int", "Unit"];
+const BUILTIN_TYPES: [&str; 5] = ["Text", "Int", "Unit", "Bool", "Bytes"];
 
 /// Capability operation signatures supplied by the embedding compiler client.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -448,28 +448,11 @@ impl<'a> Checker<'a> {
                 ParameterType::Named(ty) => LocalBinding::Value(ty.clone()),
                 ParameterType::Capability(interface) => LocalBinding::Capability(interface.clone()),
             };
-            locals.insert(parameter.name.as_str(), binding);
+            locals.insert(parameter.name.clone(), binding);
         }
 
         self.check_effect_clause(function, &locals);
-
-        for binding in &function.body.bindings {
-            let inferred = self.check_binding(binding, function, &locals);
-            if locals.contains_key(binding.name.as_str()) {
-                self.duplicate_declaration(binding.span, "let-binding", &binding.name);
-                continue;
-            }
-            if let Some(inferred) = inferred {
-                locals.insert(binding.name.as_str(), LocalBinding::Value(inferred.clone()));
-                self.facts.push(TypeFact {
-                    handle: self.symbol_handle("let", binding.span, &binding.name),
-                    explicit_type: None,
-                    inferred_type: Some(inferred),
-                });
-            }
-        }
-
-        let tail_type = self.check_expr(&function.body.tail, function, &locals);
+        let tail_type = self.check_block(&function.body, function, &locals);
         if let Some(actual) = tail_type {
             if actual != function.result_type {
                 self.type_problem(
@@ -492,7 +475,7 @@ impl<'a> Checker<'a> {
     fn check_effect_clause(
         &mut self,
         function: &FunctionDecl,
-        locals: &BTreeMap<&str, LocalBinding>,
+        locals: &BTreeMap<String, LocalBinding>,
     ) {
         let mut effects = BTreeSet::new();
         for effect in &function.effects {
@@ -536,11 +519,43 @@ impl<'a> Checker<'a> {
         }
     }
 
+    fn check_block(
+        &mut self,
+        block: &crate::Block,
+        function: &FunctionDecl,
+        outer: &BTreeMap<String, LocalBinding>,
+    ) -> Option<String> {
+        let mut locals = outer.clone();
+        for binding in &block.bindings {
+            let inferred = self.check_binding(binding, function, &locals);
+            if locals.contains_key(&binding.name) {
+                self.duplicate_declaration(binding.span, "let-binding", &binding.name);
+                continue;
+            }
+            if let Some(inferred) = inferred {
+                locals.insert(binding.name.clone(), LocalBinding::Value(inferred.clone()));
+                self.facts.push(TypeFact {
+                    handle: self.symbol_handle(
+                        "let",
+                        binding.span,
+                        &format!(
+                            "{}:{}:{}",
+                            binding.name, binding.span.start, binding.span.end
+                        ),
+                    ),
+                    explicit_type: None,
+                    inferred_type: Some(inferred),
+                });
+            }
+        }
+        self.check_expr(&block.tail, function, &locals)
+    }
+
     fn check_binding(
         &mut self,
         binding: &LetBinding,
         function: &FunctionDecl,
-        locals: &BTreeMap<&str, LocalBinding>,
+        locals: &BTreeMap<String, LocalBinding>,
     ) -> Option<String> {
         self.check_expr(&binding.value, function, locals)
     }
@@ -549,7 +564,7 @@ impl<'a> Checker<'a> {
         &mut self,
         expression: &Expr,
         function: &FunctionDecl,
-        locals: &BTreeMap<&str, LocalBinding>,
+        locals: &BTreeMap<String, LocalBinding>,
     ) -> Option<String> {
         match expression {
             Expr::Text { .. } => Some("Text".to_owned()),
@@ -603,7 +618,205 @@ impl<'a> Checker<'a> {
                 function,
                 locals,
             ),
+            Expr::FieldAccess { target, field, .. } => {
+                self.check_field_access(target, field, function, locals)
+            }
+            Expr::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => self.check_if_expression(condition, then_branch, else_branch, function, locals),
+            Expr::Match {
+                scrutinee, arms, ..
+            } => self.check_match_expression(scrutinee, arms, function, locals),
         }
+    }
+
+    fn check_field_access(
+        &mut self,
+        target: &Expr,
+        field_name: &str,
+        function: &FunctionDecl,
+        locals: &BTreeMap<String, LocalBinding>,
+    ) -> Option<String> {
+        let target_type = self.check_expr(target, function, locals)?;
+        let Some(record) = self.records.get(target_type.as_str()).copied() else {
+            self.type_problem(
+                "AIL.TYPE.FIELD_TARGET",
+                target.span(),
+                fields([("type_kind", text("record"))]),
+                fields([("type", text(target_type))]),
+                Vec::new(),
+                "check-field-access",
+            );
+            return None;
+        };
+        let Some(field) = record.fields.iter().find(|field| field.name == field_name) else {
+            self.type_problem(
+                "AIL.TYPE.UNKNOWN_FIELD",
+                target.span(),
+                fields([(
+                    "fields",
+                    DiagnosticValue::TextList(
+                        record
+                            .fields
+                            .iter()
+                            .map(|field| field.name.clone())
+                            .collect(),
+                    ),
+                )]),
+                fields([("field", text(field_name))]),
+                vec![self.symbol_handle("record", record.span, &record.name)],
+                "check-field-access",
+            );
+            return None;
+        };
+        Some(field.ty.clone())
+    }
+
+    fn check_if_expression(
+        &mut self,
+        condition: &Expr,
+        then_branch: &crate::Block,
+        else_branch: &crate::Block,
+        function: &FunctionDecl,
+        locals: &BTreeMap<String, LocalBinding>,
+    ) -> Option<String> {
+        if let Some(condition_type) = self.check_expr(condition, function, locals) {
+            if condition_type != "Bool" {
+                self.type_problem(
+                    "AIL.TYPE.IF_CONDITION",
+                    condition.span(),
+                    fields([("type", text("Bool"))]),
+                    fields([("type", text(condition_type))]),
+                    Vec::new(),
+                    "check-if-condition",
+                );
+            }
+        }
+        let then_type = self.check_block(then_branch, function, locals);
+        let else_type = self.check_block(else_branch, function, locals);
+        match (then_type, else_type) {
+            (Some(left), Some(right)) if left == right => Some(left),
+            (Some(left), Some(right)) => {
+                self.type_problem(
+                    "AIL.TYPE.IF_BRANCH_MISMATCH",
+                    else_branch.tail.span(),
+                    fields([("type", text(left))]),
+                    fields([("type", text(right))]),
+                    Vec::new(),
+                    "check-if-branches",
+                );
+                None
+            }
+            _ => None,
+        }
+    }
+
+    fn check_match_expression(
+        &mut self,
+        scrutinee: &Expr,
+        arms: &[crate::MatchArm],
+        function: &FunctionDecl,
+        locals: &BTreeMap<String, LocalBinding>,
+    ) -> Option<String> {
+        let scrutinee_type = self.check_expr(scrutinee, function, locals)?;
+        let Some(variant) = self.variants.get(scrutinee_type.as_str()).copied() else {
+            self.type_problem(
+                "AIL.TYPE.MATCH_TARGET",
+                scrutinee.span(),
+                fields([("type_kind", text("variant"))]),
+                fields([("type", text(scrutinee_type))]),
+                Vec::new(),
+                "check-match-target",
+            );
+            return None;
+        };
+
+        let mut seen = BTreeSet::new();
+        let mut result_type: Option<String> = None;
+        for arm in arms {
+            if arm.type_name != variant.name {
+                self.type_problem(
+                    "AIL.TYPE.MATCH_VARIANT",
+                    arm.span,
+                    fields([("variant", text(&variant.name))]),
+                    fields([("variant", text(&arm.type_name))]),
+                    Vec::new(),
+                    "check-match-arm",
+                );
+                continue;
+            }
+            let Some(case) = variant.cases.iter().find(|case| case.name == arm.case) else {
+                self.unresolved_name(arm.span, &arm.case, "variant-case");
+                continue;
+            };
+            if !seen.insert(case.name.as_str()) {
+                self.duplicate_declaration(arm.span, "match-arm", &case.name);
+                continue;
+            }
+            let mut arm_locals = locals.clone();
+            match (&case.payload, &arm.binding) {
+                (Some(payload), Some(binding)) => {
+                    if arm_locals.contains_key(binding) {
+                        self.duplicate_declaration(arm.span, "match-binding", binding);
+                    } else {
+                        arm_locals.insert(binding.clone(), LocalBinding::Value(payload.clone()));
+                    }
+                }
+                (Some(payload), None) => self.type_problem(
+                    "AIL.TYPE.MATCH_BINDING",
+                    arm.span,
+                    fields([("type", text(payload))]),
+                    fields([("binding", text("missing"))]),
+                    Vec::new(),
+                    "check-match-pattern",
+                ),
+                (None, Some(binding)) => self.type_problem(
+                    "AIL.TYPE.MATCH_BINDING",
+                    arm.span,
+                    fields([("type", text("Unit"))]),
+                    fields([("binding", text(binding))]),
+                    Vec::new(),
+                    "check-match-pattern",
+                ),
+                (None, None) => {}
+            }
+            if let Some(arm_type) = self.check_block(&arm.body, function, &arm_locals) {
+                if let Some(expected) = &result_type {
+                    if *expected != arm_type {
+                        self.type_problem(
+                            "AIL.TYPE.MATCH_ARM_MISMATCH",
+                            arm.body.tail.span(),
+                            fields([("type", text(expected))]),
+                            fields([("type", text(arm_type))]),
+                            Vec::new(),
+                            "check-match-arm-result",
+                        );
+                    }
+                } else {
+                    result_type = Some(arm_type);
+                }
+            }
+        }
+        let missing = variant
+            .cases
+            .iter()
+            .filter(|case| !seen.contains(case.name.as_str()))
+            .map(|case| case.name.clone())
+            .collect::<Vec<_>>();
+        if !missing.is_empty() {
+            self.type_problem(
+                "AIL.TYPE.NON_EXHAUSTIVE_MATCH",
+                scrutinee.span(),
+                fields([("cases", DiagnosticValue::TextList(missing))]),
+                BTreeMap::new(),
+                vec![self.symbol_handle("variant", variant.span, &variant.name)],
+                "check-match-exhaustiveness",
+            );
+        }
+        result_type
     }
 
     fn check_record_expression(
@@ -612,7 +825,7 @@ impl<'a> Checker<'a> {
         values: &[crate::RecordFieldValue],
         expression_span: Span,
         function: &FunctionDecl,
-        locals: &BTreeMap<&str, LocalBinding>,
+        locals: &BTreeMap<String, LocalBinding>,
     ) -> Option<String> {
         let Some(record) = self.records.get(name).copied() else {
             self.unresolved_name(expression_span, name, "record");
@@ -692,7 +905,7 @@ impl<'a> Checker<'a> {
         payload: Option<&Expr>,
         expression_span: Span,
         function: &FunctionDecl,
-        locals: &BTreeMap<&str, LocalBinding>,
+        locals: &BTreeMap<String, LocalBinding>,
     ) -> Option<String> {
         let Some(variant) = self.variants.get(type_name).copied() else {
             self.unresolved_name(expression_span, type_name, "variant");
@@ -748,8 +961,17 @@ impl<'a> Checker<'a> {
         arguments: &[Expr],
         expression_span: Span,
         function: &FunctionDecl,
-        locals: &BTreeMap<&str, LocalBinding>,
+        locals: &BTreeMap<String, LocalBinding>,
     ) -> Option<String> {
+        if let Some(signature) = intrinsic_signature(receiver, operation) {
+            return Some(self.check_intrinsic_call(
+                arguments,
+                expression_span,
+                function,
+                locals,
+                signature,
+            ));
+        }
         let Some(binding) = locals.get(receiver) else {
             self.unresolved_name(expression_span, receiver, "capability");
             return None;
@@ -815,41 +1037,92 @@ impl<'a> Checker<'a> {
                 ordinary_types_ok = false;
             }
         }
-        if ordinary_types_ok
-            && !function
-                .effects
-                .iter()
-                .any(|effect| effect.receiver == receiver && effect.operation == operation)
-        {
-            let call_handle = self.expression_handle(expression_span);
-            let function_handle = self.symbol_handle("function", function.span, &function.name);
-            self.push_problem_with_chain(
-                ProblemClass::Capability,
-                "AIL.CAPABILITY.UNDECLARED_EFFECT",
-                "capability",
-                expression_span,
-                fields([(
-                    "declared_effects",
-                    DiagnosticValue::TextList(effect_names(&function.effects)),
-                )]),
-                fields([("required_effect", text(format!("{receiver}.{operation}")))]),
-                vec![
-                    function_handle.clone(),
-                    self.parameter_handle(function, receiver),
-                ],
-                vec![
-                    CausalStep {
-                        step: "resolve-capability-operation".to_owned(),
-                        handle: call_handle,
-                    },
-                    CausalStep {
-                        step: "compare-declared-effects".to_owned(),
-                        handle: function_handle,
-                    },
-                ],
-            );
+        if ordinary_types_ok {
+            self.check_call_effect(receiver, operation, expression_span, function);
         }
         Some(signature.result.clone())
+    }
+
+    fn check_call_effect(
+        &mut self,
+        receiver: &str,
+        operation: &str,
+        expression_span: Span,
+        function: &FunctionDecl,
+    ) {
+        if function
+            .effects
+            .iter()
+            .any(|effect| effect.receiver == receiver && effect.operation == operation)
+        {
+            return;
+        }
+        let call_handle = self.expression_handle(expression_span);
+        let function_handle = self.symbol_handle("function", function.span, &function.name);
+        self.push_problem_with_chain(
+            ProblemClass::Capability,
+            "AIL.CAPABILITY.UNDECLARED_EFFECT",
+            "capability",
+            expression_span,
+            fields([(
+                "declared_effects",
+                DiagnosticValue::TextList(effect_names(&function.effects)),
+            )]),
+            fields([("required_effect", text(format!("{receiver}.{operation}")))]),
+            vec![
+                function_handle.clone(),
+                self.parameter_handle(function, receiver),
+            ],
+            vec![
+                CausalStep {
+                    step: "resolve-capability-operation".to_owned(),
+                    handle: call_handle,
+                },
+                CausalStep {
+                    step: "compare-declared-effects".to_owned(),
+                    handle: function_handle,
+                },
+            ],
+        );
+    }
+
+    fn check_intrinsic_call(
+        &mut self,
+        arguments: &[Expr],
+        expression_span: Span,
+        function: &FunctionDecl,
+        locals: &BTreeMap<String, LocalBinding>,
+        (parameters, result): (&'static [&'static str], &'static str),
+    ) -> String {
+        let argument_types = arguments
+            .iter()
+            .map(|argument| self.check_expr(argument, function, locals))
+            .collect::<Vec<_>>();
+        if parameters.len() != arguments.len() {
+            self.type_problem(
+                "AIL.TYPE.INTRINSIC_ARGUMENTS",
+                expression_span,
+                fields([("count", text(parameters.len().to_string()))]),
+                fields([("count", text(arguments.len().to_string()))]),
+                Vec::new(),
+                "check-intrinsic-arguments",
+            );
+        }
+        for ((argument, actual), expected) in arguments.iter().zip(argument_types).zip(parameters) {
+            if let Some(actual) = actual {
+                if actual != *expected {
+                    self.type_problem(
+                        "AIL.TYPE.INTRINSIC_ARGUMENT",
+                        argument.span(),
+                        fields([("type", text(*expected))]),
+                        fields([("type", text(actual))]),
+                        Vec::new(),
+                        "check-intrinsic-arguments",
+                    );
+                }
+            }
+        }
+        result.to_owned()
     }
 
     fn unresolved_name(&mut self, span: Span, name: &str, role: &str) {
@@ -1010,6 +1283,22 @@ fn effect_names(effects: &[Effect]) -> Vec<String> {
         .iter()
         .map(|effect| format!("{}.{}", effect.receiver, effect.operation))
         .collect()
+}
+
+pub(crate) fn intrinsic_signature(
+    namespace: &str,
+    operation: &str,
+) -> Option<(&'static [&'static str], &'static str)> {
+    match (namespace, operation) {
+        ("text", "is_empty" | "first_ascii_alphanumeric" | "contains_control") => {
+            Some((&["Text"], "Bool"))
+        }
+        ("text", "byte_length_between") => Some((&["Text", "Int", "Int"], "Bool")),
+        ("text", "rest_ascii_alphanumeric_or") => Some((&["Text", "Text"], "Bool")),
+        ("text", "scalar_count_gt") => Some((&["Text", "Int"], "Bool")),
+        ("bytes", "length_gt") => Some((&["Bytes", "Int"], "Bool")),
+        _ => None,
+    }
 }
 
 fn format_function_type(function: &FunctionDecl) -> String {

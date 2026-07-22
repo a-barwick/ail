@@ -11,6 +11,10 @@ name = "ail_compiler"
 name = "ailc"
 path = "src/bin/ailc.rs"
 
+[[bin]]
+name = "ail-benchmark"
+path = "src/bin/ail-benchmark.rs"
+
 [dependencies]
 serde_json = "1.0.150"
 

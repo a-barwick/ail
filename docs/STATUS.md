@@ -4,12 +4,12 @@ Last updated: 2026-07-21
 
 ## Active milestone
 
-M17 — Deterministic core interpreter
+M18 — Next validation-slice selection
 
 ## Current goal
 
-Implement a deterministic tree-walking interpreter for the next accepted
-bounded core rules. The execution path is:
+Select and accept the next bounded validation slice before extending the
+compiler. The execution path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -17,7 +17,8 @@ M11 five-construct contract (complete)
   -> M14 lossless syntax and formatter (complete)
   -> M15 static semantics and diagnostics (complete)
   -> M16 revision protocol and validated rename (complete)
-  -> M17 deterministic core interpreter (active)
+  -> M17 deterministic core interpreter (complete)
+  -> M18 next validation-slice selection (active)
 ```
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
@@ -25,18 +26,15 @@ candidate scorecard.
 
 The next agent should:
 
-- accept the smallest additional numbered language and runtime rules necessary
-  to execute the first reference-service core; do not infer them from use-case
-  examples or the existing fixtures;
-- build deterministic tree-walking execution over the accepted syntax and
-  static semantics, with supplied capability instances and ordered observable
-  calls;
-- preserve immutable revisions, canonical source, inspection, rename, and
-  identity maps from M16 while adding execution results;
-- run the shared job-service corpus only after its AIL source and runtime rules
-  are accepted; and
-- keep native lowering, general concurrency, production I/O adapters, semantic
-  diffs, and broader unaccepted constructs outside M17.
+- review the accepted M17 rules, runtime fixtures, focused tests, and locked
+  37-case public-corpus evidence;
+- choose one bounded validation slice tied to an accepted use case and
+  requirement, and explain the agent change cost it reduces;
+- accept any new numbered rules and add executable conformance evidence before
+  implementing that slice; and
+- keep UC-007, native lowering, general concurrency, production I/O adapters,
+  broad collections, and unrelated language expansion outside M18 unless the
+  maintainer explicitly changes scope.
 
 ## M14 result
 
@@ -88,6 +86,24 @@ The M16 tests cover canonical source and digest retention, function and local
 inspection, edit replay, surviving and replaced identity mappings, rejection
 paths, stale edit rejection, and repeated deterministic results.
 
+## M17 result
+
+M17 accepted nine bounded language, runtime, and protocol rules and implemented
+them in the authoritative Rust compiler. The parser, canonical formatter,
+static checker, and semantic index now cover field access, conditionals,
+exhaustive closed-variant matches, `Bool`, `Bytes`, and the seven accepted
+intrinsic functions. A deterministic tree-walking interpreter executes only
+statically valid functions from an immutable revision.
+
+`Workspace::execute` takes a revision-scoped function handle, checked runtime
+arguments, and a caller-supplied capability provider. It returns structured
+values, stable runtime faults, and ordered capability calls; invalid requests
+cannot reach the store capability. The canonical reference service keeps
+request validation, V1 priority adaptation, stored-job adaptation, and outcome
+mapping visible in AIL source. The locked AIL benchmark runner passes all 37
+public job-service cases while keeping JSON, Base64, and response projection at
+the host boundary.
+
 ## Stack decision
 
 [ADR 0004](decisions/0004-rust-compiler-stack.md) selects Rust as the
@@ -109,7 +125,7 @@ M11 delivered exactly five constructs:
 The contract contains 24 numbered proposed language and protocol rules, seven
 canonical fixture categories, nine transport-independent protocol shapes, and
 a dependency-free checker. The M11 subset remains proposed language material,
-but it is the fixed conformance boundary for M14 through M16.
+but it remains the fixed conformance boundary preserved by M14 through M17.
 
 ## Accepted foundation
 
@@ -125,6 +141,8 @@ but it is the fixed conformance boundary for M14 through M16.
 - ADR 0004 Rust compiler decision
 - M14 Rust lossless syntax and canonical formatter
 - M15 Rust static semantics and diagnostics
+- M16 Rust revision protocol and validated rename
+- M17 deterministic interpreter and public reference-service runner
 
 ## Completed
 
@@ -141,6 +159,7 @@ but it is the fixed conformance boundary for M14 through M16.
 - M14 — Rust lossless syntax and canonical formatter
 - M15 — Rust static semantics and diagnostics
 - M16 — Rust revision protocol and validated rename
+- M17 — Deterministic core interpreter
 
 ## Superseded
 
@@ -159,7 +178,7 @@ block compiler implementation.
 
 ## Do not start yet
 
-- The broader 20–30 construct language core before its rules are accepted
+- Compiler implementation for a new slice before M18 accepts its bounded rules
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
@@ -171,12 +190,15 @@ None.
 
 After meaningful work:
 
-- keep compiler behavior within the active milestone and numbered M11 rules;
-- add executable tests for every delivered behavior;
+- keep M18 focused on choosing and accepting one bounded validation slice;
+- tie the slice to accepted use cases and requirements, and add numbered rules
+  plus executable checks before implementation begins;
 - run `cargo fmt --all --check`;
 - run `cargo test --workspace`;
 - run `cargo clippy --workspace --all-targets -- -D warnings`;
 - run `python3 specs/tools/core_contract.py check`;
+- run `python3 benchmarks/tools/harness.py verify --language ail --visibility public`;
+- run `python3 benchmarks/tools/fixtures.py check`;
 - run `python3 tools/check_docs.py`; and
 - update this file and the roadmap only when the active milestone's exit
   criterion passes.

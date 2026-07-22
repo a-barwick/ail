@@ -1,0 +1,161 @@
+record CreateJobRequest {
+  job_id: Text;
+  task: Text;
+  payload: Bytes;
+  priority: PriorityOption;
+}
+
+record CreateJobRequestV1 {
+  job_id: Text;
+  task: Text;
+  payload: Bytes;
+}
+
+record Job {
+  job_id: Text;
+  task: Text;
+  payload: Bytes;
+  priority: Priority;
+}
+
+record ValidationIssue {
+  field: ValidationField;
+  reason: ValidationReason;
+}
+
+record IssueNode {
+  issue: ValidationIssue;
+  rest: ValidationIssues;
+}
+
+record StoredJobV1 {
+  job_id: Text;
+  task: Text;
+  payload: Bytes;
+}
+
+variant Priority {
+  Low;
+  Normal;
+  High;
+}
+
+variant PriorityOption {
+  Some(Priority);
+  None;
+}
+
+variant ValidationField {
+  JobId;
+  Task;
+  Payload;
+  Priority;
+}
+
+variant ValidationReason {
+  Missing;
+  InvalidFormat;
+  TooLong;
+  ControlCharacter;
+  PayloadTooLarge;
+}
+
+variant ValidationIssues {
+  Empty;
+  More(IssueNode);
+}
+
+variant InsertOutcome {
+  Inserted;
+  Duplicate;
+  UnavailableBeforeCommit;
+}
+
+variant CreateJobResult {
+  Created(Job);
+  Invalid(ValidationIssues);
+  AlreadyExists(Text);
+  PersistenceUnavailable;
+}
+
+fn adapt_stored_job(stored: StoredJobV1) -> Job {
+  Job { job_id: stored.job_id, task: stored.task, payload: stored.payload, priority: Priority::Normal }
+}
+
+fn adapt_create_job_request_v1(request: CreateJobRequestV1) -> CreateJobRequest {
+  CreateJobRequest { job_id: request.job_id, task: request.task, payload: request.payload, priority: PriorityOption::Some(Priority::Normal) }
+}
+
+fn create_job(request: CreateJobRequest, jobs: capability JobsStore) -> CreateJobResult effects { jobs.insert_if_absent } {
+  let priority_issues = match request.priority {
+    PriorityOption::Some(priority) => {
+      ValidationIssues::Empty
+    },
+    PriorityOption::None => {
+      ValidationIssues::More(IssueNode { issue: ValidationIssue { field: ValidationField::Priority, reason: ValidationReason::Missing }, rest: ValidationIssues::Empty })
+    },
+  };
+  let payload_issues = if bytes.length_gt(request.payload, 4096) {
+    ValidationIssues::More(IssueNode { issue: ValidationIssue { field: ValidationField::Payload, reason: ValidationReason::PayloadTooLarge }, rest: priority_issues })
+  } else {
+    priority_issues
+  };
+  let task_issues = if text.is_empty(request.task) {
+    ValidationIssues::More(IssueNode { issue: ValidationIssue { field: ValidationField::Task, reason: ValidationReason::Missing }, rest: payload_issues })
+  } else {
+    if text.scalar_count_gt(request.task, 80) {
+      ValidationIssues::More(IssueNode { issue: ValidationIssue { field: ValidationField::Task, reason: ValidationReason::TooLong }, rest: payload_issues })
+    } else {
+      if text.contains_control(request.task) {
+        ValidationIssues::More(IssueNode { issue: ValidationIssue { field: ValidationField::Task, reason: ValidationReason::ControlCharacter }, rest: payload_issues })
+      } else {
+        payload_issues
+      }
+    }
+  };
+  let job_id_issues = if text.is_empty(request.job_id) {
+    ValidationIssues::More(IssueNode { issue: ValidationIssue { field: ValidationField::JobId, reason: ValidationReason::Missing }, rest: task_issues })
+  } else {
+    if text.byte_length_between(request.job_id, 1, 64) {
+      if text.first_ascii_alphanumeric(request.job_id) {
+        if text.rest_ascii_alphanumeric_or(request.job_id, "_-") {
+          task_issues
+        } else {
+          ValidationIssues::More(IssueNode { issue: ValidationIssue { field: ValidationField::JobId, reason: ValidationReason::InvalidFormat }, rest: task_issues })
+        }
+      } else {
+        ValidationIssues::More(IssueNode { issue: ValidationIssue { field: ValidationField::JobId, reason: ValidationReason::InvalidFormat }, rest: task_issues })
+      }
+    } else {
+      ValidationIssues::More(IssueNode { issue: ValidationIssue { field: ValidationField::JobId, reason: ValidationReason::InvalidFormat }, rest: task_issues })
+    }
+  };
+  match job_id_issues {
+    ValidationIssues::Empty => {
+      let priority = match request.priority {
+        PriorityOption::Some(priority) => {
+          priority
+        },
+        PriorityOption::None => {
+          Priority::Normal
+        },
+      };
+      let job = Job { job_id: request.job_id, task: request.task, payload: request.payload, priority: priority };
+      let outcome = jobs.insert_if_absent(job);
+      match outcome {
+        InsertOutcome::Inserted => {
+          CreateJobResult::Created(job)
+        },
+        InsertOutcome::Duplicate => {
+          CreateJobResult::AlreadyExists(job.job_id)
+        },
+        InsertOutcome::UnavailableBeforeCommit => {
+          CreateJobResult::PersistenceUnavailable
+        },
+      }
+    },
+    ValidationIssues::More(node) => {
+      CreateJobResult::Invalid(job_id_issues)
+    },
+  }
+}

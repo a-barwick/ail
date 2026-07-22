@@ -5,6 +5,7 @@
 
 mod diagnostic;
 mod formatter;
+mod interpreter;
 mod lexer;
 mod parser;
 mod protocol;
@@ -12,12 +13,14 @@ mod semantics;
 mod syntax;
 
 pub use diagnostic::Diagnostic;
+pub use interpreter::{CapabilityProvider, ObservedCapabilityCall, RuntimeFault, RuntimeValue};
 pub use lexer::{Keyword, Span, Token, TokenKind, lex, reconstruct};
 pub use parser::{ParseResult, parse};
 pub use protocol::{
-    CanonicalEdit, IdentityClassification, IdentityMap, IdentityMapEntry, InspectionRequest,
-    InspectionResult, RenameFailure, RenameRequest, RenameResponse, RenameSuccess,
-    RenameValidation, Revision, RevisionBuildFailure, Workspace, source_digest,
+    CanonicalEdit, ExecutionFailure, ExecutionRequest, ExecutionResponse, ExecutionSuccess,
+    IdentityClassification, IdentityMap, IdentityMapEntry, InspectionRequest, InspectionResult,
+    RenameFailure, RenameRequest, RenameResponse, RenameSuccess, RenameValidation, Revision,
+    RevisionBuildFailure, Workspace, source_digest,
 };
 pub use semantics::{
     CapabilityEnvironment, CapabilityInterface, CapabilityOperation, CausalStep, CheckResult,
@@ -25,8 +28,8 @@ pub use semantics::{
     TypeCheckStatus, TypeFact, check_source,
 };
 pub use syntax::{
-    Block, Declaration, Effect, Expr, Field, FunctionDecl, LetBinding, Parameter, ParameterType,
-    RecordDecl, RecordFieldValue, SourceUnit, VariantCase, VariantDecl,
+    Block, Declaration, Effect, Expr, Field, FunctionDecl, LetBinding, MatchArm, Parameter,
+    ParameterType, RecordDecl, RecordFieldValue, SourceUnit, VariantCase, VariantDecl,
 };
 
 /// Parse and canonically format one M11 source unit.
