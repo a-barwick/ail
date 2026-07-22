@@ -1,0 +1,244 @@
+{
+  "fixture_format": 1,
+  "revision": "arch-r1",
+  "policy_revision": "m23-policy-r1",
+  "baseline_revision": "m23-baseline-r1",
+  "operations": [
+    {
+      "name": "CreateJob",
+      "id": "job.create"
+    },
+    {
+      "name": "GetJob",
+      "id": "job.get"
+    },
+    {
+      "name": "ListJobs",
+      "id": "job.list"
+    },
+    {
+      "name": "DeleteJob",
+      "id": "job.delete"
+    },
+    {
+      "name": "RetryJob",
+      "id": "job.retry"
+    },
+    {
+      "name": "PauseJob",
+      "id": "job.pause"
+    },
+    {
+      "name": "ResumeJob",
+      "id": "job.resume"
+    },
+    {
+      "name": "ArchiveJob",
+      "id": "job.archive"
+    },
+    {
+      "name": "RestoreJob",
+      "id": "job.restore"
+    },
+    {
+      "name": "AssignJob",
+      "id": "job.assign"
+    },
+    {
+      "name": "UnassignJob",
+      "id": "job.unassign"
+    },
+    {
+      "name": "PrioritizeJob",
+      "id": "job.prioritize"
+    },
+    {
+      "name": "DeprioritizeJob",
+      "id": "job.deprioritize"
+    },
+    {
+      "name": "TagJob",
+      "id": "job.tag"
+    },
+    {
+      "name": "UntagJob",
+      "id": "job.untag"
+    },
+    {
+      "name": "ScheduleJob",
+      "id": "job.schedule"
+    },
+    {
+      "name": "UnscheduleJob",
+      "id": "job.unschedule"
+    },
+    {
+      "name": "StartJob",
+      "id": "job.start"
+    },
+    {
+      "name": "CompleteJob",
+      "id": "job.complete"
+    },
+    {
+      "name": "FailJob",
+      "id": "job.fail"
+    },
+    {
+      "name": "AcknowledgeJob",
+      "id": "job.acknowledge"
+    },
+    {
+      "name": "CloneJob",
+      "id": "job.clone"
+    },
+    {
+      "name": "ExportJob",
+      "id": "job.export"
+    },
+    {
+      "name": "ImportJob",
+      "id": "job.import"
+    }
+  ],
+  "identity_pattern": {
+    "contract": "contract:{id}",
+    "transport_registration": "transport:register:{id}",
+    "transport_adapter": "transport:adapt:{id}",
+    "domain_handler": "domain:handle:{id}",
+    "behavior_fixture": "test:behavior:{id}"
+  },
+  "modules": {
+    "contracts": "contract",
+    "transport": "transport",
+    "domain": "domain",
+    "adapters": "persistence-adapter",
+    "tests": "verification"
+  },
+  "units": [
+    {
+      "id": "transport:dispatch",
+      "module": "transport",
+      "group": "transport",
+      "cfg": {
+        "nodes": 7,
+        "edges": 9
+      },
+      "capabilities": [],
+      "state_reads": [],
+      "state_writes": []
+    },
+    {
+      "id": "domain:shared_policy",
+      "module": "domain",
+      "group": "domain",
+      "cfg": {
+        "nodes": 4,
+        "edges": 4
+      },
+      "capabilities": [],
+      "state_reads": [],
+      "state_writes": []
+    }
+  ],
+  "operation_expansion": {
+    "units": [
+      "contract:{id}",
+      "transport:register:{id}",
+      "transport:adapt:{id}",
+      "domain:handle:{id}",
+      "test:behavior:{id}"
+    ],
+    "groups": [
+      "contract",
+      "transport",
+      "transport",
+      "domain",
+      "verification"
+    ],
+    "edges": [
+      [
+        "transport:register:{id}",
+        "contract:{id}",
+        "type-use"
+      ],
+      [
+        "transport:register:{id}",
+        "transport:adapt:{id}",
+        "calls"
+      ],
+      [
+        "transport:adapt:{id}",
+        "domain:handle:{id}",
+        "calls"
+      ],
+      [
+        "domain:handle:{id}",
+        "domain:shared_policy",
+        "calls"
+      ],
+      [
+        "test:behavior:{id}",
+        "domain:handle:{id}",
+        "verifies"
+      ]
+    ],
+    "handler_cfg": {
+      "nodes": 3,
+      "edges": 3
+    },
+    "adapter_cfg": {
+      "nodes": 2,
+      "edges": 1
+    },
+    "registration_cfg": {
+      "nodes": 2,
+      "edges": 1
+    },
+    "test_cfg": {
+      "nodes": 2,
+      "edges": 1
+    }
+  },
+  "typed_edge_kinds": [
+    "calls",
+    "capability-use",
+    "delegates",
+    "state-read",
+    "state-write",
+    "type-use",
+    "verifies"
+  ],
+  "state_sites": [],
+  "capability_sites": [],
+  "coverage": {
+    "analyzed": [
+      "contract",
+      "transport",
+      "domain",
+      "persistence-adapter",
+      "verification"
+    ],
+    "unchecked": [
+      {
+        "id": "external:job-api-clients",
+        "reason": "client source unavailable"
+      }
+    ],
+    "complete_for_policy": true
+  },
+  "baseline": {
+    "scope": "transport:dispatch",
+    "control_flow_complexity": 4,
+    "minimal_context_node_count": 3,
+    "accepted_debt": [
+      "transport:dispatch"
+    ]
+  },
+  "exceptions": [],
+  "endpoint_groups": {
+    "contract:job.cancel": "contract",
+    "capability:jobs_store.cancel_if_active": "persistence-adapter",
+    "state:jobs": "persistence-adapter"
+  }
+}

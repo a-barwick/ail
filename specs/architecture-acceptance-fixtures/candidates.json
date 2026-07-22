@@ -1,0 +1,638 @@
+{
+  "fixture_format": 1,
+  "base_revision": "arch-r1",
+  "behavior": {
+    "operation": "CancelJob",
+    "request": {
+      "job_id": "non-empty text"
+    },
+    "capabilities": [
+      "jobs_store.cancel_if_active"
+    ],
+    "forbidden_capabilities": [
+      "clock",
+      "network",
+      "telemetry"
+    ],
+    "cases": [
+      {
+        "id": "malformed",
+        "input": "malformed request",
+        "outcome": "ValidationFailure",
+        "calls": [],
+        "state": "unchanged",
+        "effects": []
+      },
+      {
+        "id": "queued",
+        "input": "active queued",
+        "outcome": "Cancelled",
+        "calls": [
+          "jobs_store.cancel_if_active"
+        ],
+        "state": "cancelled",
+        "effects": []
+      },
+      {
+        "id": "running",
+        "input": "active running",
+        "outcome": "Cancelled",
+        "calls": [
+          "jobs_store.cancel_if_active"
+        ],
+        "state": "cancelled",
+        "effects": []
+      },
+      {
+        "id": "missing",
+        "input": "missing",
+        "outcome": "NotFound",
+        "calls": [
+          "jobs_store.cancel_if_active"
+        ],
+        "state": "unchanged",
+        "effects": []
+      },
+      {
+        "id": "completed",
+        "input": "terminal completed",
+        "outcome": "NotCancellable",
+        "calls": [
+          "jobs_store.cancel_if_active"
+        ],
+        "state": "unchanged",
+        "effects": []
+      },
+      {
+        "id": "cancelled",
+        "input": "terminal cancelled",
+        "outcome": "NotCancellable",
+        "calls": [
+          "jobs_store.cancel_if_active"
+        ],
+        "state": "unchanged",
+        "effects": []
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "valid",
+      "revision": "arch-r2-valid",
+      "kind": "valid",
+      "operation": {
+        "name": "CancelJob",
+        "id": "job.cancel",
+        "contract": "contract:job.cancel",
+        "registration": "transport:register:job.cancel",
+        "transport_entry": "transport:adapt:job.cancel",
+        "implementation_owner": "domain:handle:job.cancel",
+        "behavior_fixture": "test:behavior:job.cancel"
+      },
+      "added_units": [
+        {
+          "id": "contract:job.cancel",
+          "group": "contract",
+          "cfg": {
+            "nodes": 1,
+            "edges": 0
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "transport:register:job.cancel",
+          "group": "transport",
+          "cfg": {
+            "nodes": 2,
+            "edges": 1
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "transport:adapt:job.cancel",
+          "group": "transport",
+          "cfg": {
+            "nodes": 2,
+            "edges": 1
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "domain:handle:job.cancel",
+          "group": "domain",
+          "cfg": {
+            "nodes": 6,
+            "edges": 8
+          },
+          "capabilities": [
+            "jobs_store"
+          ],
+          "state_reads": [
+            "jobs"
+          ],
+          "state_writes": [
+            "jobs"
+          ]
+        },
+        {
+          "id": "test:behavior:job.cancel",
+          "group": "verification",
+          "cfg": {
+            "nodes": 2,
+            "edges": 1
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        }
+      ],
+      "added_edges": [
+        [
+          "transport:register:job.cancel",
+          "contract:job.cancel",
+          "type-use"
+        ],
+        [
+          "transport:register:job.cancel",
+          "transport:adapt:job.cancel",
+          "calls"
+        ],
+        [
+          "transport:adapt:job.cancel",
+          "domain:handle:job.cancel",
+          "calls"
+        ],
+        [
+          "domain:handle:job.cancel",
+          "capability:jobs_store.cancel_if_active",
+          "capability-use"
+        ],
+        [
+          "domain:handle:job.cancel",
+          "state:jobs",
+          "state-read"
+        ],
+        [
+          "domain:handle:job.cancel",
+          "state:jobs",
+          "state-write"
+        ],
+        [
+          "test:behavior:job.cancel",
+          "domain:handle:job.cancel",
+          "verifies"
+        ]
+      ],
+      "governance": {
+        "policy_revision": "m23-policy-r1",
+        "baseline_revision": "m23-baseline-r1",
+        "exceptions": []
+      },
+      "observed_results": [
+        {
+          "id": "malformed",
+          "outcome": "ValidationFailure",
+          "calls": [],
+          "state": "unchanged",
+          "effects": []
+        },
+        {
+          "id": "queued",
+          "outcome": "Cancelled",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "cancelled",
+          "effects": []
+        },
+        {
+          "id": "running",
+          "outcome": "Cancelled",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "cancelled",
+          "effects": []
+        },
+        {
+          "id": "missing",
+          "outcome": "NotFound",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "unchanged",
+          "effects": []
+        },
+        {
+          "id": "completed",
+          "outcome": "NotCancellable",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "unchanged",
+          "effects": []
+        },
+        {
+          "id": "cancelled",
+          "outcome": "NotCancellable",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "unchanged",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "centralized",
+      "revision": "arch-r2-centralized",
+      "kind": "centralized",
+      "operation": {
+        "name": "CancelJob",
+        "id": "job.cancel",
+        "contract": "contract:job.cancel",
+        "registration": "transport:register:job.cancel",
+        "transport_entry": "transport:adapt:job.cancel",
+        "implementation_owner": "transport:dispatch",
+        "behavior_fixture": "test:behavior:job.cancel"
+      },
+      "added_units": [
+        {
+          "id": "contract:job.cancel",
+          "group": "contract",
+          "cfg": {
+            "nodes": 1,
+            "edges": 0
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "transport:register:job.cancel",
+          "group": "transport",
+          "cfg": {
+            "nodes": 2,
+            "edges": 1
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "transport:adapt:job.cancel",
+          "group": "transport",
+          "cfg": {
+            "nodes": 2,
+            "edges": 1
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "test:behavior:job.cancel",
+          "group": "verification",
+          "cfg": {
+            "nodes": 2,
+            "edges": 1
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        }
+      ],
+      "changed_units": [
+        {
+          "id": "transport:dispatch",
+          "group": "transport",
+          "cfg": {
+            "nodes": 12,
+            "edges": 17
+          },
+          "capabilities": [
+            "jobs_store"
+          ],
+          "state_reads": [
+            "jobs"
+          ],
+          "state_writes": [
+            "jobs"
+          ]
+        }
+      ],
+      "added_edges": [
+        [
+          "transport:register:job.cancel",
+          "contract:job.cancel",
+          "type-use"
+        ],
+        [
+          "transport:register:job.cancel",
+          "transport:adapt:job.cancel",
+          "calls"
+        ],
+        [
+          "transport:adapt:job.cancel",
+          "transport:dispatch",
+          "calls"
+        ],
+        [
+          "transport:dispatch",
+          "capability:jobs_store.cancel_if_active",
+          "capability-use"
+        ],
+        [
+          "transport:dispatch",
+          "state:jobs",
+          "state-read"
+        ],
+        [
+          "transport:dispatch",
+          "state:jobs",
+          "state-write"
+        ],
+        [
+          "transport:dispatch",
+          "contract:job.cancel",
+          "type-use"
+        ],
+        [
+          "test:behavior:job.cancel",
+          "transport:dispatch",
+          "verifies"
+        ]
+      ],
+      "governance": {
+        "policy_revision": "m23-policy-r1",
+        "baseline_revision": "m23-baseline-r1",
+        "exceptions": []
+      },
+      "observed_results": [
+        {
+          "id": "malformed",
+          "outcome": "ValidationFailure",
+          "calls": [],
+          "state": "unchanged",
+          "effects": []
+        },
+        {
+          "id": "queued",
+          "outcome": "Cancelled",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "cancelled",
+          "effects": []
+        },
+        {
+          "id": "running",
+          "outcome": "Cancelled",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "cancelled",
+          "effects": []
+        },
+        {
+          "id": "missing",
+          "outcome": "NotFound",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "unchanged",
+          "effects": []
+        },
+        {
+          "id": "completed",
+          "outcome": "NotCancellable",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "unchanged",
+          "effects": []
+        },
+        {
+          "id": "cancelled",
+          "outcome": "NotCancellable",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "unchanged",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "helper-split",
+      "revision": "arch-r2-helper-split",
+      "kind": "helper-split",
+      "operation": {
+        "name": "CancelJob",
+        "id": "job.cancel",
+        "contract": "contract:job.cancel",
+        "registration": "transport:register:job.cancel",
+        "transport_entry": "transport:adapt:job.cancel",
+        "implementation_owner": "transport:cancel_decision",
+        "behavior_fixture": "test:behavior:job.cancel"
+      },
+      "added_units": [
+        {
+          "id": "contract:job.cancel",
+          "group": "contract",
+          "cfg": {
+            "nodes": 1,
+            "edges": 0
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "transport:register:job.cancel",
+          "group": "transport",
+          "cfg": {
+            "nodes": 2,
+            "edges": 1
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "transport:adapt:job.cancel",
+          "group": "transport",
+          "cfg": {
+            "nodes": 2,
+            "edges": 1
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "transport:cancel_decision",
+          "group": "transport",
+          "cfg": {
+            "nodes": 5,
+            "edges": 6
+          },
+          "capabilities": [],
+          "state_reads": [
+            "jobs"
+          ],
+          "state_writes": []
+        },
+        {
+          "id": "transport:cancel_store",
+          "group": "transport",
+          "cfg": {
+            "nodes": 3,
+            "edges": 3
+          },
+          "capabilities": [
+            "jobs_store"
+          ],
+          "state_reads": [],
+          "state_writes": [
+            "jobs"
+          ]
+        },
+        {
+          "id": "transport:cancel_result",
+          "group": "transport",
+          "cfg": {
+            "nodes": 4,
+            "edges": 4
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "id": "test:behavior:job.cancel",
+          "group": "verification",
+          "cfg": {
+            "nodes": 2,
+            "edges": 1
+          },
+          "capabilities": [],
+          "state_reads": [],
+          "state_writes": []
+        }
+      ],
+      "added_edges": [
+        [
+          "transport:register:job.cancel",
+          "contract:job.cancel",
+          "type-use"
+        ],
+        [
+          "transport:register:job.cancel",
+          "transport:adapt:job.cancel",
+          "calls"
+        ],
+        [
+          "transport:adapt:job.cancel",
+          "transport:cancel_decision",
+          "calls"
+        ],
+        [
+          "transport:cancel_decision",
+          "transport:cancel_store",
+          "calls"
+        ],
+        [
+          "transport:cancel_store",
+          "capability:jobs_store.cancel_if_active",
+          "capability-use"
+        ],
+        [
+          "transport:cancel_decision",
+          "state:jobs",
+          "state-read"
+        ],
+        [
+          "transport:cancel_store",
+          "state:jobs",
+          "state-write"
+        ],
+        [
+          "transport:cancel_store",
+          "transport:cancel_result",
+          "calls"
+        ],
+        [
+          "test:behavior:job.cancel",
+          "transport:cancel_result",
+          "verifies"
+        ]
+      ],
+      "governance": {
+        "policy_revision": "m23-policy-r1",
+        "baseline_revision": "m23-baseline-r1",
+        "exceptions": []
+      },
+      "observed_results": [
+        {
+          "id": "malformed",
+          "outcome": "ValidationFailure",
+          "calls": [],
+          "state": "unchanged",
+          "effects": []
+        },
+        {
+          "id": "queued",
+          "outcome": "Cancelled",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "cancelled",
+          "effects": []
+        },
+        {
+          "id": "running",
+          "outcome": "Cancelled",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "cancelled",
+          "effects": []
+        },
+        {
+          "id": "missing",
+          "outcome": "NotFound",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "unchanged",
+          "effects": []
+        },
+        {
+          "id": "completed",
+          "outcome": "NotCancellable",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "unchanged",
+          "effects": []
+        },
+        {
+          "id": "cancelled",
+          "outcome": "NotCancellable",
+          "calls": [
+            "jobs_store.cancel_if_active"
+          ],
+          "state": "unchanged",
+          "effects": []
+        }
+      ]
+    }
+  ]
+}

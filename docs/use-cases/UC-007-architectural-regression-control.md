@@ -1,14 +1,15 @@
 # UC-007 — Architectural regression control
 
-Status: **Proposed**
+Status: **Accepted**
 
 Documentation layer: concrete application scenario. This record is
 language-independent and non-normative for AIL syntax or semantics.
 
 [ADR 0006](../decisions/0006-prepare-architectural-regression-control.md)
-selects an M23 acceptance package for this use case. Its status remains
-Proposed until the concrete behavior, workspace, policy, metrics, examples,
-baseline comparison, and budgets pass that gate.
+selected the M23 acceptance gate. The
+[accepted package](../architecture-acceptance.md) freezes the concrete behavior,
+workspace, policy, metrics, candidates, baseline comparison, and budgets. Two
+independent readers approved its digest-bound evidence on 2026-07-22.
 
 ## Actor and desired outcome
 
@@ -28,10 +29,10 @@ project and makes any intentional exception explicit.
 
 ## Reference system and system boundary
 
-The proposed reference workspace extends the job-service domain after the
+The accepted reference workspace extends the job-service domain after the
 UC-001 and UC-003 slice is stable. It contains:
 
-- at least 24 logical operations;
+- exactly 24 logical operations at R1, with `CancelJob` added as operation 25;
 - transport-independent operation declarations;
 - request decoding and response encoding boundaries;
 - separate domain handlers;
@@ -85,7 +86,7 @@ capabilities in its domain handler.
 
 ### Behavior illustration: add a cancel-job operation
 
-The proposed task is:
+The accepted task is:
 
 > Add a `CancelJob` operation with its closed success and domain-failure
 > outcomes. It may conditionally update the jobs namespace and emit no other
@@ -204,9 +205,11 @@ The task is complete only when the final revision includes:
 - the canonical source diff and semantic diff; and
 - any authorized exception with its exact scope and rationale.
 
-## Measurable success criteria
+## Required future conformance and implementation evidence
 
-UC-007 is ready for acceptance when the fixtures and benchmark can prove:
+M23 freezes the scenarios, expected classifications, and budgets below. It does
+not prove compiler behavior. Future M24 conformance rules and later compiler
+implementation must provide evidence that:
 
 1. the compiler reports the same architectural snapshot for repeated analysis
    of the same revision and configuration;
@@ -226,10 +229,13 @@ UC-007 is ready for acceptance when the fixtures and benchmark can prove:
 10. an independent reviewer can explain the architectural consequence of the
     change without reconstructing it from raw source.
 
-Benchmark targets for context, repairs, false findings, analysis time, and
-manifest size must be calibrated against strong baselines before acceptance.
+M23 freezes zero false and missed findings plus deterministic graph and output
+budgets before implementation results. Wall time, peak memory, repair cycles,
+and comparative model-context thresholds still require measurement against the
+strong pinned baseline toolchains. Acceptance of the package must not be read
+as calibration or as a comparative performance claim.
 
-## Derived proposed requirements
+## Derived accepted requirements
 
 - APP-006
 - LANG-006
@@ -238,7 +244,7 @@ manifest size must be calibrated against strong baselines before acceptance.
 - NFR-006
 - NFR-007
 
-See [the proposed architectural-health requirements](../requirements/architectural-health.md).
+See [the accepted architectural-health requirements](../requirements/architectural-health.md).
 
 ## Explicit exclusions and unresolved questions
 
@@ -252,7 +258,7 @@ This use case does not require:
 - automatic refactoring without validation and review; or
 - architectural guarantees for source the compiler cannot inspect.
 
-Before acceptance, decide:
+M23 resolved the acceptance choices as follows:
 
 1. the exact starting workspace and cancel-job behavior;
 2. which architectural groups and dependency directions are frozen;
@@ -260,4 +266,5 @@ Before acceptance, decide:
 4. which metrics are thresholded and which use no-growth policies;
 5. the maximum acceptable false-positive count;
 6. how baseline tools express equivalent constraints; and
-7. the analysis-time and manifest-size envelopes.
+7. the deterministic graph and output-size envelopes, while recording which
+   implementation-performance envelopes still require later measurement.

@@ -1,15 +1,17 @@
 # Current status
 
-Last updated: 2026-07-21
+Last updated: 2026-07-22
 
 ## Active milestone
 
-M23 — UC-007 acceptance package
+M23 — UC-007 acceptance package (gate passed; stopping before M24 activation)
 
 ## Current goal
 
-Prepare a deterministic acceptance package for architectural regression control
-before accepting UC-007 or changing the compiler. The execution path is:
+M23 accepted UC-007 and its six derived requirements through a deterministic,
+independently reviewed acceptance package without changing the compiler. It
+remains the active handoff marker because this run was explicitly forbidden
+from starting M24. The execution path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -23,8 +25,8 @@ M11 five-construct contract (complete)
   -> M20 workspace semantic graph and impact query (complete)
   -> M21 atomic schema evolution and completion evidence (complete)
   -> M22 post-UC-003 validation-slice selection (complete)
-  -> M23 UC-007 acceptance package (active)
-  -> M24 architectural regression contract (planned, conditional)
+  -> M23 UC-007 acceptance package (active, gate passed)
+  -> M24 architectural regression contract (planned, not started)
   -> M25 architectural snapshot and agent rendering (planned, conditional)
   -> M26 architectural delta, policy, and atomic enforcement (planned, conditional)
   -> M27 non-official architecture-feedback pilot (planned, conditional)
@@ -33,56 +35,57 @@ M11 five-construct contract (complete)
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
 candidate scorecard.
 
+The [M23 acceptance record](architecture-acceptance.md) freezes the exact
+24-operation R1 workspace, six `CancelJob` behavior cases, three complete
+candidates, eight policy rules, hotspot baseline, seven primitive metrics or
+sets, expected structured and compact results, baseline comparison, and fixed
+budgets. The dependency-free checker derives all classifications and rejects 37
+mutations, including behavior, coverage, budget, and traceability failures.
+Two independent reviews approved fixture-set digest `ab362d96d89cbba779743dd8a3050b2bd4452ff6daddf3e7ae65109207f7e3ed` and review-subject digest
+`fcb454729e6c2c228802d471d97c1eecd7abc793da407b0ced2bbd76fe9624cf`.
+
 The next agent should:
 
-- read [ADR 0006](decisions/0006-prepare-architectural-regression-control.md),
-  [UC-007](use-cases/UC-007-architectural-regression-control.md), the
-  [architectural-health requirements](requirements/architectural-health.md),
-  and the [proposed manifest](architecture-health.md);
-- work only on the M23 documentation, fixtures, and dependency-free acceptance
-  checker; do not write Rust compiler or runtime code;
-- freeze the exact starting workspace, `CancelJob` behavior, valid change,
-  centralized regression, superficial helper split, project policy, hotspot
-  baseline, minimal metrics, expected structured and compact text, baseline
-  comparison, and fixed budgets;
-- keep UC-007 and its requirements Proposed until the written gate passes and
-  two independent readers can classify all three candidates identically; and
-- stop after M23 with a review summary. Do not start M24 implicitly.
+- do not begin M24 unless the maintainer explicitly activates it;
+- when activated, read the accepted M23 package and freeze only the smallest
+  normative language and protocol contract it requires;
+- do not infer acceptance of the broader proposed manifest catalog, diagnostic
+  codes, policy vocabulary, or structural operations; and
+- keep compiler implementation in M25/M26 rather than pulling it into M24.
 
 Amp may be used to author M23. If it is, start from a clean scoped branch,
 record `amp --version`, the selected mode, exact prompt, and thread ID or URL,
 then review the diff and rerun the checks before merging. Amp is an optional
 operator, not official evidence or a source of language semantics.
 
-## Restart prompt
+There is no restart prompt for implementation until M24 is explicitly activated.
 
-Use this prompt with Codex, Amp, or another repository-aware coding agent:
+## M23 result
 
-```text
-Implement only active milestone M23, the UC-007 acceptance package.
+M23 froze and accepted the language-independent architectural-regression gate.
+R1 contains exactly 24 operations and one accepted dispatch hotspot. Every
+candidate adds complete `CancelJob` contract, registration, transport entry,
+implementation-owner, and behavior-fixture roles. The common six-case behavior
+oracle permits only one atomic jobs-store operation and no clock, network, or
+telemetry effect.
 
-Read AGENTS.md and the required project documents in its stated order. Then
-read docs/decisions/0006-prepare-architectural-regression-control.md,
-docs/use-cases/UC-007-architectural-regression-control.md,
-docs/requirements/architectural-health.md, docs/architecture-health.md,
-docs/STATUS.md, and M23 in docs/roadmap.md.
+The valid domain-handler change passes. The centralized change passes behavior
+but is rejected for dispatch growth and transport dependency, capability, and
+state violations. The helper-splitting change keeps dispatch and every helper
+within unit thresholds but is rejected by the same aggregate transport
+boundaries. Exact structured records and compact text are digest locked.
 
-Do not write Rust compiler or runtime code. Freeze the exact mature job-service
-workspace, CancelJob behavior, valid/centralized/helper-splitting candidates,
-project boundaries and hotspot baseline, minimal metrics, expected structured
-and compact text output, baseline-tool comparison, and fixed false-finding,
-analysis, and manifest-size budgets. Add a dependency-free acceptance checker.
-Keep UC-007 and its requirements Proposed until the written gate passes and two
-independent readers can classify all three candidates identically. Run the M23
-focused checks and the repository documentation check. Stop with a review
-summary; do not start M24, commit, merge, or push unless explicitly asked.
-```
+The checker independently expands the semantic workspace, derives control-flow,
+dependency, capability, state, SCC, and bounded-context facts, evaluates all
+eight policy rules, derives output text, and rejects 37 mutations. UC-007 and
+`APP-006`, `LANG-006`, `PROTO-006`, `PROTO-007`, `NFR-006`, and `NFR-007`
+are accepted. The broader architectural health manifest remains proposed; no
+M24 contract or compiler behavior was started.
 
-For Amp, the shortest safe invocation is:
-
-```bash
-amp -x "Read docs/STATUS.md and implement only the active milestone exactly as its restart prompt says. Do not start the successor milestone."
-```
+M23 was authored with Amp `0.0.1784692913-g1576c6` on branch
+`codex/m23-architecture-acceptance`, using the current thread's default mode and
+the exact restart request recorded in the
+[M23 Amp thread](https://ampcode.com/threads/T-019f8816-50ee-72b9-ad31-ef5b400e9bec).
 
 ## M22 result
 
@@ -297,16 +300,16 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M9 — Numeric AIL benchmark targets
 - M10 — Illustrative AIL variants
 
-These items require an explicit maintainer decision to resume. They do not
-block the active acceptance work.
+These items require an explicit maintainer decision to resume.
 
-UC-007 and its requirements remain Proposed while active M23 prepares their
-acceptance evidence. M24–M27 remain conditional and activate one at a time.
+UC-007 and its requirements are accepted. M24–M27 remain planned and activate
+one at a time only when explicitly started.
 
 ## Do not start yet
 
-- Architectural-health compiler or runtime implementation before M23 accepts
-  the use case and M24 freezes the contract
+- M24 contract work until the maintainer explicitly activates M24
+- Architectural-health compiler or runtime implementation before M24 freezes
+  the contract
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
@@ -318,10 +321,8 @@ None.
 
 After meaningful work:
 
-- keep M23 focused on acceptance evidence, fixtures, and its dependency-free
-  checker;
-- do not implement architectural-health compiler behavior before M24 is active
-  and its numbered contract is accepted;
+- do not start M24 or implement architectural-health compiler behavior without
+  explicit maintainer activation;
 - run `cargo fmt --all --check`;
 - run `cargo test --workspace`;
 - run `cargo clippy --workspace --all-targets -- -D warnings`;

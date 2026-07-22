@@ -12,14 +12,12 @@ contain the accepted `APP-*`, `LANG-*`, `PROTO-*`, and `NFR-*` records for
 UC-001 and UC-003. The shared JSON format and measure-first benchmark policy are
 documented under [benchmarks](../benchmarks/README.md).
 
-## Proposed requirement sets
-
 The [architectural-health requirements](architectural-health.md) derive
 `APP-006`, `LANG-006`, `PROTO-006`, `PROTO-007`, `NFR-006`, and `NFR-007` from
-proposed UC-007. They remain proposed until the scaling workspace, architecture
-policy, metrics, fixtures, baseline comparison, and fixed budgets are reviewed.
-Active M23 prepares that evidence; it does not accept the requirements or
-authorize their compiler implementation.
+accepted UC-007. M23 accepted them after freezing and independently reviewing
+the scaling workspace, architecture policy, metrics, fixtures, baseline
+comparison, and budgets. They authorize later specification work, not compiler
+implementation by themselves.
 
 ## Requirement classes
 

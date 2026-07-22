@@ -1,0 +1,176 @@
+{
+  "package_version": 1,
+  "status": "Accepted",
+  "documentation": "../docs/architecture-acceptance.md",
+  "use_case": "UC-007",
+  "requirements": [
+    "APP-006",
+    "LANG-006",
+    "PROTO-006",
+    "PROTO-007",
+    "NFR-006",
+    "NFR-007"
+  ],
+  "metrics": [
+    "control_flow_complexity",
+    "direct_dependency_set",
+    "declared_capability_set",
+    "state_read_set",
+    "state_write_set",
+    "dependency_component_size",
+    "minimal_context_node_count"
+  ],
+  "canonical_json": {
+    "encoding": "UTF-8",
+    "object_keys": "fixture insertion order is significant and locked by canonical indent=2 bytes",
+    "arrays": "ordered",
+    "final_newline": true,
+    "duplicate_keys": "rejected"
+  },
+  "children": [
+    {
+      "path": "architecture-acceptance-fixtures/workspace.json",
+      "sha256": "e4bd3366c6896115e3f942646620fa9890d00f909a304e515f714c5cf2c64c3e"
+    },
+    {
+      "path": "architecture-acceptance-fixtures/candidates.json",
+      "sha256": "d2d82695782f02a917cbb2e48ddb2a999e314d9c77ea4df7c1dabdcff6cd6e34"
+    },
+    {
+      "path": "architecture-acceptance-fixtures/expected.json",
+      "sha256": "b3799ffd19f31b4e21b890c0744edca2157a3ad7d77d688d60d519aab260f53e"
+    }
+  ],
+  "fixture_set_digest": "ab362d96d89cbba779743dd8a3050b2bd4452ff6daddf3e7ae65109207f7e3ed",
+  "rules": [
+    "M23-POL-GROUP-DEPENDENCY",
+    "M23-POL-TRANSPORT-CAPABILITY",
+    "M23-POL-TRANSPORT-STATE",
+    "M23-POL-DISPATCH-NO-GROWTH",
+    "M23-POL-NEW-UNIT",
+    "M23-POL-NO-NEW-CYCLE",
+    "M23-POL-COVERAGE",
+    "M23-POL-GOVERNANCE"
+  ],
+  "traceability": {
+    "M23-POL-GROUP-DEPENDENCY": [
+      "APP-006",
+      "LANG-006",
+      "PROTO-007"
+    ],
+    "M23-POL-TRANSPORT-CAPABILITY": [
+      "APP-006",
+      "LANG-006",
+      "PROTO-007"
+    ],
+    "M23-POL-TRANSPORT-STATE": [
+      "APP-006",
+      "LANG-006",
+      "PROTO-007"
+    ],
+    "M23-POL-DISPATCH-NO-GROWTH": [
+      "APP-006",
+      "PROTO-007"
+    ],
+    "M23-POL-NEW-UNIT": [
+      "APP-006",
+      "PROTO-006"
+    ],
+    "M23-POL-NO-NEW-CYCLE": [
+      "APP-006",
+      "LANG-006",
+      "PROTO-007"
+    ],
+    "M23-POL-COVERAGE": [
+      "LANG-006",
+      "PROTO-006",
+      "NFR-006"
+    ],
+    "M23-POL-GOVERNANCE": [
+      "APP-006",
+      "PROTO-007"
+    ]
+  },
+  "policy": {
+    "allowed_group_dependencies": {
+      "contract": [],
+      "transport": [
+        "contract",
+        "domain",
+        "transport"
+      ],
+      "domain": [
+        "contract",
+        "domain",
+        "persistence-adapter"
+      ],
+      "persistence-adapter": [
+        "contract",
+        "persistence-adapter"
+      ],
+      "verification": [
+        "contract",
+        "domain",
+        "transport",
+        "persistence-adapter",
+        "verification"
+      ]
+    },
+    "transport_capabilities": [],
+    "transport_state": [],
+    "dispatch_no_growth": {
+      "control_flow_complexity": 4,
+      "minimal_context_node_count": 3
+    },
+    "new_unit": {
+      "control_flow_complexity_max": 4,
+      "minimal_context_node_count_max": 12
+    },
+    "new_cycles": false,
+    "coverage_required": true,
+    "governance": {
+      "policy_revision": "m23-policy-r1",
+      "baseline_revision": "m23-baseline-r1",
+      "exceptions": []
+    }
+  },
+  "budgets": {
+    "r1_operations": 24,
+    "candidates": 3,
+    "false_findings": 0,
+    "missed_required_findings": 0,
+    "semantic_nodes_per_candidate_max": 512,
+    "typed_edges_per_candidate_max": 2048,
+    "structured_result_utf8_bytes_max": 65536,
+    "compact_utf8_bytes_max": 2048,
+    "compact_newline_lines_max": 12,
+    "required_contributor_truncation": false
+  },
+  "reviews_path": "architecture-acceptance-reviews.json",
+  "evidence_traceability": {
+    "APP-006": [
+      "architecture-acceptance-fixtures/candidates.json",
+      "architecture-acceptance-fixtures/expected.json"
+    ],
+    "LANG-006": [
+      "architecture-acceptance-fixtures/workspace.json",
+      "architecture-acceptance-fixtures/candidates.json"
+    ],
+    "PROTO-006": [
+      "architecture-acceptance-fixtures/workspace.json",
+      "architecture-acceptance-fixtures/expected.json"
+    ],
+    "PROTO-007": [
+      "architecture-acceptance-fixtures/candidates.json",
+      "architecture-acceptance-fixtures/expected.json"
+    ],
+    "NFR-006": [
+      "architecture-acceptance-fixtures/expected.json"
+    ],
+    "NFR-007": [
+      "architecture-acceptance-fixtures/candidates.json",
+      "architecture-acceptance-fixtures/expected.json"
+    ]
+  },
+  "review_subject_digest": "fcb454729e6c2c228802d471d97c1eecd7abc793da407b0ced2bbd76fe9624cf"
+}
