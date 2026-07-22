@@ -17,7 +17,9 @@ documented under [benchmarks](../benchmarks/README.md).
 The [architectural-health requirements](architectural-health.md) derive
 `APP-006`, `LANG-006`, `PROTO-006`, `PROTO-007`, `NFR-006`, and `NFR-007` from
 proposed UC-007. They remain proposed until the scaling workspace, architecture
-policy, metrics, fixtures, and baseline comparison are reviewed.
+policy, metrics, fixtures, baseline comparison, and fixed budgets are reviewed.
+Active M23 prepares that evidence; it does not accept the requirements or
+authorize their compiler implementation.
 
 ## Requirement classes
 

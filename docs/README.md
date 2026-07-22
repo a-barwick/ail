@@ -31,10 +31,11 @@ The [roadmap](roadmap.md) sequences work across layers. M14–M17 are the comple
 authoritative compiler sequence through the deterministic interpreter. M18
 selected compiler-guided UC-003 priority evolution as the next validation
 slice. M19 accepted its bounded contract, M20 implemented its semantic graph
-and impact query, and M21 completed the atomic change and evidence loop. M22 is
-the active selection milestone for the next bounded validation slice; the
-long-range outlook is not active work. A roadmap entry does not make planned
-behavior normative.
+and impact query, and M21 completed the atomic change and evidence loop. M22
+selected architectural regression control as the next direction in
+[ADR 0006](decisions/0006-prepare-architectural-regression-control.md). M23 is
+the active acceptance-package milestone; it does not authorize compiler
+implementation. A roadmap entry does not make planned behavior normative.
 
 The [current status](STATUS.md) names the active milestone and gives the next
 agent its immediate handoff.
@@ -118,10 +119,12 @@ evolution in [ADR 0005](decisions/0005-next-validation-slice.md). M19 froze the
 bounded schema-identity, impact-query, transaction, semantic-diff, and
 completion-evidence contract. M20 implemented its ordered source-set semantic
 graph and exact impact query. M21 implemented the atomic R1-to-R2 transaction
-and completion evidence. M22 now selects the next bounded validation slice.
-Architectural regression control is a separate proposed scaling use case and
-feature specification; it does not expand the active slice until reviewed and
-accepted.
+and completion evidence. M22 selected architectural regression control as the
+next scaling direction. M23 now freezes its acceptance evidence, including the
+starting workspace, `CancelJob` behavior, good and seeded bad changes, project
+policy, metrics, expected structured and compact text, baseline comparison, and
+budgets. UC-007 and its requirements remain proposed until that gate passes; no
+architectural-health compiler behavior is active yet.
 
 There is no accepted broad AIL syntax or normative language core yet. The M11
 subset is the fixed conformance boundary for the first Rust compiler slices.

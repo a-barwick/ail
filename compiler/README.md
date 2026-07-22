@@ -14,8 +14,10 @@ The compiler is delivered in conformance slices:
 M18 selected compiler-guided UC-003 priority evolution as the next validation
 slice. M19 accepted its conformance contract, M20 implemented the ordered
 source-set semantic graph and impact query, and M21 completed atomic schema
-evolution and completion evidence. M22 now selects the next bounded validation
-slice before further compiler implementation begins.
+evolution and completion evidence. M22 selected architectural regression
+control as the next direction, and M23 is now freezing its acceptance package.
+UC-007 remains Proposed; no architectural-health Rust implementation begins
+until M23 passes and M24 freezes an accepted contract.
 
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
 behavior. Implementation details do not create language semantics.

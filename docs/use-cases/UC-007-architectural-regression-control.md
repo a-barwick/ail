@@ -5,6 +5,11 @@ Status: **Proposed**
 Documentation layer: concrete application scenario. This record is
 language-independent and non-normative for AIL syntax or semantics.
 
+[ADR 0006](../decisions/0006-prepare-architectural-regression-control.md)
+selects an M23 acceptance package for this use case. Its status remains
+Proposed until the concrete behavior, workspace, policy, metrics, examples,
+baseline comparison, and budgets pass that gate.
+
 ## Actor and desired outcome
 
 A maintainer asks an agent to add one operation to a service that already has

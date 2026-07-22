@@ -4,12 +4,12 @@ Last updated: 2026-07-21
 
 ## Active milestone
 
-M22 — Post-UC-003 validation-slice selection
+M23 — UC-007 acceptance package
 
 ## Current goal
 
-Select the next bounded validation slice after the completed UC-003 change loop.
-The execution path is:
+Prepare a deterministic acceptance package for architectural regression control
+before accepting UC-007 or changing the compiler. The execution path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -22,7 +22,12 @@ M11 five-construct contract (complete)
   -> M19 UC-003 schema-evolution contract (complete)
   -> M20 workspace semantic graph and impact query (complete)
   -> M21 atomic schema evolution and completion evidence (complete)
-  -> M22 post-UC-003 validation-slice selection (active)
+  -> M22 post-UC-003 validation-slice selection (complete)
+  -> M23 UC-007 acceptance package (active)
+  -> M24 architectural regression contract (planned, conditional)
+  -> M25 architectural snapshot and agent rendering (planned, conditional)
+  -> M26 architectural delta, policy, and atomic enforcement (planned, conditional)
+  -> M27 non-official architecture-feedback pilot (planned, conditional)
 ```
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
@@ -30,14 +35,69 @@ candidate scorecard.
 
 The next agent should:
 
-- review the completed M19–M21 evidence and the remaining accepted application,
-  language, runtime, and protocol gaps;
-- select exactly one next validation slice through the use-case and requirements
-  gate, or identify the bounded acceptance work required first;
-- add a concrete numbered contract and implementation sequence before changing
-  compiler or runtime behavior; and
-- keep UC-007, the M8 campaign, lowering, production I/O, concurrency, and broad
-  core expansion inactive unless the selection work explicitly accepts them.
+- read [ADR 0006](decisions/0006-prepare-architectural-regression-control.md),
+  [UC-007](use-cases/UC-007-architectural-regression-control.md), the
+  [architectural-health requirements](requirements/architectural-health.md),
+  and the [proposed manifest](architecture-health.md);
+- work only on the M23 documentation, fixtures, and dependency-free acceptance
+  checker; do not write Rust compiler or runtime code;
+- freeze the exact starting workspace, `CancelJob` behavior, valid change,
+  centralized regression, superficial helper split, project policy, hotspot
+  baseline, minimal metrics, expected structured and compact text, baseline
+  comparison, and fixed budgets;
+- keep UC-007 and its requirements Proposed until the written gate passes and
+  two independent readers can classify all three candidates identically; and
+- stop after M23 with a review summary. Do not start M24 implicitly.
+
+Amp may be used to author M23. If it is, start from a clean scoped branch,
+record `amp --version`, the selected mode, exact prompt, and thread ID or URL,
+then review the diff and rerun the checks before merging. Amp is an optional
+operator, not official evidence or a source of language semantics.
+
+## Restart prompt
+
+Use this prompt with Codex, Amp, or another repository-aware coding agent:
+
+```text
+Implement only active milestone M23, the UC-007 acceptance package.
+
+Read AGENTS.md and the required project documents in its stated order. Then
+read docs/decisions/0006-prepare-architectural-regression-control.md,
+docs/use-cases/UC-007-architectural-regression-control.md,
+docs/requirements/architectural-health.md, docs/architecture-health.md,
+docs/STATUS.md, and M23 in docs/roadmap.md.
+
+Do not write Rust compiler or runtime code. Freeze the exact mature job-service
+workspace, CancelJob behavior, valid/centralized/helper-splitting candidates,
+project boundaries and hotspot baseline, minimal metrics, expected structured
+and compact text output, baseline-tool comparison, and fixed false-finding,
+analysis, and manifest-size budgets. Add a dependency-free acceptance checker.
+Keep UC-007 and its requirements Proposed until the written gate passes and two
+independent readers can classify all three candidates identically. Run the M23
+focused checks and the repository documentation check. Stop with a review
+summary; do not start M24, commit, merge, or push unless explicitly asked.
+```
+
+For Amp, the shortest safe invocation is:
+
+```bash
+amp -x "Read docs/STATUS.md and implement only the active milestone exactly as its restart prompt says. Do not start the successor milestone."
+```
+
+## M22 result
+
+M22 selected architectural regression control as the next scaling direction in
+[ADR 0006](decisions/0006-prepare-architectural-regression-control.md). The
+selection is deliberately conditional: M23 must first make the workspace,
+behavior, policy, metrics, examples, baseline comparison, output contract, and
+budgets concrete enough to accept or reject.
+
+The planned campaign is one short acceptance gate, one contract milestone, two
+implementation milestones, and one small non-official usability pilot. Compact,
+deterministic agent text is now an explicit product surface derived from the
+compiler's authoritative structured facts. UC-007 and its requirements remain
+Proposed, and no architectural-health compiler implementation is authorized
+during M23.
 
 ## M21 result
 
@@ -202,6 +262,7 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M17 deterministic interpreter and public reference-service runner
 - M20 workspace graph and exact impact query
 - M21 atomic schema evolution and completion evidence
+- ADR 0006 architectural-regression-control direction and bounded campaign
 
 ## Completed
 
@@ -223,6 +284,7 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M19 — UC-003 schema-evolution contract
 - M20 — Workspace semantic graph and impact query
 - M21 — Atomic schema evolution and completion evidence
+- M22 — Post-UC-003 validation-slice selection
 
 ## Superseded
 
@@ -234,15 +296,17 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M8g–M8o — Official baseline calibration campaign
 - M9 — Numeric AIL benchmark targets
 - M10 — Illustrative AIL variants
-- UC-007 — Architectural regression control
 
 These items require an explicit maintainer decision to resume. They do not
-block compiler implementation.
+block the active acceptance work.
+
+UC-007 and its requirements remain Proposed while active M23 prepares their
+acceptance evidence. M24–M27 remain conditional and activate one at a time.
 
 ## Do not start yet
 
-- Compiler or runtime implementation before M22 selects and accepts the next
-  bounded slice
+- Architectural-health compiler or runtime implementation before M23 accepts
+  the use case and M24 freezes the contract
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
@@ -254,9 +318,10 @@ None.
 
 After meaningful work:
 
-- keep M22 focused on selection through the use-case and requirements gate;
-- do not implement a new compiler or runtime slice before its numbered contract
-  is accepted;
+- keep M23 focused on acceptance evidence, fixtures, and its dependency-free
+  checker;
+- do not implement architectural-health compiler behavior before M24 is active
+  and its numbered contract is accepted;
 - run `cargo fmt --all --check`;
 - run `cargo test --workspace`;
 - run `cargo clippy --workspace --all-targets -- -D warnings`;

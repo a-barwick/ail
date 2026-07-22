@@ -56,8 +56,15 @@ UC-001 and UC-003 were selected first because they exercise public contracts,
 errors, stored state, change impact, and safe multi-file edits without requiring
 general concurrency or a production runtime.
 
-None of these future cases enters the operational roadmap until its use case and
-requirements are accepted and numbered milestones are added.
+None of these future cases authorizes language or compiler implementation until
+its use case and requirements are accepted and numbered implementation
+milestones are added. A bounded acceptance milestone may enter the roadmap to
+produce the evidence needed for that decision.
+
+[ADR 0006](../decisions/0006-prepare-architectural-regression-control.md)
+selects UC-007 acceptance preparation as active M23. This is a bounded gate,
+not acceptance of the use case: UC-007 remains Proposed until its workspace,
+behavior, policy, metrics, examples, baseline comparison, and budgets pass.
 
 ## Use-case record
 

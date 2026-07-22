@@ -7,6 +7,11 @@ compiler contract for [UC-007](use-cases/UC-007-architectural-regression-control
 and its [derived requirements](requirements/architectural-health.md). It is not
 yet a normative AIL language or protocol specification.
 
+[ADR 0006](decisions/0006-prepare-architectural-regression-control.md) selects
+an M23 acceptance package for this direction. This manifest remains Proposed
+until the concrete workspace, behavior, policy, minimal metrics, expected
+outputs, baseline comparison, and fixed budgets pass that gate.
+
 ## Outcome
 
 The compiler produces a revision-bound, machine-readable account of where

@@ -61,7 +61,12 @@ becomes active.
 | M19 | UC-003 schema-evolution contract | Complete | M18 |
 | M20 | Workspace semantic graph and impact query | Complete | M19 |
 | M21 | Atomic schema evolution and completion evidence | Complete | M20 |
-| M22 | Post-UC-003 validation-slice selection | Active | M21 |
+| M22 | Post-UC-003 validation-slice selection | Complete | M21 |
+| M23 | UC-007 acceptance package | Active | M22 |
+| M24 | Architectural regression contract | Planned | M23 acceptance |
+| M25 | Architectural snapshot and agent rendering | Planned | M24 |
+| M26 | Architectural delta, policy, and atomic enforcement | Planned | M25 |
+| M27 | Non-official architecture-feedback pilot | Planned | M26 |
 
 ## Delivery milestones
 
@@ -1045,7 +1050,7 @@ return the declared structured cause.
 
 ### M22 — Post-UC-003 validation-slice selection
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -1072,9 +1077,210 @@ python3 tools/check_docs.py
 
 #### Exit criterion
 
-The repository identifies one accepted next validation slice and a bounded
-numbered delivery sequence. An implementation agent can start the first new
-milestone without inferring scope from the long-range outlook.
+The repository identifies one selected direction, states any acceptance work
+required before implementation, and records a bounded numbered delivery
+sequence. An agent can start the first new milestone without inferring scope
+from the long-range outlook.
+
+#### Delivered
+
+- Selected architectural regression control as the next scaling direction in
+  [ADR 0006](decisions/0006-prepare-architectural-regression-control.md)
+- Kept UC-007 and its requirements proposed until their concrete workspace,
+  behavior, policy, fixtures, comparison, and budgets pass acceptance
+- Bounded the work as M23 acceptance preparation, M24 contract, M25 and M26
+  implementation, and M27 non-official usability validation
+- Made deterministic compact agent rendering an explicit product surface
+  derived from the compiler's structured facts
+- Recorded Amp as an optional versioned operator for authoring or a later
+  non-official pilot, not as language semantics or official evidence
+- Preserved a build-heavy effort bias after one short acceptance gate
+
+### M23 — UC-007 acceptance package
+
+**Status:** Active
+
+#### Scope
+
+- Freeze the exact mature job-service starting workspace and explain or amend
+  the proposed scale before acceptance
+- Freeze transport-independent `CancelJob` inputs, outcomes, state changes,
+  capability use, effect order, and behavior fixtures
+- Freeze one valid change, one behaviorally correct centralized regression, and
+  one superficial helper-splitting change
+- Freeze architecture groups, allowed dependencies, capability and state
+  boundaries, the accepted hotspot baseline, and the smallest metric set that
+  distinguishes the three changes
+- Freeze expected structured results and compact agent-facing text for the
+  starting revision and every candidate
+- Identify equivalent Rust, Go, Python, and TypeScript baseline tools and
+  comparison rules
+- Set the false-finding allowance, analysis budget, and manifest-size budget
+  before inspecting implementation results
+- Add dependency-free checks for the acceptance package and decide whether to
+  accept UC-007 and `APP-006`, `LANG-006`, `PROTO-006`, `PROTO-007`, `NFR-006`,
+  and `NFR-007`
+
+#### Non-scope
+
+- Rust compiler, policy-engine, or text-renderer implementation
+- Treating any proposed policy syntax, metric, threshold, or diagnostic as
+  accepted before the gate passes
+- General architecture inference, a composite quality score, or automatic
+  refactoring
+- Agent trials, official benchmark evidence, M8 resumption, native lowering,
+  production I/O, or concurrency
+
+#### Focused verification
+
+```bash
+python3 specs/tools/architecture_acceptance.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+Two independent readers can use only the frozen behavior, project policy,
+baseline, and expected facts to classify the valid, centralized, and
+helper-splitting changes identically. The checker proves complete traceability,
+deterministic ordering, fixed budgets, and no hidden acceptance choice. If the
+gate passes, UC-007 and its requirements are accepted and M24 becomes active;
+otherwise the rejection or required amendment is recorded before new work.
+
+### M24 — Architectural regression contract
+
+**Status:** Planned
+
+#### Scope
+
+- Accept the smallest numbered language and protocol rules required by M23
+- Freeze metric meanings, aggregate scopes, policy and baseline governance,
+  coverage, ordering, budgets, diagnostics, and completion evidence
+- Freeze canonical snapshot and delta encodings plus compact deterministic
+  agent renderings for all M23 candidates
+- Freeze rejecting cases for boundary, authority, hotspot, cycle, stale
+  baseline, unauthorized governance, and incomplete-analysis failures
+
+#### Non-scope
+
+- Rust implementation
+- Universal architecture policy or default thresholds for every project
+- Automatic repair or official agent evidence
+
+#### Focused verification
+
+```bash
+python3 specs/tools/architecture_contract.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+Two independent readers can predict every structured fact, policy result,
+compact text summary, and commit or rejection outcome without using incidental
+implementation behavior.
+
+### M25 — Architectural snapshot and agent rendering
+
+**Status:** Planned
+
+#### Scope
+
+- Implement the accepted revision-bound facts, contributors, coverage, and
+  aggregate scopes for the M23 starting revision
+- Implement deterministic budgets and explicit incomplete results
+- Render the bounded compact agent summary from the same structured facts
+- Match repeated snapshot and rendering fixtures exactly
+
+#### Non-scope
+
+- Cross-revision regression classification or denied transaction enforcement
+- Metrics, relationships, or language constructs outside the M24 contract
+
+#### Focused verification
+
+```bash
+cargo test --workspace --test m25_architecture_snapshot
+python3 specs/tools/architecture_contract.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The compiler returns the frozen structured snapshot and compact text for the
+starting revision, including exact contributors, policy context, coverage, and
+budgets. Repeated requests are identical and incomplete analysis cannot render
+as clean.
+
+### M26 — Architectural delta, policy, and atomic enforcement
+
+**Status:** Planned
+
+#### Scope
+
+- Implement compatible revision comparison and identity mapping for accepted
+  architectural facts
+- Implement the accepted no-growth, dependency, capability, state, cycle,
+  baseline, exception, and governance rules
+- Match the valid, centralized, and helper-splitting candidate classifications
+- Integrate denied and incomplete results with atomic candidate rollback and
+  revision-bound completion evidence
+- Render actionable compact explanations with exact contributors and next
+  inspection handles
+
+#### Non-scope
+
+- Automatic architecture design or repair
+- Unaccepted policy vocabulary, broad refactors, or official agent evidence
+
+#### Focused verification
+
+```bash
+cargo test --workspace --test m26_architecture_delta
+python3 specs/tools/architecture_contract.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The valid change commits, while the centralized and superficial-splitting
+changes return their exact structured and compact causes and publish no
+revision. Unchanged accepted debt remains visible without becoming a new
+failure, and unauthorized policy or baseline changes cannot create a pass.
+
+### M27 — Non-official architecture-feedback pilot
+
+**Status:** Planned
+
+#### Scope
+
+- Run a small usability pilot against the locked M23 task after M26 passes
+- Record the exact agent, version, mode, prompt, permissions, tools, thread or
+  run identity, compiler outputs, edits, validations, and repairs
+- Test whether an operator can use compact output and structured drill-down to
+  avoid or repair the seeded regression
+- Permit Codex, Amp, or another explicitly named operator configuration
+
+#### Non-scope
+
+- Official comparative evidence, statistical claims, or AIL success targets
+- Changing fixtures, policy, baselines, prompts, or expected results after
+  observing a run
+- Resuming M8 or selecting a measured agent by convenience
+
+#### Focused verification
+
+```bash
+python3 benchmarks/tools/harness.py verify-architecture-pilot
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The repository contains at least one complete, replayable, explicitly
+non-official run showing whether the feedback was actionable, with every input,
+output, edit, check, repair, and limitation accounted for. The result supports
+a later go, revise, or stop decision but makes no comparative project claim.
 
 ## Deferred scaling candidate: architectural regression control
 
@@ -1084,12 +1290,11 @@ milestone without inferring scope from the long-range outlook.
 candidate validation track. They are not part of M19–M21 and do not expand a
 milestone implicitly.
 
-After the semantic oracle and core protocol exist, maintainers may review
-whether UC-007 should be the next scaling use case. Acceptance requires its
-starting workspace, cancel-job behavior, project policy, metric catalog,
-fixtures, baseline comparison, and budgets to satisfy the gate in its
-requirement set. Accepted work must be added as numbered milestones with
-explicit dependencies.
+ADR 0006 selects UC-007 acceptance preparation as M23. UC-007 and its
+requirements remain proposed until the starting workspace, cancel-job behavior,
+project policy, metric catalog, fixtures, baseline comparison, and budgets pass
+the M23 gate. M24 through M27 remain conditional planned work until their
+predecessors complete.
 
 Architectural-health implementation should follow the core semantic graph and
 revision protocol. It does not block M19 through M21.
@@ -1097,8 +1302,8 @@ revision protocol. It does not block M19 through M21.
 ## Long-range outlook after M17
 
 This section records intended capability order but is not an operational
-roadmap. M22 owns selection of the next compiler path; later implementation
-work must become numbered milestones one active at a time.
+roadmap. M23 owns the UC-007 acceptance package; M24 through M27 are the only
+planned successor work and activate one milestone at a time.
 
 1. **Broader semantic oracle:** expand the M11 spike subset to the accepted
    20–30 construct job-service core, then implement parser recovery and source
