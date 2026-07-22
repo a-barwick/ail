@@ -8,6 +8,7 @@ Documentation layer: concrete application scenarios. Use cases translate the
 language behavior.
 
 UC-001 and UC-003 were accepted as the first reference slice on 2026-07-18.
+UC-007 was accepted as the architectural-regression scaling case on 2026-07-22.
 
 ## Accepted reference slice
 
@@ -34,6 +35,17 @@ Their first derived requirements are collected in
 The shared test format and comparison rules are under
 [benchmarks](../benchmarks/README.md).
 
+## Accepted scaling case
+
+| Record | Status | Representative agent task |
+| --- | --- | --- |
+| [UC-007 — Architectural regression control](UC-007-architectural-regression-control.md) | Accepted | Add `CancelJob` without growing the dispatch hotspot or moving store authority into transport |
+
+The language-independent [M23 acceptance package](../architecture-acceptance.md)
+freezes its 24-operation starting workspace, behavior, policy, candidates,
+minimal metrics, compact evidence, baseline comparison, budgets, and two
+independent reviews. Acceptance does not itself define compiler protocol rules.
+
 ## Future cases
 
 After the semantic oracle and core protocol can execute the first reference
@@ -48,9 +60,6 @@ slice, choose the next scaling case from:
 - **UC-006 — Replayable external inputs:** test behavior involving time,
   randomness, configuration, secrets, filesystem state, or network responses
   through supplied or recorded capabilities.
-- **[UC-007 — Architectural regression control](UC-007-architectural-regression-control.md):**
-  add an operation to a mature service without enlarging a hotspot, bypassing
-  a declared boundary, or hiding responsibility through superficial splitting.
 
 UC-001 and UC-003 were selected first because they exercise public contracts,
 errors, stored state, change impact, and safe multi-file edits without requiring
@@ -62,9 +71,8 @@ milestones are added. A bounded acceptance milestone may enter the roadmap to
 produce the evidence needed for that decision.
 
 [ADR 0006](../decisions/0006-prepare-architectural-regression-control.md)
-selects UC-007 acceptance preparation as active M23. This is a bounded gate,
-not acceptance of the use case: UC-007 remains Proposed until its workspace,
-behavior, policy, metrics, examples, baseline comparison, and budgets pass.
+selected UC-007 acceptance preparation. M23 passed that bounded gate without
+defining M24 protocol rules or implementing compiler behavior.
 
 ## Use-case record
 

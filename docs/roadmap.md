@@ -1144,8 +1144,30 @@ Two independent readers can use only the frozen behavior, project policy,
 baseline, and expected facts to classify the valid, centralized, and
 helper-splitting changes identically. The checker proves complete traceability,
 deterministic ordering, fixed budgets, and no hidden acceptance choice. If the
-gate passes, UC-007 and its requirements are accepted and M24 becomes active;
-otherwise the rejection or required amendment is recorded before new work.
+gate passes, UC-007 and its requirements are accepted and M24 is eligible for
+explicit activation; otherwise the rejection or required amendment is recorded
+before new work.
+
+#### Delivered
+
+- Froze an exact 24-operation R1 workspace and complete `CancelJob` operation
+  roles for the valid, centralized, and helper-splitting candidates
+- Froze six transport-independent behavior cases with one atomic jobs-store
+  operation and no clock, network, or telemetry effect
+- Froze five architecture groups, eight policy rules, one accepted dispatch
+  baseline, seven primitive metrics or sets, and complete/unchecked coverage
+- Froze exact structured results and bounded compact text that accept the valid
+  candidate and reject both behaviorally correct architecture regressions
+- Identified pinned Rust, Go, Python, and TypeScript comparison tools and fixed
+  zero false/missed findings plus graph and encoded-output budgets
+- Added a dependency-free checker that derives every result from semantic
+  facts, verifies the digest graph and review records, and rejects 37 mutations
+- Recorded two independent approvals of fixture-set digest
+  `ab362d96d89cbba779743dd8a3050b2bd4452ff6daddf3e7ae65109207f7e3ed`
+  and review-subject digest
+  `fcb454729e6c2c228802d471d97c1eecd7abc793da407b0ced2bbd76fe9624cf`
+- Accepted UC-007 and its six requirements without defining M24 protocol rules
+  or implementing compiler behavior
 
 ### M24 — Architectural regression contract
 
@@ -1282,19 +1304,18 @@ non-official run showing whether the feedback was actionable, with every input,
 output, edit, check, repair, and limitation accounted for. The result supports
 a later go, revise, or stop decision but makes no comparative project claim.
 
-## Deferred scaling candidate: architectural regression control
+## Accepted scaling direction: architectural regression control
 
 [UC-007](use-cases/UC-007-architectural-regression-control.md), its
-[proposed requirements](requirements/architectural-health.md), and the
-[architectural health manifest](architecture-health.md) remain a separate
-candidate validation track. They are not part of M19–M21 and do not expand a
-milestone implicitly.
+[accepted requirements](requirements/architectural-health.md), and the proposed
+[architectural health manifest](architecture-health.md) form a separate scaling
+track. They are not part of M19–M21 and do not expand a milestone implicitly.
 
-ADR 0006 selects UC-007 acceptance preparation as M23. UC-007 and its
-requirements remain proposed until the starting workspace, cancel-job behavior,
-project policy, metric catalog, fixtures, baseline comparison, and budgets pass
-the M23 gate. M24 through M27 remain conditional planned work until their
-predecessors complete.
+ADR 0006 selected UC-007 acceptance preparation as M23. Its starting workspace,
+cancel-job behavior, project policy, minimal metric set, fixtures, baseline
+comparison, and budgets passed the gate, so UC-007 and its requirements are
+accepted. M24 through M27 remain planned work and activate only when explicitly
+started and their predecessors are complete.
 
 Architectural-health implementation should follow the core semantic graph and
 revision protocol. It does not block M19 through M21.
@@ -1302,7 +1323,8 @@ revision protocol. It does not block M19 through M21.
 ## Long-range outlook after M17
 
 This section records intended capability order but is not an operational
-roadmap. M23 owns the UC-007 acceptance package; M24 through M27 are the only
+roadmap. M23 has delivered the UC-007 acceptance package and remains the active
+handoff marker until M24 is explicitly started; M24 through M27 are the only
 planned successor work and activate one milestone at a time.
 
 1. **Broader semantic oracle:** expand the M11 spike subset to the accepted

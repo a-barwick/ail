@@ -1,0 +1,76 @@
+{
+  "fixture_format": 1,
+  "status": "accepted",
+  "fixture_set_digest": "ab362d96d89cbba779743dd8a3050b2bd4452ff6daddf3e7ae65109207f7e3ed",
+  "reviews": [
+    {
+      "reviewer_id": "oracle-gpt-5.6-sol",
+      "reviewed_on": "2026-07-22",
+      "review_subject_digest": "fcb454729e6c2c228802d471d97c1eecd7abc793da407b0ced2bbd76fe9624cf",
+      "classifications": {
+        "r1": {
+          "result": "accepted-baseline",
+          "rules": []
+        },
+        "valid": {
+          "result": "accepted",
+          "rules": []
+        },
+        "centralized": {
+          "result": "rejected",
+          "rules": [
+            "M23-POL-DISPATCH-NO-GROWTH",
+            "M23-POL-TRANSPORT-CAPABILITY",
+            "M23-POL-TRANSPORT-STATE",
+            "M23-POL-GROUP-DEPENDENCY"
+          ]
+        },
+        "helper-split": {
+          "result": "rejected",
+          "rules": [
+            "M23-POL-TRANSPORT-CAPABILITY",
+            "M23-POL-TRANSPORT-STATE",
+            "M23-POL-GROUP-DEPENDENCY"
+          ]
+        }
+      },
+      "decision": "approve",
+      "blockers": []
+    },
+    {
+      "reviewer_id": "amp-independent-reader-b",
+      "reviewed_on": "2026-07-22",
+      "review_subject_digest": "fcb454729e6c2c228802d471d97c1eecd7abc793da407b0ced2bbd76fe9624cf",
+      "classifications": {
+        "r1": {
+          "result": "accepted-baseline",
+          "rules": []
+        },
+        "valid": {
+          "result": "accepted",
+          "rules": []
+        },
+        "centralized": {
+          "result": "rejected",
+          "rules": [
+            "M23-POL-DISPATCH-NO-GROWTH",
+            "M23-POL-TRANSPORT-CAPABILITY",
+            "M23-POL-TRANSPORT-STATE",
+            "M23-POL-GROUP-DEPENDENCY"
+          ]
+        },
+        "helper-split": {
+          "result": "rejected",
+          "rules": [
+            "M23-POL-TRANSPORT-CAPABILITY",
+            "M23-POL-TRANSPORT-STATE",
+            "M23-POL-GROUP-DEPENDENCY"
+          ]
+        }
+      },
+      "decision": "approve",
+      "blockers": []
+    }
+  ],
+  "review_subject_digest": "fcb454729e6c2c228802d471d97c1eecd7abc793da407b0ced2bbd76fe9624cf"
+}

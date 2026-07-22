@@ -1,0 +1,190 @@
+{
+  "fixture_format": 1,
+  "label": "non-normative M23 acceptance oracle; not an M24 protocol",
+  "results": [
+    {
+      "candidate": "r1",
+      "revision": "arch-r1",
+      "classification": "accepted",
+      "behavior": "not-applicable",
+      "architecture": "accepted-baseline",
+      "published": true,
+      "committed": true,
+      "findings": [],
+      "accepted_debt": [
+        "transport:dispatch"
+      ],
+      "coverage": {
+        "analyzed": 5,
+        "unchecked": [
+          "external:job-api-clients"
+        ]
+      },
+      "next_inspection_ids": [
+        "transport:dispatch"
+      ],
+      "compact": "accepted arch-r1 policy=m23-policy-r1 baseline=m23-baseline-r1\nbehavior: not-applicable; architecture: accepted-baseline\npublication: published; commit: committed\ndebt: transport:dispatch unchanged (CFC=4 context=3)\ncoverage: 5 groups; unchecked external:job-api-clients\ninspect: transport:dispatch\n"
+    },
+    {
+      "candidate": "valid",
+      "revision": "arch-r2-valid",
+      "classification": "accepted",
+      "behavior": "passed:6/6",
+      "architecture": "accepted",
+      "published": true,
+      "committed": true,
+      "findings": [],
+      "accepted_debt": [
+        "transport:dispatch"
+      ],
+      "coverage": {
+        "analyzed": 5,
+        "unchecked": [
+          "external:job-api-clients"
+        ]
+      },
+      "next_inspection_ids": [
+        "domain:handle:job.cancel"
+      ],
+      "compact": "accepted arch-r2-valid policy=m23-policy-r1 baseline=m23-baseline-r1\nbehavior: passed 6/6; architecture: accepted\npublication: published; commit: committed\ndebt: transport:dispatch unchanged (CFC=4 context=3)\ncoverage: 5 groups; unchecked external:job-api-clients\ninspect: domain:handle:job.cancel\n"
+    },
+    {
+      "candidate": "centralized",
+      "revision": "arch-r2-centralized",
+      "classification": "rejected",
+      "behavior": "passed:6/6",
+      "architecture": "rejected",
+      "published": false,
+      "committed": false,
+      "findings": [
+        {
+          "id": "centralized:dispatch-growth",
+          "classification": "regression",
+          "rule": "M23-POL-DISPATCH-NO-GROWTH",
+          "scope": "transport:dispatch",
+          "contributors": [
+            "transport:dispatch"
+          ],
+          "facts": "CFC 4->7; context 3->8",
+          "contributors_truncated": false
+        },
+        {
+          "id": "centralized:transport-capability",
+          "classification": "violation",
+          "rule": "M23-POL-TRANSPORT-CAPABILITY",
+          "scope": "group:transport",
+          "contributors": [
+            "capability:jobs_store.cancel_if_active",
+            "transport:dispatch"
+          ],
+          "facts": "declared capabilities jobs_store",
+          "contributors_truncated": false
+        },
+        {
+          "id": "centralized:transport-state",
+          "classification": "violation",
+          "rule": "M23-POL-TRANSPORT-STATE",
+          "scope": "group:transport",
+          "contributors": [
+            "state:jobs",
+            "transport:dispatch"
+          ],
+          "facts": "state reads+writes jobs",
+          "contributors_truncated": false
+        },
+        {
+          "id": "centralized:transport-dependency",
+          "classification": "violation",
+          "rule": "M23-POL-GROUP-DEPENDENCY",
+          "scope": "group:transport",
+          "contributors": [
+            "capability:jobs_store.cancel_if_active",
+            "state:jobs",
+            "transport:dispatch"
+          ],
+          "facts": "forbidden group dependencies transport->persistence-adapter",
+          "contributors_truncated": false
+        }
+      ],
+      "accepted_debt": [
+        "transport:dispatch"
+      ],
+      "coverage": {
+        "analyzed": 5,
+        "unchecked": [
+          "external:job-api-clients"
+        ]
+      },
+      "next_inspection_ids": [
+        "transport:dispatch",
+        "group:transport"
+      ],
+      "compact": "rejected arch-r2-centralized policy=m23-policy-r1 baseline=m23-baseline-r1\nbehavior: passed 6/6; architecture: rejected\npublication: not-published; commit: rolled-back\nregression M23-POL-DISPATCH-NO-GROWTH transport:dispatch CFC 4->7; context 3->8 contributors=transport:dispatch\nviolation M23-POL-TRANSPORT-CAPABILITY group:transport declared capabilities jobs_store contributors=capability:jobs_store.cancel_if_active,transport:dispatch\nviolation M23-POL-TRANSPORT-STATE group:transport state reads+writes jobs contributors=state:jobs,transport:dispatch\nviolation M23-POL-GROUP-DEPENDENCY group:transport forbidden group dependencies transport->persistence-adapter contributors=capability:jobs_store.cancel_if_active,state:jobs,transport:dispatch\ndebt: transport:dispatch baseline=m23-baseline-r1 (CFC=4 context=3)\ncoverage: 5 groups; unchecked external:job-api-clients\ninspect: transport:dispatch,group:transport\n"
+    },
+    {
+      "candidate": "helper-split",
+      "revision": "arch-r2-helper-split",
+      "classification": "rejected",
+      "behavior": "passed:6/6",
+      "architecture": "rejected",
+      "published": false,
+      "committed": false,
+      "findings": [
+        {
+          "id": "helper-split:transport-capability",
+          "classification": "violation",
+          "rule": "M23-POL-TRANSPORT-CAPABILITY",
+          "scope": "group:transport",
+          "contributors": [
+            "capability:jobs_store.cancel_if_active",
+            "transport:cancel_store"
+          ],
+          "facts": "declared capabilities jobs_store",
+          "contributors_truncated": false
+        },
+        {
+          "id": "helper-split:transport-state",
+          "classification": "violation",
+          "rule": "M23-POL-TRANSPORT-STATE",
+          "scope": "group:transport",
+          "contributors": [
+            "state:jobs",
+            "transport:cancel_decision",
+            "transport:cancel_store"
+          ],
+          "facts": "state reads+writes jobs",
+          "contributors_truncated": false
+        },
+        {
+          "id": "helper-split:transport-dependency",
+          "classification": "violation",
+          "rule": "M23-POL-GROUP-DEPENDENCY",
+          "scope": "group:transport",
+          "contributors": [
+            "capability:jobs_store.cancel_if_active",
+            "state:jobs",
+            "transport:cancel_decision",
+            "transport:cancel_store"
+          ],
+          "facts": "forbidden group dependencies transport->persistence-adapter",
+          "contributors_truncated": false
+        }
+      ],
+      "accepted_debt": [
+        "transport:dispatch"
+      ],
+      "coverage": {
+        "analyzed": 5,
+        "unchecked": [
+          "external:job-api-clients"
+        ]
+      },
+      "next_inspection_ids": [
+        "group:transport",
+        "transport:cancel_decision",
+        "transport:cancel_store"
+      ],
+      "compact": "rejected arch-r2-helper-split policy=m23-policy-r1 baseline=m23-baseline-r1\nbehavior: passed 6/6; architecture: rejected\npublication: not-published; commit: rolled-back\nviolation M23-POL-TRANSPORT-CAPABILITY group:transport declared capabilities jobs_store contributors=capability:jobs_store.cancel_if_active,transport:cancel_store\nviolation M23-POL-TRANSPORT-STATE group:transport state reads+writes jobs contributors=state:jobs,transport:cancel_decision,transport:cancel_store\nviolation M23-POL-GROUP-DEPENDENCY group:transport forbidden group dependencies transport->persistence-adapter contributors=capability:jobs_store.cancel_if_active,state:jobs,transport:cancel_decision,transport:cancel_store\ndebt: transport:dispatch baseline=m23-baseline-r1 (CFC=4 context=3)\ncoverage: 5 groups; unchecked external:job-api-clients\ninspect: group:transport,transport:cancel_decision,transport:cancel_store\n"
+    }
+  ]
+}

@@ -1,11 +1,11 @@
-# Proposed architectural-health requirements
+# Architectural-health requirements
 
-Status: **Proposed**
+Status: **Accepted**
 
 Documentation layer: requirements derived from
-[UC-007](../use-cases/UC-007-architectural-regression-control.md). These
-requirements are not accepted language or protocol rules and do not select AIL
-syntax or the compiler implementation.
+[UC-007](../use-cases/UC-007-architectural-regression-control.md). Acceptance
+authorizes later language and protocol specification work; it does not itself
+define language or protocol rules, select syntax, or implement compiler behavior.
 
 ## Traceability summary
 
@@ -22,7 +22,7 @@ syntax or the compiler implementation.
 
 ### APP-006 — Architecture-preserving feature extension
 
-Status: **Proposed**
+Status: **Accepted**
 
 Source use case: UC-007.
 
@@ -42,21 +42,20 @@ tests and fails architecture policy. The valid implementation passes both. The
 completion manifest shows that no unauthorized policy, baseline, capability,
 state, or dependency change occurred.
 
-Target milestone and scope: A future numbered scaling milestone after the core
-semantic graph and revision protocol exist, and only after UC-007 and this
-requirement set are accepted. It is not part of M0–M17. Constrains application
+Target milestone and scope: The numbered M24–M27 scaling sequence after the core
+semantic graph and revision protocol. It is not part of M0–M17. Constrains application
 completion, compiler policy, benchmark, and governance. It does not prescribe
 one module layout.
 
 Dependencies and open questions: Depends on LANG-006, PROTO-006, PROTO-007, and
-the frozen UC-007 architecture policy. The exact cancel-job behavior and policy
-thresholds remain open.
+the frozen UC-007 architecture policy. The exact cancel-job behavior and M23
+acceptance thresholds are frozen in the acceptance package.
 
 ## Language requirement
 
 ### LANG-006 — Complete architectural relationships
 
-Status: **Proposed**
+Status: **Accepted**
 
 Source use case: UC-007.
 
@@ -78,9 +77,8 @@ capability delegation, state access, closed outcomes, recursion, foreign
 boundaries, and generated source. Every relationship is either present in the
 semantic graph or represented by an explicit incomplete-coverage edge.
 
-Target milestone and scope: A future numbered scaling-language milestone after
-acceptance, followed by core-protocol exposure. It is not part of M11 while this
-requirement remains proposed. Constrains the language and compiler semantic
+Target milestone and scope: The M24 scaling-language contract, followed by
+core-protocol exposure. It is not part of M11. Constrains the language and compiler semantic
 model, not metric thresholds or project architecture.
 
 Dependencies and open questions: Depends on the future module, effect,
@@ -91,7 +89,7 @@ exclude opaque reflection instead of modeling it.
 
 ### PROTO-006 — Architectural health snapshot
 
-Status: **Proposed**
+Status: **Accepted**
 
 Source use case: UC-007.
 
@@ -101,10 +99,12 @@ deterministically ordered architectural health snapshot. It must include
 coverage, metric values, semantic contributors, aggregate scopes, active policy
 selectors, baseline matches, exceptions, and unchecked boundaries.
 
-The required initial metrics are defined by the
-[architectural health manifest specification](../architecture-health.md). The
-interface must report primitive measurements and semantic sets rather than only
-an opaque composite score.
+The accepted metric scope is the seven-metric M23 acceptance slice in the
+[M23 package](../architecture-acceptance.md), not the entire proposed catalog in
+the architectural health manifest. The interface must report primitive
+measurements and semantic sets rather than only an opaque composite score.
+M24 must define the normative meanings and canonical encoding for that bounded
+slice before compiler implementation begins.
 
 Rationale and agent change cost: A structured snapshot lets an agent and
 reviewer inspect where responsibility, authority, state, and coupling are
@@ -127,7 +127,7 @@ implementation questions subject to NFR-006.
 
 ### PROTO-007 — Architectural delta and policy evaluation
 
-Status: **Proposed**
+Status: **Accepted**
 
 Source use case: UC-007.
 
@@ -170,7 +170,7 @@ specification.
 
 ### NFR-006 — Deterministic and bounded architectural analysis
 
-Status: **Proposed**
+Status: **Accepted**
 
 Source use case: UC-007.
 
@@ -195,13 +195,14 @@ Target milestone and scope: The future numbered scaling-protocol implementation
 and performance milestone created after acceptance. Constrains analysis behavior
 and evidence, not a particular graph algorithm.
 
-Dependencies and open questions: Depends on PROTO-006 and PROTO-007. Numerical
-analysis-time, memory, and manifest-size limits require UC-007 baseline
-calibration.
+Dependencies and open questions: Depends on PROTO-006 and PROTO-007. M23 fixes
+deterministic graph and encoded-output limits. Numerical wall-time and memory
+limits still require later baseline measurement; the acceptance package does
+not claim that calibration has occurred.
 
 ### NFR-007 — Architectural regression benchmark
 
-Status: **Proposed**
+Status: **Accepted**
 
 Source use case: UC-007.
 
@@ -230,21 +231,23 @@ semantic graph and revision protocol exist, and only after UC-007 is accepted.
 It is not part of M0–M17. Constrains benchmark and governance.
 
 Dependencies and open questions: Depends on NFR-001, PROTO-006, PROTO-007, and
-the frozen UC-007 workspace. Trial count, false-positive allowance, and
-performance envelopes require baseline calibration.
+the frozen UC-007 workspace. M23 fixes a zero false/missed-finding allowance.
+Trial count, repair-cycle, wall-time, peak-memory, and comparative model-context
+envelopes require later baseline calibration.
 
-## Acceptance gate
+## Acceptance evidence
 
-These requirements are ready for acceptance only when:
+M23 passed the acceptance gate on 2026-07-22:
 
 1. UC-007 fixes the starting workspace, operation behavior, and architecture
    policy;
 2. the feature specification defines every required metric and policy result
    unambiguously;
-3. proposed fixtures demonstrate both symbol-level and aggregate analysis;
+3. frozen fixtures demonstrate both symbol-level and aggregate analysis;
 4. baseline tools and comparison rules are identified; and
 5. two independent readers classify every seeded change the same way.
 
-Acceptance would authorize normative protocol rules and conformance fixtures.
-It would not make a project-selected complexity threshold part of universal AIL
-language semantics.
+This acceptance authorizes M24 to propose normative protocol rules and
+conformance fixtures when that milestone is explicitly started. It does not
+make a project-selected complexity threshold part of universal AIL language
+semantics.
