@@ -15,10 +15,13 @@ mod syntax;
 
 pub use diagnostic::Diagnostic;
 pub use evolution::{
-    EffectSummary, EvolutionBuildFailure, EvolutionCoverage, EvolutionSource, EvolutionWorkspace,
-    ImpactEntry, ImpactFailure, ImpactReport, ImpactRequest, PersistentIdentity,
-    ProposedSchemaChange, RelationshipEdge, SemanticLocation, SourceArtifact, SourceFileMetadata,
-    SourceSetRevision, UncheckedBoundary, relationship_kinds,
+    CandidateChangeRequest, CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary,
+    ChangeFailure, ChangeResponse, ChangeSuccess, CompletionEvidence, EffectSummary,
+    EvolutionBuildFailure, EvolutionCoverage, EvolutionSource, EvolutionWorkspace, ImpactEntry,
+    ImpactFailure, ImpactReport, ImpactRequest, PersistentIdentity, PersistentIdentityChanges,
+    ProposedSchemaChange, PublicBehaviorFailure, RelationshipEdge, SemanticChange, SemanticDiff,
+    SemanticLocation, SourceArtifact, SourceFileMetadata, SourceSetRevision, UncheckedBoundary,
+    ValidationSummary, relationship_kinds,
 };
 pub use interpreter::{CapabilityProvider, ObservedCapabilityCall, RuntimeFault, RuntimeValue};
 pub use lexer::{Keyword, Span, Token, TokenKind, lex, reconstruct};

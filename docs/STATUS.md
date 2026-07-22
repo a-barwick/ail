@@ -4,13 +4,12 @@ Last updated: 2026-07-21
 
 ## Active milestone
 
-M21 — Atomic schema evolution and completion evidence
+M22 — Post-UC-003 validation-slice selection
 
 ## Current goal
 
-Implement the accepted M19 atomic candidate validation, canonical edits,
-identity mapping, semantic diff, and completion-evidence contract. The execution
-path is:
+Select the next bounded validation slice after the completed UC-003 change loop.
+The execution path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -22,7 +21,8 @@ M11 five-construct contract (complete)
   -> M18 next validation-slice selection (complete)
   -> M19 UC-003 schema-evolution contract (complete)
   -> M20 workspace semantic graph and impact query (complete)
-  -> M21 atomic schema evolution and completion evidence (active)
+  -> M21 atomic schema evolution and completion evidence (complete)
+  -> M22 post-UC-003 validation-slice selection (active)
 ```
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
@@ -30,16 +30,30 @@ candidate scorecard.
 
 The next agent should:
 
-- implement only the M21 whole-workspace candidate transaction and evidence
-  scope fixed by the M19 contract;
-- require the current base revision, exact M20 impact accounting, complete
-  canonical candidate sources, and all validation phases before publication;
-- derive per-path canonical edits, complete revision identity mapping,
-  persistent identity classifications, semantic diff, and completion evidence;
-- match the successful M19 R1-to-R2 transaction and all five rejection fixtures
-  in `compiler/ail-compiler/tests/m21_schema_transaction.rs`; and
-- keep general refactors, hidden or official agent runs, migrations, production
-  adapters, lowering, concurrency, and UC-007 outside M21.
+- review the completed M19–M21 evidence and the remaining accepted application,
+  language, runtime, and protocol gaps;
+- select exactly one next validation slice through the use-case and requirements
+  gate, or identify the bounded acceptance work required first;
+- add a concrete numbered contract and implementation sequence before changing
+  compiler or runtime behavior; and
+- keep UC-007, the M8 campaign, lowering, production I/O, concurrency, and broad
+  core expansion inactive unless the selection work explicitly accepts them.
+
+## M21 result
+
+M21 implemented the accepted whole-workspace candidate transaction. The
+compiler validates the current base, exact M20 impact accounting, complete
+canonical source set, stable schema identities, effect and capability
+non-growth, and caller-supplied public behavior evidence before publishing one
+child revision.
+
+The committed R1-to-R2 fixture matches the frozen source-set digest, five
+ordered whole-path edits, persistent identity classifications, seven semantic
+changes, unchanged store authority and effect ordering, and revision-bound
+completion evidence. Structured stale, missed-consumer, incompatible-identity,
+effect-growth, behavior-mismatch, incomplete-source, and static-invalid
+rejections all return empty edits and publish no revision. All prior compiler
+tests and the 37-case public AIL corpus remain passing.
 
 ## M20 result
 
@@ -186,6 +200,8 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M15 Rust static semantics and diagnostics
 - M16 Rust revision protocol and validated rename
 - M17 deterministic interpreter and public reference-service runner
+- M20 workspace graph and exact impact query
+- M21 atomic schema evolution and completion evidence
 
 ## Completed
 
@@ -206,6 +222,7 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M18 — Next validation-slice selection
 - M19 — UC-003 schema-evolution contract
 - M20 — Workspace semantic graph and impact query
+- M21 — Atomic schema evolution and completion evidence
 
 ## Superseded
 
@@ -224,7 +241,8 @@ block compiler implementation.
 
 ## Do not start yet
 
-- Work beyond the bounded M21 atomic schema-evolution transaction
+- Compiler or runtime implementation before M22 selects and accepts the next
+  bounded slice
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
@@ -236,8 +254,9 @@ None.
 
 After meaningful work:
 
-- keep M21 focused on the accepted atomic schema-evolution transaction;
-- do not expand into general refactoring or new language/runtime features;
+- keep M22 focused on selection through the use-case and requirements gate;
+- do not implement a new compiler or runtime slice before its numbered contract
+  is accepted;
 - run `cargo fmt --all --check`;
 - run `cargo test --workspace`;
 - run `cargo clippy --workspace --all-targets -- -D warnings`;

@@ -8,6 +8,14 @@ use crate::{
     ParseResult, SemanticHandle, SourceUnit, Span, TypeCheckStatus, parse, source_digest,
 };
 
+mod transaction;
+
+pub use transaction::{
+    CandidateChangeRequest, CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary,
+    ChangeFailure, ChangeResponse, ChangeSuccess, CompletionEvidence, PersistentIdentityChanges,
+    PublicBehaviorFailure, SemanticChange, SemanticDiff, ValidationSummary,
+};
+
 const RELATIONSHIP_KINDS: [&str; 12] = [
     "declares-member",
     "signature-input",
@@ -181,6 +189,7 @@ struct StoredSourceSet {
 #[derive(Debug, Clone)]
 pub struct EvolutionWorkspace {
     id: String,
+    capabilities: CapabilityEnvironment,
     current_revision_id: String,
     revisions: BTreeMap<String, StoredSourceSet>,
 }
@@ -207,6 +216,7 @@ impl EvolutionWorkspace {
         revisions.insert(revision_id.clone(), stored);
         Ok(Self {
             id,
+            capabilities: capabilities.clone(),
             current_revision_id: revision_id,
             revisions,
         })

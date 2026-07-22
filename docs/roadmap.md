@@ -60,7 +60,8 @@ becomes active.
 | M18 | Next validation-slice selection | Complete | M17 |
 | M19 | UC-003 schema-evolution contract | Complete | M18 |
 | M20 | Workspace semantic graph and impact query | Complete | M19 |
-| M21 | Atomic schema evolution and completion evidence | Active | M20 |
+| M21 | Atomic schema evolution and completion evidence | Complete | M20 |
+| M22 | Post-UC-003 validation-slice selection | Active | M21 |
 
 ## Delivery milestones
 
@@ -982,7 +983,7 @@ Repeated requests and retained parent-revision requests are identical.
 
 ### M21 — Atomic schema evolution and completion evidence
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -1022,6 +1023,59 @@ M19 fixtures and all 37 public cases. Stale, incomplete, incompatible,
 effect-changing, or behaviorally failing candidates publish no revision and
 return the declared structured cause.
 
+#### Delivered
+
+- Added whole-source-set candidate validation against the current immutable
+  revision and exact pre-edit impact report
+- Canonicalized and statically checked the complete candidate before exposing
+  it to the accepted public-behavior oracle or publishing a child revision
+- Derived ordered per-path canonical edits, a complete indexed-handle identity
+  map, persistent identity classifications, and the frozen seven-change
+  semantic diff
+- Bound parse, type, capability, impact, and public-behavior evidence to the
+  committed child revision while retaining the base impact and unchecked
+  boundary
+- Returned stable structured rejections with empty edits for stale bases,
+  missed consumers, incompatible identity reuse, effect growth, behavior
+  mismatch, incomplete source sets, and invalid candidates
+- Added four focused M21 tests covering the accepted R1-to-R2 result, every
+  frozen rejection, additional atomicity boundaries, and repeated deterministic
+  results
+- Preserved the M11 rename protocol and all 37 public job-service results
+
+### M22 — Post-UC-003 validation-slice selection
+
+**Status:** Active
+
+#### Scope
+
+- Review the completed M19–M21 UC-003 evidence and the remaining accepted
+  application, language, runtime, and protocol gaps
+- Select exactly one next validation slice through the use-case and requirements
+  gate, or identify the bounded acceptance work required before selection
+- Add concrete numbered contract and implementation milestones with explicit
+  dependencies, non-scope, focused checks, and exit criteria
+
+#### Non-scope
+
+- Compiler or runtime implementation before the next slice and rules are
+  accepted
+- Implicit activation of UC-007 or the deferred M8 campaign
+- Native lowering, production I/O, general concurrency, or broad language-core
+  expansion without accepted use-case and requirement support
+
+#### Focused verification
+
+```bash
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The repository identifies one accepted next validation slice and a bounded
+numbered delivery sequence. An implementation agent can start the first new
+milestone without inferring scope from the long-range outlook.
+
 ## Deferred scaling candidate: architectural regression control
 
 [UC-007](use-cases/UC-007-architectural-regression-control.md), its
@@ -1043,8 +1097,8 @@ revision protocol. It does not block M19 through M21.
 ## Long-range outlook after M17
 
 This section records intended capability order but is not an operational
-roadmap. M19 through M21 own the current compiler path; later work must become
-numbered milestones one active at a time.
+roadmap. M22 owns selection of the next compiler path; later implementation
+work must become numbered milestones one active at a time.
 
 1. **Broader semantic oracle:** expand the M11 spike subset to the accepted
    20–30 construct job-service core, then implement parser recovery and source

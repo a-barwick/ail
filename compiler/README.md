@@ -13,8 +13,9 @@ The compiler is delivered in conformance slices:
 
 M18 selected compiler-guided UC-003 priority evolution as the next validation
 slice. M19 accepted its conformance contract, M20 implemented the ordered
-source-set semantic graph and impact query, and M21 now implements atomic schema
-evolution and completion evidence.
+source-set semantic graph and impact query, and M21 completed atomic schema
+evolution and completion evidence. M22 now selects the next bounded validation
+slice before further compiler implementation begins.
 
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
 behavior. Implementation details do not create language semantics.
@@ -33,3 +34,7 @@ local and explicit public type facts, and structured diagnostics.
 `ail_compiler::Workspace` stores immutable canonical revisions, exposes
 deterministic revision-scoped handles and elaborated inspection, and validates
 atomic rename transactions with canonical edits and complete identity maps.
+`ail_compiler::EvolutionWorkspace` additionally validates complete multi-source
+candidates atomically, exposes the exact uncommitted revision to a behavior
+oracle, and returns revision-bound impact, edit, identity, semantic-diff, and
+completion evidence.

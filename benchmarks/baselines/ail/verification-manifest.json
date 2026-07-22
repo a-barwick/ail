@@ -179,7 +179,11 @@
     },
     {
       "path": "compiler/ail-compiler/src/evolution.rs",
-      "sha256": "c863a08e2045922ad7d3dcb7fcbddfc8434c15ced405a9be79c55a5a0cb318c4"
+      "sha256": "bb183ed2c8d5ec8687ad6a769eb681075ed671eea8b4629f914ac2670f61279f"
+    },
+    {
+      "path": "compiler/ail-compiler/src/evolution/transaction.rs",
+      "sha256": "d3a810cbbe7182b53fd11f6044ad2799b93b2ca862c4b23dcc9d4e54ffce0940"
     },
     {
       "path": "compiler/ail-compiler/src/formatter.rs",
@@ -195,7 +199,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/lib.rs",
-      "sha256": "39d2b678045f064192b32fff4833871e5e680bbf5d38455be9a3361bf94dd74e"
+      "sha256": "360f858975ec250460210ac314f91671e74f59d3fda109c54c9cadc440c689af"
     },
     {
       "path": "compiler/ail-compiler/src/parser.rs",
@@ -220,6 +224,10 @@
     {
       "path": "compiler/ail-compiler/tests/m20_impact.rs",
       "sha256": "f8f3a3fbf613c79cc0145d958d3f98a7aa98a66e6a3cde7a96e88f4fc150fa78"
+    },
+    {
+      "path": "compiler/ail-compiler/tests/m21_schema_transaction.rs",
+      "sha256": "06f093186941d5e1883749ebae1841271114a21fb9e7db1d1b22d7159a29d4eb"
     },
     {
       "path": "specs/README.md",
