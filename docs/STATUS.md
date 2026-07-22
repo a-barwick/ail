@@ -4,12 +4,12 @@ Last updated: 2026-07-21
 
 ## Active milestone
 
-M18 — Next validation-slice selection
+M19 — UC-003 schema-evolution contract
 
 ## Current goal
 
-Select and accept the next bounded validation slice before extending the
-compiler. The execution path is:
+Freeze the bounded contract for compiler-guided UC-003 priority evolution
+before extending the compiler. The execution path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -18,7 +18,10 @@ M11 five-construct contract (complete)
   -> M15 static semantics and diagnostics (complete)
   -> M16 revision protocol and validated rename (complete)
   -> M17 deterministic core interpreter (complete)
-  -> M18 next validation-slice selection (active)
+  -> M18 next validation-slice selection (complete)
+  -> M19 UC-003 schema-evolution contract (active)
+  -> M20 workspace semantic graph and impact query (planned)
+  -> M21 atomic schema evolution and completion evidence (planned)
 ```
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
@@ -26,15 +29,28 @@ candidate scorecard.
 
 The next agent should:
 
-- review the accepted M17 rules, runtime fixtures, focused tests, and locked
-  37-case public-corpus evidence;
-- choose one bounded validation slice tied to an accepted use case and
-  requirement, and explain the agent change cost it reduces;
-- accept any new numbered rules and add executable conformance evidence before
-  implementing that slice; and
-- keep UC-007, native lowering, general concurrency, production I/O adapters,
-  broad collections, and unrelated language expansion outside M18 unless the
-  maintainer explicitly changes scope.
+- implement only the M19 contract and fixture scope defined in the roadmap and
+  [ADR 0005](decisions/0005-next-validation-slice.md);
+- define stable schema identities separately from revision-scoped handles and
+  fix exact deterministic source-set digest and graph-ordering rules;
+- freeze canonical R1 and R2 workspaces plus impact, transaction, rejection,
+  semantic-diff, validation, and completion-evidence results;
+- extend the dependency-free contract checker over every new rule, shape, and
+  fixture; and
+- keep Rust implementation, UC-007, native lowering, general concurrency,
+  production I/O adapters, broad collections, and unrelated language expansion
+  outside M19 unless the maintainer explicitly changes scope.
+
+## M18 result
+
+M18 reviewed the completed M17 evidence and selected compiler-guided UC-003
+priority evolution as the next validation slice. ADR 0005 records why this
+closes accepted schema-consequence and change-protocol gaps before the project
+adds another runtime feature or use case.
+
+The bounded sequence is contract first in M19, semantic graph and impact
+implementation in M20, then atomic schema evolution and completion evidence in
+M21. UC-007 and all unrelated scaling work remain outside that sequence.
 
 ## M14 result
 
@@ -160,6 +176,7 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M15 — Rust static semantics and diagnostics
 - M16 — Rust revision protocol and validated rename
 - M17 — Deterministic core interpreter
+- M18 — Next validation-slice selection
 
 ## Superseded
 
@@ -178,7 +195,8 @@ block compiler implementation.
 
 ## Do not start yet
 
-- Compiler implementation for a new slice before M18 accepts its bounded rules
+- M20 or M21 compiler implementation before M19 accepts the bounded rules and
+  fixtures
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
@@ -190,9 +208,9 @@ None.
 
 After meaningful work:
 
-- keep M18 focused on choosing and accepting one bounded validation slice;
-- tie the slice to accepted use cases and requirements, and add numbered rules
-  plus executable checks before implementation begins;
+- keep M19 focused on accepting the bounded UC-003 schema-evolution contract;
+- tie every rule and fixture to accepted UC-003 requirements and avoid
+  implementation-defined semantics;
 - run `cargo fmt --all --check`;
 - run `cargo test --workspace`;
 - run `cargo clippy --workspace --all-targets -- -D warnings`;

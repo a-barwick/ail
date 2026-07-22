@@ -57,7 +57,10 @@ becomes active.
 | M15 | Rust static semantics and diagnostics | Complete | M14 |
 | M16 | Rust revision protocol and validated rename | Complete | M15 |
 | M17 | Deterministic core interpreter | Complete | M16 |
-| M18 | Next validation-slice selection | Active | M17 |
+| M18 | Next validation-slice selection | Complete | M17 |
+| M19 | UC-003 schema-evolution contract | Active | M18 |
+| M20 | Workspace semantic graph and impact query | Planned | M19 |
+| M21 | Atomic schema evolution and completion evidence | Planned | M20 |
 
 ## Delivery milestones
 
@@ -812,7 +815,7 @@ matches the shared public oracle without weakening the frozen behavior.
 
 ### M18 — Next validation-slice selection
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -841,12 +844,152 @@ The repository identifies one accepted next validation slice and a bounded
 numbered implementation sequence. An agent can begin the first implementation
 milestone without inferring scope from the long-range outlook.
 
+#### Delivered
+
+- Reviewed the locked M17 interpreter, runtime fixtures, focused tests, and
+  37-case public-corpus evidence
+- Identified the remaining accepted UC-003 gaps in stable schema identity,
+  semantic impact, atomic structural change, semantic diff, and completion
+  evidence
+- Selected compiler-guided UC-003 priority evolution in
+  [ADR 0005](decisions/0005-next-validation-slice.md)
+- Bounded the work as M19 through M21 without activating UC-007 or adding
+  unrelated runtime, concurrency, I/O, collection, or lowering behavior
+
+### M19 — UC-003 schema-evolution contract
+
+**Status:** Active
+
+#### Scope
+
+- Accept the smallest numbered language and protocol rules needed for the
+  selected R1-to-R2 priority evolution
+- Define stable schema identities separately from revision-scoped handles
+- Define one immutable ordered source-set revision and its deterministic digest
+- Define typed semantic relationship kinds and deterministic traversal order
+- Define the `must_change`, `review`, and `unchecked` impact-query contract
+- Define the atomic candidate-change request, semantic diff, validation
+  summary, failure diagnostics, and completion-evidence shapes
+- Freeze canonical R1 and R2 job-service workspaces containing every in-scope
+  UC-003 semantic role
+- Freeze positive and rejecting conformance fixtures, including stale base,
+  missed consumer, incompatible schema identity, effect growth, and failed
+  behavior validation
+- Extend the dependency-free contract checker over every new rule, shape, and
+  fixture
+
+#### Non-scope
+
+- Rust implementation of the new rules
+- A general package, module, import, serialization, migration, or code-generation
+  system
+- A fixture-specific priority operation
+- General semantic context, architectural-health metrics, or policy evaluation
+- Native lowering, concurrency, production I/O, or new external authority
+
+#### Focused verification
+
+```bash
+python3 specs/tools/core_contract.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+Two independent readers can predict the complete ordered impact report and
+every commit or rejection result for the frozen R1-to-R2 fixtures. Every new
+behavior is traceable to accepted UC-003 requirements, and M20 can implement
+the contract without choosing identity, traversal, coverage, or ordering
+semantics.
+
+### M20 — Workspace semantic graph and impact query
+
+**Status:** Planned
+
+#### Scope
+
+- Implement immutable ordered multi-source revisions and canonical source-set
+  digests while retaining parent revisions
+- Implement the accepted stable schema identities without conflating them with
+  revision-scoped handles
+- Index the accepted declaration, construction, field, function, match,
+  capability, effect, and source-artifact relationship kinds
+- Implement deterministic revision-bound semantic inspection over those facts
+- Implement the accepted pre-edit impact query and exact coverage categories
+- Match every M19 inspection, graph, impact, stale-request, and incomplete-
+  coverage fixture
+
+#### Non-scope
+
+- Committing source changes other than the existing M16 rename
+- Inferring external consumers or claiming completeness beyond analyzed inputs
+- General modules, imports, dependency resolution, reflection, generated code,
+  or architectural-health metrics
+- New runtime behavior
+
+#### Focused verification
+
+```bash
+cargo test --workspace --test m20_impact
+python3 specs/tools/core_contract.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+At R1, the compiler returns every and only the frozen `must_change` locations,
+keeps bounded reasoned entries in `review`, lists unavailable consumers in
+`unchecked`, and reports unchanged storage authority and effect ordering.
+Repeated requests and retained parent-revision requests are identical.
+
+### M21 — Atomic schema evolution and completion evidence
+
+**Status:** Planned
+
+#### Scope
+
+- Implement the accepted whole-workspace candidate-change transaction against
+  the current immutable revision
+- Apply ordered canonical per-path edits and validate the complete candidate
+  source set before publication
+- Return the complete cross-revision identity map and accepted semantic diff
+- Return structured rejection diagnostics and machine-readable validation and
+  completion summaries
+- Execute the accepted static, impact, effect, and public behavior checks for
+  the same candidate revision
+- Match every M19 transaction fixture and preserve M11 rename behavior
+
+#### Non-scope
+
+- A fixture-specific `add_priority` operation or automatic product-policy
+  inference
+- Move, extraction, parameter addition, or general refactoring primitives
+- Hidden or official agent benchmark runs
+- General migrations, production adapters, native lowering, or concurrency
+
+#### Focused verification
+
+```bash
+cargo test --workspace --test m21_schema_transaction
+python3 benchmarks/tools/harness.py verify --language ail --visibility public
+python3 specs/tools/core_contract.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The accepted complete R1 priority change commits exactly one R2 whose canonical
+source, identities, semantic diff, validation summary, and behavior match the
+M19 fixtures and all 37 public cases. Stale, incomplete, incompatible,
+effect-changing, or behaviorally failing candidates publish no revision and
+return the declared structured cause.
+
 ## Deferred scaling candidate: architectural regression control
 
 [UC-007](use-cases/UC-007-architectural-regression-control.md), its
 [proposed requirements](requirements/architectural-health.md), and the
 [architectural health manifest](architecture-health.md) remain a separate
-candidate validation track. They are not part of M0–M17 and do not expand a
+candidate validation track. They are not part of M19–M21 and do not expand a
 milestone implicitly.
 
 After the semantic oracle and core protocol exist, maintainers may review
@@ -857,12 +1000,12 @@ requirement set. Accepted work must be added as numbered milestones with
 explicit dependencies.
 
 Architectural-health implementation should follow the core semantic graph and
-revision protocol. It does not block M14 through M17.
+revision protocol. It does not block M19 through M21.
 
 ## Long-range outlook after M17
 
 This section records intended capability order but is not an operational
-roadmap. M14 through M17 own the current compiler path; later work must become
+roadmap. M19 through M21 own the current compiler path; later work must become
 numbered milestones one active at a time.
 
 1. **Broader semantic oracle:** expand the M11 spike subset to the accepted

@@ -9,7 +9,11 @@ The compiler is delivered in conformance slices:
 - M15: static semantics and structured diagnostics (complete);
 - M16: immutable revisions, inspection, validated rename, and identity maps
   (complete);
-- M17: deterministic interpretation of the accepted core (active).
+- M17: deterministic interpretation of the accepted core (complete).
+
+M18 selected compiler-guided UC-003 priority evolution as the next validation
+slice. M19 is defining its conformance contract; no schema-evolution compiler
+behavior is authorized until those numbered rules and fixtures are accepted.
 
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
 behavior. Implementation details do not create language semantics.
