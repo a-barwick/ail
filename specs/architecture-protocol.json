@@ -1,0 +1,323 @@
+{
+  "architecture_protocol_version": 1,
+  "status": "Accepted",
+  "transport": "independent",
+  "canonical_digests": {
+    "algorithm": "SHA-256",
+    "encoding": "lowercase sha256:<hex> over canonical JSON bytes; snapshot/delta objects omit their own digest",
+    "budget_bytes": "structured_bytes is canonical snapshot bytes with budgets.structured_bytes zero and budgets.exhausted at its final value; full response must be <=65536",
+    "candidate_graph": {
+      "object_keys": [
+        "units",
+        "edges"
+      ],
+      "unit_keys": [
+        "id",
+        "module",
+        "group",
+        "cfg",
+        "capabilities",
+        "state_reads",
+        "state_writes"
+      ],
+      "cfg_keys": [
+        "nodes",
+        "edges"
+      ],
+      "unit_order": "UTF-8 identity byte order",
+      "set_order": "deduplicated UTF-8 byte order",
+      "edge_shape": "[source, target, kind]",
+      "edge_order": "UTF-8 source, UTF-8 target, then edge-kind precedence",
+      "edge_kind_precedence": [
+        "calls",
+        "type-use",
+        "verifies",
+        "capability-use",
+        "state-read",
+        "state-write",
+        "delegates"
+      ],
+      "duplicates": "duplicate unit identities and duplicate edge triples are rejected before digesting",
+      "encoding": "canonical UTF-8 JSON with two-space indentation and one final LF",
+      "digest": "lowercase sha256:<hex>"
+    }
+  },
+  "shapes": {
+    "AnalysisIdentity": {
+      "required": [
+        "workspace_id",
+        "revision_id",
+        "semantic_model_version",
+        "policy_revision",
+        "baseline_revision",
+        "analysis_scope"
+      ],
+      "optional": []
+    },
+    "Coverage": {
+      "required": [
+        "analyzed_groups",
+        "unchecked_boundaries",
+        "complete_for_policy"
+      ],
+      "optional": []
+    },
+    "BudgetUse": {
+      "required": [
+        "semantic_nodes",
+        "typed_edges",
+        "structured_bytes",
+        "compact_bytes",
+        "compact_lines",
+        "exhausted"
+      ],
+      "optional": []
+    },
+    "ScopeMetrics": {
+      "required": [
+        "scope_kind",
+        "identity",
+        "unit_ids",
+        "control_flow_complexity",
+        "direct_dependency_set",
+        "declared_capability_set",
+        "state_read_set",
+        "state_write_set",
+        "dependency_component_size",
+        "minimal_context_node_count"
+      ],
+      "optional": []
+    },
+    "Finding": {
+      "required": [
+        "id",
+        "code",
+        "classification",
+        "disposition",
+        "rule",
+        "scope",
+        "contributors",
+        "facts",
+        "exception"
+      ],
+      "optional": []
+    },
+    "PolicySelector": {
+      "required": [
+        "scope_kind",
+        "scope_identity"
+      ],
+      "optional": []
+    },
+    "PolicyRule": {
+      "required": [
+        "id",
+        "selector",
+        "classification",
+        "disposition",
+        "comparison",
+        "value"
+      ],
+      "optional": []
+    },
+    "BaselineMatch": {
+      "required": [
+        "baseline_revision",
+        "scope",
+        "metrics",
+        "accepted_debt"
+      ],
+      "optional": []
+    },
+    "Exception": {
+      "required": [
+        "id",
+        "rule",
+        "scope",
+        "contributors",
+        "policy_revision",
+        "expires_after_review_boundary"
+      ],
+      "optional": []
+    },
+    "ScopeChange": {
+      "required": [
+        "scope_kind",
+        "identity",
+        "base",
+        "candidate"
+      ],
+      "optional": []
+    },
+    "ArchitectureSnapshot": {
+      "required": [
+        "format",
+        "analysis",
+        "scopes",
+        "coverage",
+        "budgets",
+        "active_policies",
+        "baseline_match",
+        "accepted_debt",
+        "exceptions",
+        "findings",
+        "classification",
+        "compact"
+      ],
+      "optional": []
+    },
+    "ArchitectureDelta": {
+      "required": [
+        "format",
+        "base_snapshot_digest",
+        "candidate_snapshot_digest",
+        "base_revision_id",
+        "candidate_revision_id",
+        "scope_changes",
+        "findings",
+        "classification",
+        "publication",
+        "commit",
+        "compact"
+      ],
+      "optional": []
+    },
+    "GovernanceChange": {
+      "required": [
+        "kind",
+        "rule",
+        "scope",
+        "exception_ids"
+      ],
+      "optional": []
+    },
+    "GovernanceAuthorization": {
+      "required": [
+        "authorization_id",
+        "candidate_revision_id",
+        "candidate_graph_digest",
+        "policy_revision",
+        "baseline_revision",
+        "kind",
+        "exception_ids",
+        "rule",
+        "scope",
+        "review_boundary"
+      ],
+      "optional": []
+    },
+    "ArchitectureRequest": {
+      "required": [
+        "base_revision_id",
+        "candidate_revision_id",
+        "analysis_scope",
+        "policy_revision",
+        "baseline_revision",
+        "review_boundary",
+        "requested_governance_changes",
+        "authorization_id"
+      ],
+      "optional": []
+    },
+    "ArchitectureEvaluationInput": {
+      "required": [
+        "request",
+        "governance_authorizations",
+        "active_exceptions",
+        "active_policy_revision",
+        "active_baseline_revision"
+      ],
+      "optional": []
+    },
+    "ArchitectureSnapshotRequest": {
+      "required": [
+        "revision_id",
+        "analysis_scope"
+      ],
+      "optional": []
+    },
+    "ArchitectureSnapshotInput": {
+      "required": [
+        "request",
+        "active_exceptions",
+        "active_policy_revision",
+        "active_baseline_revision"
+      ],
+      "optional": []
+    },
+    "CompletionEvidence": {
+      "required": [
+        "base_revision_id",
+        "revision_id",
+        "base_snapshot_digest",
+        "snapshot_digest",
+        "delta_digest",
+        "policy_revision",
+        "baseline_revision",
+        "coverage",
+        "budgets",
+        "behavior_validation",
+        "commit"
+      ],
+      "optional": []
+    },
+    "ArchitectureSuccess": {
+      "required": [
+        "status",
+        "snapshot",
+        "delta",
+        "completion"
+      ],
+      "optional": []
+    },
+    "ArchitectureSnapshotResponse": {
+      "required": [
+        "status",
+        "snapshot",
+        "snapshot_digest"
+      ],
+      "optional": []
+    },
+    "ArchitectureIncompleteFailure": {
+      "required": [
+        "status",
+        "analysis",
+        "coverage",
+        "budgets",
+        "diagnostics",
+        "edits",
+        "current_revision_id",
+        "published_child_revision_id"
+      ],
+      "optional": []
+    },
+    "ArchitectureFailure": {
+      "required": [
+        "status",
+        "base_revision_id",
+        "current_revision_id",
+        "snapshot",
+        "delta",
+        "diagnostics",
+        "edits",
+        "published_child_revision_id"
+      ],
+      "optional": []
+    }
+  },
+  "operations": {
+    "architecture_snapshot": {
+      "input": "ArchitectureSnapshotInput",
+      "success": "ArchitectureSnapshotResponse",
+      "failure": "ArchitectureIncompleteFailure"
+    },
+    "validate_architecture_change": {
+      "input": "ArchitectureEvaluationInput",
+      "success": "ArchitectureSuccess",
+      "failure": [
+        "ArchitectureFailure",
+        "ArchitectureIncompleteFailure"
+      ]
+    }
+  }
+}

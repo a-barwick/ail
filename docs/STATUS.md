@@ -1,17 +1,17 @@
 # Current status
 
-Last updated: 2026-07-22
+Last updated: 2026-07-23
 
 ## Active milestone
 
-M23 — UC-007 acceptance package (gate passed; stopping before M24 activation)
+M25 — architectural snapshot and agent rendering
 
 ## Current goal
 
-M23 accepted UC-007 and its six derived requirements through a deterministic,
-independently reviewed acceptance package without changing the compiler. It
-remains the active handoff marker because this run was explicitly forbidden
-from starting M24. The execution path is:
+M23 and M24 are Complete. M25 delivered the accepted revision-bound
+architectural snapshot and compact rendering for the frozen M23 starting
+revision. It remains Active as the handoff marker, and work stops before M26.
+The execution path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -25,9 +25,9 @@ M11 five-construct contract (complete)
   -> M20 workspace semantic graph and impact query (complete)
   -> M21 atomic schema evolution and completion evidence (complete)
   -> M22 post-UC-003 validation-slice selection (complete)
-  -> M23 UC-007 acceptance package (active, gate passed)
-  -> M24 architectural regression contract (planned, not started)
-  -> M25 architectural snapshot and agent rendering (planned, conditional)
+  -> M23 UC-007 acceptance package (complete)
+  -> M24 architectural regression contract (complete)
+  -> M25 architectural snapshot and agent rendering (active)
   -> M26 architectural delta, policy, and atomic enforcement (planned, conditional)
   -> M27 non-official architecture-feedback pilot (planned, conditional)
 ```
@@ -44,21 +44,49 @@ mutations, including behavior, coverage, budget, and traceability failures.
 Two independent reviews approved fixture-set digest `ab362d96d89cbba779743dd8a3050b2bd4452ff6daddf3e7ae65109207f7e3ed` and review-subject digest
 `fcb454729e6c2c228802d471d97c1eecd7abc793da407b0ced2bbd76fe9624cf`.
 
-The next agent should:
+The M25 implementation:
 
-- do not begin M24 unless the maintainer explicitly activates it;
-- when activated, read the accepted M23 package and freeze only the smallest
-  normative language and protocol contract it requires;
-- do not infer acceptance of the broader proposed manifest catalog, diagnostic
-  codes, policy vocabulary, or structural operations; and
-- keep compiler implementation in M25/M26 rather than pulling it into M24.
+- uses only the accepted M24 rules, shapes, metrics, diagnostics, and fixtures;
+- derives the frozen R1 snapshot and compact rendering from validated,
+  revision-bound semantic facts; and
+- stops before M26 cross-revision comparison or transaction enforcement.
 
 Amp may be used to author M23. If it is, start from a clean scoped branch,
 record `amp --version`, the selected mode, exact prompt, and thread ID or URL,
 then review the diff and rerun the checks before merging. Amp is an optional
 operator, not official evidence or a source of language semantics.
 
-There is no restart prompt for implementation until M24 is explicitly activated.
+## M25 result
+
+M25 added a read-only Rust architecture snapshot API over validated immutable
+semantic graph revisions. It derives executable-unit, module,
+dependency-component, and architecture-group results for the seven accepted
+metrics, including complete ordered contributors. Policy and baseline context,
+accepted debt, analyzed and unchecked coverage, and all budget counts come from
+the same revision-bound facts.
+
+The compiler emits canonical two-space JSON and the exact compact three-line
+R1 summary from the structured snapshot. The frozen snapshot digest is
+`sha256:b5b855c9e0eda1ac6de0517b66027aff7d755b42a144fdc910b25b3755a128fc`.
+Repeated requests are identical. Coverage loss and semantic-node, typed-edge,
+structured-byte, compact-byte, or compact-line exhaustion return bounded
+incomplete results with no snapshot or edits and cannot appear accepted.
+
+Focused and full repository checks pass. The AIL verification manifest now
+locks the M25 module and focused test while the 37 public runtime cases remain
+unchanged. M25 adds no AIL syntax or runtime behavior and does not compare
+revisions, enforce candidate policy, publish or roll back transactions, or
+start M26.
+
+## M24 result
+
+M24 accepted two language and six protocol rules, seven metrics, four aggregate
+scopes, 23 transport-independent shapes, ten diagnostics, four exact operation
+fixtures plus one read-only incomplete fixture, and 23 executable scenarios. The standalone checker locks
+M23 inputs, independently derives M24 semantics, and rejects 36 contract
+mutations. No AIL grammar, compiler/runtime code, universal policy,
+automatic repair, or official agent evidence was added. M24 is Complete and its
+accepted contract is the fixed input to active M25 implementation.
 
 ## M23 result
 
@@ -288,6 +316,7 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M20 — Workspace semantic graph and impact query
 - M21 — Atomic schema evolution and completion evidence
 - M22 — Post-UC-003 validation-slice selection
+- M23 — UC-007 acceptance package
 
 ## Superseded
 
@@ -302,14 +331,14 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 
 These items require an explicit maintainer decision to resume.
 
-UC-007 and its requirements are accepted. M24–M27 remain planned and activate
-one at a time only when explicitly started.
+UC-007, its requirements, and the bounded M24 contract are accepted. M25 is
+Active; M26–M27 remain planned and activate one at a time only when explicitly
+started.
 
 ## Do not start yet
 
-- M24 contract work until the maintainer explicitly activates M24
-- Architectural-health compiler or runtime implementation before M24 freezes
-  the contract
+- M26 architectural delta, policy, and atomic enforcement
+- Architectural-health behavior beyond the bounded M25 snapshot contract
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
@@ -321,8 +350,7 @@ None.
 
 After meaningful work:
 
-- do not start M24 or implement architectural-health compiler behavior without
-  explicit maintainer activation;
+- do not start M26 or implement cross-revision architecture enforcement;
 - run `cargo fmt --all --check`;
 - run `cargo test --workspace`;
 - run `cargo clippy --workspace --all-targets -- -D warnings`;

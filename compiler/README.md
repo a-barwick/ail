@@ -15,9 +15,10 @@ M18 selected compiler-guided UC-003 priority evolution as the next validation
 slice. M19 accepted its conformance contract, M20 implemented the ordered
 source-set semantic graph and impact query, and M21 completed atomic schema
 evolution and completion evidence. M22 selected architectural regression
-control as the next direction, and M23 is now freezing its acceptance package.
-UC-007 remains Proposed; no architectural-health Rust implementation begins
-until M23 passes and M24 freezes an accepted contract.
+control as the next direction, M23 accepted its concrete evidence package, M24
+accepted the bounded contract, and M25 implements the read-only architectural
+snapshot and compact rendering. Cross-revision policy enforcement remains M26
+work and has not started.
 
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
 behavior. Implementation details do not create language semantics.
@@ -40,3 +41,6 @@ atomic rename transactions with canonical edits and complete identity maps.
 candidates atomically, exposes the exact uncommitted revision to a behavior
 oracle, and returns revision-bound impact, edit, identity, semantic-diff, and
 completion evidence.
+`ail_compiler::architecture_snapshot` derives the accepted four-scope,
+seven-metric architecture snapshot from validated immutable semantic facts and
+returns bounded incomplete results when coverage or a fixed budget is exhausted.

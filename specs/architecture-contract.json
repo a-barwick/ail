@@ -1,0 +1,154 @@
+{
+  "architecture_contract_version": 1,
+  "status": "Accepted",
+  "extends": [
+    "M19",
+    "M21"
+  ],
+  "documents": [
+    "architecture.md",
+    "architecture-protocol.json"
+  ],
+  "requirements": [
+    "APP-006",
+    "LANG-006",
+    "PROTO-006",
+    "PROTO-007",
+    "NFR-006",
+    "NFR-007"
+  ],
+  "rules": [
+    {
+      "id": "M24-LANG-001",
+      "kind": "language",
+      "requirements": [
+        "APP-006",
+        "LANG-006",
+        "PROTO-006",
+        "NFR-006"
+      ]
+    },
+    {
+      "id": "M24-LANG-002",
+      "kind": "language",
+      "requirements": [
+        "APP-006",
+        "LANG-006",
+        "PROTO-007",
+        "NFR-007"
+      ]
+    },
+    {
+      "id": "M24-PROTO-001",
+      "kind": "protocol",
+      "requirements": [
+        "PROTO-006",
+        "PROTO-007",
+        "NFR-006"
+      ]
+    },
+    {
+      "id": "M24-PROTO-002",
+      "kind": "protocol",
+      "requirements": [
+        "PROTO-006",
+        "NFR-006",
+        "NFR-007"
+      ]
+    },
+    {
+      "id": "M24-PROTO-003",
+      "kind": "protocol",
+      "requirements": [
+        "APP-006",
+        "PROTO-007",
+        "NFR-007"
+      ]
+    },
+    {
+      "id": "M24-PROTO-004",
+      "kind": "protocol",
+      "requirements": [
+        "PROTO-006",
+        "NFR-006",
+        "NFR-007"
+      ]
+    },
+    {
+      "id": "M24-PROTO-005",
+      "kind": "protocol",
+      "requirements": [
+        "APP-006",
+        "PROTO-006",
+        "PROTO-007",
+        "NFR-007"
+      ]
+    },
+    {
+      "id": "M24-PROTO-006",
+      "kind": "protocol",
+      "requirements": [
+        "APP-006",
+        "PROTO-006",
+        "PROTO-007",
+        "NFR-006"
+      ]
+    }
+  ],
+  "accepted_metrics": [
+    "control_flow_complexity",
+    "direct_dependency_set",
+    "declared_capability_set",
+    "state_read_set",
+    "state_write_set",
+    "dependency_component_size",
+    "minimal_context_node_count"
+  ],
+  "aggregate_scopes": [
+    "executable-unit",
+    "module",
+    "dependency-component",
+    "architecture-group"
+  ],
+  "diagnostic_codes": [
+    "AIL.ARCH.HOTSPOT_GROWTH",
+    "AIL.ARCH.AUTHORITY",
+    "AIL.ARCH.STATE",
+    "AIL.ARCH.BOUNDARY",
+    "AIL.ARCH.NEW_UNIT",
+    "AIL.ARCH.CYCLE",
+    "AIL.ARCH.COVERAGE_INCOMPLETE",
+    "AIL.ARCH.STALE_BASELINE",
+    "AIL.ARCH.GOVERNANCE_UNAUTHORIZED",
+    "AIL.ARCH.ANALYSIS_INCOMPLETE"
+  ],
+  "module_membership": {
+    "role_templates": {
+      "contract": "contracts",
+      "transport_registration": "transport",
+      "transport_adapter": "transport",
+      "domain_handler": "domain",
+      "behavior_fixture": "tests"
+    },
+    "explicit_units": {
+      "domain:shared_policy": "domain",
+      "transport:dispatch": "transport",
+      "transport:cancel_decision": "transport",
+      "transport:cancel_store": "transport",
+      "transport:cancel_result": "transport"
+    },
+    "endpoint_module": "adapters"
+  },
+  "fixtures": [
+    "architecture-fixtures/results.json",
+    "architecture-fixtures/rejections.json"
+  ],
+  "accepted_input_digests": {
+    "docs/architecture-acceptance.md": "ba4edfaef2bfb8290373748b48174c40573cce536143b86b82a8966025099eb1",
+    "specs/architecture-acceptance.json": "d6a70df6a9630cd71d0165edd03db0fcfc841d32250856e462a86e6eaff0fd62",
+    "specs/architecture-acceptance-fixtures/workspace.json": "e4bd3366c6896115e3f942646620fa9890d00f909a304e515f714c5cf2c64c3e",
+    "specs/architecture-acceptance-fixtures/candidates.json": "d2d82695782f02a917cbb2e48ddb2a999e314d9c77ea4df7c1dabdcff6cd6e34",
+    "specs/architecture-acceptance-fixtures/expected.json": "b3799ffd19f31b4e21b890c0744edca2157a3ad7d77d688d60d519aab260f53e",
+    "specs/tools/architecture_acceptance.py": "e55e20d4b8645e6afbcb50aba854ec097f2561a4af8e4b88ae46d1f4f8cae06f"
+  }
+}

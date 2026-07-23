@@ -62,9 +62,9 @@ becomes active.
 | M20 | Workspace semantic graph and impact query | Complete | M19 |
 | M21 | Atomic schema evolution and completion evidence | Complete | M20 |
 | M22 | Post-UC-003 validation-slice selection | Complete | M21 |
-| M23 | UC-007 acceptance package | Active | M22 |
-| M24 | Architectural regression contract | Planned | M23 acceptance |
-| M25 | Architectural snapshot and agent rendering | Planned | M24 |
+| M23 | UC-007 acceptance package | Complete | M22 |
+| M24 | Architectural regression contract | Complete | M23 acceptance |
+| M25 | Architectural snapshot and agent rendering | Active | M24 |
 | M26 | Architectural delta, policy, and atomic enforcement | Planned | M25 |
 | M27 | Non-official architecture-feedback pilot | Planned | M26 |
 
@@ -1098,7 +1098,7 @@ from the long-range outlook.
 
 ### M23 — UC-007 acceptance package
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -1171,7 +1171,7 @@ before new work.
 
 ### M24 — Architectural regression contract
 
-**Status:** Planned
+**Status:** Complete
 
 #### Scope
 
@@ -1202,9 +1202,23 @@ Two independent readers can predict every structured fact, policy result,
 compact text summary, and commit or rejection outcome without using incidental
 implementation behavior.
 
+#### Delivered
+
+- Accepted two language and six protocol rules traced to all six M23
+  requirements, without adding AIL grammar or compiler behavior
+- Froze exactly seven metrics, four aggregate scopes, 23 transport-independent
+  shapes, ten diagnostic codes, M23 governance, ordering, and fixed budgets
+- Froze four exact operation results plus one read-only incomplete result and
+  23 executable scenarios,
+  including module and dependency-component aggregate evidence
+- Added a standalone dependency-free checker that digest-locks and re-derives
+  the M23 inputs and rejects 36 malformed or weakened contract mutations
+- Accepted the M24 contract while retaining **Active** as the handoff marker;
+  this run stops before M25 and does not activate implementation
+
 ### M25 — Architectural snapshot and agent rendering
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 
@@ -1233,6 +1247,23 @@ The compiler returns the frozen structured snapshot and compact text for the
 starting revision, including exact contributors, policy context, coverage, and
 budgets. Repeated requests are identical and incomplete analysis cannot render
 as clean.
+
+#### Delivered
+
+- Added a read-only Rust snapshot API over validated revision-bound semantic
+  graph, policy, baseline, coverage, and exception facts
+- Derived all seven accepted metrics for executable-unit, module,
+  dependency-component, and architecture-group scopes with exact ordered
+  contributors and deterministic component identities
+- Matched the frozen R1 structured response, compact text, and snapshot digest
+  exactly and returned identical results for repeated requests
+- Accounted for all five fixed budgets in precedence order and returned bounded
+  incomplete results for coverage or budget exhaustion without a snapshot,
+  edits, or clean classification
+- Preserved every prior compiler and 37-case public runtime result; added no
+  syntax, runtime behavior, cross-revision comparison, policy enforcement, or
+  transaction rollback
+- Retained **Active** as the handoff marker and stopped before M26
 
 ### M26 — Architectural delta, policy, and atomic enforcement
 
@@ -1314,8 +1345,9 @@ track. They are not part of M19–M21 and do not expand a milestone implicitly.
 ADR 0006 selected UC-007 acceptance preparation as M23. Its starting workspace,
 cancel-job behavior, project policy, minimal metric set, fixtures, baseline
 comparison, and budgets passed the gate, so UC-007 and its requirements are
-accepted. M24 through M27 remain planned work and activate only when explicitly
-started and their predecessors are complete.
+accepted. M24 has accepted its bounded contract, and M25 has delivered the
+single-revision snapshot while remaining the active handoff marker. M26 and M27
+activate only when explicitly started and their predecessors are complete.
 
 Architectural-health implementation should follow the core semantic graph and
 revision protocol. It does not block M19 through M21.
@@ -1323,9 +1355,9 @@ revision protocol. It does not block M19 through M21.
 ## Long-range outlook after M17
 
 This section records intended capability order but is not an operational
-roadmap. M23 has delivered the UC-007 acceptance package and remains the active
-handoff marker until M24 is explicitly started; M24 through M27 are the only
-planned successor work and activate one milestone at a time.
+roadmap. M23 delivered the UC-007 acceptance package, M24 accepted the bounded
+contract, and M25 delivered the single-revision snapshot. M25 remains the
+active handoff marker; M26 and M27 activate one milestone at a time.
 
 1. **Broader semantic oracle:** expand the M11 spike subset to the accepted
    20–30 construct job-service core, then implement parser recovery and source

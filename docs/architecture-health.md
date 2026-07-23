@@ -8,9 +8,10 @@ and its [derived requirements](requirements/architectural-health.md). It is not
 yet a normative AIL language or protocol specification.
 
 [ADR 0006](decisions/0006-prepare-architectural-regression-control.md) selected
-an M23 acceptance package for this direction. That bounded package passed; this
-broader manifest remains Proposed until M24 selects and accepts exact normative
-rules rather than inheriting the full design catalog implicitly.
+an M23 acceptance package for this direction. That bounded package passed, and
+the [M24 contract](../specs/architecture.md) selected its smallest exact rule,
+metric, protocol, and diagnostic subset. This broader manifest remains Proposed;
+only the bounded contract rules are accepted rather than the full design catalog.
 
 The [accepted M23 package](architecture-acceptance.md) freezes that technical
 evidence and records two review-subject-digest-bound approvals. Its acceptance

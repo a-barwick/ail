@@ -1,0 +1,4180 @@
+{
+  "fixture_format": 2,
+  "accepted_input_fixture_set_digest": "ab362d96d89cbba779743dd8a3050b2bd4452ff6daddf3e7ae65109207f7e3ed",
+  "operations": [
+    {
+      "candidate": "r1",
+      "operation": "architecture_snapshot",
+      "input": {
+        "request": {
+          "revision_id": "arch-r1",
+          "analysis_scope": "transport:dispatch"
+        },
+        "active_exceptions": [],
+        "active_policy_revision": "m23-policy-r1",
+        "active_baseline_revision": "m23-baseline-r1"
+      },
+      "expected_response": {
+        "status": "success",
+        "snapshot": {
+          "format": "ail.architecture.snapshot.v1",
+          "analysis": {
+            "workspace_id": "m23-job-service",
+            "revision_id": "arch-r1",
+            "semantic_model_version": "m24-v1",
+            "policy_revision": "m23-policy-r1",
+            "baseline_revision": "m23-baseline-r1",
+            "analysis_scope": "transport:dispatch"
+          },
+          "scopes": [
+            {
+              "scope_kind": "executable-unit",
+              "identity": "transport:dispatch",
+              "unit_ids": [
+                "transport:dispatch"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 4,
+                "contributors": [
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 4
+                  }
+                ]
+              },
+              "direct_dependency_set": [],
+              "declared_capability_set": [],
+              "state_read_set": [],
+              "state_write_set": [],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 3
+            },
+            {
+              "scope_kind": "module",
+              "identity": "module:transport",
+              "unit_ids": [
+                "transport:adapt:job.acknowledge",
+                "transport:adapt:job.archive",
+                "transport:adapt:job.assign",
+                "transport:adapt:job.clone",
+                "transport:adapt:job.complete",
+                "transport:adapt:job.create",
+                "transport:adapt:job.delete",
+                "transport:adapt:job.deprioritize",
+                "transport:adapt:job.export",
+                "transport:adapt:job.fail",
+                "transport:adapt:job.get",
+                "transport:adapt:job.import",
+                "transport:adapt:job.list",
+                "transport:adapt:job.pause",
+                "transport:adapt:job.prioritize",
+                "transport:adapt:job.restore",
+                "transport:adapt:job.resume",
+                "transport:adapt:job.retry",
+                "transport:adapt:job.schedule",
+                "transport:adapt:job.start",
+                "transport:adapt:job.tag",
+                "transport:adapt:job.unassign",
+                "transport:adapt:job.unschedule",
+                "transport:adapt:job.untag",
+                "transport:dispatch",
+                "transport:register:job.acknowledge",
+                "transport:register:job.archive",
+                "transport:register:job.assign",
+                "transport:register:job.clone",
+                "transport:register:job.complete",
+                "transport:register:job.create",
+                "transport:register:job.delete",
+                "transport:register:job.deprioritize",
+                "transport:register:job.export",
+                "transport:register:job.fail",
+                "transport:register:job.get",
+                "transport:register:job.import",
+                "transport:register:job.list",
+                "transport:register:job.pause",
+                "transport:register:job.prioritize",
+                "transport:register:job.restore",
+                "transport:register:job.resume",
+                "transport:register:job.retry",
+                "transport:register:job.schedule",
+                "transport:register:job.start",
+                "transport:register:job.tag",
+                "transport:register:job.unassign",
+                "transport:register:job.unschedule",
+                "transport:register:job.untag"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 52,
+                "contributors": [
+                  {
+                    "unit_id": "transport:adapt:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.untag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 4
+                  },
+                  {
+                    "unit_id": "transport:register:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.untag",
+                    "value": 1
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "contract:job.acknowledge",
+                "contract:job.archive",
+                "contract:job.assign",
+                "contract:job.clone",
+                "contract:job.complete",
+                "contract:job.create",
+                "contract:job.delete",
+                "contract:job.deprioritize",
+                "contract:job.export",
+                "contract:job.fail",
+                "contract:job.get",
+                "contract:job.import",
+                "contract:job.list",
+                "contract:job.pause",
+                "contract:job.prioritize",
+                "contract:job.restore",
+                "contract:job.resume",
+                "contract:job.retry",
+                "contract:job.schedule",
+                "contract:job.start",
+                "contract:job.tag",
+                "contract:job.unassign",
+                "contract:job.unschedule",
+                "contract:job.untag",
+                "domain:handle:job.acknowledge",
+                "domain:handle:job.archive",
+                "domain:handle:job.assign",
+                "domain:handle:job.clone",
+                "domain:handle:job.complete",
+                "domain:handle:job.create",
+                "domain:handle:job.delete",
+                "domain:handle:job.deprioritize",
+                "domain:handle:job.export",
+                "domain:handle:job.fail",
+                "domain:handle:job.get",
+                "domain:handle:job.import",
+                "domain:handle:job.list",
+                "domain:handle:job.pause",
+                "domain:handle:job.prioritize",
+                "domain:handle:job.restore",
+                "domain:handle:job.resume",
+                "domain:handle:job.retry",
+                "domain:handle:job.schedule",
+                "domain:handle:job.start",
+                "domain:handle:job.tag",
+                "domain:handle:job.unassign",
+                "domain:handle:job.unschedule",
+                "domain:handle:job.untag"
+              ],
+              "declared_capability_set": [],
+              "state_read_set": [],
+              "state_write_set": [],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 98
+            },
+            {
+              "scope_kind": "dependency-component",
+              "identity": "component:sha256:0c648e9d9f502b636225a251d57afdbe1fe02f29516480e22f607450731ae260",
+              "unit_ids": [
+                "transport:dispatch"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 4,
+                "contributors": [
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 4
+                  }
+                ]
+              },
+              "direct_dependency_set": [],
+              "declared_capability_set": [],
+              "state_read_set": [],
+              "state_write_set": [],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 2
+            },
+            {
+              "scope_kind": "architecture-group",
+              "identity": "group:transport",
+              "unit_ids": [
+                "transport:adapt:job.acknowledge",
+                "transport:adapt:job.archive",
+                "transport:adapt:job.assign",
+                "transport:adapt:job.clone",
+                "transport:adapt:job.complete",
+                "transport:adapt:job.create",
+                "transport:adapt:job.delete",
+                "transport:adapt:job.deprioritize",
+                "transport:adapt:job.export",
+                "transport:adapt:job.fail",
+                "transport:adapt:job.get",
+                "transport:adapt:job.import",
+                "transport:adapt:job.list",
+                "transport:adapt:job.pause",
+                "transport:adapt:job.prioritize",
+                "transport:adapt:job.restore",
+                "transport:adapt:job.resume",
+                "transport:adapt:job.retry",
+                "transport:adapt:job.schedule",
+                "transport:adapt:job.start",
+                "transport:adapt:job.tag",
+                "transport:adapt:job.unassign",
+                "transport:adapt:job.unschedule",
+                "transport:adapt:job.untag",
+                "transport:dispatch",
+                "transport:register:job.acknowledge",
+                "transport:register:job.archive",
+                "transport:register:job.assign",
+                "transport:register:job.clone",
+                "transport:register:job.complete",
+                "transport:register:job.create",
+                "transport:register:job.delete",
+                "transport:register:job.deprioritize",
+                "transport:register:job.export",
+                "transport:register:job.fail",
+                "transport:register:job.get",
+                "transport:register:job.import",
+                "transport:register:job.list",
+                "transport:register:job.pause",
+                "transport:register:job.prioritize",
+                "transport:register:job.restore",
+                "transport:register:job.resume",
+                "transport:register:job.retry",
+                "transport:register:job.schedule",
+                "transport:register:job.start",
+                "transport:register:job.tag",
+                "transport:register:job.unassign",
+                "transport:register:job.unschedule",
+                "transport:register:job.untag"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 52,
+                "contributors": [
+                  {
+                    "unit_id": "transport:adapt:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.untag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 4
+                  },
+                  {
+                    "unit_id": "transport:register:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.untag",
+                    "value": 1
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "contract:job.acknowledge",
+                "contract:job.archive",
+                "contract:job.assign",
+                "contract:job.clone",
+                "contract:job.complete",
+                "contract:job.create",
+                "contract:job.delete",
+                "contract:job.deprioritize",
+                "contract:job.export",
+                "contract:job.fail",
+                "contract:job.get",
+                "contract:job.import",
+                "contract:job.list",
+                "contract:job.pause",
+                "contract:job.prioritize",
+                "contract:job.restore",
+                "contract:job.resume",
+                "contract:job.retry",
+                "contract:job.schedule",
+                "contract:job.start",
+                "contract:job.tag",
+                "contract:job.unassign",
+                "contract:job.unschedule",
+                "contract:job.untag",
+                "domain:handle:job.acknowledge",
+                "domain:handle:job.archive",
+                "domain:handle:job.assign",
+                "domain:handle:job.clone",
+                "domain:handle:job.complete",
+                "domain:handle:job.create",
+                "domain:handle:job.delete",
+                "domain:handle:job.deprioritize",
+                "domain:handle:job.export",
+                "domain:handle:job.fail",
+                "domain:handle:job.get",
+                "domain:handle:job.import",
+                "domain:handle:job.list",
+                "domain:handle:job.pause",
+                "domain:handle:job.prioritize",
+                "domain:handle:job.restore",
+                "domain:handle:job.resume",
+                "domain:handle:job.retry",
+                "domain:handle:job.schedule",
+                "domain:handle:job.start",
+                "domain:handle:job.tag",
+                "domain:handle:job.unassign",
+                "domain:handle:job.unschedule",
+                "domain:handle:job.untag"
+              ],
+              "declared_capability_set": [],
+              "state_read_set": [],
+              "state_write_set": [],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 98
+            }
+          ],
+          "coverage": {
+            "analyzed_groups": [
+              "contract",
+              "transport",
+              "domain",
+              "persistence-adapter",
+              "verification"
+            ],
+            "unchecked_boundaries": [
+              {
+                "id": "external:job-api-clients",
+                "reason": "client source unavailable"
+              }
+            ],
+            "complete_for_policy": true
+          },
+          "budgets": {
+            "semantic_nodes": 122,
+            "typed_edges": 120,
+            "structured_bytes": 24074,
+            "compact_bytes": 111,
+            "compact_lines": 3,
+            "exhausted": null
+          },
+          "active_policies": [
+            {
+              "id": "M23-POL-GROUP-DEPENDENCY",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "*"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "subset-by-source-group",
+              "value": {
+                "contract": [],
+                "transport": [
+                  "contract",
+                  "domain",
+                  "transport"
+                ],
+                "domain": [
+                  "contract",
+                  "domain",
+                  "persistence-adapter"
+                ],
+                "persistence-adapter": [
+                  "contract",
+                  "persistence-adapter"
+                ],
+                "verification": [
+                  "contract",
+                  "domain",
+                  "transport",
+                  "persistence-adapter",
+                  "verification"
+                ]
+              }
+            },
+            {
+              "id": "M23-POL-TRANSPORT-CAPABILITY",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "group:transport"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "set-subset",
+              "value": []
+            },
+            {
+              "id": "M23-POL-TRANSPORT-STATE",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "group:transport"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "read-and-write-set-subset",
+              "value": []
+            },
+            {
+              "id": "M23-POL-DISPATCH-NO-GROWTH",
+              "selector": {
+                "scope_kind": "executable-unit",
+                "scope_identity": "transport:dispatch"
+              },
+              "classification": "regression",
+              "disposition": "deny",
+              "comparison": "both-less-than-or-equal-baseline",
+              "value": {
+                "control_flow_complexity": 4,
+                "minimal_context_node_count": 3
+              }
+            },
+            {
+              "id": "M23-POL-NEW-UNIT",
+              "selector": {
+                "scope_kind": "executable-unit",
+                "scope_identity": "new-non-contract-unit"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "both-less-than-or-equal",
+              "value": {
+                "control_flow_complexity_max": 4,
+                "minimal_context_node_count_max": 12
+              }
+            },
+            {
+              "id": "M23-POL-NO-NEW-CYCLE",
+              "selector": {
+                "scope_kind": "dependency-component",
+                "scope_identity": "new-component"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "new-component-member-count-less-than-or-equal",
+              "value": 1
+            },
+            {
+              "id": "M23-POL-COVERAGE",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "*"
+              },
+              "classification": "incomplete",
+              "disposition": "deny",
+              "comparison": "complete-for-policy-equals",
+              "value": true
+            },
+            {
+              "id": "M23-POL-GOVERNANCE",
+              "selector": {
+                "scope_kind": "governance",
+                "scope_identity": "trusted-input"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "trusted-revisions-and-exact-exceptions-equal",
+              "value": {
+                "policy_revision": "m23-policy-r1",
+                "baseline_revision": "m23-baseline-r1",
+                "exceptions": []
+              }
+            }
+          ],
+          "baseline_match": {
+            "baseline_revision": "m23-baseline-r1",
+            "scope": "transport:dispatch",
+            "metrics": {
+              "control_flow_complexity": 4,
+              "minimal_context_node_count": 3
+            },
+            "accepted_debt": true
+          },
+          "accepted_debt": [
+            {
+              "rule": "M23-POL-DISPATCH-NO-GROWTH",
+              "scope": "transport:dispatch",
+              "baseline_revision": "m23-baseline-r1",
+              "metrics": {
+                "control_flow_complexity": 4,
+                "minimal_context_node_count": 3
+              }
+            }
+          ],
+          "exceptions": [],
+          "findings": [],
+          "classification": "accepted",
+          "compact": "accepted arch-r1 scope=transport:dispatch\npolicy=m23-policy-r1 baseline=m23-baseline-r1\ncoverage=5 unchecked=1\n"
+        },
+        "snapshot_digest": "sha256:b5b855c9e0eda1ac6de0517b66027aff7d755b42a144fdc910b25b3755a128fc"
+      }
+    },
+    {
+      "candidate": "valid",
+      "operation": "validate_architecture_change",
+      "input": {
+        "request": {
+          "base_revision_id": "arch-r1",
+          "candidate_revision_id": "arch-r2-valid",
+          "analysis_scope": "domain:handle:job.cancel",
+          "policy_revision": "m23-policy-r1",
+          "baseline_revision": "m23-baseline-r1",
+          "review_boundary": "review-2026-07-22",
+          "requested_governance_changes": [],
+          "authorization_id": null
+        },
+        "governance_authorizations": [],
+        "active_exceptions": [],
+        "active_policy_revision": "m23-policy-r1",
+        "active_baseline_revision": "m23-baseline-r1"
+      },
+      "expected_response": {
+        "status": "success",
+        "snapshot": {
+          "format": "ail.architecture.snapshot.v1",
+          "analysis": {
+            "workspace_id": "m23-job-service",
+            "revision_id": "arch-r2-valid",
+            "semantic_model_version": "m24-v1",
+            "policy_revision": "m23-policy-r1",
+            "baseline_revision": "m23-baseline-r1",
+            "analysis_scope": "domain:handle:job.cancel"
+          },
+          "scopes": [
+            {
+              "scope_kind": "executable-unit",
+              "identity": "domain:handle:job.cancel",
+              "unit_ids": [
+                "domain:handle:job.cancel"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 4,
+                "contributors": [
+                  {
+                    "unit_id": "domain:handle:job.cancel",
+                    "value": 4
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 6
+            },
+            {
+              "scope_kind": "module",
+              "identity": "module:domain",
+              "unit_ids": [
+                "domain:handle:job.acknowledge",
+                "domain:handle:job.archive",
+                "domain:handle:job.assign",
+                "domain:handle:job.cancel",
+                "domain:handle:job.clone",
+                "domain:handle:job.complete",
+                "domain:handle:job.create",
+                "domain:handle:job.delete",
+                "domain:handle:job.deprioritize",
+                "domain:handle:job.export",
+                "domain:handle:job.fail",
+                "domain:handle:job.get",
+                "domain:handle:job.import",
+                "domain:handle:job.list",
+                "domain:handle:job.pause",
+                "domain:handle:job.prioritize",
+                "domain:handle:job.restore",
+                "domain:handle:job.resume",
+                "domain:handle:job.retry",
+                "domain:handle:job.schedule",
+                "domain:handle:job.start",
+                "domain:handle:job.tag",
+                "domain:handle:job.unassign",
+                "domain:handle:job.unschedule",
+                "domain:handle:job.untag",
+                "domain:shared_policy"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 54,
+                "contributors": [
+                  {
+                    "unit_id": "domain:handle:job.acknowledge",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.archive",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.assign",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.cancel",
+                    "value": 4
+                  },
+                  {
+                    "unit_id": "domain:handle:job.clone",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.complete",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.create",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.delete",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.deprioritize",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.export",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.fail",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.get",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.import",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.list",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.pause",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.prioritize",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.restore",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.resume",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.retry",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.schedule",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.start",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.tag",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.unassign",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.unschedule",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.untag",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:shared_policy",
+                    "value": 2
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 79
+            },
+            {
+              "scope_kind": "dependency-component",
+              "identity": "component:sha256:befce04daf8f54b3f8fee533b3762ecce6f49e073bb5a6d0a5a71eee50f60503",
+              "unit_ids": [
+                "domain:handle:job.cancel"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 4,
+                "contributors": [
+                  {
+                    "unit_id": "domain:handle:job.cancel",
+                    "value": 4
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 6
+            },
+            {
+              "scope_kind": "architecture-group",
+              "identity": "group:domain",
+              "unit_ids": [
+                "domain:handle:job.acknowledge",
+                "domain:handle:job.archive",
+                "domain:handle:job.assign",
+                "domain:handle:job.cancel",
+                "domain:handle:job.clone",
+                "domain:handle:job.complete",
+                "domain:handle:job.create",
+                "domain:handle:job.delete",
+                "domain:handle:job.deprioritize",
+                "domain:handle:job.export",
+                "domain:handle:job.fail",
+                "domain:handle:job.get",
+                "domain:handle:job.import",
+                "domain:handle:job.list",
+                "domain:handle:job.pause",
+                "domain:handle:job.prioritize",
+                "domain:handle:job.restore",
+                "domain:handle:job.resume",
+                "domain:handle:job.retry",
+                "domain:handle:job.schedule",
+                "domain:handle:job.start",
+                "domain:handle:job.tag",
+                "domain:handle:job.unassign",
+                "domain:handle:job.unschedule",
+                "domain:handle:job.untag",
+                "domain:shared_policy"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 54,
+                "contributors": [
+                  {
+                    "unit_id": "domain:handle:job.acknowledge",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.archive",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.assign",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.cancel",
+                    "value": 4
+                  },
+                  {
+                    "unit_id": "domain:handle:job.clone",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.complete",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.create",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.delete",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.deprioritize",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.export",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.fail",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.get",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.import",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.list",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.pause",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.prioritize",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.restore",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.resume",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.retry",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.schedule",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.start",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.tag",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.unassign",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.unschedule",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:handle:job.untag",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "domain:shared_policy",
+                    "value": 2
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 79
+            }
+          ],
+          "coverage": {
+            "analyzed_groups": [
+              "contract",
+              "transport",
+              "domain",
+              "persistence-adapter",
+              "verification"
+            ],
+            "unchecked_boundaries": [
+              {
+                "id": "external:job-api-clients",
+                "reason": "client source unavailable"
+              }
+            ],
+            "complete_for_policy": true
+          },
+          "budgets": {
+            "semantic_nodes": 129,
+            "typed_edges": 127,
+            "structured_bytes": 14524,
+            "compact_bytes": 123,
+            "compact_lines": 3,
+            "exhausted": null
+          },
+          "active_policies": [
+            {
+              "id": "M23-POL-GROUP-DEPENDENCY",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "*"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "subset-by-source-group",
+              "value": {
+                "contract": [],
+                "transport": [
+                  "contract",
+                  "domain",
+                  "transport"
+                ],
+                "domain": [
+                  "contract",
+                  "domain",
+                  "persistence-adapter"
+                ],
+                "persistence-adapter": [
+                  "contract",
+                  "persistence-adapter"
+                ],
+                "verification": [
+                  "contract",
+                  "domain",
+                  "transport",
+                  "persistence-adapter",
+                  "verification"
+                ]
+              }
+            },
+            {
+              "id": "M23-POL-TRANSPORT-CAPABILITY",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "group:transport"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "set-subset",
+              "value": []
+            },
+            {
+              "id": "M23-POL-TRANSPORT-STATE",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "group:transport"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "read-and-write-set-subset",
+              "value": []
+            },
+            {
+              "id": "M23-POL-DISPATCH-NO-GROWTH",
+              "selector": {
+                "scope_kind": "executable-unit",
+                "scope_identity": "transport:dispatch"
+              },
+              "classification": "regression",
+              "disposition": "deny",
+              "comparison": "both-less-than-or-equal-baseline",
+              "value": {
+                "control_flow_complexity": 4,
+                "minimal_context_node_count": 3
+              }
+            },
+            {
+              "id": "M23-POL-NEW-UNIT",
+              "selector": {
+                "scope_kind": "executable-unit",
+                "scope_identity": "new-non-contract-unit"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "both-less-than-or-equal",
+              "value": {
+                "control_flow_complexity_max": 4,
+                "minimal_context_node_count_max": 12
+              }
+            },
+            {
+              "id": "M23-POL-NO-NEW-CYCLE",
+              "selector": {
+                "scope_kind": "dependency-component",
+                "scope_identity": "new-component"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "new-component-member-count-less-than-or-equal",
+              "value": 1
+            },
+            {
+              "id": "M23-POL-COVERAGE",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "*"
+              },
+              "classification": "incomplete",
+              "disposition": "deny",
+              "comparison": "complete-for-policy-equals",
+              "value": true
+            },
+            {
+              "id": "M23-POL-GOVERNANCE",
+              "selector": {
+                "scope_kind": "governance",
+                "scope_identity": "trusted-input"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "trusted-revisions-and-exact-exceptions-equal",
+              "value": {
+                "policy_revision": "m23-policy-r1",
+                "baseline_revision": "m23-baseline-r1",
+                "exceptions": []
+              }
+            }
+          ],
+          "baseline_match": {
+            "baseline_revision": "m23-baseline-r1",
+            "scope": "transport:dispatch",
+            "metrics": {
+              "control_flow_complexity": 4,
+              "minimal_context_node_count": 3
+            },
+            "accepted_debt": true
+          },
+          "accepted_debt": [
+            {
+              "rule": "M23-POL-DISPATCH-NO-GROWTH",
+              "scope": "transport:dispatch",
+              "baseline_revision": "m23-baseline-r1",
+              "metrics": {
+                "control_flow_complexity": 4,
+                "minimal_context_node_count": 3
+              }
+            }
+          ],
+          "exceptions": [],
+          "findings": [],
+          "classification": "accepted",
+          "compact": "accepted arch-r2-valid scope=domain:handle:job.cancel\npolicy=m23-policy-r1 baseline=m23-baseline-r1\ncoverage=5 unchecked=1\n"
+        },
+        "delta": {
+          "format": "ail.architecture.delta.v1",
+          "base_snapshot_digest": "sha256:b5b855c9e0eda1ac6de0517b66027aff7d755b42a144fdc910b25b3755a128fc",
+          "candidate_snapshot_digest": "sha256:2803f53269b79f55c67c5cb3d946c449af859b884d694091423669c3a41e5c8c",
+          "base_revision_id": "arch-r1",
+          "candidate_revision_id": "arch-r2-valid",
+          "scope_changes": [
+            {
+              "scope_kind": "executable-unit",
+              "identity": "domain:handle:job.cancel",
+              "base": null,
+              "candidate": "sha256:416b4b9dfecfd538cf4bd1ebc83235dbe7ec3ef82ced01558866005a6a0a2a58"
+            },
+            {
+              "scope_kind": "executable-unit",
+              "identity": "transport:dispatch",
+              "base": "sha256:c6b5edc2d6815078c670fe839c3eb70f6728699e02f0a94a9053161dd0708e37",
+              "candidate": null
+            },
+            {
+              "scope_kind": "module",
+              "identity": "module:domain",
+              "base": null,
+              "candidate": "sha256:0bcb83c074edb06a75d791f03340fe276758729583f0778f170972a9f1be1b66"
+            },
+            {
+              "scope_kind": "module",
+              "identity": "module:transport",
+              "base": "sha256:1f647ed334095d3a7610f6057fe617d0c3b29fc18e485bb6cc38f7019586f820",
+              "candidate": null
+            },
+            {
+              "scope_kind": "dependency-component",
+              "identity": "component:sha256:0c648e9d9f502b636225a251d57afdbe1fe02f29516480e22f607450731ae260",
+              "base": "sha256:b4fe9c7badbd61b3149935eb88d0d08a0d790ff15439e195ea3e144d7d5a72f5",
+              "candidate": null
+            },
+            {
+              "scope_kind": "dependency-component",
+              "identity": "component:sha256:befce04daf8f54b3f8fee533b3762ecce6f49e073bb5a6d0a5a71eee50f60503",
+              "base": null,
+              "candidate": "sha256:233b6a90039a7ca91149c749b8ceb36fdb70f31ab94c12e0eb42ffb48aa90d66"
+            },
+            {
+              "scope_kind": "architecture-group",
+              "identity": "group:domain",
+              "base": null,
+              "candidate": "sha256:fb547a7c5e6b790a7c357a12b3c3574bef24af2a90daf87a51de701b376f8f45"
+            },
+            {
+              "scope_kind": "architecture-group",
+              "identity": "group:transport",
+              "base": "sha256:68b1109e63c1f6fcd91b48d10f36a0c3b9b6fb13708db900b6cecee02199492d",
+              "candidate": null
+            }
+          ],
+          "findings": [],
+          "classification": "accepted",
+          "publication": "published",
+          "commit": "committed",
+          "compact": "accepted arch-r1->arch-r2-valid changes=8 findings=0 publication=arch-r2-valid\n"
+        },
+        "completion": {
+          "base_revision_id": "arch-r1",
+          "revision_id": "arch-r2-valid",
+          "base_snapshot_digest": "sha256:b5b855c9e0eda1ac6de0517b66027aff7d755b42a144fdc910b25b3755a128fc",
+          "snapshot_digest": "sha256:2803f53269b79f55c67c5cb3d946c449af859b884d694091423669c3a41e5c8c",
+          "delta_digest": "sha256:1abba03dd786a832d3bef8591872d6d7b58095603feab6d0f2903b3a9b8ffc49",
+          "policy_revision": "m23-policy-r1",
+          "baseline_revision": "m23-baseline-r1",
+          "coverage": {
+            "analyzed_groups": [
+              "contract",
+              "transport",
+              "domain",
+              "persistence-adapter",
+              "verification"
+            ],
+            "unchecked_boundaries": [
+              {
+                "id": "external:job-api-clients",
+                "reason": "client source unavailable"
+              }
+            ],
+            "complete_for_policy": true
+          },
+          "budgets": {
+            "semantic_nodes": 129,
+            "typed_edges": 127,
+            "structured_bytes": 14524,
+            "compact_bytes": 123,
+            "compact_lines": 3,
+            "exhausted": null
+          },
+          "behavior_validation": {
+            "status": "passed",
+            "cases_passed": 6,
+            "cases_total": 6
+          },
+          "commit": "committed"
+        }
+      }
+    },
+    {
+      "candidate": "centralized",
+      "operation": "validate_architecture_change",
+      "input": {
+        "request": {
+          "base_revision_id": "arch-r1",
+          "candidate_revision_id": "arch-r2-centralized",
+          "analysis_scope": "transport:dispatch",
+          "policy_revision": "m23-policy-r1",
+          "baseline_revision": "m23-baseline-r1",
+          "review_boundary": "review-2026-07-22",
+          "requested_governance_changes": [],
+          "authorization_id": null
+        },
+        "governance_authorizations": [],
+        "active_exceptions": [],
+        "active_policy_revision": "m23-policy-r1",
+        "active_baseline_revision": "m23-baseline-r1"
+      },
+      "expected_response": {
+        "status": "failure",
+        "base_revision_id": "arch-r1",
+        "current_revision_id": "arch-r1",
+        "snapshot": {
+          "format": "ail.architecture.snapshot.v1",
+          "analysis": {
+            "workspace_id": "m23-job-service",
+            "revision_id": "arch-r2-centralized",
+            "semantic_model_version": "m24-v1",
+            "policy_revision": "m23-policy-r1",
+            "baseline_revision": "m23-baseline-r1",
+            "analysis_scope": "transport:dispatch"
+          },
+          "scopes": [
+            {
+              "scope_kind": "executable-unit",
+              "identity": "transport:dispatch",
+              "unit_ids": [
+                "transport:dispatch"
+              ],
+              "control_flow_complexity": {
+                "maximum": 7,
+                "sum": 7,
+                "contributors": [
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 7
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "contract:job.cancel",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 8
+            },
+            {
+              "scope_kind": "module",
+              "identity": "module:transport",
+              "unit_ids": [
+                "transport:adapt:job.acknowledge",
+                "transport:adapt:job.archive",
+                "transport:adapt:job.assign",
+                "transport:adapt:job.cancel",
+                "transport:adapt:job.clone",
+                "transport:adapt:job.complete",
+                "transport:adapt:job.create",
+                "transport:adapt:job.delete",
+                "transport:adapt:job.deprioritize",
+                "transport:adapt:job.export",
+                "transport:adapt:job.fail",
+                "transport:adapt:job.get",
+                "transport:adapt:job.import",
+                "transport:adapt:job.list",
+                "transport:adapt:job.pause",
+                "transport:adapt:job.prioritize",
+                "transport:adapt:job.restore",
+                "transport:adapt:job.resume",
+                "transport:adapt:job.retry",
+                "transport:adapt:job.schedule",
+                "transport:adapt:job.start",
+                "transport:adapt:job.tag",
+                "transport:adapt:job.unassign",
+                "transport:adapt:job.unschedule",
+                "transport:adapt:job.untag",
+                "transport:dispatch",
+                "transport:register:job.acknowledge",
+                "transport:register:job.archive",
+                "transport:register:job.assign",
+                "transport:register:job.cancel",
+                "transport:register:job.clone",
+                "transport:register:job.complete",
+                "transport:register:job.create",
+                "transport:register:job.delete",
+                "transport:register:job.deprioritize",
+                "transport:register:job.export",
+                "transport:register:job.fail",
+                "transport:register:job.get",
+                "transport:register:job.import",
+                "transport:register:job.list",
+                "transport:register:job.pause",
+                "transport:register:job.prioritize",
+                "transport:register:job.restore",
+                "transport:register:job.resume",
+                "transport:register:job.retry",
+                "transport:register:job.schedule",
+                "transport:register:job.start",
+                "transport:register:job.tag",
+                "transport:register:job.unassign",
+                "transport:register:job.unschedule",
+                "transport:register:job.untag"
+              ],
+              "control_flow_complexity": {
+                "maximum": 7,
+                "sum": 57,
+                "contributors": [
+                  {
+                    "unit_id": "transport:adapt:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.cancel",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.untag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 7
+                  },
+                  {
+                    "unit_id": "transport:register:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.cancel",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.untag",
+                    "value": 1
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "contract:job.acknowledge",
+                "contract:job.archive",
+                "contract:job.assign",
+                "contract:job.cancel",
+                "contract:job.clone",
+                "contract:job.complete",
+                "contract:job.create",
+                "contract:job.delete",
+                "contract:job.deprioritize",
+                "contract:job.export",
+                "contract:job.fail",
+                "contract:job.get",
+                "contract:job.import",
+                "contract:job.list",
+                "contract:job.pause",
+                "contract:job.prioritize",
+                "contract:job.restore",
+                "contract:job.resume",
+                "contract:job.retry",
+                "contract:job.schedule",
+                "contract:job.start",
+                "contract:job.tag",
+                "contract:job.unassign",
+                "contract:job.unschedule",
+                "contract:job.untag",
+                "domain:handle:job.acknowledge",
+                "domain:handle:job.archive",
+                "domain:handle:job.assign",
+                "domain:handle:job.clone",
+                "domain:handle:job.complete",
+                "domain:handle:job.create",
+                "domain:handle:job.delete",
+                "domain:handle:job.deprioritize",
+                "domain:handle:job.export",
+                "domain:handle:job.fail",
+                "domain:handle:job.get",
+                "domain:handle:job.import",
+                "domain:handle:job.list",
+                "domain:handle:job.pause",
+                "domain:handle:job.prioritize",
+                "domain:handle:job.restore",
+                "domain:handle:job.resume",
+                "domain:handle:job.retry",
+                "domain:handle:job.schedule",
+                "domain:handle:job.start",
+                "domain:handle:job.tag",
+                "domain:handle:job.unassign",
+                "domain:handle:job.unschedule",
+                "domain:handle:job.untag",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 104
+            },
+            {
+              "scope_kind": "dependency-component",
+              "identity": "component:sha256:0c648e9d9f502b636225a251d57afdbe1fe02f29516480e22f607450731ae260",
+              "unit_ids": [
+                "transport:dispatch"
+              ],
+              "control_flow_complexity": {
+                "maximum": 7,
+                "sum": 7,
+                "contributors": [
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 7
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "contract:job.cancel",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 7
+            },
+            {
+              "scope_kind": "architecture-group",
+              "identity": "group:transport",
+              "unit_ids": [
+                "transport:adapt:job.acknowledge",
+                "transport:adapt:job.archive",
+                "transport:adapt:job.assign",
+                "transport:adapt:job.cancel",
+                "transport:adapt:job.clone",
+                "transport:adapt:job.complete",
+                "transport:adapt:job.create",
+                "transport:adapt:job.delete",
+                "transport:adapt:job.deprioritize",
+                "transport:adapt:job.export",
+                "transport:adapt:job.fail",
+                "transport:adapt:job.get",
+                "transport:adapt:job.import",
+                "transport:adapt:job.list",
+                "transport:adapt:job.pause",
+                "transport:adapt:job.prioritize",
+                "transport:adapt:job.restore",
+                "transport:adapt:job.resume",
+                "transport:adapt:job.retry",
+                "transport:adapt:job.schedule",
+                "transport:adapt:job.start",
+                "transport:adapt:job.tag",
+                "transport:adapt:job.unassign",
+                "transport:adapt:job.unschedule",
+                "transport:adapt:job.untag",
+                "transport:dispatch",
+                "transport:register:job.acknowledge",
+                "transport:register:job.archive",
+                "transport:register:job.assign",
+                "transport:register:job.cancel",
+                "transport:register:job.clone",
+                "transport:register:job.complete",
+                "transport:register:job.create",
+                "transport:register:job.delete",
+                "transport:register:job.deprioritize",
+                "transport:register:job.export",
+                "transport:register:job.fail",
+                "transport:register:job.get",
+                "transport:register:job.import",
+                "transport:register:job.list",
+                "transport:register:job.pause",
+                "transport:register:job.prioritize",
+                "transport:register:job.restore",
+                "transport:register:job.resume",
+                "transport:register:job.retry",
+                "transport:register:job.schedule",
+                "transport:register:job.start",
+                "transport:register:job.tag",
+                "transport:register:job.unassign",
+                "transport:register:job.unschedule",
+                "transport:register:job.untag"
+              ],
+              "control_flow_complexity": {
+                "maximum": 7,
+                "sum": 57,
+                "contributors": [
+                  {
+                    "unit_id": "transport:adapt:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.cancel",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.untag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 7
+                  },
+                  {
+                    "unit_id": "transport:register:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.cancel",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.untag",
+                    "value": 1
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "contract:job.acknowledge",
+                "contract:job.archive",
+                "contract:job.assign",
+                "contract:job.cancel",
+                "contract:job.clone",
+                "contract:job.complete",
+                "contract:job.create",
+                "contract:job.delete",
+                "contract:job.deprioritize",
+                "contract:job.export",
+                "contract:job.fail",
+                "contract:job.get",
+                "contract:job.import",
+                "contract:job.list",
+                "contract:job.pause",
+                "contract:job.prioritize",
+                "contract:job.restore",
+                "contract:job.resume",
+                "contract:job.retry",
+                "contract:job.schedule",
+                "contract:job.start",
+                "contract:job.tag",
+                "contract:job.unassign",
+                "contract:job.unschedule",
+                "contract:job.untag",
+                "domain:handle:job.acknowledge",
+                "domain:handle:job.archive",
+                "domain:handle:job.assign",
+                "domain:handle:job.clone",
+                "domain:handle:job.complete",
+                "domain:handle:job.create",
+                "domain:handle:job.delete",
+                "domain:handle:job.deprioritize",
+                "domain:handle:job.export",
+                "domain:handle:job.fail",
+                "domain:handle:job.get",
+                "domain:handle:job.import",
+                "domain:handle:job.list",
+                "domain:handle:job.pause",
+                "domain:handle:job.prioritize",
+                "domain:handle:job.restore",
+                "domain:handle:job.resume",
+                "domain:handle:job.retry",
+                "domain:handle:job.schedule",
+                "domain:handle:job.start",
+                "domain:handle:job.tag",
+                "domain:handle:job.unassign",
+                "domain:handle:job.unschedule",
+                "domain:handle:job.untag",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 104
+            }
+          ],
+          "coverage": {
+            "analyzed_groups": [
+              "contract",
+              "transport",
+              "domain",
+              "persistence-adapter",
+              "verification"
+            ],
+            "unchecked_boundaries": [
+              {
+                "id": "external:job-api-clients",
+                "reason": "client source unavailable"
+              }
+            ],
+            "complete_for_policy": true
+          },
+          "budgets": {
+            "semantic_nodes": 128,
+            "typed_edges": 128,
+            "structured_bytes": 28369,
+            "compact_bytes": 494,
+            "compact_lines": 7,
+            "exhausted": null
+          },
+          "active_policies": [
+            {
+              "id": "M23-POL-GROUP-DEPENDENCY",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "*"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "subset-by-source-group",
+              "value": {
+                "contract": [],
+                "transport": [
+                  "contract",
+                  "domain",
+                  "transport"
+                ],
+                "domain": [
+                  "contract",
+                  "domain",
+                  "persistence-adapter"
+                ],
+                "persistence-adapter": [
+                  "contract",
+                  "persistence-adapter"
+                ],
+                "verification": [
+                  "contract",
+                  "domain",
+                  "transport",
+                  "persistence-adapter",
+                  "verification"
+                ]
+              }
+            },
+            {
+              "id": "M23-POL-TRANSPORT-CAPABILITY",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "group:transport"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "set-subset",
+              "value": []
+            },
+            {
+              "id": "M23-POL-TRANSPORT-STATE",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "group:transport"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "read-and-write-set-subset",
+              "value": []
+            },
+            {
+              "id": "M23-POL-DISPATCH-NO-GROWTH",
+              "selector": {
+                "scope_kind": "executable-unit",
+                "scope_identity": "transport:dispatch"
+              },
+              "classification": "regression",
+              "disposition": "deny",
+              "comparison": "both-less-than-or-equal-baseline",
+              "value": {
+                "control_flow_complexity": 4,
+                "minimal_context_node_count": 3
+              }
+            },
+            {
+              "id": "M23-POL-NEW-UNIT",
+              "selector": {
+                "scope_kind": "executable-unit",
+                "scope_identity": "new-non-contract-unit"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "both-less-than-or-equal",
+              "value": {
+                "control_flow_complexity_max": 4,
+                "minimal_context_node_count_max": 12
+              }
+            },
+            {
+              "id": "M23-POL-NO-NEW-CYCLE",
+              "selector": {
+                "scope_kind": "dependency-component",
+                "scope_identity": "new-component"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "new-component-member-count-less-than-or-equal",
+              "value": 1
+            },
+            {
+              "id": "M23-POL-COVERAGE",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "*"
+              },
+              "classification": "incomplete",
+              "disposition": "deny",
+              "comparison": "complete-for-policy-equals",
+              "value": true
+            },
+            {
+              "id": "M23-POL-GOVERNANCE",
+              "selector": {
+                "scope_kind": "governance",
+                "scope_identity": "trusted-input"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "trusted-revisions-and-exact-exceptions-equal",
+              "value": {
+                "policy_revision": "m23-policy-r1",
+                "baseline_revision": "m23-baseline-r1",
+                "exceptions": []
+              }
+            }
+          ],
+          "baseline_match": {
+            "baseline_revision": "m23-baseline-r1",
+            "scope": "transport:dispatch",
+            "metrics": {
+              "control_flow_complexity": 4,
+              "minimal_context_node_count": 3
+            },
+            "accepted_debt": true
+          },
+          "accepted_debt": [
+            {
+              "rule": "M23-POL-DISPATCH-NO-GROWTH",
+              "scope": "transport:dispatch",
+              "baseline_revision": "m23-baseline-r1",
+              "metrics": {
+                "control_flow_complexity": 4,
+                "minimal_context_node_count": 3
+              }
+            }
+          ],
+          "exceptions": [],
+          "findings": [
+            {
+              "id": "centralized:dispatch-growth",
+              "code": "AIL.ARCH.HOTSPOT_GROWTH",
+              "classification": "regression",
+              "disposition": "deny",
+              "rule": "M23-POL-DISPATCH-NO-GROWTH",
+              "scope": "transport:dispatch",
+              "contributors": [
+                "transport:dispatch"
+              ],
+              "facts": {
+                "base_cfc": 4,
+                "candidate_cfc": 7,
+                "base_context": 3,
+                "candidate_context": 8
+              },
+              "exception": null
+            },
+            {
+              "id": "centralized:transport-capability",
+              "code": "AIL.ARCH.AUTHORITY",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-TRANSPORT-CAPABILITY",
+              "scope": "group:transport",
+              "contributors": [
+                "capability:jobs_store.cancel_if_active",
+                "transport:dispatch"
+              ],
+              "facts": {
+                "actual": [
+                  "jobs_store"
+                ],
+                "allowed": []
+              },
+              "exception": null
+            },
+            {
+              "id": "centralized:transport-state",
+              "code": "AIL.ARCH.STATE",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-TRANSPORT-STATE",
+              "scope": "group:transport",
+              "contributors": [
+                "state:jobs",
+                "transport:dispatch"
+              ],
+              "facts": {
+                "reads": [
+                  "jobs"
+                ],
+                "writes": [
+                  "jobs"
+                ],
+                "allowed": []
+              },
+              "exception": null
+            },
+            {
+              "id": "centralized:group-dependency",
+              "code": "AIL.ARCH.BOUNDARY",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-GROUP-DEPENDENCY",
+              "scope": "group:transport",
+              "contributors": [
+                "capability:jobs_store.cancel_if_active",
+                "state:jobs",
+                "transport:dispatch"
+              ],
+              "facts": {
+                "forbidden_group_edges": [
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:dispatch",
+                    "target": "capability:jobs_store.cancel_if_active",
+                    "kind": "capability-use"
+                  },
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:dispatch",
+                    "target": "state:jobs",
+                    "kind": "state-read"
+                  },
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:dispatch",
+                    "target": "state:jobs",
+                    "kind": "state-write"
+                  }
+                ]
+              },
+              "exception": null
+            }
+          ],
+          "classification": "rejected",
+          "compact": "rejected arch-r2-centralized scope=transport:dispatch\npolicy=m23-policy-r1 baseline=m23-baseline-r1\nAIL.ARCH.HOTSPOT_GROWTH transport:dispatch contributors=transport:dispatch\nAIL.ARCH.AUTHORITY group:transport contributors=capability:jobs_store.cancel_if_active,transport:dispatch\nAIL.ARCH.STATE group:transport contributors=state:jobs,transport:dispatch\nAIL.ARCH.BOUNDARY group:transport contributors=capability:jobs_store.cancel_if_active,state:jobs,transport:dispatch\ncoverage=5 unchecked=1\n"
+        },
+        "delta": {
+          "format": "ail.architecture.delta.v1",
+          "base_snapshot_digest": "sha256:b5b855c9e0eda1ac6de0517b66027aff7d755b42a144fdc910b25b3755a128fc",
+          "candidate_snapshot_digest": "sha256:d7b3ab55f9d83a23a463bfa8481dd51cb90e2aefb307fc66425cda5f490a85a7",
+          "base_revision_id": "arch-r1",
+          "candidate_revision_id": "arch-r2-centralized",
+          "scope_changes": [
+            {
+              "scope_kind": "executable-unit",
+              "identity": "transport:dispatch",
+              "base": "sha256:c6b5edc2d6815078c670fe839c3eb70f6728699e02f0a94a9053161dd0708e37",
+              "candidate": "sha256:73d48b80af67111950a572d933c6876f61fc0ac60b5f864ece31ef71ed8df96c"
+            },
+            {
+              "scope_kind": "module",
+              "identity": "module:transport",
+              "base": "sha256:1f647ed334095d3a7610f6057fe617d0c3b29fc18e485bb6cc38f7019586f820",
+              "candidate": "sha256:071d8e869f01078271fe9d43322451cfba21bd17b3136e7b2eaecc7e36dd86a0"
+            },
+            {
+              "scope_kind": "dependency-component",
+              "identity": "component:sha256:0c648e9d9f502b636225a251d57afdbe1fe02f29516480e22f607450731ae260",
+              "base": "sha256:b4fe9c7badbd61b3149935eb88d0d08a0d790ff15439e195ea3e144d7d5a72f5",
+              "candidate": "sha256:84648085b43a77755bb24ecdbad674f1c03a763c4859e094cdd7704efe8a8d34"
+            },
+            {
+              "scope_kind": "architecture-group",
+              "identity": "group:transport",
+              "base": "sha256:68b1109e63c1f6fcd91b48d10f36a0c3b9b6fb13708db900b6cecee02199492d",
+              "candidate": "sha256:c65b4610a96858f16d27a4ef5454e89b3df68ba09c74d8f8ec633b57f0589e5e"
+            }
+          ],
+          "findings": [
+            {
+              "id": "centralized:dispatch-growth",
+              "code": "AIL.ARCH.HOTSPOT_GROWTH",
+              "classification": "regression",
+              "disposition": "deny",
+              "rule": "M23-POL-DISPATCH-NO-GROWTH",
+              "scope": "transport:dispatch",
+              "contributors": [
+                "transport:dispatch"
+              ],
+              "facts": {
+                "base_cfc": 4,
+                "candidate_cfc": 7,
+                "base_context": 3,
+                "candidate_context": 8
+              },
+              "exception": null
+            },
+            {
+              "id": "centralized:transport-capability",
+              "code": "AIL.ARCH.AUTHORITY",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-TRANSPORT-CAPABILITY",
+              "scope": "group:transport",
+              "contributors": [
+                "capability:jobs_store.cancel_if_active",
+                "transport:dispatch"
+              ],
+              "facts": {
+                "actual": [
+                  "jobs_store"
+                ],
+                "allowed": []
+              },
+              "exception": null
+            },
+            {
+              "id": "centralized:transport-state",
+              "code": "AIL.ARCH.STATE",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-TRANSPORT-STATE",
+              "scope": "group:transport",
+              "contributors": [
+                "state:jobs",
+                "transport:dispatch"
+              ],
+              "facts": {
+                "reads": [
+                  "jobs"
+                ],
+                "writes": [
+                  "jobs"
+                ],
+                "allowed": []
+              },
+              "exception": null
+            },
+            {
+              "id": "centralized:group-dependency",
+              "code": "AIL.ARCH.BOUNDARY",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-GROUP-DEPENDENCY",
+              "scope": "group:transport",
+              "contributors": [
+                "capability:jobs_store.cancel_if_active",
+                "state:jobs",
+                "transport:dispatch"
+              ],
+              "facts": {
+                "forbidden_group_edges": [
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:dispatch",
+                    "target": "capability:jobs_store.cancel_if_active",
+                    "kind": "capability-use"
+                  },
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:dispatch",
+                    "target": "state:jobs",
+                    "kind": "state-read"
+                  },
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:dispatch",
+                    "target": "state:jobs",
+                    "kind": "state-write"
+                  }
+                ]
+              },
+              "exception": null
+            }
+          ],
+          "classification": "rejected",
+          "publication": "not-published",
+          "commit": "rolled-back",
+          "compact": "rejected arch-r1->arch-r2-centralized changes=4 findings=4 publication=none\n"
+        },
+        "diagnostics": [
+          {
+            "id": "centralized:dispatch-growth",
+            "code": "AIL.ARCH.HOTSPOT_GROWTH",
+            "classification": "regression",
+            "disposition": "deny",
+            "rule": "M23-POL-DISPATCH-NO-GROWTH",
+            "scope": "transport:dispatch",
+            "contributors": [
+              "transport:dispatch"
+            ],
+            "facts": {
+              "base_cfc": 4,
+              "candidate_cfc": 7,
+              "base_context": 3,
+              "candidate_context": 8
+            },
+            "exception": null
+          },
+          {
+            "id": "centralized:transport-capability",
+            "code": "AIL.ARCH.AUTHORITY",
+            "classification": "violation",
+            "disposition": "deny",
+            "rule": "M23-POL-TRANSPORT-CAPABILITY",
+            "scope": "group:transport",
+            "contributors": [
+              "capability:jobs_store.cancel_if_active",
+              "transport:dispatch"
+            ],
+            "facts": {
+              "actual": [
+                "jobs_store"
+              ],
+              "allowed": []
+            },
+            "exception": null
+          },
+          {
+            "id": "centralized:transport-state",
+            "code": "AIL.ARCH.STATE",
+            "classification": "violation",
+            "disposition": "deny",
+            "rule": "M23-POL-TRANSPORT-STATE",
+            "scope": "group:transport",
+            "contributors": [
+              "state:jobs",
+              "transport:dispatch"
+            ],
+            "facts": {
+              "reads": [
+                "jobs"
+              ],
+              "writes": [
+                "jobs"
+              ],
+              "allowed": []
+            },
+            "exception": null
+          },
+          {
+            "id": "centralized:group-dependency",
+            "code": "AIL.ARCH.BOUNDARY",
+            "classification": "violation",
+            "disposition": "deny",
+            "rule": "M23-POL-GROUP-DEPENDENCY",
+            "scope": "group:transport",
+            "contributors": [
+              "capability:jobs_store.cancel_if_active",
+              "state:jobs",
+              "transport:dispatch"
+            ],
+            "facts": {
+              "forbidden_group_edges": [
+                {
+                  "source_group": "transport",
+                  "target_group": "persistence-adapter",
+                  "source": "transport:dispatch",
+                  "target": "capability:jobs_store.cancel_if_active",
+                  "kind": "capability-use"
+                },
+                {
+                  "source_group": "transport",
+                  "target_group": "persistence-adapter",
+                  "source": "transport:dispatch",
+                  "target": "state:jobs",
+                  "kind": "state-read"
+                },
+                {
+                  "source_group": "transport",
+                  "target_group": "persistence-adapter",
+                  "source": "transport:dispatch",
+                  "target": "state:jobs",
+                  "kind": "state-write"
+                }
+              ]
+            },
+            "exception": null
+          }
+        ],
+        "edits": [],
+        "published_child_revision_id": null
+      }
+    },
+    {
+      "candidate": "helper-split",
+      "operation": "validate_architecture_change",
+      "input": {
+        "request": {
+          "base_revision_id": "arch-r1",
+          "candidate_revision_id": "arch-r2-helper-split",
+          "analysis_scope": "transport:cancel_decision",
+          "policy_revision": "m23-policy-r1",
+          "baseline_revision": "m23-baseline-r1",
+          "review_boundary": "review-2026-07-22",
+          "requested_governance_changes": [],
+          "authorization_id": null
+        },
+        "governance_authorizations": [],
+        "active_exceptions": [],
+        "active_policy_revision": "m23-policy-r1",
+        "active_baseline_revision": "m23-baseline-r1"
+      },
+      "expected_response": {
+        "status": "failure",
+        "base_revision_id": "arch-r1",
+        "current_revision_id": "arch-r1",
+        "snapshot": {
+          "format": "ail.architecture.snapshot.v1",
+          "analysis": {
+            "workspace_id": "m23-job-service",
+            "revision_id": "arch-r2-helper-split",
+            "semantic_model_version": "m24-v1",
+            "policy_revision": "m23-policy-r1",
+            "baseline_revision": "m23-baseline-r1",
+            "analysis_scope": "transport:cancel_decision"
+          },
+          "scopes": [
+            {
+              "scope_kind": "executable-unit",
+              "identity": "transport:cancel_decision",
+              "unit_ids": [
+                "transport:cancel_decision"
+              ],
+              "control_flow_complexity": {
+                "maximum": 3,
+                "sum": 3,
+                "contributors": [
+                  {
+                    "unit_id": "transport:cancel_decision",
+                    "value": 3
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "state:jobs",
+                "transport:cancel_store"
+              ],
+              "declared_capability_set": [],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 5
+            },
+            {
+              "scope_kind": "module",
+              "identity": "module:transport",
+              "unit_ids": [
+                "transport:adapt:job.acknowledge",
+                "transport:adapt:job.archive",
+                "transport:adapt:job.assign",
+                "transport:adapt:job.cancel",
+                "transport:adapt:job.clone",
+                "transport:adapt:job.complete",
+                "transport:adapt:job.create",
+                "transport:adapt:job.delete",
+                "transport:adapt:job.deprioritize",
+                "transport:adapt:job.export",
+                "transport:adapt:job.fail",
+                "transport:adapt:job.get",
+                "transport:adapt:job.import",
+                "transport:adapt:job.list",
+                "transport:adapt:job.pause",
+                "transport:adapt:job.prioritize",
+                "transport:adapt:job.restore",
+                "transport:adapt:job.resume",
+                "transport:adapt:job.retry",
+                "transport:adapt:job.schedule",
+                "transport:adapt:job.start",
+                "transport:adapt:job.tag",
+                "transport:adapt:job.unassign",
+                "transport:adapt:job.unschedule",
+                "transport:adapt:job.untag",
+                "transport:cancel_decision",
+                "transport:cancel_result",
+                "transport:cancel_store",
+                "transport:dispatch",
+                "transport:register:job.acknowledge",
+                "transport:register:job.archive",
+                "transport:register:job.assign",
+                "transport:register:job.cancel",
+                "transport:register:job.clone",
+                "transport:register:job.complete",
+                "transport:register:job.create",
+                "transport:register:job.delete",
+                "transport:register:job.deprioritize",
+                "transport:register:job.export",
+                "transport:register:job.fail",
+                "transport:register:job.get",
+                "transport:register:job.import",
+                "transport:register:job.list",
+                "transport:register:job.pause",
+                "transport:register:job.prioritize",
+                "transport:register:job.restore",
+                "transport:register:job.resume",
+                "transport:register:job.retry",
+                "transport:register:job.schedule",
+                "transport:register:job.start",
+                "transport:register:job.tag",
+                "transport:register:job.unassign",
+                "transport:register:job.unschedule",
+                "transport:register:job.untag"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 61,
+                "contributors": [
+                  {
+                    "unit_id": "transport:adapt:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.cancel",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.untag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:cancel_decision",
+                    "value": 3
+                  },
+                  {
+                    "unit_id": "transport:cancel_result",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "transport:cancel_store",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 4
+                  },
+                  {
+                    "unit_id": "transport:register:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.cancel",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.untag",
+                    "value": 1
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "contract:job.acknowledge",
+                "contract:job.archive",
+                "contract:job.assign",
+                "contract:job.cancel",
+                "contract:job.clone",
+                "contract:job.complete",
+                "contract:job.create",
+                "contract:job.delete",
+                "contract:job.deprioritize",
+                "contract:job.export",
+                "contract:job.fail",
+                "contract:job.get",
+                "contract:job.import",
+                "contract:job.list",
+                "contract:job.pause",
+                "contract:job.prioritize",
+                "contract:job.restore",
+                "contract:job.resume",
+                "contract:job.retry",
+                "contract:job.schedule",
+                "contract:job.start",
+                "contract:job.tag",
+                "contract:job.unassign",
+                "contract:job.unschedule",
+                "contract:job.untag",
+                "domain:handle:job.acknowledge",
+                "domain:handle:job.archive",
+                "domain:handle:job.assign",
+                "domain:handle:job.clone",
+                "domain:handle:job.complete",
+                "domain:handle:job.create",
+                "domain:handle:job.delete",
+                "domain:handle:job.deprioritize",
+                "domain:handle:job.export",
+                "domain:handle:job.fail",
+                "domain:handle:job.get",
+                "domain:handle:job.import",
+                "domain:handle:job.list",
+                "domain:handle:job.pause",
+                "domain:handle:job.prioritize",
+                "domain:handle:job.restore",
+                "domain:handle:job.resume",
+                "domain:handle:job.retry",
+                "domain:handle:job.schedule",
+                "domain:handle:job.start",
+                "domain:handle:job.tag",
+                "domain:handle:job.unassign",
+                "domain:handle:job.unschedule",
+                "domain:handle:job.untag",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 107
+            },
+            {
+              "scope_kind": "dependency-component",
+              "identity": "component:sha256:e08015b7695201e603016c80a4d7c87bc96d404976e92d96ec242b217e9b43b2",
+              "unit_ids": [
+                "transport:cancel_decision"
+              ],
+              "control_flow_complexity": {
+                "maximum": 3,
+                "sum": 3,
+                "contributors": [
+                  {
+                    "unit_id": "transport:cancel_decision",
+                    "value": 3
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "state:jobs",
+                "transport:cancel_store"
+              ],
+              "declared_capability_set": [],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 5
+            },
+            {
+              "scope_kind": "architecture-group",
+              "identity": "group:transport",
+              "unit_ids": [
+                "transport:adapt:job.acknowledge",
+                "transport:adapt:job.archive",
+                "transport:adapt:job.assign",
+                "transport:adapt:job.cancel",
+                "transport:adapt:job.clone",
+                "transport:adapt:job.complete",
+                "transport:adapt:job.create",
+                "transport:adapt:job.delete",
+                "transport:adapt:job.deprioritize",
+                "transport:adapt:job.export",
+                "transport:adapt:job.fail",
+                "transport:adapt:job.get",
+                "transport:adapt:job.import",
+                "transport:adapt:job.list",
+                "transport:adapt:job.pause",
+                "transport:adapt:job.prioritize",
+                "transport:adapt:job.restore",
+                "transport:adapt:job.resume",
+                "transport:adapt:job.retry",
+                "transport:adapt:job.schedule",
+                "transport:adapt:job.start",
+                "transport:adapt:job.tag",
+                "transport:adapt:job.unassign",
+                "transport:adapt:job.unschedule",
+                "transport:adapt:job.untag",
+                "transport:cancel_decision",
+                "transport:cancel_result",
+                "transport:cancel_store",
+                "transport:dispatch",
+                "transport:register:job.acknowledge",
+                "transport:register:job.archive",
+                "transport:register:job.assign",
+                "transport:register:job.cancel",
+                "transport:register:job.clone",
+                "transport:register:job.complete",
+                "transport:register:job.create",
+                "transport:register:job.delete",
+                "transport:register:job.deprioritize",
+                "transport:register:job.export",
+                "transport:register:job.fail",
+                "transport:register:job.get",
+                "transport:register:job.import",
+                "transport:register:job.list",
+                "transport:register:job.pause",
+                "transport:register:job.prioritize",
+                "transport:register:job.restore",
+                "transport:register:job.resume",
+                "transport:register:job.retry",
+                "transport:register:job.schedule",
+                "transport:register:job.start",
+                "transport:register:job.tag",
+                "transport:register:job.unassign",
+                "transport:register:job.unschedule",
+                "transport:register:job.untag"
+              ],
+              "control_flow_complexity": {
+                "maximum": 4,
+                "sum": 61,
+                "contributors": [
+                  {
+                    "unit_id": "transport:adapt:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.cancel",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:adapt:job.untag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:cancel_decision",
+                    "value": 3
+                  },
+                  {
+                    "unit_id": "transport:cancel_result",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "transport:cancel_store",
+                    "value": 2
+                  },
+                  {
+                    "unit_id": "transport:dispatch",
+                    "value": 4
+                  },
+                  {
+                    "unit_id": "transport:register:job.acknowledge",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.archive",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.assign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.cancel",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.clone",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.complete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.create",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.delete",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.deprioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.export",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.fail",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.get",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.import",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.list",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.pause",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.prioritize",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.restore",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.resume",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.retry",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.schedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.start",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.tag",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unassign",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.unschedule",
+                    "value": 1
+                  },
+                  {
+                    "unit_id": "transport:register:job.untag",
+                    "value": 1
+                  }
+                ]
+              },
+              "direct_dependency_set": [
+                "capability:jobs_store.cancel_if_active",
+                "contract:job.acknowledge",
+                "contract:job.archive",
+                "contract:job.assign",
+                "contract:job.cancel",
+                "contract:job.clone",
+                "contract:job.complete",
+                "contract:job.create",
+                "contract:job.delete",
+                "contract:job.deprioritize",
+                "contract:job.export",
+                "contract:job.fail",
+                "contract:job.get",
+                "contract:job.import",
+                "contract:job.list",
+                "contract:job.pause",
+                "contract:job.prioritize",
+                "contract:job.restore",
+                "contract:job.resume",
+                "contract:job.retry",
+                "contract:job.schedule",
+                "contract:job.start",
+                "contract:job.tag",
+                "contract:job.unassign",
+                "contract:job.unschedule",
+                "contract:job.untag",
+                "domain:handle:job.acknowledge",
+                "domain:handle:job.archive",
+                "domain:handle:job.assign",
+                "domain:handle:job.clone",
+                "domain:handle:job.complete",
+                "domain:handle:job.create",
+                "domain:handle:job.delete",
+                "domain:handle:job.deprioritize",
+                "domain:handle:job.export",
+                "domain:handle:job.fail",
+                "domain:handle:job.get",
+                "domain:handle:job.import",
+                "domain:handle:job.list",
+                "domain:handle:job.pause",
+                "domain:handle:job.prioritize",
+                "domain:handle:job.restore",
+                "domain:handle:job.resume",
+                "domain:handle:job.retry",
+                "domain:handle:job.schedule",
+                "domain:handle:job.start",
+                "domain:handle:job.tag",
+                "domain:handle:job.unassign",
+                "domain:handle:job.unschedule",
+                "domain:handle:job.untag",
+                "state:jobs"
+              ],
+              "declared_capability_set": [
+                "jobs_store"
+              ],
+              "state_read_set": [
+                "jobs"
+              ],
+              "state_write_set": [
+                "jobs"
+              ],
+              "dependency_component_size": 1,
+              "minimal_context_node_count": 107
+            }
+          ],
+          "coverage": {
+            "analyzed_groups": [
+              "contract",
+              "transport",
+              "domain",
+              "persistence-adapter",
+              "verification"
+            ],
+            "unchecked_boundaries": [
+              {
+                "id": "external:job-api-clients",
+                "reason": "client source unavailable"
+              }
+            ],
+            "complete_for_policy": true
+          },
+          "budgets": {
+            "semantic_nodes": 131,
+            "typed_edges": 129,
+            "structured_bytes": 28654,
+            "compact_bytes": 491,
+            "compact_lines": 6,
+            "exhausted": null
+          },
+          "active_policies": [
+            {
+              "id": "M23-POL-GROUP-DEPENDENCY",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "*"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "subset-by-source-group",
+              "value": {
+                "contract": [],
+                "transport": [
+                  "contract",
+                  "domain",
+                  "transport"
+                ],
+                "domain": [
+                  "contract",
+                  "domain",
+                  "persistence-adapter"
+                ],
+                "persistence-adapter": [
+                  "contract",
+                  "persistence-adapter"
+                ],
+                "verification": [
+                  "contract",
+                  "domain",
+                  "transport",
+                  "persistence-adapter",
+                  "verification"
+                ]
+              }
+            },
+            {
+              "id": "M23-POL-TRANSPORT-CAPABILITY",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "group:transport"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "set-subset",
+              "value": []
+            },
+            {
+              "id": "M23-POL-TRANSPORT-STATE",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "group:transport"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "read-and-write-set-subset",
+              "value": []
+            },
+            {
+              "id": "M23-POL-DISPATCH-NO-GROWTH",
+              "selector": {
+                "scope_kind": "executable-unit",
+                "scope_identity": "transport:dispatch"
+              },
+              "classification": "regression",
+              "disposition": "deny",
+              "comparison": "both-less-than-or-equal-baseline",
+              "value": {
+                "control_flow_complexity": 4,
+                "minimal_context_node_count": 3
+              }
+            },
+            {
+              "id": "M23-POL-NEW-UNIT",
+              "selector": {
+                "scope_kind": "executable-unit",
+                "scope_identity": "new-non-contract-unit"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "both-less-than-or-equal",
+              "value": {
+                "control_flow_complexity_max": 4,
+                "minimal_context_node_count_max": 12
+              }
+            },
+            {
+              "id": "M23-POL-NO-NEW-CYCLE",
+              "selector": {
+                "scope_kind": "dependency-component",
+                "scope_identity": "new-component"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "new-component-member-count-less-than-or-equal",
+              "value": 1
+            },
+            {
+              "id": "M23-POL-COVERAGE",
+              "selector": {
+                "scope_kind": "architecture-group",
+                "scope_identity": "*"
+              },
+              "classification": "incomplete",
+              "disposition": "deny",
+              "comparison": "complete-for-policy-equals",
+              "value": true
+            },
+            {
+              "id": "M23-POL-GOVERNANCE",
+              "selector": {
+                "scope_kind": "governance",
+                "scope_identity": "trusted-input"
+              },
+              "classification": "violation",
+              "disposition": "deny",
+              "comparison": "trusted-revisions-and-exact-exceptions-equal",
+              "value": {
+                "policy_revision": "m23-policy-r1",
+                "baseline_revision": "m23-baseline-r1",
+                "exceptions": []
+              }
+            }
+          ],
+          "baseline_match": {
+            "baseline_revision": "m23-baseline-r1",
+            "scope": "transport:dispatch",
+            "metrics": {
+              "control_flow_complexity": 4,
+              "minimal_context_node_count": 3
+            },
+            "accepted_debt": true
+          },
+          "accepted_debt": [
+            {
+              "rule": "M23-POL-DISPATCH-NO-GROWTH",
+              "scope": "transport:dispatch",
+              "baseline_revision": "m23-baseline-r1",
+              "metrics": {
+                "control_flow_complexity": 4,
+                "minimal_context_node_count": 3
+              }
+            }
+          ],
+          "exceptions": [],
+          "findings": [
+            {
+              "id": "helper-split:transport-capability",
+              "code": "AIL.ARCH.AUTHORITY",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-TRANSPORT-CAPABILITY",
+              "scope": "group:transport",
+              "contributors": [
+                "capability:jobs_store.cancel_if_active",
+                "transport:cancel_store"
+              ],
+              "facts": {
+                "actual": [
+                  "jobs_store"
+                ],
+                "allowed": []
+              },
+              "exception": null
+            },
+            {
+              "id": "helper-split:transport-state",
+              "code": "AIL.ARCH.STATE",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-TRANSPORT-STATE",
+              "scope": "group:transport",
+              "contributors": [
+                "state:jobs",
+                "transport:cancel_decision",
+                "transport:cancel_store"
+              ],
+              "facts": {
+                "reads": [
+                  "jobs"
+                ],
+                "writes": [
+                  "jobs"
+                ],
+                "allowed": []
+              },
+              "exception": null
+            },
+            {
+              "id": "helper-split:group-dependency",
+              "code": "AIL.ARCH.BOUNDARY",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-GROUP-DEPENDENCY",
+              "scope": "group:transport",
+              "contributors": [
+                "capability:jobs_store.cancel_if_active",
+                "state:jobs",
+                "transport:cancel_decision",
+                "transport:cancel_store"
+              ],
+              "facts": {
+                "forbidden_group_edges": [
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:cancel_decision",
+                    "target": "state:jobs",
+                    "kind": "state-read"
+                  },
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:cancel_store",
+                    "target": "capability:jobs_store.cancel_if_active",
+                    "kind": "capability-use"
+                  },
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:cancel_store",
+                    "target": "state:jobs",
+                    "kind": "state-write"
+                  }
+                ]
+              },
+              "exception": null
+            }
+          ],
+          "classification": "rejected",
+          "compact": "rejected arch-r2-helper-split scope=transport:cancel_decision\npolicy=m23-policy-r1 baseline=m23-baseline-r1\nAIL.ARCH.AUTHORITY group:transport contributors=capability:jobs_store.cancel_if_active,transport:cancel_store\nAIL.ARCH.STATE group:transport contributors=state:jobs,transport:cancel_decision,transport:cancel_store\nAIL.ARCH.BOUNDARY group:transport contributors=capability:jobs_store.cancel_if_active,state:jobs,transport:cancel_decision,transport:cancel_store\ncoverage=5 unchecked=1\n"
+        },
+        "delta": {
+          "format": "ail.architecture.delta.v1",
+          "base_snapshot_digest": "sha256:b5b855c9e0eda1ac6de0517b66027aff7d755b42a144fdc910b25b3755a128fc",
+          "candidate_snapshot_digest": "sha256:53d76cf6fbc841d090415843afd77457451b465b71a79129045f01767be023b5",
+          "base_revision_id": "arch-r1",
+          "candidate_revision_id": "arch-r2-helper-split",
+          "scope_changes": [
+            {
+              "scope_kind": "executable-unit",
+              "identity": "transport:cancel_decision",
+              "base": null,
+              "candidate": "sha256:2fdfb100893ad4b5395c943a21b684a26598af94874076980b38801dfbb91e0a"
+            },
+            {
+              "scope_kind": "executable-unit",
+              "identity": "transport:dispatch",
+              "base": "sha256:c6b5edc2d6815078c670fe839c3eb70f6728699e02f0a94a9053161dd0708e37",
+              "candidate": null
+            },
+            {
+              "scope_kind": "module",
+              "identity": "module:transport",
+              "base": "sha256:1f647ed334095d3a7610f6057fe617d0c3b29fc18e485bb6cc38f7019586f820",
+              "candidate": "sha256:cd7c0aebcd4b3eaef2e934b01d93daa832e7dffcee7d89dd18d9373454cfce24"
+            },
+            {
+              "scope_kind": "dependency-component",
+              "identity": "component:sha256:0c648e9d9f502b636225a251d57afdbe1fe02f29516480e22f607450731ae260",
+              "base": "sha256:b4fe9c7badbd61b3149935eb88d0d08a0d790ff15439e195ea3e144d7d5a72f5",
+              "candidate": null
+            },
+            {
+              "scope_kind": "dependency-component",
+              "identity": "component:sha256:e08015b7695201e603016c80a4d7c87bc96d404976e92d96ec242b217e9b43b2",
+              "base": null,
+              "candidate": "sha256:b83a9b2a968e14336cd1feefb05e814bb3eec59c2c5fa861520ef6b2b121502b"
+            },
+            {
+              "scope_kind": "architecture-group",
+              "identity": "group:transport",
+              "base": "sha256:68b1109e63c1f6fcd91b48d10f36a0c3b9b6fb13708db900b6cecee02199492d",
+              "candidate": "sha256:806ebf1d9d838818d731bcd1940ed2b1deb86a3acae9fc56d7d7d07c99f32b05"
+            }
+          ],
+          "findings": [
+            {
+              "id": "helper-split:transport-capability",
+              "code": "AIL.ARCH.AUTHORITY",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-TRANSPORT-CAPABILITY",
+              "scope": "group:transport",
+              "contributors": [
+                "capability:jobs_store.cancel_if_active",
+                "transport:cancel_store"
+              ],
+              "facts": {
+                "actual": [
+                  "jobs_store"
+                ],
+                "allowed": []
+              },
+              "exception": null
+            },
+            {
+              "id": "helper-split:transport-state",
+              "code": "AIL.ARCH.STATE",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-TRANSPORT-STATE",
+              "scope": "group:transport",
+              "contributors": [
+                "state:jobs",
+                "transport:cancel_decision",
+                "transport:cancel_store"
+              ],
+              "facts": {
+                "reads": [
+                  "jobs"
+                ],
+                "writes": [
+                  "jobs"
+                ],
+                "allowed": []
+              },
+              "exception": null
+            },
+            {
+              "id": "helper-split:group-dependency",
+              "code": "AIL.ARCH.BOUNDARY",
+              "classification": "violation",
+              "disposition": "deny",
+              "rule": "M23-POL-GROUP-DEPENDENCY",
+              "scope": "group:transport",
+              "contributors": [
+                "capability:jobs_store.cancel_if_active",
+                "state:jobs",
+                "transport:cancel_decision",
+                "transport:cancel_store"
+              ],
+              "facts": {
+                "forbidden_group_edges": [
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:cancel_decision",
+                    "target": "state:jobs",
+                    "kind": "state-read"
+                  },
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:cancel_store",
+                    "target": "capability:jobs_store.cancel_if_active",
+                    "kind": "capability-use"
+                  },
+                  {
+                    "source_group": "transport",
+                    "target_group": "persistence-adapter",
+                    "source": "transport:cancel_store",
+                    "target": "state:jobs",
+                    "kind": "state-write"
+                  }
+                ]
+              },
+              "exception": null
+            }
+          ],
+          "classification": "rejected",
+          "publication": "not-published",
+          "commit": "rolled-back",
+          "compact": "rejected arch-r1->arch-r2-helper-split changes=6 findings=3 publication=none\n"
+        },
+        "diagnostics": [
+          {
+            "id": "helper-split:transport-capability",
+            "code": "AIL.ARCH.AUTHORITY",
+            "classification": "violation",
+            "disposition": "deny",
+            "rule": "M23-POL-TRANSPORT-CAPABILITY",
+            "scope": "group:transport",
+            "contributors": [
+              "capability:jobs_store.cancel_if_active",
+              "transport:cancel_store"
+            ],
+            "facts": {
+              "actual": [
+                "jobs_store"
+              ],
+              "allowed": []
+            },
+            "exception": null
+          },
+          {
+            "id": "helper-split:transport-state",
+            "code": "AIL.ARCH.STATE",
+            "classification": "violation",
+            "disposition": "deny",
+            "rule": "M23-POL-TRANSPORT-STATE",
+            "scope": "group:transport",
+            "contributors": [
+              "state:jobs",
+              "transport:cancel_decision",
+              "transport:cancel_store"
+            ],
+            "facts": {
+              "reads": [
+                "jobs"
+              ],
+              "writes": [
+                "jobs"
+              ],
+              "allowed": []
+            },
+            "exception": null
+          },
+          {
+            "id": "helper-split:group-dependency",
+            "code": "AIL.ARCH.BOUNDARY",
+            "classification": "violation",
+            "disposition": "deny",
+            "rule": "M23-POL-GROUP-DEPENDENCY",
+            "scope": "group:transport",
+            "contributors": [
+              "capability:jobs_store.cancel_if_active",
+              "state:jobs",
+              "transport:cancel_decision",
+              "transport:cancel_store"
+            ],
+            "facts": {
+              "forbidden_group_edges": [
+                {
+                  "source_group": "transport",
+                  "target_group": "persistence-adapter",
+                  "source": "transport:cancel_decision",
+                  "target": "state:jobs",
+                  "kind": "state-read"
+                },
+                {
+                  "source_group": "transport",
+                  "target_group": "persistence-adapter",
+                  "source": "transport:cancel_store",
+                  "target": "capability:jobs_store.cancel_if_active",
+                  "kind": "capability-use"
+                },
+                {
+                  "source_group": "transport",
+                  "target_group": "persistence-adapter",
+                  "source": "transport:cancel_store",
+                  "target": "state:jobs",
+                  "kind": "state-write"
+                }
+              ]
+            },
+            "exception": null
+          }
+        ],
+        "edits": [],
+        "published_child_revision_id": null
+      }
+    },
+    {
+      "candidate": "r1-coverage-incomplete",
+      "operation": "architecture_snapshot",
+      "input": {
+        "request": {
+          "revision_id": "arch-r1",
+          "analysis_scope": "transport:dispatch"
+        },
+        "active_exceptions": [],
+        "active_policy_revision": "m23-policy-r1",
+        "active_baseline_revision": "m23-baseline-r1"
+      },
+      "expected_response": {
+        "status": "incomplete",
+        "analysis": {
+          "workspace_id": "m23-job-service",
+          "revision_id": "arch-r1",
+          "semantic_model_version": "m24-v1",
+          "policy_revision": "m23-policy-r1",
+          "baseline_revision": "m23-baseline-r1",
+          "analysis_scope": "transport:dispatch"
+        },
+        "coverage": {
+          "analyzed_groups": [
+            "contract",
+            "transport",
+            "domain",
+            "persistence-adapter"
+          ],
+          "unchecked_boundaries": [
+            {
+              "id": "external:job-api-clients",
+              "reason": "client source unavailable"
+            }
+          ],
+          "complete_for_policy": false
+        },
+        "budgets": {
+          "semantic_nodes": 122,
+          "typed_edges": 120,
+          "structured_bytes": 24869,
+          "compact_bytes": 167,
+          "compact_lines": 4,
+          "exhausted": null
+        },
+        "diagnostics": [
+          {
+            "id": "r1:coverage",
+            "code": "AIL.ARCH.COVERAGE_INCOMPLETE",
+            "classification": "incomplete",
+            "disposition": "deny",
+            "rule": "M23-POL-COVERAGE",
+            "scope": "workspace",
+            "contributors": [],
+            "facts": {
+              "required_groups": [
+                "contract",
+                "transport",
+                "domain",
+                "persistence-adapter",
+                "verification"
+              ],
+              "analyzed_groups": [
+                "contract",
+                "transport",
+                "domain",
+                "persistence-adapter"
+              ],
+              "unchecked_boundaries": [
+                {
+                  "id": "external:job-api-clients",
+                  "reason": "client source unavailable"
+                }
+              ]
+            },
+            "exception": null
+          }
+        ],
+        "edits": [],
+        "current_revision_id": "arch-r1",
+        "published_child_revision_id": null
+      }
+    }
+  ]
+}

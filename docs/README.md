@@ -35,8 +35,10 @@ and impact query, and M21 completed the atomic change and evidence loop. M22
 selected architectural regression control as the next direction in
 [ADR 0006](decisions/0006-prepare-architectural-regression-control.md). M23
 accepted UC-007 and its requirements through a frozen, independently reviewed
-acceptance package. M24 remains planned and has not started. A roadmap entry
-does not make planned behavior normative.
+acceptance package. M24 now accepts the bounded architectural regression
+contract. M25 implements its single-revision snapshot and compact rendering and
+remains active as the handoff marker; M26 has not started. A roadmap entry does
+not make planned behavior normative.
 
 The [current status](STATUS.md) records the active milestone, or states that the
 next planned milestone has not been started, and gives the next agent its
@@ -127,7 +129,8 @@ starting workspace, `CancelJob` behavior, good and seeded bad changes, project
 policy, metrics, expected structured and compact text, baseline comparison, and
 budgets. Two independent readers classified every candidate identically, so
 UC-007 and its requirements are accepted. No architectural-health compiler
-behavior or M24 normative contract is active yet.
+compiler behavior is active yet; only the bounded M24 normative contract is
+accepted.
 
 There is no accepted broad AIL syntax or normative language core yet. The M11
 subset is the fixed conformance boundary for the first Rust compiler slices.

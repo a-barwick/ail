@@ -3,6 +3,7 @@
 //! M15 adds static semantics and structured diagnostics over the M14 lossless
 //! syntax tree. Revision operations remain a later milestone.
 
+mod architecture;
 mod diagnostic;
 mod evolution;
 mod formatter;
@@ -13,6 +14,16 @@ mod protocol;
 mod semantics;
 mod syntax;
 
+pub use architecture::{
+    AcceptedDebt, AnalysisIdentity, ArchitectureCoverage, ArchitectureEdge, ArchitectureException,
+    ArchitectureIncompleteFailure, ArchitecturePolicy, ArchitecturePolicyContext,
+    ArchitectureRequestError, ArchitectureRequestErrorKind, ArchitectureRevision,
+    ArchitectureRevisionError, ArchitectureSnapshot, ArchitectureSnapshotInput,
+    ArchitectureSnapshotRequest, ArchitectureSnapshotResponse, ArchitectureSnapshotResult,
+    ArchitectureUnit, BaselineMatch, BudgetUse, ControlFlowGraph, DispatchBudget,
+    GroupDependencies, NewUnitBudget, PolicyGovernance, PolicySelector, PolicyValue, ScopeMetrics,
+    architecture_snapshot,
+};
 pub use diagnostic::Diagnostic;
 pub use evolution::{
     CandidateChangeRequest, CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary,
