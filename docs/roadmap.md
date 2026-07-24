@@ -65,8 +65,8 @@ becomes active.
 | M23 | UC-007 acceptance package | Complete | M22 |
 | M24 | Architectural regression contract | Complete | M23 acceptance |
 | M25 | Architectural snapshot and agent rendering | Complete | M24 |
-| M26 | Architectural delta, policy, and atomic enforcement | Active | M25 |
-| M27 | Non-official architecture-feedback pilot | Planned | M26 |
+| M26 | Architectural delta, policy, and atomic enforcement | Complete | M25 |
+| M27 | Non-official architecture-feedback pilot | Active | M26 |
 
 ## Delivery milestones
 
@@ -1267,7 +1267,7 @@ as clean.
 
 ### M26 — Architectural delta, policy, and atomic enforcement
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -1321,7 +1321,7 @@ failure, and unauthorized policy or baseline changes cannot create a pass.
 
 ### M27 — Non-official architecture-feedback pilot
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 
@@ -1364,8 +1364,8 @@ ADR 0006 selected UC-007 acceptance preparation as M23. Its starting workspace,
 cancel-job behavior, project policy, minimal metric set, fixtures, baseline
 comparison, and budgets passed the gate, so UC-007 and its requirements are
 accepted. M24 accepted its bounded contract, M25 delivered the single-revision
-snapshot, and active M26 delivered cross-revision enforcement while remaining
-the handoff marker. M27 activates only when explicitly started.
+snapshot, and M26 delivered cross-revision enforcement. M27 is now active for
+the bounded non-official usability pilot.
 
 Architectural-health implementation should follow the core semantic graph and
 revision protocol. It does not block M19 through M21.
@@ -1374,9 +1374,8 @@ revision protocol. It does not block M19 through M21.
 
 This section records intended capability order but is not an operational
 roadmap. M23 delivered the UC-007 acceptance package, M24 accepted the bounded
-contract, M25 delivered the single-revision snapshot, and active M26 delivered
-cross-revision enforcement. M27 remains planned and requires explicit
-activation.
+contract, M25 delivered the single-revision snapshot, and M26 delivered
+cross-revision enforcement. M27 is the active milestone.
 
 1. **Broader semantic oracle:** expand the M11 spike subset to the accepted
    20–30 construct job-service core, then implement parser recovery and source

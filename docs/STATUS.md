@@ -4,14 +4,14 @@ Last updated: 2026-07-23
 
 ## Active milestone
 
-M26 — architectural delta, policy, and atomic enforcement
+M27 — non-official architecture-feedback pilot
 
 ## Current goal
 
-M23 through M25 are Complete. M26 delivered the accepted cross-revision
-architectural comparison, policy and governance evaluation, and atomic
-candidate enforcement. It remains Active as the handoff marker, and work stops
-before M27. The execution path is:
+M23 through M26 are Complete. M27 is Active for one small, replayable,
+explicitly non-official pilot testing whether an operator can use M26's compact
+findings and structured drill-down to avoid or repair the seeded regression.
+The execution path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -28,8 +28,8 @@ M11 five-construct contract (complete)
   -> M23 UC-007 acceptance package (complete)
   -> M24 architectural regression contract (complete)
   -> M25 architectural snapshot and agent rendering (complete)
-  -> M26 architectural delta, policy, and atomic enforcement (active)
-  -> M27 non-official architecture-feedback pilot (planned, conditional)
+  -> M26 architectural delta, policy, and atomic enforcement (complete)
+  -> M27 non-official architecture-feedback pilot (active)
 ```
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
@@ -363,13 +363,11 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 
 These items require an explicit maintainer decision to resume.
 
-UC-007, its requirements, and the bounded M24 contract are accepted. M25 is
-Complete. M26 remains Active as the completed handoff marker; M27 is Planned
-and requires explicit activation.
+UC-007, its requirements, and the bounded M24 contract are accepted. M25 and
+M26 are Complete. M27 is Active.
 
 ## Do not start yet
 
-- M27 non-official architecture-feedback pilot
 - Architectural-health behavior beyond the bounded M26 contract
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
@@ -382,7 +380,8 @@ None.
 
 After meaningful work:
 
-- do not start M27 or collect architecture-pilot evidence;
+- keep M27 explicitly non-official and do not change locked fixtures, policy,
+  baselines, prompts, or expected results after observing a run;
 - run `cargo +1.87.0 fmt --all --check`;
 - run `cargo +1.87.0 test --workspace`;
 - run `cargo +1.87.0 clippy --workspace --all-targets -- -D warnings`;
