@@ -36,9 +36,10 @@ selected architectural regression control as the next direction in
 [ADR 0006](decisions/0006-prepare-architectural-regression-control.md). M23
 accepted UC-007 and its requirements through a frozen, independently reviewed
 acceptance package. M24 now accepts the bounded architectural regression
-contract. M25 implements its single-revision snapshot and compact rendering and
-remains active as the handoff marker; M26 has not started. A roadmap entry does
-not make planned behavior normative.
+contract. M25 implements its single-revision snapshot and compact rendering,
+and active M26 implements cross-revision policy enforcement and atomic
+publication. M27 has not started. A roadmap entry does not make planned
+behavior normative.
 
 The [current status](STATUS.md) records the active milestone, or states that the
 next planned milestone has not been started, and gives the next agent its

@@ -4,14 +4,14 @@ Last updated: 2026-07-23
 
 ## Active milestone
 
-M25 — architectural snapshot and agent rendering
+M26 — architectural delta, policy, and atomic enforcement
 
 ## Current goal
 
-M23 and M24 are Complete. M25 delivered the accepted revision-bound
-architectural snapshot and compact rendering for the frozen M23 starting
-revision. It remains Active as the handoff marker, and work stops before M26.
-The execution path is:
+M23 through M25 are Complete. M26 delivered the accepted cross-revision
+architectural comparison, policy and governance evaluation, and atomic
+candidate enforcement. It remains Active as the handoff marker, and work stops
+before M27. The execution path is:
 
 ```text
 M11 five-construct contract (complete)
@@ -27,8 +27,8 @@ M11 five-construct contract (complete)
   -> M22 post-UC-003 validation-slice selection (complete)
   -> M23 UC-007 acceptance package (complete)
   -> M24 architectural regression contract (complete)
-  -> M25 architectural snapshot and agent rendering (active)
-  -> M26 architectural delta, policy, and atomic enforcement (planned, conditional)
+  -> M25 architectural snapshot and agent rendering (complete)
+  -> M26 architectural delta, policy, and atomic enforcement (active)
   -> M27 non-official architecture-feedback pilot (planned, conditional)
 ```
 
@@ -50,6 +50,36 @@ The M25 implementation:
 - derives the frozen R1 snapshot and compact rendering from validated,
   revision-bound semantic facts; and
 - stops before M26 cross-revision comparison or transaction enforcement.
+
+## M26 result
+
+M26 added an atomic architecture workspace transaction over validated base and
+candidate semantic graphs. It derives compatible four-scope snapshots, exact
+canonical snapshot and delta digests, deterministic scope changes, and all
+eight accepted policy results from trusted policy, baseline, exception,
+authorization, coverage, behavior, and graph facts.
+
+The valid domain-owned `CancelJob` candidate publishes exactly one child. The
+centralized candidate is rejected for dispatch growth plus transport authority,
+state, and dependency violations. The helper-splitting candidate is rejected
+by the same aggregate transport boundaries even though each helper remains
+within its individual unit limits. Existing dispatch debt remains visible but
+does not become a regression.
+
+Exceptions match only the exact active policy revision, rule, scope, complete
+contributor set, and unexpired review boundary. Governance authorization binds
+the candidate revision and canonical graph digest, policy and baseline,
+change kind, exception IDs, rule, scope, and review boundary. Stale baselines,
+candidate-owned governance, unknown or mismatched authorizations, invalid
+behavior evidence, denied findings, and incomplete analysis publish nothing
+and leave all retained revisions unchanged.
+
+The focused test reconstructs semantic candidates and mutations from the M23
+inputs, then matches all three candidate responses and all 23 executable M24
+scenarios exactly. All fixed budget failures remain bounded and cannot appear
+clean. Completion evidence is bound to the exact committed child. Full compiler,
+contract, documentation, fixture, Clippy, and 37-case public runtime checks
+pass. No language syntax or runtime behavior changed, and M27 has not started.
 
 Amp may be used to author M23. If it is, start from a clean scoped branch,
 record `amp --version`, the selected mode, exact prompt, and thread ID or URL,
@@ -86,7 +116,7 @@ fixtures plus one read-only incomplete fixture, and 23 executable scenarios. The
 M23 inputs, independently derives M24 semantics, and rejects 36 contract
 mutations. No AIL grammar, compiler/runtime code, universal policy,
 automatic repair, or official agent evidence was added. M24 is Complete and its
-accepted contract is the fixed input to active M25 implementation.
+accepted contract remains the fixed input to M25 and M26.
 
 ## M23 result
 
@@ -317,6 +347,8 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M21 — Atomic schema evolution and completion evidence
 - M22 — Post-UC-003 validation-slice selection
 - M23 — UC-007 acceptance package
+- M24 — Architectural regression contract
+- M25 — Architectural snapshot and agent rendering
 
 ## Superseded
 
@@ -332,13 +364,13 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 These items require an explicit maintainer decision to resume.
 
 UC-007, its requirements, and the bounded M24 contract are accepted. M25 is
-Active; M26–M27 remain planned and activate one at a time only when explicitly
-started.
+Complete. M26 remains Active as the completed handoff marker; M27 is Planned
+and requires explicit activation.
 
 ## Do not start yet
 
-- M26 architectural delta, policy, and atomic enforcement
-- Architectural-health behavior beyond the bounded M25 snapshot contract
+- M27 non-official architecture-feedback pilot
+- Architectural-health behavior beyond the bounded M26 contract
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
 
@@ -350,12 +382,14 @@ None.
 
 After meaningful work:
 
-- do not start M26 or implement cross-revision architecture enforcement;
-- run `cargo fmt --all --check`;
-- run `cargo test --workspace`;
-- run `cargo clippy --workspace --all-targets -- -D warnings`;
+- do not start M27 or collect architecture-pilot evidence;
+- run `cargo +1.87.0 fmt --all --check`;
+- run `cargo +1.87.0 test --workspace`;
+- run `cargo +1.87.0 clippy --workspace --all-targets -- -D warnings`;
+- run `python3 specs/tools/architecture_acceptance.py check`;
+- run `python3 specs/tools/architecture_contract.py check`;
 - run `python3 specs/tools/core_contract.py check`;
-- run `python3 benchmarks/tools/harness.py verify --language ail --visibility public`;
+- run `PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public`;
 - run `python3 benchmarks/tools/fixtures.py check`;
 - run `python3 tools/check_docs.py`; and
 - update this file and the roadmap only when the active milestone's exit

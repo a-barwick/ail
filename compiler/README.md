@@ -16,9 +16,9 @@ slice. M19 accepted its conformance contract, M20 implemented the ordered
 source-set semantic graph and impact query, and M21 completed atomic schema
 evolution and completion evidence. M22 selected architectural regression
 control as the next direction, M23 accepted its concrete evidence package, M24
-accepted the bounded contract, and M25 implements the read-only architectural
-snapshot and compact rendering. Cross-revision policy enforcement remains M26
-work and has not started.
+accepted the bounded contract, M25 implemented the read-only architectural
+snapshot and compact rendering, and M26 implements cross-revision policy,
+governance, bounded failure, and atomic publication.
 
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
 behavior. Implementation details do not create language semantics.
@@ -44,3 +44,7 @@ completion evidence.
 `ail_compiler::architecture_snapshot` derives the accepted four-scope,
 seven-metric architecture snapshot from validated immutable semantic facts and
 returns bounded incomplete results when coverage or a fixed budget is exhausted.
+`ail_compiler::ArchitectureWorkspace::validate_architecture_change` compares a
+validated candidate with the current immutable revision, derives the canonical
+snapshot and delta, evaluates trusted policy and governance, and publishes one
+child only when behavior passes and no denied or incomplete finding remains.

@@ -15,14 +15,17 @@ mod semantics;
 mod syntax;
 
 pub use architecture::{
-    AcceptedDebt, AnalysisIdentity, ArchitectureCoverage, ArchitectureEdge, ArchitectureException,
-    ArchitectureIncompleteFailure, ArchitecturePolicy, ArchitecturePolicyContext,
-    ArchitectureRequestError, ArchitectureRequestErrorKind, ArchitectureRevision,
-    ArchitectureRevisionError, ArchitectureSnapshot, ArchitectureSnapshotInput,
-    ArchitectureSnapshotRequest, ArchitectureSnapshotResponse, ArchitectureSnapshotResult,
-    ArchitectureUnit, BaselineMatch, BudgetUse, ControlFlowGraph, DispatchBudget,
-    GroupDependencies, NewUnitBudget, PolicyGovernance, PolicySelector, PolicyValue, ScopeMetrics,
-    architecture_snapshot,
+    AcceptedDebt, AnalysisIdentity, ArchitectureChangeResult, ArchitectureCompletionEvidence,
+    ArchitectureCoverage, ArchitectureDelta, ArchitectureEdge, ArchitectureEvaluationInput,
+    ArchitectureException, ArchitectureFailure, ArchitectureIncompleteFailure, ArchitecturePolicy,
+    ArchitecturePolicyContext, ArchitectureRequest, ArchitectureRequestError,
+    ArchitectureRequestErrorKind, ArchitectureRevision, ArchitectureRevisionError,
+    ArchitectureSnapshot, ArchitectureSnapshotInput, ArchitectureSnapshotRequest,
+    ArchitectureSnapshotResponse, ArchitectureSnapshotResult, ArchitectureSuccess,
+    ArchitectureUnit, ArchitectureWorkspace, BaselineMatch, BehaviorValidation, BudgetUse,
+    ControlFlowGraph, DispatchBudget, GovernanceAuthorization, GovernanceChange, GroupDependencies,
+    NewUnitBudget, PolicyGovernance, PolicySelector, PolicyValue, ScopeChange, ScopeMetrics,
+    architecture_snapshot, validate_architecture_change,
 };
 pub use diagnostic::Diagnostic;
 pub use evolution::{

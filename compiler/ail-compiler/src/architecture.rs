@@ -42,6 +42,62 @@ const EDGE_KINDS: [&str; 7] = [
     "state-write",
     "delegates",
 ];
+const EXCEPTION_RULES: [&str; 6] = [
+    "M23-POL-GROUP-DEPENDENCY",
+    "M23-POL-TRANSPORT-CAPABILITY",
+    "M23-POL-TRANSPORT-STATE",
+    "M23-POL-DISPATCH-NO-GROWTH",
+    "M23-POL-NEW-UNIT",
+    "M23-POL-NO-NEW-CYCLE",
+];
+const JSON_FIELD_ORDER: &[&str] = &[
+    "id",
+    "code",
+    "classification",
+    "disposition",
+    "rule",
+    "scope",
+    "contributors",
+    "facts",
+    "base_cfc",
+    "candidate_cfc",
+    "base_context",
+    "candidate_context",
+    "actual",
+    "reads",
+    "writes",
+    "allowed",
+    "forbidden_group_edges",
+    "source_group",
+    "target_group",
+    "source",
+    "target",
+    "kind",
+    "cfc",
+    "cfc_max",
+    "context",
+    "context_max",
+    "components",
+    "members",
+    "required_groups",
+    "analyzed_groups",
+    "unchecked_boundaries",
+    "required",
+    "provided",
+    "requested_changes",
+    "authorization_id",
+    "trusted_authorization_matched",
+    "exhausted",
+    "used",
+    "limit",
+    "exception_ids",
+    "policy_revision",
+    "expires_after_review_boundary",
+    "status",
+    "cases_passed",
+    "cases_total",
+    "exception",
+];
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ControlFlowGraph {
     pub nodes: usize,
@@ -129,6 +185,14 @@ pub struct ArchitecturePolicyContext {
     pub new_cycles: bool,
     pub coverage_required: bool,
     pub baseline_match: BaselineMatch,
+}
+
+/// Caller-supplied evidence from the fixed M26 six-case behavior oracle.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BehaviorValidation {
+    pub status: String,
+    pub cases_passed: usize,
+    pub cases_total: usize,
 }
 
 impl ArchitecturePolicyContext {
@@ -294,6 +358,12 @@ impl ArchitectureRevision {
                     "invalid unit identity, module, or group".into(),
                 ));
             }
+            if !REQUIRED_GROUPS.contains(&unit.group.as_str()) {
+                return Err(ArchitectureRevisionError(format!(
+                    "unknown unit group {}",
+                    unit.group
+                )));
+            }
             if !ids.insert(unit.id.as_str()) {
                 return Err(ArchitectureRevisionError(format!(
                     "duplicate unit {}",
@@ -323,6 +393,76 @@ impl ArchitectureRevision {
                         unit.id
                     )));
                 }
+            }
+        }
+        if !ids.contains("transport:dispatch") {
+            return Err(ArchitectureRevisionError(
+                "transport:dispatch unit is required".into(),
+            ));
+        }
+        for (endpoint, group) in &self.endpoint_groups {
+            if endpoint.is_empty()
+                || endpoint.contains(['\n', '\r'])
+                || self
+                    .units
+                    .iter()
+                    .find(|unit| unit.id == *endpoint)
+                    .is_some_and(|unit| unit.group != *group)
+                || !REQUIRED_GROUPS.contains(&group.as_str())
+            {
+                return Err(ArchitectureRevisionError(format!(
+                    "invalid endpoint group entry {endpoint}"
+                )));
+            }
+        }
+        if !self
+            .coverage
+            .analyzed_groups
+            .iter()
+            .all(|group| REQUIRED_GROUPS.contains(&group.as_str()))
+            || self
+                .coverage
+                .analyzed_groups
+                .iter()
+                .collect::<BTreeSet<_>>()
+                .len()
+                != self.coverage.analyzed_groups.len()
+        {
+            return Err(ArchitectureRevisionError(
+                "analyzed coverage contains unknown or duplicate groups".into(),
+            ));
+        }
+        let mut boundary_ids = BTreeSet::new();
+        for value in &self.coverage.unchecked_boundaries {
+            let Value::Object(boundary) = value else {
+                return Err(ArchitectureRevisionError(
+                    "unchecked boundaries must be objects".into(),
+                ));
+            };
+            if boundary.len() != 2
+                || !boundary.contains_key("id")
+                || !boundary.contains_key("reason")
+            {
+                return Err(ArchitectureRevisionError(
+                    "unchecked boundaries require exactly id and reason".into(),
+                ));
+            }
+            let valid_string = |key: &str| {
+                boundary
+                    .get(key)
+                    .and_then(Value::as_str)
+                    .is_some_and(|text| !text.is_empty() && !text.contains(['\n', '\r']))
+            };
+            if !valid_string("id") || !valid_string("reason") {
+                return Err(ArchitectureRevisionError(
+                    "unchecked boundary id and reason must be nonempty single-line strings".into(),
+                ));
+            }
+            let id = boundary["id"].as_str().expect("validated string");
+            if !boundary_ids.insert(id) {
+                return Err(ArchitectureRevisionError(format!(
+                    "duplicate unchecked boundary {id}"
+                )));
             }
         }
         let mut triples = BTreeSet::new();
@@ -392,40 +532,9 @@ impl ArchitectureRevision {
                 "policy and accepted baseline disagree".into(),
             ));
         }
-        let longest_scope = self
-            .units
-            .iter()
-            .max_by_key(|unit| unit.id.len())
-            .map_or("", |unit| unit.id.as_str());
-        let analysis = AnalysisIdentity {
-            workspace_id: self.workspace_id.clone(),
-            revision_id: self.revision_id.clone(),
-            semantic_model_version: self.semantic_model_version.clone(),
-            policy_revision: self.policy.revision.clone(),
-            baseline_revision: self.policy.baseline_match.baseline_revision.clone(),
-            analysis_scope: longest_scope.to_owned(),
-        };
-        let diagnostic = coverage_diagnostic(&self.revision_id, &self.coverage);
-        let bounded = ArchitectureIncompleteFailure {
-            status: "incomplete".into(),
-            analysis,
-            coverage: self.coverage.clone(),
-            budgets: BudgetUse {
-                semantic_nodes: 0,
-                typed_edges: 0,
-                structured_bytes: 0,
-                compact_bytes: 0,
-                compact_lines: 0,
-                exhausted: None,
-            },
-            diagnostics: vec![diagnostic],
-            edits: Vec::new(),
-            current_revision_id: self.revision_id.clone(),
-            published_child_revision_id: None,
-        };
-        if canonical(&bounded).len() > LIMITS[2].1 {
+        if self.policy.new_cycles {
             return Err(ArchitectureRevisionError(
-                "revision identity or coverage cannot fit a bounded response".into(),
+                "new dependency cycles cannot be enabled".into(),
             ));
         }
         Ok(())
@@ -503,7 +612,7 @@ pub struct ArchitectureSnapshot {
     pub coverage: ArchitectureCoverage,
     pub budgets: BudgetUse,
     pub active_policies: Vec<ArchitecturePolicy>,
-    pub baseline_match: BaselineMatch,
+    pub baseline_match: Option<BaselineMatch>,
     pub accepted_debt: Vec<AcceptedDebt>,
     pub exceptions: Vec<ArchitectureException>,
     pub findings: Vec<Value>,
@@ -532,6 +641,194 @@ pub enum ArchitectureSnapshotResult {
     Success(ArchitectureSnapshotResponse),
     Incomplete(ArchitectureIncompleteFailure),
 }
+
+/// A candidate-owned governance mutation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GovernanceChange {
+    pub kind: String,
+    pub rule: String,
+    pub scope: String,
+    pub exception_ids: Vec<String>,
+}
+/// Trusted evidence authorizing exactly one governance mutation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GovernanceAuthorization {
+    pub authorization_id: String,
+    pub candidate_revision_id: String,
+    pub candidate_graph_digest: String,
+    pub policy_revision: String,
+    pub baseline_revision: String,
+    pub kind: String,
+    pub exception_ids: Vec<String>,
+    pub rule: String,
+    pub scope: String,
+    pub review_boundary: String,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ArchitectureRequest {
+    pub base_revision_id: String,
+    pub candidate_revision_id: String,
+    pub analysis_scope: String,
+    pub policy_revision: String,
+    pub baseline_revision: String,
+    pub review_boundary: String,
+    pub requested_governance_changes: Vec<GovernanceChange>,
+    pub authorization_id: Option<String>,
+}
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArchitectureEvaluationInput {
+    pub request: ArchitectureRequest,
+    pub governance_authorizations: Vec<GovernanceAuthorization>,
+    pub active_exceptions: Vec<ArchitectureException>,
+    pub active_policy_revision: String,
+    pub active_baseline_revision: String,
+}
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArchitectureDelta {
+    pub format: String,
+    pub base_snapshot_digest: String,
+    pub candidate_snapshot_digest: String,
+    pub base_revision_id: String,
+    pub candidate_revision_id: String,
+    pub scope_changes: Vec<ScopeChange>,
+    pub findings: Vec<Value>,
+    pub classification: String,
+    pub publication: String,
+    pub commit: String,
+    pub compact: String,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ScopeChange {
+    pub scope_kind: String,
+    pub identity: String,
+    pub base: Option<String>,
+    pub candidate: Option<String>,
+}
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArchitectureCompletionEvidence {
+    pub base_revision_id: String,
+    pub revision_id: String,
+    pub base_snapshot_digest: String,
+    pub snapshot_digest: String,
+    pub delta_digest: String,
+    pub policy_revision: String,
+    pub baseline_revision: String,
+    pub coverage: ArchitectureCoverage,
+    pub budgets: BudgetUse,
+    pub behavior_validation: BehaviorValidation,
+    pub commit: String,
+}
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArchitectureSuccess {
+    pub status: String,
+    pub snapshot: ArchitectureSnapshot,
+    pub delta: ArchitectureDelta,
+    pub completion: ArchitectureCompletionEvidence,
+}
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArchitectureFailure {
+    pub status: String,
+    pub base_revision_id: String,
+    pub current_revision_id: String,
+    pub snapshot: ArchitectureSnapshot,
+    pub delta: ArchitectureDelta,
+    pub diagnostics: Vec<Value>,
+    pub edits: Vec<Value>,
+    pub published_child_revision_id: Option<String>,
+}
+#[derive(Clone, Debug, PartialEq)]
+pub enum ArchitectureChangeResult {
+    Success(Box<ArchitectureSuccess>),
+    Failure(Box<ArchitectureFailure>),
+    Incomplete(Box<ArchitectureIncompleteFailure>),
+}
+
+/// Atomic owner for immutable architecture revisions.
+#[derive(Clone, Debug)]
+pub struct ArchitectureWorkspace {
+    current_revision_id: String,
+    revisions: BTreeMap<String, ArchitectureRevision>,
+}
+impl ArchitectureWorkspace {
+    #[must_use]
+    pub fn new(base: ArchitectureRevision) -> Self {
+        Self {
+            current_revision_id: base.revision_id.clone(),
+            revisions: BTreeMap::from([(base.revision_id.clone(), base)]),
+        }
+    }
+    #[must_use]
+    pub fn current_revision_id(&self) -> &str {
+        &self.current_revision_id
+    }
+    #[must_use]
+    pub fn retained_revision_ids(&self) -> Vec<&str> {
+        self.revisions.keys().map(String::as_str).collect()
+    }
+    #[must_use]
+    pub fn revision(&self, id: &str) -> Option<&ArchitectureRevision> {
+        self.revisions.get(id)
+    }
+    /// Validates and atomically publishes an architecture candidate when accepted.
+    ///
+    /// # Errors
+    /// Returns a request error when the base or candidate revision is invalid or stale,
+    /// governance does not match trusted inputs, or analysis cannot evaluate the scope.
+    pub fn validate_architecture_change<F>(
+        &mut self,
+        candidate: ArchitectureRevision,
+        input: &ArchitectureEvaluationInput,
+        validate_behavior: F,
+    ) -> Result<ArchitectureChangeResult, ArchitectureRequestError>
+    where
+        F: FnOnce(&ArchitectureRevision) -> Result<BehaviorValidation, ArchitectureRequestError>,
+    {
+        let base = self
+            .revisions
+            .get(&input.request.base_revision_id)
+            .ok_or_else(|| ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::StaleRevision,
+                message: "base revision is not retained".into(),
+            })?
+            .clone();
+        if self.current_revision_id != input.request.base_revision_id {
+            return Err(ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::StaleRevision,
+                message: "base revision is not current".into(),
+            });
+        }
+        if self.revisions.contains_key(&candidate.revision_id) {
+            return Err(ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::InvalidRevision,
+                message: "candidate revision identity is already retained".into(),
+            });
+        }
+        let result = evaluate_change(&base, &candidate, input, validate_behavior)?;
+        if matches!(result, ArchitectureChangeResult::Success(_)) {
+            self.current_revision_id.clone_from(&candidate.revision_id);
+            self.revisions
+                .insert(candidate.revision_id.clone(), candidate);
+        }
+        Ok(result)
+    }
+}
+
+/// Validates an architecture candidate through the supplied workspace.
+///
+/// # Errors
+/// Returns a request error when the base or candidate revision is invalid or stale,
+/// governance does not match trusted inputs, or analysis cannot evaluate the scope.
+pub fn validate_architecture_change<F>(
+    workspace: &mut ArchitectureWorkspace,
+    candidate: ArchitectureRevision,
+    input: &ArchitectureEvaluationInput,
+    validate_behavior: F,
+) -> Result<ArchitectureChangeResult, ArchitectureRequestError>
+where
+    F: FnOnce(&ArchitectureRevision) -> Result<BehaviorValidation, ArchitectureRequestError>,
+{
+    workspace.validate_architecture_change(candidate, input, validate_behavior)
+}
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ArchitectureRequestError {
     pub kind: ArchitectureRequestErrorKind,
@@ -555,6 +852,15 @@ pub enum ArchitectureRequestErrorKind {
 pub fn architecture_snapshot(
     revision: &ArchitectureRevision,
     input: &ArchitectureSnapshotInput,
+) -> Result<ArchitectureSnapshotResult, ArchitectureRequestError> {
+    architecture_snapshot_impl(revision, input, true)
+}
+
+#[allow(clippy::too_many_lines)]
+fn architecture_snapshot_impl(
+    revision: &ArchitectureRevision,
+    input: &ArchitectureSnapshotInput,
+    enforce_budgets: bool,
 ) -> Result<ArchitectureSnapshotResult, ArchitectureRequestError> {
     revision
         .validate()
@@ -680,7 +986,7 @@ pub fn architecture_snapshot(
         coverage: coverage.clone(),
         budgets: budgets.clone(),
         active_policies: revision.policy.policies(),
-        baseline_match: revision.policy.baseline_match.clone(),
+        baseline_match: Some(revision.policy.baseline_match.clone()),
         accepted_debt: revision.policy.accepted_debt(),
         exceptions: input.active_exceptions.clone(),
         findings,
@@ -697,7 +1003,7 @@ pub fn architecture_snapshot(
     budgets.compact_lines = snapshot.compact.matches('\n').count();
     measure(&mut snapshot, &mut budgets);
     snapshot.budgets = budgets.clone();
-    if !coverage_complete || budgets.exhausted.is_some() {
+    if !coverage_complete || (enforce_budgets && budgets.exhausted.is_some()) {
         let diagnostic = if let Some(field) = &budgets.exhausted {
             let used = budget_value(&budgets, field);
             let limit = LIMITS
@@ -727,7 +1033,7 @@ pub fn architecture_snapshot(
         snapshot,
         snapshot_digest: source_digest(&canonical_snapshot),
     };
-    if canonical(&response).len() > LIMITS[2].1 {
+    if enforce_budgets && canonical(&response).len() > LIMITS[2].1 {
         return Err(ArchitectureRequestError {
             kind: ArchitectureRequestErrorKind::InvalidRevision,
             message: "success response exceeds its fixed bound".into(),
@@ -736,7 +1042,797 @@ pub fn architecture_snapshot(
     Ok(ArchitectureSnapshotResult::Success(response))
 }
 
+#[allow(clippy::too_many_lines)]
+fn evaluate_change<F>(
+    base: &ArchitectureRevision,
+    candidate: &ArchitectureRevision,
+    input: &ArchitectureEvaluationInput,
+    validate_behavior: F,
+) -> Result<ArchitectureChangeResult, ArchitectureRequestError>
+where
+    F: FnOnce(&ArchitectureRevision) -> Result<BehaviorValidation, ArchitectureRequestError>,
+{
+    base.validate().map_err(|e| ArchitectureRequestError {
+        kind: ArchitectureRequestErrorKind::InvalidRevision,
+        message: e.0,
+    })?;
+    candidate.validate().map_err(|e| ArchitectureRequestError {
+        kind: ArchitectureRequestErrorKind::InvalidRevision,
+        message: e.0,
+    })?;
+    let behavior_validation = validate_behavior(candidate)?;
+    if behavior_validation.status != "passed"
+        || behavior_validation.cases_passed != 6
+        || behavior_validation.cases_total != 6
+    {
+        return Err(ArchitectureRequestError {
+            kind: ArchitectureRequestErrorKind::InvalidRevision,
+            message: "M26 behavior validation must report passed 6/6".into(),
+        });
+    }
+    if base.workspace_id != candidate.workspace_id
+        || base.semantic_model_version != candidate.semantic_model_version
+        || input.request.candidate_revision_id != candidate.revision_id
+        || candidate.policy != base.policy
+    {
+        return Err(ArchitectureRequestError {
+            kind: ArchitectureRequestErrorKind::StaleRevision,
+            message: "candidate identity is incompatible".into(),
+        });
+    }
+    if input.active_policy_revision != base.policy.revision
+        || input.active_baseline_revision != base.policy.baseline_match.baseline_revision
+        || input.request.policy_revision != input.active_policy_revision
+    {
+        return Err(ArchitectureRequestError {
+            kind: ArchitectureRequestErrorKind::StaleGovernance,
+            message: "trusted governance context mismatch".into(),
+        });
+    }
+    let base_input = ArchitectureSnapshotInput {
+        request: ArchitectureSnapshotRequest {
+            revision_id: base.revision_id.clone(),
+            analysis_scope: "transport:dispatch".into(),
+        },
+        active_exceptions: vec![],
+        active_policy_revision: input.active_policy_revision.clone(),
+        active_baseline_revision: input.active_baseline_revision.clone(),
+    };
+    let ArchitectureSnapshotResult::Success(base_result) =
+        architecture_snapshot(base, &base_input)?
+    else {
+        return Err(ArchitectureRequestError {
+            kind: ArchitectureRequestErrorKind::InvalidRevision,
+            message: "base architecture is incomplete".into(),
+        });
+    };
+    let mut safe = candidate.clone();
+    safe.coverage.complete_for_policy = true;
+    safe.coverage.analyzed_groups = REQUIRED_GROUPS.iter().map(|x| (*x).into()).collect();
+    let candidate_input = ArchitectureSnapshotInput {
+        request: ArchitectureSnapshotRequest {
+            revision_id: candidate.revision_id.clone(),
+            analysis_scope: input.request.analysis_scope.clone(),
+        },
+        active_exceptions: input.active_exceptions.clone(),
+        active_policy_revision: input.active_policy_revision.clone(),
+        active_baseline_revision: input.active_baseline_revision.clone(),
+    };
+    let initial = architecture_snapshot_impl(&safe, &candidate_input, false)?;
+    let ArchitectureSnapshotResult::Success(success) = initial else {
+        let ArchitectureSnapshotResult::Incomplete(mut failure) = initial else {
+            unreachable!()
+        };
+        failure.current_revision_id.clone_from(&base.revision_id);
+        return Ok(ArchitectureChangeResult::Incomplete(Box::new(failure)));
+    };
+    let mut snapshot = success.snapshot;
+    snapshot
+        .analysis
+        .baseline_revision
+        .clone_from(&input.request.baseline_revision);
+    snapshot.coverage = candidate.coverage.clone();
+    let mut findings = architecture_findings(base, candidate, input);
+    for finding in &mut findings {
+        let contributors = finding["contributors"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|v| v.as_str().map(str::to_owned))
+            .collect::<Vec<_>>();
+        if let Some(exception) = input.active_exceptions.iter().find(|e| {
+            finding["rule"]
+                .as_str()
+                .is_some_and(|rule| EXCEPTION_RULES.contains(&rule))
+                && e.rule == finding["rule"]
+                && e.scope == finding["scope"]
+                && e.contributors == contributors
+                && e.policy_revision == input.active_policy_revision
+                && e.expires_after_review_boundary >= input.request.review_boundary
+        }) {
+            finding["disposition"] = Value::String("record".into());
+            finding["exception"] = ordered_value(&exception.ordered_json());
+        }
+    }
+    findings.sort_by_key(finding_key);
+    let extra = findings
+        .iter()
+        .filter_map(|f| f["scope"].as_str())
+        .collect::<BTreeSet<_>>();
+    let comps = components(&candidate.units, &candidate.edges);
+    for scope in extra {
+        if scope.starts_with("group:") && !snapshot.scopes.iter().any(|s| s.identity == scope) {
+            let group = scope.trim_start_matches("group:");
+            let members = candidate
+                .units
+                .iter()
+                .filter(|u| u.group == group)
+                .map(|u| u.id.clone())
+                .collect();
+            snapshot.scopes.push(metric(
+                "architecture-group",
+                scope.into(),
+                members,
+                false,
+                candidate,
+                &comps,
+            ));
+        } else if candidate.units.iter().any(|u| u.id == scope)
+            && !snapshot.scopes.iter().any(|s| s.identity == scope)
+        {
+            snapshot.scopes.push(metric(
+                "executable-unit",
+                scope.into(),
+                vec![scope.into()],
+                true,
+                candidate,
+                &comps,
+            ));
+        }
+    }
+    snapshot
+        .scopes
+        .sort_by_key(|s| (scope_rank(&s.scope_kind), s.identity.clone()));
+    snapshot.findings = findings;
+    let coverage_complete = candidate.coverage.complete_for_policy
+        && candidate
+            .coverage
+            .analyzed_groups
+            .iter()
+            .map(String::as_str)
+            .eq(REQUIRED_GROUPS);
+    snapshot.coverage.complete_for_policy = coverage_complete;
+    snapshot.baseline_match = (input.request.baseline_revision == input.active_baseline_revision)
+        .then(|| base.policy.baseline_match.clone());
+    let denied = snapshot.findings.iter().any(|f| f["disposition"] == "deny");
+    snapshot.classification = if !coverage_complete
+        || snapshot.findings.iter().any(|finding| {
+            finding["classification"] == "incomplete" && finding["disposition"] == "deny"
+        }) {
+        "incomplete"
+    } else if denied {
+        "rejected"
+    } else {
+        "accepted"
+    }
+    .into();
+    snapshot.compact = render_compact(&snapshot);
+    let mut budgets = snapshot.budgets.clone();
+    budgets.compact_bytes = snapshot.compact.len();
+    budgets.compact_lines = snapshot.compact.matches('\n').count();
+    measure(&mut snapshot, &mut budgets);
+    snapshot.budgets = budgets.clone();
+    if !coverage_complete || budgets.exhausted.is_some() {
+        let diagnostic = if let Some(field) = &budgets.exhausted {
+            serde_json::json!({"id":format!("{}:analysis-budget",finding_prefix(&candidate.revision_id)),"code":"AIL.ARCH.ANALYSIS_INCOMPLETE","classification":"incomplete","disposition":"deny","rule":"M24-ANALYSIS-BUDGET","scope":"workspace","contributors":[],"facts":{"exhausted":field,"used":budget_value(&budgets,field),"limit":LIMITS.iter().find(|x|x.0==field).unwrap().1},"exception":null})
+        } else {
+            snapshot
+                .findings
+                .iter()
+                .find(|f| f["code"] == "AIL.ARCH.COVERAGE_INCOMPLETE")
+                .cloned()
+                .unwrap()
+        };
+        let result =
+            ArchitectureChangeResult::Incomplete(Box::new(ArchitectureIncompleteFailure {
+                status: "incomplete".into(),
+                analysis: snapshot.analysis,
+                coverage: snapshot.coverage,
+                budgets,
+                diagnostics: vec![diagnostic],
+                edits: vec![],
+                current_revision_id: base.revision_id.clone(),
+                published_child_revision_id: None,
+            }));
+        return bounded_change_result(result);
+    }
+    let delta = architecture_delta(&base_result.snapshot, &snapshot);
+    if denied {
+        let result = ArchitectureChangeResult::Failure(Box::new(ArchitectureFailure {
+            status: "failure".into(),
+            base_revision_id: base.revision_id.clone(),
+            current_revision_id: base.revision_id.clone(),
+            diagnostics: snapshot.findings.clone(),
+            snapshot,
+            delta,
+            edits: vec![],
+            published_child_revision_id: None,
+        }));
+        return bounded_change_result(result);
+    }
+    let base_digest = digest(&base_result.snapshot);
+    let snapshot_digest = digest(&snapshot);
+    let delta_digest = digest(&delta);
+    bounded_change_result(ArchitectureChangeResult::Success(Box::new(
+        ArchitectureSuccess {
+            status: "success".into(),
+            completion: ArchitectureCompletionEvidence {
+                base_revision_id: base.revision_id.clone(),
+                revision_id: candidate.revision_id.clone(),
+                base_snapshot_digest: base_digest,
+                snapshot_digest,
+                delta_digest,
+                policy_revision: input.active_policy_revision.clone(),
+                baseline_revision: input.active_baseline_revision.clone(),
+                coverage: snapshot.coverage.clone(),
+                budgets: snapshot.budgets.clone(),
+                behavior_validation,
+                commit: "committed".into(),
+            },
+            snapshot,
+            delta,
+        },
+    )))
+}
+
+fn bounded_change_result(
+    result: ArchitectureChangeResult,
+) -> Result<ArchitectureChangeResult, ArchitectureRequestError> {
+    if canonical(&result).len() > LIMITS[2].1 {
+        return Err(ArchitectureRequestError {
+            kind: ArchitectureRequestErrorKind::InvalidRevision,
+            message: "operation response exceeds its fixed bound".into(),
+        });
+    }
+    Ok(result)
+}
+
+fn finding(
+    id: &str,
+    code: &str,
+    class: &str,
+    rule: &str,
+    scope: &str,
+    contributors: Vec<String>,
+    facts: Value,
+) -> Value {
+    let mut value = serde_json::Map::new();
+    value.insert("id".into(), Value::String(id.into()));
+    value.insert("code".into(), Value::String(code.into()));
+    value.insert("classification".into(), Value::String(class.into()));
+    value.insert("disposition".into(), Value::String("deny".into()));
+    value.insert("rule".into(), Value::String(rule.into()));
+    value.insert("scope".into(), Value::String(scope.into()));
+    value.insert(
+        "contributors".into(),
+        Value::Array(contributors.into_iter().map(Value::String).collect()),
+    );
+    value.insert("facts".into(), facts);
+    value.insert("exception".into(), Value::Null);
+    Value::Object(value)
+}
+fn architecture_findings(
+    base: &ArchitectureRevision,
+    candidate: &ArchitectureRevision,
+    input: &ArchitectureEvaluationInput,
+) -> Vec<Value> {
+    let prefix = finding_prefix(&candidate.revision_id);
+    let mut findings = Vec::new();
+    findings.extend(hotspot_finding(base, candidate, prefix));
+    findings.extend(authority_finding(base, candidate, prefix));
+    findings.extend(state_finding(base, candidate, prefix));
+    findings.extend(boundary_finding(base, candidate, prefix));
+    findings.extend(new_unit_findings(base, candidate, prefix));
+    findings.extend(cycle_finding(base, candidate, prefix));
+    findings.extend(coverage_finding(candidate));
+    findings.extend(stale_baseline_finding(input, prefix));
+    findings.extend(governance_finding(candidate, input, prefix));
+    findings
+}
+
+fn hotspot_finding(
+    base: &ArchitectureRevision,
+    c: &ArchitectureRevision,
+    prefix: &str,
+) -> Option<Value> {
+    let map: BTreeMap<_, _> = c.units.iter().map(|u| (u.id.as_str(), u)).collect();
+    let dispatch = &map["transport:dispatch"];
+    let dc = dispatch.cfg.edges + 2 - dispatch.cfg.nodes;
+    let context = metric(
+        "executable-unit",
+        "transport:dispatch".into(),
+        vec!["transport:dispatch".into()],
+        true,
+        c,
+        &components(&c.units, &c.edges),
+    )
+    .minimal_context_node_count;
+    if dc > base.policy.dispatch_no_growth.control_flow_complexity
+        || context > base.policy.dispatch_no_growth.minimal_context_node_count
+    {
+        return Some(finding(
+            &format!("{prefix}:dispatch-growth"),
+            "AIL.ARCH.HOTSPOT_GROWTH",
+            "regression",
+            "M23-POL-DISPATCH-NO-GROWTH",
+            "transport:dispatch",
+            vec!["transport:dispatch".into()],
+            serde_json::json!({"base_cfc":base.policy.dispatch_no_growth.control_flow_complexity,"candidate_cfc":dc,"base_context":base.policy.dispatch_no_growth.minimal_context_node_count,"candidate_context":context}),
+        ));
+    }
+    None
+}
+
+fn authority_finding(
+    base: &ArchitectureRevision,
+    c: &ArchitectureRevision,
+    prefix: &str,
+) -> Option<Value> {
+    let transport: BTreeSet<_> = c
+        .units
+        .iter()
+        .filter(|u| u.group == "transport")
+        .map(|u| u.id.as_str())
+        .collect();
+    let ce = c
+        .edges
+        .iter()
+        .filter(|e| transport.contains(e.source.as_str()) && e.kind == "capability-use")
+        .collect::<Vec<_>>();
+    let allowed_capabilities: BTreeSet<_> = base
+        .policy
+        .transport_capabilities
+        .iter()
+        .map(String::as_str)
+        .collect();
+    let ce = ce
+        .into_iter()
+        .filter(|edge| {
+            edge.target
+                .strip_prefix("capability:")
+                .and_then(|value| value.split('.').next())
+                .is_none_or(|capability| !allowed_capabilities.contains(capability))
+        })
+        .collect::<Vec<_>>();
+    if !ce.is_empty() {
+        let contributors = ce
+            .iter()
+            .flat_map(|e| [e.source.clone(), e.target.clone()])
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        let actual = ce
+            .iter()
+            .filter_map(|e| {
+                e.target
+                    .strip_prefix("capability:")
+                    .and_then(|x| x.split('.').next())
+            })
+            .collect::<BTreeSet<_>>();
+        return Some(finding(
+            &format!("{prefix}:transport-capability"),
+            "AIL.ARCH.AUTHORITY",
+            "violation",
+            "M23-POL-TRANSPORT-CAPABILITY",
+            "group:transport",
+            contributors,
+            serde_json::json!({"actual":actual,"allowed":base.policy.transport_capabilities}),
+        ));
+    }
+    None
+}
+
+fn state_finding(
+    base: &ArchitectureRevision,
+    c: &ArchitectureRevision,
+    prefix: &str,
+) -> Option<Value> {
+    let transport: BTreeSet<_> = c
+        .units
+        .iter()
+        .filter(|u| u.group == "transport")
+        .map(|u| u.id.as_str())
+        .collect();
+    let se = c
+        .edges
+        .iter()
+        .filter(|e| {
+            transport.contains(e.source.as_str())
+                && matches!(e.kind.as_str(), "state-read" | "state-write")
+        })
+        .collect::<Vec<_>>();
+    let allowed_state: BTreeSet<_> = base
+        .policy
+        .transport_state
+        .iter()
+        .map(String::as_str)
+        .collect();
+    let se = se
+        .into_iter()
+        .filter(|edge| {
+            edge.target
+                .strip_prefix("state:")
+                .is_none_or(|state| !allowed_state.contains(state))
+        })
+        .collect::<Vec<_>>();
+    if !se.is_empty() {
+        let contributors = se
+            .iter()
+            .flat_map(|e| [e.source.clone(), e.target.clone()])
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        let reads = se
+            .iter()
+            .filter(|e| e.kind == "state-read")
+            .filter_map(|e| e.target.strip_prefix("state:"))
+            .collect::<BTreeSet<_>>();
+        let writes = se
+            .iter()
+            .filter(|e| e.kind == "state-write")
+            .filter_map(|e| e.target.strip_prefix("state:"))
+            .collect::<BTreeSet<_>>();
+        return Some(finding(
+            &format!("{prefix}:transport-state"),
+            "AIL.ARCH.STATE",
+            "violation",
+            "M23-POL-TRANSPORT-STATE",
+            "group:transport",
+            contributors,
+            serde_json::json!({"reads":reads,"writes":writes,"allowed":base.policy.transport_state}),
+        ));
+    }
+    None
+}
+
+fn boundary_finding(
+    base: &ArchitectureRevision,
+    c: &ArchitectureRevision,
+    prefix: &str,
+) -> Option<Value> {
+    let groups = c
+        .units
+        .iter()
+        .map(|u| (u.id.as_str(), u.group.as_str()))
+        .chain(
+            c.endpoint_groups
+                .iter()
+                .map(|(a, b)| (a.as_str(), b.as_str())),
+        )
+        .collect::<BTreeMap<_, _>>();
+    let allowed = |a: &str, b: &str| match a {
+        "contract" => base
+            .policy
+            .allowed_group_dependencies
+            .contract
+            .iter()
+            .any(|x| x == b),
+        "transport" => base
+            .policy
+            .allowed_group_dependencies
+            .transport
+            .iter()
+            .any(|x| x == b),
+        "domain" => base
+            .policy
+            .allowed_group_dependencies
+            .domain
+            .iter()
+            .any(|x| x == b),
+        "persistence-adapter" => base
+            .policy
+            .allowed_group_dependencies
+            .persistence_adapter
+            .iter()
+            .any(|x| x == b),
+        _ => base
+            .policy
+            .allowed_group_dependencies
+            .verification
+            .iter()
+            .any(|x| x == b),
+    };
+    let mut forbidden = vec![];
+    for e in &c.edges {
+        if e.kind != "verifies" {
+            if let (Some(a), Some(b)) =
+                (groups.get(e.source.as_str()), groups.get(e.target.as_str()))
+            {
+                if a != b && !allowed(a, b) {
+                    forbidden.push((a, b, e));
+                }
+            }
+        }
+    }
+    if !forbidden.is_empty() {
+        forbidden.sort_by_key(|x| (x.0, x.1, &x.2.source, &x.2.target, &x.2.kind));
+        let contributors = forbidden
+            .iter()
+            .flat_map(|x| [x.2.source.clone(), x.2.target.clone()])
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        let facts=forbidden.iter().map(|x|serde_json::json!({"source_group":x.0,"target_group":x.1,"source":x.2.source,"target":x.2.target,"kind":x.2.kind})).collect::<Vec<_>>();
+        return Some(finding(
+            &format!("{prefix}:group-dependency"),
+            "AIL.ARCH.BOUNDARY",
+            "violation",
+            "M23-POL-GROUP-DEPENDENCY",
+            &format!("group:{}", forbidden[0].0),
+            contributors,
+            serde_json::json!({"forbidden_group_edges":facts}),
+        ));
+    }
+    None
+}
+
+fn new_unit_findings(
+    base: &ArchitectureRevision,
+    c: &ArchitectureRevision,
+    prefix: &str,
+) -> Vec<Value> {
+    let mut out = Vec::new();
+    let base_ids: BTreeSet<_> = base.units.iter().map(|u| u.id.as_str()).collect();
+    let comps = components(&c.units, &c.edges);
+    for u in c
+        .units
+        .iter()
+        .filter(|u| !base_ids.contains(u.id.as_str()) && u.group != "contract")
+    {
+        let cf = u.cfg.edges + 2 - u.cfg.nodes;
+        let cx = metric(
+            "executable-unit",
+            u.id.clone(),
+            vec![u.id.clone()],
+            true,
+            c,
+            &comps,
+        )
+        .minimal_context_node_count;
+        if cf > base.policy.new_unit.control_flow_complexity_max
+            || cx > base.policy.new_unit.minimal_context_node_count_max
+        {
+            out.push(finding(
+                &format!("{prefix}:new-unit:{}", u.id),
+                "AIL.ARCH.NEW_UNIT",
+                "violation",
+                "M23-POL-NEW-UNIT",
+                &u.id,
+                vec![u.id.clone()],
+                serde_json::json!({"cfc":cf,"cfc_max":base.policy.new_unit.control_flow_complexity_max,"context":cx,"context_max":base.policy.new_unit.minimal_context_node_count_max}),
+            ));
+        }
+    }
+    out
+}
+
+fn cycle_finding(
+    base: &ArchitectureRevision,
+    c: &ArchitectureRevision,
+    prefix: &str,
+) -> Option<Value> {
+    let comps = components(&c.units, &c.edges);
+    let bc = components(&base.units, &base.edges);
+    let cycles = comps
+        .iter()
+        .filter(|component| component.len() > 1 && !bc.contains(component))
+        .collect::<Vec<_>>();
+    if !base.policy.new_cycles && !cycles.is_empty() {
+        let contributors = cycles
+            .iter()
+            .flat_map(|component| component.iter().cloned())
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>();
+        let component_values = cycles
+            .iter()
+            .map(|component| serde_json::json!({"id":component_id(component),"members":component}))
+            .collect::<Vec<_>>();
+        return Some(finding(
+            &format!("{prefix}:new-cycle"),
+            "AIL.ARCH.CYCLE",
+            "violation",
+            "M23-POL-NO-NEW-CYCLE",
+            &component_id(cycles[0]),
+            contributors,
+            serde_json::json!({"components":component_values}),
+        ));
+    }
+    None
+}
+
+fn coverage_finding(c: &ArchitectureRevision) -> Option<Value> {
+    if !c.coverage.complete_for_policy
+        || !c
+            .coverage
+            .analyzed_groups
+            .iter()
+            .map(String::as_str)
+            .eq(REQUIRED_GROUPS)
+    {
+        return Some(coverage_diagnostic(&c.revision_id, &c.coverage));
+    }
+    None
+}
+
+fn stale_baseline_finding(input: &ArchitectureEvaluationInput, prefix: &str) -> Option<Value> {
+    if input.request.baseline_revision != input.active_baseline_revision {
+        return Some(finding(
+            &format!("{prefix}:stale-baseline"),
+            "AIL.ARCH.STALE_BASELINE",
+            "incomplete",
+            "M24-BASELINE-COMPATIBILITY",
+            "transport:dispatch",
+            vec![],
+            serde_json::json!({"required":input.active_baseline_revision,"provided":input.request.baseline_revision}),
+        ));
+    }
+    None
+}
+
+fn governance_finding(
+    c: &ArchitectureRevision,
+    input: &ArchitectureEvaluationInput,
+    prefix: &str,
+) -> Option<Value> {
+    let governance_shape_valid = match input.request.requested_governance_changes.len() {
+        0 => input.request.authorization_id.is_none(),
+        1 => input.request.authorization_id.is_some(),
+        _ => false,
+    };
+    if !governance_shape_valid || !input.request.requested_governance_changes.is_empty() {
+        let change = input.request.requested_governance_changes.first();
+        let digest = graph_digest(c);
+        let matched = governance_shape_valid
+            && input.request.policy_revision == input.active_policy_revision
+            && input.request.baseline_revision == input.active_baseline_revision
+            && input
+                .request
+                .authorization_id
+                .as_ref()
+                .and_then(|id| {
+                    input
+                        .governance_authorizations
+                        .iter()
+                        .find(|a| &a.authorization_id == id)
+                })
+                .is_some_and(|a| {
+                    a.candidate_revision_id == c.revision_id
+                        && a.candidate_graph_digest == digest
+                        && a.policy_revision == input.active_policy_revision
+                        && a.baseline_revision == input.active_baseline_revision
+                        && change.is_some_and(|change| {
+                            a.kind == change.kind
+                                && sorted(&a.exception_ids) == sorted(&change.exception_ids)
+                                && a.rule == change.rule
+                                && a.scope == change.scope
+                        })
+                        && a.review_boundary == input.request.review_boundary
+                });
+        if !matched {
+            return Some(finding(
+                &format!("{prefix}:governance"),
+                "AIL.ARCH.GOVERNANCE_UNAUTHORIZED",
+                "violation",
+                "M23-POL-GOVERNANCE",
+                "governance",
+                vec![],
+                serde_json::json!({"requested_changes":input.request.requested_governance_changes.iter().map(change_value).collect::<Vec<_>>(),"authorization_id":input.request.authorization_id,"trusted_authorization_matched":false}),
+            ));
+        }
+    }
+    None
+}
+
+fn sorted(v: &[String]) -> Vec<String> {
+    let mut x = v.to_vec();
+    x.sort();
+    x.dedup();
+    x
+}
+fn change_value(c: &GovernanceChange) -> Value {
+    serde_json::json!({"kind":c.kind,"rule":c.rule,"scope":c.scope,"exception_ids":c.exception_ids})
+}
+fn graph_digest(r: &ArchitectureRevision) -> String {
+    let mut units = r.units.clone();
+    units.sort_by(|a, b| a.id.cmp(&b.id));
+    let us = units
+        .iter()
+        .map(|u| {
+            OrderedJson::Object(vec![
+                ("id".into(), OrderedJson::String(u.id.clone())),
+                ("module".into(), OrderedJson::String(u.module.clone())),
+                ("group".into(), OrderedJson::String(u.group.clone())),
+                (
+                    "cfg".into(),
+                    OrderedJson::Object(vec![
+                        ("nodes".into(), OrderedJson::Number(u.cfg.nodes)),
+                        ("edges".into(), OrderedJson::Number(u.cfg.edges)),
+                    ]),
+                ),
+                ("capabilities".into(), strings(&sorted(&u.capabilities))),
+                ("state_reads".into(), strings(&sorted(&u.state_reads))),
+                ("state_writes".into(), strings(&sorted(&u.state_writes))),
+            ])
+        })
+        .collect::<Vec<_>>();
+    let mut edges = r.edges.clone();
+    edges.sort_by_key(|e| {
+        (
+            e.source.clone(),
+            e.target.clone(),
+            EDGE_KINDS.iter().position(|x| *x == e.kind).unwrap(),
+        )
+    });
+    let es = edges
+        .iter()
+        .map(|e| {
+            OrderedJson::Array(vec![
+                OrderedJson::String(e.source.clone()),
+                OrderedJson::String(e.target.clone()),
+                OrderedJson::String(e.kind.clone()),
+            ])
+        })
+        .collect();
+    let graph = OrderedJson::Object(vec![
+        ("units".into(), OrderedJson::Array(us)),
+        ("edges".into(), OrderedJson::Array(es)),
+    ]);
+    let mut canonical = String::new();
+    render_json(&graph, 0, &mut canonical);
+    canonical.push('\n');
+    source_digest(&canonical)
+}
+fn scope_rank(k: &str) -> usize {
+    [
+        "executable-unit",
+        "module",
+        "dependency-component",
+        "architecture-group",
+    ]
+    .iter()
+    .position(|x| *x == k)
+    .unwrap_or(9)
+}
+fn finding_key(v: &Value) -> (usize, String, String, String) {
+    let codes = [
+        "AIL.ARCH.HOTSPOT_GROWTH",
+        "AIL.ARCH.AUTHORITY",
+        "AIL.ARCH.STATE",
+        "AIL.ARCH.BOUNDARY",
+        "AIL.ARCH.NEW_UNIT",
+        "AIL.ARCH.CYCLE",
+        "AIL.ARCH.COVERAGE_INCOMPLETE",
+        "AIL.ARCH.STALE_BASELINE",
+        "AIL.ARCH.GOVERNANCE_UNAUTHORIZED",
+        "AIL.ARCH.ANALYSIS_INCOMPLETE",
+    ];
+    (
+        codes.iter().position(|x| v["code"] == *x).unwrap(),
+        v["scope"].as_str().unwrap().into(),
+        serde_json::to_string(&v["contributors"]).unwrap(),
+        v["id"].as_str().unwrap().into(),
+    )
+}
+
 fn finding_prefix(revision_id: &str) -> &str {
+    if let Some(rest) = revision_id.strip_prefix("arch-r") {
+        let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+        if digits > 0 && rest.as_bytes().get(digits) == Some(&b'-') {
+            return &rest[digits + 1..];
+        }
+    }
     revision_id.strip_prefix("arch-").unwrap_or(revision_id)
 }
 
@@ -993,6 +2089,12 @@ enum OrderedJson {
 trait ToOrderedJson {
     fn ordered_json(&self) -> OrderedJson;
 }
+impl<T: ToOrderedJson> ToOrderedJson for Option<T> {
+    fn ordered_json(&self) -> OrderedJson {
+        self.as_ref()
+            .map_or(OrderedJson::Null, ToOrderedJson::ordered_json)
+    }
+}
 
 fn strings(values: &[String]) -> OrderedJson {
     OrderedJson::Array(values.iter().cloned().map(OrderedJson::String).collect())
@@ -1015,31 +2117,30 @@ fn value_json(value: &Value) -> OrderedJson {
         Value::String(value) => OrderedJson::String(value.clone()),
         Value::Array(value) => OrderedJson::Array(value.iter().map(value_json).collect()),
         Value::Object(value) => {
-            const ORDER: &[&str] = &[
-                "id",
-                "code",
-                "classification",
-                "disposition",
-                "rule",
-                "scope",
-                "contributors",
-                "facts",
-                "required_groups",
-                "analyzed_groups",
-                "unchecked_boundaries",
-                "exhausted",
-                "used",
-                "limit",
-                "exception",
-            ];
+            if value.contains_key("kind") && value.contains_key("exception_ids") {
+                return OrderedJson::Object(
+                    ["kind", "rule", "scope", "exception_ids"]
+                        .into_iter()
+                        .map(|key| (key.into(), value_json(&value[key])))
+                        .collect(),
+                );
+            }
+            if value.contains_key("source_group") {
+                return OrderedJson::Object(
+                    ["source_group", "target_group", "source", "target", "kind"]
+                        .into_iter()
+                        .map(|key| (key.into(), value_json(&value[key])))
+                        .collect(),
+                );
+            }
             let mut fields = Vec::new();
-            for key in ORDER {
+            for key in JSON_FIELD_ORDER {
                 if let Some(item) = value.get(*key) {
                     fields.push(((*key).into(), value_json(item)));
                 }
             }
             for (key, item) in value {
-                if !ORDER.contains(&key.as_str()) {
+                if !JSON_FIELD_ORDER.contains(&key.as_str()) {
                     fields.push((key.clone(), value_json(item)));
                 }
             }
@@ -1208,6 +2309,45 @@ impl ToOrderedJson for ArchitectureIncompleteFailure {
         "published_child_revision_id": self.published_child_revision_id.clone().map_or(OrderedJson::Null, OrderedJson::String))
     }
 }
+impl ToOrderedJson for ScopeChange {
+    fn ordered_json(&self) -> OrderedJson {
+        object!("scope_kind":OrderedJson::String(self.scope_kind.clone()),"identity":OrderedJson::String(self.identity.clone()),"base":self.base.clone().map_or(OrderedJson::Null,OrderedJson::String),"candidate":self.candidate.clone().map_or(OrderedJson::Null,OrderedJson::String))
+    }
+}
+impl ToOrderedJson for ArchitectureDelta {
+    fn ordered_json(&self) -> OrderedJson {
+        object!("format":OrderedJson::String(self.format.clone()),"base_snapshot_digest":OrderedJson::String(self.base_snapshot_digest.clone()),"candidate_snapshot_digest":OrderedJson::String(self.candidate_snapshot_digest.clone()),"base_revision_id":OrderedJson::String(self.base_revision_id.clone()),"candidate_revision_id":OrderedJson::String(self.candidate_revision_id.clone()),"scope_changes":OrderedJson::Array(self.scope_changes.iter().map(ToOrderedJson::ordered_json).collect()),"findings":values(&self.findings),"classification":OrderedJson::String(self.classification.clone()),"publication":OrderedJson::String(self.publication.clone()),"commit":OrderedJson::String(self.commit.clone()),"compact":OrderedJson::String(self.compact.clone()))
+    }
+}
+impl ToOrderedJson for BehaviorValidation {
+    fn ordered_json(&self) -> OrderedJson {
+        object!("status":OrderedJson::String(self.status.clone()),"cases_passed":OrderedJson::Number(self.cases_passed),"cases_total":OrderedJson::Number(self.cases_total))
+    }
+}
+impl ToOrderedJson for ArchitectureCompletionEvidence {
+    fn ordered_json(&self) -> OrderedJson {
+        object!("base_revision_id":OrderedJson::String(self.base_revision_id.clone()),"revision_id":OrderedJson::String(self.revision_id.clone()),"base_snapshot_digest":OrderedJson::String(self.base_snapshot_digest.clone()),"snapshot_digest":OrderedJson::String(self.snapshot_digest.clone()),"delta_digest":OrderedJson::String(self.delta_digest.clone()),"policy_revision":OrderedJson::String(self.policy_revision.clone()),"baseline_revision":OrderedJson::String(self.baseline_revision.clone()),"coverage":self.coverage.ordered_json(),"budgets":self.budgets.ordered_json(),"behavior_validation":self.behavior_validation.ordered_json(),"commit":OrderedJson::String(self.commit.clone()))
+    }
+}
+impl ToOrderedJson for ArchitectureSuccess {
+    fn ordered_json(&self) -> OrderedJson {
+        object!("status":OrderedJson::String(self.status.clone()),"snapshot":self.snapshot.ordered_json(),"delta":self.delta.ordered_json(),"completion":self.completion.ordered_json())
+    }
+}
+impl ToOrderedJson for ArchitectureFailure {
+    fn ordered_json(&self) -> OrderedJson {
+        object!("status":OrderedJson::String(self.status.clone()),"base_revision_id":OrderedJson::String(self.base_revision_id.clone()),"current_revision_id":OrderedJson::String(self.current_revision_id.clone()),"snapshot":self.snapshot.ordered_json(),"delta":self.delta.ordered_json(),"diagnostics":values(&self.diagnostics),"edits":values(&self.edits),"published_child_revision_id":self.published_child_revision_id.clone().map_or(OrderedJson::Null,OrderedJson::String))
+    }
+}
+impl ToOrderedJson for ArchitectureChangeResult {
+    fn ordered_json(&self) -> OrderedJson {
+        match self {
+            Self::Success(v) => v.ordered_json(),
+            Self::Failure(v) => v.ordered_json(),
+            Self::Incomplete(v) => v.ordered_json(),
+        }
+    }
+}
 impl ToOrderedJson for ArchitectureSnapshotResult {
     fn ordered_json(&self) -> OrderedJson {
         match self {
@@ -1222,6 +2362,75 @@ impl ArchitectureSnapshotResult {
     #[must_use]
     pub fn to_json_value(&self) -> Value {
         ordered_value(&self.ordered_json())
+    }
+}
+impl ArchitectureChangeResult {
+    #[must_use]
+    pub fn to_json_value(&self) -> Value {
+        ordered_value(&self.ordered_json())
+    }
+}
+
+fn digest<T: ToOrderedJson>(v: &T) -> String {
+    source_digest(&String::from_utf8(canonical(v)).expect("canonical JSON is UTF-8"))
+}
+fn architecture_delta(
+    base: &ArchitectureSnapshot,
+    candidate: &ArchitectureSnapshot,
+) -> ArchitectureDelta {
+    let bm = base
+        .scopes
+        .iter()
+        .map(|s| ((scope_rank(&s.scope_kind), s.identity.clone()), s))
+        .collect::<BTreeMap<_, _>>();
+    let cm = candidate
+        .scopes
+        .iter()
+        .map(|s| ((scope_rank(&s.scope_kind), s.identity.clone()), s))
+        .collect::<BTreeMap<_, _>>();
+    let keys = bm.keys().chain(cm.keys()).cloned().collect::<BTreeSet<_>>();
+    let changes = keys
+        .iter()
+        .filter_map(|k| {
+            let b = bm.get(k);
+            let c = cm.get(k);
+            (b != c).then(|| ScopeChange {
+                scope_kind: b.or(c).unwrap().scope_kind.clone(),
+                identity: k.1.clone(),
+                base: b.map(|x| digest(*x)),
+                candidate: c.map(|x| digest(*x)),
+            })
+        })
+        .collect::<Vec<_>>();
+    let denied = candidate
+        .findings
+        .iter()
+        .any(|f| f["disposition"] == "deny");
+    let change_count = changes.len();
+    ArchitectureDelta {
+        format: "ail.architecture.delta.v1".into(),
+        base_snapshot_digest: digest(base),
+        candidate_snapshot_digest: digest(candidate),
+        base_revision_id: base.analysis.revision_id.clone(),
+        candidate_revision_id: candidate.analysis.revision_id.clone(),
+        scope_changes: changes,
+        findings: candidate.findings.clone(),
+        classification: candidate.classification.clone(),
+        publication: if denied { "not-published" } else { "published" }.into(),
+        commit: if denied { "rolled-back" } else { "committed" }.into(),
+        compact: format!(
+            "{} {}->{} changes={} findings={} publication={}\n",
+            candidate.classification,
+            base.analysis.revision_id,
+            candidate.analysis.revision_id,
+            change_count,
+            candidate.findings.len(),
+            if denied {
+                "none"
+            } else {
+                &candidate.analysis.revision_id
+            }
+        ),
     }
 }
 
@@ -1349,9 +2558,16 @@ mod tests {
 
     use super::{
         AnalysisIdentity, ArchitectureCoverage, ArchitectureSnapshot, ArchitectureSnapshotResult,
-        BaselineMatch, BudgetUse, DispatchBudget, bounded_incomplete, canonical, measure,
-        render_compact,
+        BaselineMatch, BudgetUse, DispatchBudget, bounded_incomplete, canonical, finding_prefix,
+        measure, render_compact,
     };
+
+    #[test]
+    fn finding_prefix_accepts_any_numeric_architecture_revision() {
+        assert_eq!(finding_prefix("arch-r2-valid"), "valid");
+        assert_eq!(finding_prefix("arch-r27-logical-id"), "logical-id");
+        assert_eq!(finding_prefix("arch-rx-logical-id"), "rx-logical-id");
+    }
 
     #[test]
     fn compact_line_budget_returns_a_bounded_incomplete_result() {
@@ -1383,7 +2599,7 @@ mod tests {
             coverage: coverage.clone(),
             budgets: budget.clone(),
             active_policies: Vec::new(),
-            baseline_match: BaselineMatch {
+            baseline_match: Some(BaselineMatch {
                 baseline_revision: "baseline-r1".into(),
                 scope: "unit:owner".into(),
                 metrics: DispatchBudget {
@@ -1391,7 +2607,7 @@ mod tests {
                     minimal_context_node_count: 1,
                 },
                 accepted_debt: true,
-            },
+            }),
             accepted_debt: Vec::new(),
             exceptions: Vec::new(),
             findings: (0..10)

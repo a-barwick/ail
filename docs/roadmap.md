@@ -64,8 +64,8 @@ becomes active.
 | M22 | Post-UC-003 validation-slice selection | Complete | M21 |
 | M23 | UC-007 acceptance package | Complete | M22 |
 | M24 | Architectural regression contract | Complete | M23 acceptance |
-| M25 | Architectural snapshot and agent rendering | Active | M24 |
-| M26 | Architectural delta, policy, and atomic enforcement | Planned | M25 |
+| M25 | Architectural snapshot and agent rendering | Complete | M24 |
+| M26 | Architectural delta, policy, and atomic enforcement | Active | M25 |
 | M27 | Non-official architecture-feedback pilot | Planned | M26 |
 
 ## Delivery milestones
@@ -1218,7 +1218,7 @@ implementation behavior.
 
 ### M25 — Architectural snapshot and agent rendering
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -1267,7 +1267,7 @@ as clean.
 
 ### M26 — Architectural delta, policy, and atomic enforcement
 
-**Status:** Planned
+**Status:** Active
 
 #### Scope
 
@@ -1300,6 +1300,24 @@ The valid change commits, while the centralized and superficial-splitting
 changes return their exact structured and compact causes and publish no
 revision. Unchanged accepted debt remains visible without becoming a new
 failure, and unauthorized policy or baseline changes cannot create a pass.
+
+#### Delivered
+
+- Added compatible four-scope snapshot comparison, canonical identity mapping,
+  exact snapshot and delta digests, and deterministic ordered scope changes
+- Evaluated all eight accepted project rules from trusted policy, baseline,
+  exception, authorization, coverage, graph, and behavior facts
+- Matched the valid, centralized, and helper-splitting responses plus all 23
+  rejection, governance, exception, and budget scenarios byte-for-byte
+- Kept existing dispatch debt visible without classifying it as new growth and
+  applied exact exception matching without suppressing stale or unauthorized
+  governance failures
+- Published exactly one valid child revision and retained the unchanged base
+  for every denied, incomplete, invalid-behavior, or governance-invalid request
+- Bound completion evidence to the exact base, committed child, snapshot and
+  delta digests, policy and baseline, coverage, budgets, behavior, and outcome
+- Preserved all prior compiler behavior and all 37 public runtime cases without
+  adding syntax, runtime effects, dependencies, automatic repair, or M27 work
 
 ### M27 — Non-official architecture-feedback pilot
 
@@ -1345,9 +1363,9 @@ track. They are not part of M19–M21 and do not expand a milestone implicitly.
 ADR 0006 selected UC-007 acceptance preparation as M23. Its starting workspace,
 cancel-job behavior, project policy, minimal metric set, fixtures, baseline
 comparison, and budgets passed the gate, so UC-007 and its requirements are
-accepted. M24 has accepted its bounded contract, and M25 has delivered the
-single-revision snapshot while remaining the active handoff marker. M26 and M27
-activate only when explicitly started and their predecessors are complete.
+accepted. M24 accepted its bounded contract, M25 delivered the single-revision
+snapshot, and active M26 delivered cross-revision enforcement while remaining
+the handoff marker. M27 activates only when explicitly started.
 
 Architectural-health implementation should follow the core semantic graph and
 revision protocol. It does not block M19 through M21.
@@ -1356,8 +1374,9 @@ revision protocol. It does not block M19 through M21.
 
 This section records intended capability order but is not an operational
 roadmap. M23 delivered the UC-007 acceptance package, M24 accepted the bounded
-contract, and M25 delivered the single-revision snapshot. M25 remains the
-active handoff marker; M26 and M27 activate one milestone at a time.
+contract, M25 delivered the single-revision snapshot, and active M26 delivered
+cross-revision enforcement. M27 remains planned and requires explicit
+activation.
 
 1. **Broader semantic oracle:** expand the M11 spike subset to the accepted
    20–30 construct job-service core, then implement parser recovery and source

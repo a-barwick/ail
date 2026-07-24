@@ -171,7 +171,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/architecture.rs",
-      "sha256": "a5df4dfa68d696043f6c07c38b4243d36875af2d0f8ab8b1f62937723ed0fa76"
+      "sha256": "f751b9c3b869a305cfed639f901307f0448264f58d23aa7729770907350c7267"
     },
     {
       "path": "compiler/ail-compiler/src/bin/ail-benchmark.rs",
@@ -203,7 +203,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/lib.rs",
-      "sha256": "a95c121cdf9aa726f71422d88ab4529a5a2012fe9925944099006b2138b3498a"
+      "sha256": "6756e822e9d40ed37e0c539aecc026092d0deab5417fe50944f8a5ddefde29b8"
     },
     {
       "path": "compiler/ail-compiler/src/parser.rs",
@@ -236,6 +236,10 @@
     {
       "path": "compiler/ail-compiler/tests/m25_architecture_snapshot.rs",
       "sha256": "8ce3702e4479feee11f1de56abd5c2cbc292b847526347b089608cfa079a6355"
+    },
+    {
+      "path": "compiler/ail-compiler/tests/m26_architecture_delta.rs",
+      "sha256": "17741f294739af0a2c60f433cd1ac27931ba2168eac4a5251a03e6d11367379e"
     },
     {
       "path": "specs/README.md",
