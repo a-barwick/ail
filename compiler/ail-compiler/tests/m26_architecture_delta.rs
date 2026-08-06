@@ -513,6 +513,38 @@ fn all_m26_fixtures_match_and_transactions_are_atomic() {
     let valid_candidate = candidate(&base, &candidates, "valid", &Value::Null, &workspace);
     let valid_input = input(&valid_operation["input"]);
 
+    let retained_pilot_candidate: Value = serde_json::from_str(include_str!(
+        "../../../benchmarks/architecture-pilot/repaired-candidate.json"
+    ))
+    .unwrap();
+    let retained_pilot_candidates = json!({"candidates": [retained_pilot_candidate]});
+    let retained_pilot_candidate = candidate(
+        &base,
+        &retained_pilot_candidates,
+        "valid",
+        &Value::Null,
+        &workspace,
+    );
+    let mut pilot_workspace = ArchitectureWorkspace::new(base.clone());
+    let pilot_result = validate_architecture_change(
+        &mut pilot_workspace,
+        retained_pilot_candidate.clone(),
+        &valid_input,
+        passing_validator(retained_pilot_candidate),
+    )
+    .unwrap();
+    let pilot_json = pilot_result.to_json_value();
+    assert_eq!(pilot_json["status"], "success");
+    assert_eq!(
+        pilot_json["completion"]["behavior_validation"],
+        json!({"status": "passed", "cases_passed": 6, "cases_total": 6})
+    );
+    assert_eq!(pilot_workspace.current_revision_id(), "arch-r2-valid");
+    assert_eq!(
+        pilot_workspace.retained_revision_ids(),
+        ["arch-r1", "arch-r2-valid"]
+    );
+
     let observed = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
     let observed_by_validator = observed.clone();
     let expected = valid_candidate.clone();

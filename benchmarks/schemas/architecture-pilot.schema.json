@@ -1,0 +1,305 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ail.dev/schemas/architecture-pilot.schema.json",
+  "title": "AIL non-official architecture-feedback pilot",
+  "type": "object",
+  "required": [
+    "pilot_format",
+    "pilot_id",
+    "official",
+    "claims",
+    "fixture_set_digest",
+    "operator",
+    "artifacts",
+    "initial_inspection",
+    "validation_log",
+    "final_comparison",
+    "limitations"
+  ],
+  "properties": {
+    "pilot_format": {
+      "const": 1
+    },
+    "pilot_id": {
+      "const": "m27-amp-01"
+    },
+    "official": {
+      "const": false
+    },
+    "claims": {
+      "type": "object",
+      "required": [
+        "comparative",
+        "statistical",
+        "project_success"
+      ],
+      "properties": {
+        "comparative": {
+          "const": false
+        },
+        "statistical": {
+          "const": false
+        },
+        "project_success": {
+          "const": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "fixture_set_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "operator": {
+      "type": "object",
+      "required": [
+        "agent",
+        "version",
+        "mode",
+        "executor",
+        "project",
+        "working_directory",
+        "thread_url",
+        "task_thread_url",
+        "original_output_paths",
+        "permissions",
+        "restrictions",
+        "authorization_changes",
+        "tools"
+      ],
+      "properties": {
+        "agent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "executor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "working_directory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "thread_url": {
+          "type": "string",
+          "pattern": "^https://ampcode\\.com/threads/T-[0-9a-f-]+$"
+        },
+        "task_thread_url": {
+          "type": "string",
+          "pattern": "^https://ampcode\\.com/threads/T-[0-9a-f-]+$"
+        },
+        "original_output_paths": {
+          "$ref": "#/$defs/nonemptyStrings"
+        },
+        "permissions": {
+          "$ref": "#/$defs/nonemptyStrings"
+        },
+        "restrictions": {
+          "$ref": "#/$defs/nonemptyStrings"
+        },
+        "authorization_changes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "restriction",
+              "user_instruction",
+              "command",
+              "effect"
+            ],
+            "properties": {
+              "restriction": {
+                "type": "string",
+                "minLength": 1
+              },
+              "user_instruction": {
+                "type": "string",
+                "minLength": 1
+              },
+              "command": {
+                "type": "string",
+                "minLength": 1
+              },
+              "effect": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "tools": {
+          "$ref": "#/$defs/nonemptyStrings"
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "object",
+      "required": [
+        "prompt",
+        "operator_report",
+        "repaired_candidate"
+      ],
+      "properties": {
+        "prompt": {
+          "$ref": "#/$defs/artifact"
+        },
+        "operator_report": {
+          "$ref": "#/$defs/artifact"
+        },
+        "repaired_candidate": {
+          "$ref": "#/$defs/artifact"
+        }
+      },
+      "additionalProperties": false
+    },
+    "initial_inspection": {
+      "type": "object",
+      "required": [
+        "compact_source",
+        "structured_findings"
+      ],
+      "properties": {
+        "compact_source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "structured_findings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "scope",
+              "contributors"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scope": {
+                "type": "string",
+                "minLength": 1
+              },
+              "contributors": {
+                "$ref": "#/$defs/nonemptyStrings"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "validation_log": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "command",
+          "outcome",
+          "result"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "command": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "result": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "final_comparison": {
+      "type": "object",
+      "required": [
+        "matches_locked_valid",
+        "differences",
+        "candidate_sha256_at_comparison",
+        "candidate_sha256_after_comparison",
+        "candidate_changed_after_comparison"
+      ],
+      "properties": {
+        "matches_locked_valid": {
+          "const": false
+        },
+        "differences": {
+          "$ref": "#/$defs/nonemptyStrings"
+        },
+        "candidate_sha256_at_comparison": {
+          "$ref": "#/$defs/sha256"
+        },
+        "candidate_sha256_after_comparison": {
+          "$ref": "#/$defs/sha256"
+        },
+        "candidate_changed_after_comparison": {
+          "const": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "limitations": {
+      "$ref": "#/$defs/nonemptyStrings"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "additionalProperties": false
+    },
+    "nonemptyStrings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

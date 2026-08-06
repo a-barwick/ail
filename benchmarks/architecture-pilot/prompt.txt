@@ -1,0 +1,73 @@
+This is one explicitly non-official M27 usability pilot. Work alone in the
+checked-out AIL repository. Use only finder, shell commands, and apply_patch.
+Do not use the network, delegate, install anything, or modify tracked files.
+
+Task: repair the behaviorally correct centralized CancelJob architecture after
+the compiler rejects it. The transport layer must remain an adapter; domain
+decisions, jobs-store authority, and jobs state must remain domain-owned.
+
+First materialize only the seeded candidate and its compiler response without
+printing or reading either frozen alternative candidate:
+
+  python3 - <<'PY'
+  import json
+  from pathlib import Path
+  candidates = json.load(open('specs/architecture-acceptance-fixtures/candidates.json'))
+  seeded = next(x for x in candidates['candidates'] if x['id'] == 'centralized')
+  Path('m27-repaired-candidate.json').write_text(json.dumps(seeded, indent=2) + '\n')
+  results = json.load(open('specs/architecture-fixtures/results.json'))
+  response = next(x['expected_response'] for x in results['operations'] if x.get('candidate') == 'centralized')
+  Path('/tmp/m27-centralized-response.json').write_text(json.dumps(response, indent=2) + '\n')
+  print(response['snapshot']['compact'], end='')
+  print(response['delta']['compact'], end='')
+  PY
+
+Use the compact output first. Inspect only the relevant diagnostics and
+contributors in `/tmp/m27-centralized-response.json` when more detail is
+needed. Edit `m27-repaired-candidate.json` into the smallest candidate that
+preserves all six behavior cases while resolving the reported architecture
+findings. Do not inspect the `valid` or `helper-split` candidate while making
+the repair.
+
+When satisfied, run these local checks:
+
+  python3 -m json.tool m27-repaired-candidate.json >/dev/null
+  cargo +1.87.0 test --workspace --test m26_architecture_delta
+
+Then, without changing the repaired candidate again, read the locked `valid`
+candidate and result only to determine whether the repair matches the accepted
+outcome and to record the exact final compact output. Create canonical
+two-space JSON at `m27-operator-report.json` with exactly this shape:
+
+  {
+    "report_format": 1,
+    "task": "Add CancelJob without moving domain authority into transport",
+    "initial_attempt": {
+      "candidate": "centralized",
+      "status": "failure",
+      "behavior": "passed 6/6",
+      "current_revision_id": "arch-r1",
+      "published_child_revision_id": null,
+      "snapshot_compact": "<exact locked value>",
+      "delta_compact": "<exact locked value>"
+    },
+    "actions": [
+      {"kind": "inspect", "detail": "<what the compact output established>"},
+      {"kind": "inspect", "detail": "<which structured contributors were inspected>"},
+      {"kind": "edit", "detail": "<the candidate edit>"},
+      {"kind": "validate", "detail": "<commands and outcomes>"}
+    ],
+    "repair": "<why the ownership change addresses the findings>",
+    "final_validation": {
+      "candidate": "valid",
+      "status": "success",
+      "behavior": "passed 6/6",
+      "published_child_revision_id": "arch-r2-valid",
+      "snapshot_compact": "<exact locked value>",
+      "delta_compact": "<exact locked value>"
+    },
+    "limitations": ["<at least one concrete limitation>" ]
+  }
+
+Report the Amp version, mode, tools actually used, both output paths, every
+validation result, and whether the candidate was changed after final comparison.

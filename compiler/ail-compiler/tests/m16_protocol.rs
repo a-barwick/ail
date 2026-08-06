@@ -104,6 +104,42 @@ fn revision_storage_uses_canonical_source_and_the_required_sha256_digest() {
 }
 
 #[test]
+fn source_digest_matches_standard_sha256_edge_and_padding_vectors() {
+    assert_eq!(
+        source_digest(""),
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    );
+    assert_eq!(
+        source_digest("abc"),
+        "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    );
+    for (length, expected) in [
+        (
+            55,
+            "sha256:9f4390f8d30c2dd92ec9f095b65e2b9ae9b0a925a5258e241c9f1e910f734318",
+        ),
+        (
+            56,
+            "sha256:b35439a4ac6f0948b6d6f9e3c6af0f5f590ce20f1bde7090ef7970686ec6738a",
+        ),
+        (
+            63,
+            "sha256:7d3e74a05d7db15bce4ad9ec0658ea98e3f06eeecf16b4c6fff2da457ddc2f34",
+        ),
+        (
+            64,
+            "sha256:ffe054fe7ae0cb6dc65c3af9b61d5209f439851db43d0ba5997337df154668eb",
+        ),
+    ] {
+        assert_eq!(source_digest(&"a".repeat(length)), expected);
+    }
+    assert_eq!(
+        source_digest("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"),
+        "sha256:248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1"
+    );
+}
+
+#[test]
 fn inspection_exposes_elaborated_function_and_local_facts() {
     let fixture = fixture("positive.json");
     let workspace = workspace(&fixture);

@@ -54,9 +54,12 @@ Preserve these distinctions:
 
 The repository has entered authoritative compiler implementation. The first
 job-service use cases and requirements and the M11 five-construct contract are
-accepted inputs to the active Rust compiler milestones. `docs/STATUS.md` names
-the active milestone. UC-007 and the architectural health manifest remain
-proposed future scaling work and do not expand it until accepted.
+accepted inputs to the completed Rust compiler milestones. M23 through M27 are
+complete, and `docs/STATUS.md` records that no successor milestone is active.
+UC-007, its requirements, and the bounded M24 contract are accepted; M25 and M26
+implement that contract, and M27 retains one non-official pilot. The broader
+architectural health manifest remains proposed and does not expand the accepted
+scope.
 
 Behavior examples at this stage are non-normative and must not establish syntax.
 

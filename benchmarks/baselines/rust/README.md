@@ -24,7 +24,7 @@ Install the Rust toolchain and fetch the locked dependencies once:
 rustup toolchain install 1.88.0 \
   --profile minimal \
   --component clippy,rust-analyzer,rustfmt
-cargo fetch --locked \
+rustup run 1.88.0 cargo fetch --locked \
   --manifest-path benchmarks/baselines/rust/Cargo.toml
 ```
 
@@ -33,12 +33,13 @@ cargo fetch --locked \
 Run these commands from the repository root:
 
 ```bash
-cargo build --workspace --locked \
+rustup run 1.88.0 cargo build --workspace --locked \
   --manifest-path benchmarks/baselines/rust/Cargo.toml
-cargo fmt --all --manifest-path benchmarks/baselines/rust/Cargo.toml -- --check
-cargo clippy --workspace --all-targets --all-features \
+rustup run 1.88.0 cargo fmt --all \
+  --manifest-path benchmarks/baselines/rust/Cargo.toml -- --check
+rustup run 1.88.0 cargo clippy --workspace --all-targets --all-features \
   --manifest-path benchmarks/baselines/rust/Cargo.toml -- -D warnings
-cargo test --workspace --locked \
+rustup run 1.88.0 cargo test --workspace --locked \
   --manifest-path benchmarks/baselines/rust/Cargo.toml
 rustup run 1.88.0 rust-analyzer --version
 python3 benchmarks/tools/harness.py verify \
@@ -67,7 +68,7 @@ rustup run 1.88.0 cargo llvm-cov \
 ## Run one case
 
 ```bash
-cargo run --quiet --offline --locked \
+rustup run 1.88.0 cargo run --quiet --offline --locked \
   --manifest-path benchmarks/baselines/rust/Cargo.toml \
   -p ail-job-service-v2 -- \
   --case benchmarks/fixtures/public/create_job/uc003-v2-created-priority-high.json
@@ -76,7 +77,7 @@ cargo run --quiet --offline --locked \
 ## Run the corpus
 
 ```bash
-cargo run --quiet --offline --locked \
+rustup run 1.88.0 cargo run --quiet --offline --locked \
   --manifest-path benchmarks/baselines/rust/Cargo.toml \
   -p ail-job-service-v2 -- \
   --corpus benchmarks/fixtures/manifest.json

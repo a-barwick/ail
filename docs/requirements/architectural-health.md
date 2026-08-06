@@ -4,8 +4,9 @@ Status: **Accepted**
 
 Documentation layer: requirements derived from
 [UC-007](../use-cases/UC-007-architectural-regression-control.md). Acceptance
-authorizes later language and protocol specification work; it does not itself
-define language or protocol rules, select syntax, or implement compiler behavior.
+authorized the bounded M24 language and protocol specification; M25 and M26
+implemented that contract. These requirements do not themselves define language
+or protocol rules, select syntax, or expand the implemented scope.
 
 ## Traceability summary
 
@@ -42,10 +43,10 @@ tests and fails architecture policy. The valid implementation passes both. The
 completion manifest shows that no unauthorized policy, baseline, capability,
 state, or dependency change occurred.
 
-Target milestone and scope: The numbered M24–M27 scaling sequence after the core
-semantic graph and revision protocol. It is not part of M0–M17. Constrains application
-completion, compiler policy, benchmark, and governance. It does not prescribe
-one module layout.
+Target milestone and scope: The completed M24–M27 scaling sequence after the
+core semantic graph and revision protocol. It is not part of M0–M17. Constrains
+application completion, compiler policy, benchmark, and governance. It does not
+prescribe one module layout.
 
 Dependencies and open questions: Depends on LANG-006, PROTO-006, PROTO-007, and
 the frozen UC-007 architecture policy. The exact cancel-job behavior and M23
@@ -72,18 +73,21 @@ features hide the underlying authority, state, or dependency edges. Language
 analyzability creates the facts that the compiler protocol and project policy
 consume.
 
-Acceptance evidence: Proposed fixtures cover direct and indirect calls,
-capability delegation, state access, closed outcomes, recursion, foreign
+Acceptance evidence: The broader proposed fixtures cover direct and indirect
+calls, capability delegation, state access, closed outcomes, recursion, foreign
 boundaries, and generated source. Every relationship is either present in the
 semantic graph or represented by an explicit incomplete-coverage edge.
 
-Target milestone and scope: The M24 scaling-language contract, followed by
-core-protocol exposure. It is not part of M11. Constrains the language and compiler semantic
-model, not metric thresholds or project architecture.
+Target milestone and scope: M24 accepted the bounded scaling-language contract,
+and M25–M26 expose it through the compiler protocol. It is not part of M11.
+Constrains the language and compiler semantic model, not metric thresholds or
+project architecture.
 
-Dependencies and open questions: Depends on the future module, effect,
-capability, state, foreign-code, and generated-source rules. The first core may
-exclude opaque reflection instead of modeling it.
+Dependencies and open questions: The bounded M24 contract uses explicit module,
+capability, state, and typed-edge facts. Applying the requirement beyond that
+slice still depends on future general module, effect, foreign-code, and
+generated-source rules. Opaque reflection may remain excluded instead of being
+modeled.
 
 ## Compiler semantic-interface requirements
 
@@ -103,8 +107,8 @@ The accepted metric scope is the seven-metric M23 acceptance slice in the
 [M23 package](../architecture-acceptance.md), not the entire proposed catalog in
 the architectural health manifest. The interface must report primitive
 measurements and semantic sets rather than only an opaque composite score.
-M24 must define the normative meanings and canonical encoding for that bounded
-slice before compiler implementation begins.
+M24 defines the normative meanings and canonical encoding for that bounded
+slice; M25 implements the snapshot and compact rendering.
 
 Rationale and agent change cost: A structured snapshot lets an agent and
 reviewer inspect where responsibility, authority, state, and coupling are
@@ -116,10 +120,10 @@ component, and declared architecture group; repeated requests are identical;
 semantic contributors resolve at the requested revision; and partial coverage
 cannot be rendered as a clean result.
 
-Target milestone and scope: A future numbered scaling-protocol contract and
-implementation milestone after acceptance and after the core revision protocol
-exists. It is not part of M0–M17. Constrains the compiler protocol and policy
-engine, not its transport encoding.
+Target milestone and scope: M24 accepted the scaling-protocol contract after the
+core revision protocol, and M25 implemented this snapshot. It is not part of
+M0–M17. Constrains the compiler protocol and policy engine, not its transport
+encoding.
 
 Dependencies and open questions: Depends on LANG-006 and revision-scoped
 semantic handles. Metric cost and incremental recomputation strategies remain
@@ -157,14 +161,14 @@ hotspot, reduced hotspot, prohibited capability edge, new dependency cycle,
 unchanged accepted debt, stale baseline, authorized exception, expired or
 inapplicable exception, and unauthorized policy edit.
 
-Target milestone and scope: A future numbered scaling-protocol milestone after
-acceptance and after PROTO-006 is available. Constrains compiler, protocol,
-project policy, and validation summaries.
+Target milestone and scope: M24 accepted the bounded operation after PROTO-006,
+and M26 implemented its delta, policy evaluation, and atomic publication.
+Constrains compiler, protocol, project policy, and validation summaries.
 
 Dependencies and open questions: Depends on PROTO-003, PROTO-005, PROTO-006,
-identity mapping, and the project-policy revision model. The first accepted
-policy vocabulary remains to be selected from the proposed feature
-specification.
+identity mapping, and the project-policy revision model. M24 selected the first
+accepted bounded policy vocabulary; vocabulary outside that contract remains
+proposed.
 
 ## Non-functional and benchmark requirements
 
@@ -191,9 +195,10 @@ equal after normalization. Budget fixtures prove that required policy facts are
 returned or the evaluation is explicitly `incomplete`; no incomplete result is
 classified as a pass.
 
-Target milestone and scope: The future numbered scaling-protocol implementation
-and performance milestone created after acceptance. Constrains analysis behavior
-and evidence, not a particular graph algorithm.
+Target milestone and scope: M24 fixed deterministic graph and output budgets;
+M25 and M26 implemented bounded incomplete results. Numerical performance
+calibration remains later work. Constrains analysis behavior and evidence, not
+a particular graph algorithm.
 
 Dependencies and open questions: Depends on PROTO-006 and PROTO-007. M23 fixes
 deterministic graph and encoded-output limits. Numerical wall-time and memory
@@ -247,7 +252,8 @@ M23 passed the acceptance gate on 2026-07-22:
 4. baseline tools and comparison rules are identified; and
 5. two independent readers classify every seeded change the same way.
 
-This acceptance authorizes M24 to propose normative protocol rules and
-conformance fixtures when that milestone is explicitly started. It does not
-make a project-selected complexity threshold part of universal AIL language
-semantics.
+M24 subsequently accepted the bounded normative protocol and conformance
+fixtures, and M25–M26 implemented them. M27 retained one non-official
+actionability pilot; it does not satisfy the comparative benchmark in NFR-007.
+None of this makes a project-selected complexity threshold part of universal
+AIL language semantics.

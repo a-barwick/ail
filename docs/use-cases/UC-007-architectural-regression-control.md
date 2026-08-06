@@ -205,11 +205,12 @@ The task is complete only when the final revision includes:
 - the canonical source diff and semantic diff; and
 - any authorized exception with its exact scope and rationale.
 
-## Required future conformance and implementation evidence
+## Conformance and implementation evidence
 
-M23 freezes the scenarios, expected classifications, and budgets below. It does
-not prove compiler behavior. Future M24 conformance rules and later compiler
-implementation must provide evidence that:
+M23 froze the scenarios, expected classifications, and budgets below without
+claiming compiler behavior. M24 accepted the bounded conformance rules, and the
+M25–M26 implementation now provides executable evidence for the
+machine-verifiable requirements:
 
 1. the compiler reports the same architectural snapshot for repeated analysis
    of the same revision and configuration;
@@ -225,9 +226,16 @@ implementation must provide evidence that:
 7. enlarging that hotspot does fail without rewriting the baseline;
 8. incomplete analysis is reported as incomplete rather than clean;
 9. every diagnostic and manifest is bound to the correct source and policy
-   revisions; and
+   revisions.
+
+M27's one non-official pilot supplies a bounded actionability observation
+relevant to the separate reviewer criterion:
+
 10. an independent reviewer can explain the architectural consequence of the
     change without reconstructing it from raw source.
+
+That one run is not broad, comparative, statistical, or official proof of the
+reviewer criterion.
 
 M23 freezes zero false and missed findings plus deterministic graph and output
 budgets before implementation results. Wall time, peak memory, repair cycles,

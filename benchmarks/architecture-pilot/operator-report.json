@@ -1,0 +1,43 @@
+{
+  "report_format": 1,
+  "task": "Add CancelJob without moving domain authority into transport",
+  "initial_attempt": {
+    "candidate": "centralized",
+    "status": "failure",
+    "behavior": "passed 6/6",
+    "current_revision_id": "arch-r1",
+    "published_child_revision_id": null,
+    "snapshot_compact": "rejected arch-r2-centralized scope=transport:dispatch\npolicy=m23-policy-r1 baseline=m23-baseline-r1\nAIL.ARCH.HOTSPOT_GROWTH transport:dispatch contributors=transport:dispatch\nAIL.ARCH.AUTHORITY group:transport contributors=capability:jobs_store.cancel_if_active,transport:dispatch\nAIL.ARCH.STATE group:transport contributors=state:jobs,transport:dispatch\nAIL.ARCH.BOUNDARY group:transport contributors=capability:jobs_store.cancel_if_active,state:jobs,transport:dispatch\ncoverage=5 unchecked=1\n",
+    "delta_compact": "rejected arch-r1->arch-r2-centralized changes=4 findings=4 publication=none\n"
+  },
+  "actions": [
+    {
+      "kind": "inspect",
+      "detail": "The compact output established that all 6 behavior cases passed, publication was denied, transport:dispatch grew, and transport acquired jobs-store authority, jobs state, and a forbidden persistence-adapter boundary."
+    },
+    {
+      "kind": "inspect",
+      "detail": "Inspected the four structured findings and contributors transport:dispatch, capability:jobs_store.cancel_if_active, and state:jobs, including the capability-use, state-read, and state-write boundary edges."
+    },
+    {
+      "kind": "edit",
+      "detail": "Added domain:handle:job.cancel as the implementation owner, routed the transport adapter to it, moved jobs_store capability and jobs state facts and edges to it, and left transport:dispatch unchanged while preserving all six observed results."
+    },
+    {
+      "kind": "validate",
+      "detail": "python3 -m json.tool m27-repaired-candidate.json passed; a local policy evaluation accepted the repair with behavior passed 6/6; cargo +1.87.0 test --workspace --test m26_architecture_delta passed 2/2 tests."
+    }
+  ],
+  "repair": "The transport registration and adapter now only translate and forward the request. The domain handler owns cancellation decisions and directly uses jobs_store and jobs state, so transport no longer grows the central dispatcher or holds domain authority, state, or a forbidden persistence dependency.",
+  "final_validation": {
+    "candidate": "valid",
+    "status": "success",
+    "behavior": "passed 6/6",
+    "published_child_revision_id": "arch-r2-valid",
+    "snapshot_compact": "accepted arch-r2-valid scope=domain:handle:job.cancel\npolicy=m23-policy-r1 baseline=m23-baseline-r1\ncoverage=5 unchecked=1\n",
+    "delta_compact": "accepted arch-r1->arch-r2-valid changes=8 findings=0 publication=arch-r2-valid\n"
+  },
+  "limitations": [
+    "The repaired candidate is policy-equivalent but not structurally identical to the locked valid candidate: it retains an empty changed_units field and one redundant domain-to-contract type-use edge. Per the pilot instructions, it was not changed after the final comparison."
+  ]
+}

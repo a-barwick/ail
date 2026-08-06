@@ -109,6 +109,22 @@ The runner owns fixture JSON/Base64 decoding, deterministic capability state,
 and versioned response projection. Canonical AIL source owns request validation,
 V1 adaptation, priority propagation, the store call, and outcome mapping.
 
+## M27 architecture-feedback pilot
+
+[`architecture-pilot/`](architecture-pilot/README.md) retains one complete,
+explicitly non-official Amp run against the locked M23 centralized `CancelJob`
+regression. Its external lock and manifest bind the exact prompt, operator,
+restrictions, outputs, repair, checks, comparison, and limitations. The verifier
+also checks the six behavior cases and the repair's domain and transport
+ownership directly:
+
+```bash
+python3 benchmarks/tools/harness.py verify-architecture-pilot
+```
+
+This single run shows only that the feedback was actionable in that run. It is
+not comparative, statistical, official, or an AIL success claim.
+
 ## M7 parity freeze
 
 M7 verifies the four baseline runners together. It checks the locked V1 and V2

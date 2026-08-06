@@ -205,11 +205,12 @@ incomplete analysis required by a denied rule prevent a structural transaction
 from committing. Exceptions are explicit, scoped, versioned policy artifacts,
 not source-comment suppressions.
 
-The proposed metric catalog, manifest, baseline, exception, diagnostic, and
-validation behavior are defined in the
-[architectural health manifest](architecture-health.md). The feature remains
-non-normative until UC-007, its requirements, numbered protocol rules, and
-conformance fixtures are accepted.
+The broader proposed metric catalog, manifest, baseline, exception, diagnostic,
+and validation behavior are defined in the
+[architectural health manifest](architecture-health.md). UC-007, its
+requirements, and the bounded M24 rules and conformance fixtures are accepted;
+M25 and M26 implement that slice. Everything outside that bounded contract
+remains non-normative.
 
 ## Targets
 

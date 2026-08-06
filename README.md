@@ -56,8 +56,8 @@ The current direction combines:
 - local inference with a compiler-provided elaborated view;
 - typed incomplete programs and structured diagnostics;
 - semantic context slicing, diffs, and transactional edits;
-- proposed revision-bound architectural health manifests and enforceable
-  project policy;
+- revision-bound architectural facts and bounded enforceable project policy,
+  with a broader health manifest still proposed;
 - deterministic replay and controlled concurrency; and
 - native compilation with optional compatible source emission.
 
@@ -71,7 +71,9 @@ proposed architectural-regression feature, and
 The job-service workload, use cases, requirements, public JSON fixtures, and
 benchmark harness/task contract are accepted. The Rust, Go, Python, and
 TypeScript baselines and the M11 five-construct contract are complete. The
-active compiler milestone is tracked in [docs/STATUS.md](docs/STATUS.md).
+authoritative compiler delivers the completed compiler slices through M26, and
+M27 retains one explicitly non-official architecture-feedback pilot. Current
+milestone state is tracked in [docs/STATUS.md](docs/STATUS.md).
 
 The operational delivery sequence is defined in
 [docs/roadmap.md](docs/roadmap.md).

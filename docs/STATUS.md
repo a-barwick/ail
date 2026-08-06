@@ -1,16 +1,17 @@
 # Current status
 
-Last updated: 2026-07-23
+Last updated: 2026-08-05
 
 ## Active milestone
 
-M27 — non-official architecture-feedback pilot
+None — M27 is complete and no successor milestone is defined
 
 ## Current goal
 
-M23 through M26 are Complete. M27 is Active for one small, replayable,
-explicitly non-official pilot testing whether an operator can use M26's compact
-findings and structured drill-down to avoid or repair the seeded regression.
+M23 through M27 are Complete. The repository has no active implementation or
+direction-selection milestone. New work requires explicit maintainer scope; one
+non-official pilot does not authorize another run, a broader claim, or a new
+language or compiler feature.
 The execution path is:
 
 ```text
@@ -29,7 +30,7 @@ M11 five-construct contract (complete)
   -> M24 architectural regression contract (complete)
   -> M25 architectural snapshot and agent rendering (complete)
   -> M26 architectural delta, policy, and atomic enforcement (complete)
-  -> M27 non-official architecture-feedback pilot (active)
+  -> M27 non-official architecture-feedback pilot (complete)
 ```
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
@@ -50,6 +51,40 @@ The M25 implementation:
 - derives the frozen R1 snapshot and compact rendering from validated,
   revision-bound semantic facts; and
 - stops before M26 cross-revision comparison or transaction enforcement.
+
+## M27 result
+
+M27 retained one complete, explicitly non-official Amp medium-mode pilot against
+the locked centralized `CancelJob` regression. The package binds Amp
+`0.0.1785901465-g80049c`, both threads, the exact prompt, orb environment,
+permissions, restrictions and their one user-authorized change, tools, compiler
+output, structured drill-down, edit, validation sequence, comparison, and
+limitations to the accepted M23 fixture-set digest.
+
+The compact output showed that behavior passed 6/6 while publication was denied
+for dispatch growth and transport-owned capability, state, and persistence
+boundaries. The structured findings identified the exact dispatch, jobs-store,
+and jobs-state contributors. The operator routed the transport adapter to a
+domain handler and moved cancellation decisions, jobs-store access, and jobs
+state there. The retained candidate passes all six cases and the architecture
+policy; transport remains an adapter.
+
+The candidate is frozen at SHA-256
+`8bfd3f223b2b15f4eca72eba215e25450d61ded2cd22ae0c6d3223fa25df567d`.
+It differs from the locked valid candidate only by an empty `changed_units`
+field and one redundant domain-to-contract `type-use` edge. It was not changed
+after the final comparison. The first focused Cargo attempt was blocked because
+the pilot orb lacked Cargo; after the user explicitly lifted the no-network and
+no-installation restriction, Rust 1.87.0 was installed and the test passed 2/2.
+
+The schema-backed verifier checks the manifest and artifact digest closure,
+exact compact output, structured contributors, six behavior cases, domain
+ownership, transport adaptation, final comparison, post-comparison integrity,
+and non-official classification. One acceptance test and eight mutation tests
+cover every required rejection. Full repository checks pass. This is one
+operator repairing one seeded candidate and supports no comparative,
+statistical, official, or broader project claim. No successor milestone has
+been defined.
 
 ## M26 result
 
@@ -349,6 +384,8 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 - M23 — UC-007 acceptance package
 - M24 — Architectural regression contract
 - M25 — Architectural snapshot and agent rendering
+- M26 — Architectural delta, policy, and atomic enforcement
+- M27 — Non-official architecture-feedback pilot
 
 ## Superseded
 
@@ -364,13 +401,14 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 These items require an explicit maintainer decision to resume.
 
 UC-007, its requirements, and the bounded M24 contract are accepted. M25 and
-M26 are Complete. M27 is Active.
+M26 are Complete, and M27 is Complete. No successor milestone is active.
 
 ## Do not start yet
 
 - Architectural-health behavior beyond the bounded M26 contract
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
+- Any successor milestone without explicit maintainer scope
 
 ## Blockers
 
@@ -380,8 +418,11 @@ None.
 
 After meaningful work:
 
-- keep M27 explicitly non-official and do not change locked fixtures, policy,
-  baselines, prompts, or expected results after observing a run;
+- preserve the M27 prompt, candidate, report, manifest, lock, fixtures, policy,
+  baselines, and expected results;
+- keep M27 explicitly non-official and make no comparative or project claim;
+- obtain explicit maintainer scope before defining or starting another
+  milestone;
 - run `cargo +1.87.0 fmt --all --check`;
 - run `cargo +1.87.0 test --workspace`;
 - run `cargo +1.87.0 clippy --workspace --all-targets -- -D warnings`;

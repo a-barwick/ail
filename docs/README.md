@@ -25,7 +25,9 @@ syntax.
 Architecture decision records under `decisions/` explain why consequential
 choices were made. Reviews such as [spec-review.md](spec-review.md) assess the
 state of another artifact at a point in time; they do not silently update that
-artifact.
+artifact. The [post-M27 cleanup ledger](post-m27-cleanup-ledger.md) records the
+confirmed outcomes of an independent repository audit without creating another
+milestone.
 
 The [roadmap](roadmap.md) sequences work across layers. M14–M17 are the completed
 authoritative compiler sequence through the deterministic interpreter. M18
@@ -35,11 +37,11 @@ and impact query, and M21 completed the atomic change and evidence loop. M22
 selected architectural regression control as the next direction in
 [ADR 0006](decisions/0006-prepare-architectural-regression-control.md). M23
 accepted UC-007 and its requirements through a frozen, independently reviewed
-acceptance package. M24 now accepts the bounded architectural regression
-contract. M25 implements its single-revision snapshot and compact rendering,
-and M26 implements cross-revision policy enforcement and atomic publication.
-M27 is active for a bounded non-official usability pilot. A roadmap entry does
-not make planned behavior normative.
+acceptance package. M24 accepted the bounded architectural regression
+contract. M25 implemented its single-revision snapshot and compact rendering,
+M26 implemented cross-revision policy enforcement and atomic publication, and
+M27 completed one bounded non-official usability pilot. No successor milestone
+is defined or active. A roadmap entry does not make planned behavior normative.
 
 The [current status](STATUS.md) records the active milestone, or states that the
 next planned milestone has not been started, and gives the next agent its
@@ -129,9 +131,11 @@ next scaling direction. M23 froze its acceptance evidence, including the
 starting workspace, `CancelJob` behavior, good and seeded bad changes, project
 policy, metrics, expected structured and compact text, baseline comparison, and
 budgets. Two independent readers classified every candidate identically, so
-UC-007 and its requirements are accepted. No architectural-health compiler
-compiler behavior is active yet; only the bounded M24 normative contract is
-accepted.
+UC-007 and its requirements are accepted. M24 accepted the bounded normative
+contract, M25 implemented its revision-bound snapshot and compact rendering,
+M26 implemented cross-revision policy and atomic publication, and M27 retained
+one explicitly non-official repair pilot. No successor milestone is defined or
+active, and the broader architectural-health proposal remains non-normative.
 
 There is no accepted broad AIL syntax or normative language core yet. The M11
 subset is the fixed conformance boundary for the first Rust compiler slices.

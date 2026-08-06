@@ -19,6 +19,7 @@ from typing import Any, Iterator, NoReturn
 import fixtures as fixture_tool
 import task_starts as task_start_tool
 import calibration as calibration_tool
+import architecture_pilot as architecture_pilot_tool
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -1184,6 +1185,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("self-test", help="exercise every M2 harness outcome")
+    subparsers.add_parser(
+        "verify-architecture-pilot",
+        help="verify the retained non-official M27 usability pilot",
+    )
     calibration = subparsers.add_parser(
         "verify-calibration",
         help="verify the M8 evidence contract and calibration campaign",
@@ -1251,6 +1256,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "self-test":
             self_test()
+        elif args.command == "verify-architecture-pilot":
+            result = architecture_pilot_tool.verify_architecture_pilot()
+            print(
+                "M27 non-official architecture pilot passed: "
+                f"{result['pilot_id']} is complete and replayable."
+            )
         elif args.command == "verify-calibration":
             if args.index_lock is not None and args.campaign is None:
                 _raise(
@@ -1312,6 +1323,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR [{error.code}]: {error.message}", file=sys.stderr)
         return 1
     except calibration_tool.CalibrationError as error:
+        print(f"ERROR [{error.code}]: {error.message}", file=sys.stderr)
+        return 1
+    except architecture_pilot_tool.ArchitecturePilotError as error:
         print(f"ERROR [{error.code}]: {error.message}", file=sys.stderr)
         return 1
     return 0

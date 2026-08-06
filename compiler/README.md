@@ -17,8 +17,10 @@ source-set semantic graph and impact query, and M21 completed atomic schema
 evolution and completion evidence. M22 selected architectural regression
 control as the next direction, M23 accepted its concrete evidence package, M24
 accepted the bounded contract, M25 implemented the read-only architectural
-snapshot and compact rendering, and M26 implements cross-revision policy,
-governance, bounded failure, and atomic publication.
+snapshot and compact rendering, and M26 implemented cross-revision policy,
+governance, bounded failure, and atomic publication. M27 retained one
+non-official feedback pilot without changing compiler behavior. No successor
+milestone is defined or active.
 
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
 behavior. Implementation details do not create language semantics.

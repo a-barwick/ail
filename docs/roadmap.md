@@ -66,7 +66,7 @@ becomes active.
 | M24 | Architectural regression contract | Complete | M23 acceptance |
 | M25 | Architectural snapshot and agent rendering | Complete | M24 |
 | M26 | Architectural delta, policy, and atomic enforcement | Complete | M25 |
-| M27 | Non-official architecture-feedback pilot | Active | M26 |
+| M27 | Non-official architecture-feedback pilot | Complete | M26 |
 
 ## Delivery milestones
 
@@ -1321,7 +1321,7 @@ failure, and unauthorized policy or baseline changes cannot create a pass.
 
 ### M27 — Non-official architecture-feedback pilot
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
@@ -1353,6 +1353,34 @@ non-official run showing whether the feedback was actionable, with every input,
 output, edit, check, repair, and limitation accounted for. The result supports
 a later go, revise, or stop decision but makes no comparative project claim.
 
+#### Delivered
+
+- Retained one Amp `0.0.1785901465-g80049c` medium-mode run with the exact
+  prompt, threads, orb environment, permissions, restrictions, authorized
+  toolchain change, tools, original outputs, edit, checks, and limitations
+- Kept the compact centralized rejection as the first input and recorded the
+  four structured findings and their exact dispatch, capability, and state
+  contributors used for drill-down
+- Preserved the repaired candidate byte-for-byte at SHA-256
+  `8bfd3f223b2b15f4eca72eba215e25450d61ded2cd22ae0c6d3223fa25df567d`
+  after final comparison
+- Verified that the domain handler owns cancellation, jobs-store access, and
+  jobs state while transport only registers, adapts, and forwards the request
+- Replayed the retained candidate through the M26 transaction, passed all six
+  behavior cases, published `arch-r2-valid`, and retained `arch-r1`
+- Recorded that the repair differs from the locked valid candidate only by an
+  empty `changed_units` field and one redundant domain-to-contract `type-use`
+  edge, without editing it after comparison
+- Added a schema, external manifest lock, semantic verifier, one acceptance
+  test, and eight rejection tests covering changed bytes or digests, missing
+  metadata, noncanonical JSON, changed compact or behavior evidence, official
+  claims, transport-owned repair, and unrecorded post-comparison changes
+- Recorded the initial missing-Cargo result and later explicit authorization to
+  install Rust 1.87.0 before the required focused test passed; no failed step or
+  changed restriction was omitted
+- Classified the pilot as one non-official run supporting no comparative,
+  statistical, or broader project claim
+
 ## Accepted scaling direction: architectural regression control
 
 [UC-007](use-cases/UC-007-architectural-regression-control.md), its
@@ -1364,8 +1392,9 @@ ADR 0006 selected UC-007 acceptance preparation as M23. Its starting workspace,
 cancel-job behavior, project policy, minimal metric set, fixtures, baseline
 comparison, and budgets passed the gate, so UC-007 and its requirements are
 accepted. M24 accepted its bounded contract, M25 delivered the single-revision
-snapshot, and M26 delivered cross-revision enforcement. M27 is now active for
-the bounded non-official usability pilot.
+snapshot, M26 delivered cross-revision enforcement, and M27 completed one
+bounded non-official usability pilot. No successor milestone is defined or
+active.
 
 Architectural-health implementation should follow the core semantic graph and
 revision protocol. It does not block M19 through M21.
@@ -1375,7 +1404,8 @@ revision protocol. It does not block M19 through M21.
 This section records intended capability order but is not an operational
 roadmap. M23 delivered the UC-007 acceptance package, M24 accepted the bounded
 contract, M25 delivered the single-revision snapshot, and M26 delivered
-cross-revision enforcement. M27 is the active milestone.
+cross-revision enforcement. M27 completed the non-official pilot; no later
+milestone is defined.
 
 1. **Broader semantic oracle:** expand the M11 spike subset to the accepted
    20–30 construct job-service core, then implement parser recovery and source

@@ -210,7 +210,7 @@
     },
     {
       "path": "benchmarks/contracts/contract-lock.json",
-      "sha256": "25a57959be218a53bcd71dc1864b50f3d582cd8fa7084d47910867a5da634ce7"
+      "sha256": "4cdda1784886ccaff6dffe94b212d7bbfdd526c5343c90dc5889e100cbe343f3"
     },
     {
       "path": "benchmarks/contracts/hidden-contract.json",
@@ -234,7 +234,7 @@
     },
     {
       "path": "benchmarks/tools/harness.py",
-      "sha256": "84c3c4fd54b9924b8b36820b8533263ff6dff92f6de30ab3262091ac43f81f40"
+      "sha256": "6e7e043784f0c451cbf6d742200a3edb34f4e2942f0faac0205c9124241cb64b"
     }
   ]
 }

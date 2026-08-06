@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [[ ! -x "$HOME/.cargo/bin/rustup" ]]; then
+  echo "Installing rustup"
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+    | sh -s -- -y --profile minimal --default-toolchain 1.87.0
+fi
+
+export PATH="$HOME/.cargo/bin:$PATH"
+echo "Installing Rust 1.87.0 with rustfmt and Clippy"
+rustup toolchain install 1.87.0 --profile minimal --component rustfmt,clippy
+
+echo "Fetching locked Cargo dependencies"
+cargo +1.87.0 fetch --locked --manifest-path "$repo_root/Cargo.toml"

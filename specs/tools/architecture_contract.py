@@ -503,7 +503,7 @@ def main()->int:
             (SPECS/paths[2]).write_bytes(canonical(r)); (SPECS/paths[3]).write_bytes(canonical(x)); print("generated M24 fixtures"); return 0
         vals=[load(SPECS/p) for p in paths]; validate(*vals); count=mutations(*vals)
         print(f"M24 architecture contract: valid; 8 rules, {len(SHAPE_KEYS)} shapes, 5 operation results, {len(SCENARIOS)} executable scenarios, {count} mutation tests")
-        print("accepted M23 inputs: digest-locked; M24 evaluator independent of M23 evaluate/result/renderer; M24 remains Active")
+        print("accepted M23 inputs: digest-locked; M24 evaluator independent of M23 evaluate/result/renderer; M24 contract remains fixed")
         return 0
     except (CheckError,m23.CheckError,OSError,json.JSONDecodeError) as e: print("architecture_contract:",e,file=sys.stderr); return 1
 if __name__=="__main__": raise SystemExit(main())

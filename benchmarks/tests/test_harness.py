@@ -8,6 +8,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -194,6 +195,40 @@ class HarnessTests(unittest.TestCase):
         with self.assertRaises(harness.HarnessError) as raised:
             harness._compare_baseline_observations((reference, other))
         self.assertEqual(raised.exception.code, "cross_language_mismatch")
+
+    def test_architecture_pilot_subcommand_dispatches(self) -> None:
+        with mock.patch.object(
+            harness.architecture_pilot_tool,
+            "verify_architecture_pilot",
+            return_value={"pilot_id": "m27-test"},
+        ) as verify:
+            with mock.patch("builtins.print") as output:
+                result = harness.main(["verify-architecture-pilot"])
+
+        self.assertEqual(result, 0)
+        verify.assert_called_once_with()
+        output.assert_called_once_with(
+            "M27 non-official architecture pilot passed: "
+            "m27-test is complete and replayable."
+        )
+
+    def test_architecture_pilot_subcommand_maps_verifier_errors(self) -> None:
+        error = harness.architecture_pilot_tool.ArchitecturePilotError(
+            "architecture_pilot_changed", "candidate changed"
+        )
+        with mock.patch.object(
+            harness.architecture_pilot_tool,
+            "verify_architecture_pilot",
+            side_effect=error,
+        ):
+            with mock.patch("builtins.print") as output:
+                result = harness.main(["verify-architecture-pilot"])
+
+        self.assertEqual(result, 1)
+        output.assert_called_once_with(
+            "ERROR [architecture_pilot_changed]: candidate changed",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":

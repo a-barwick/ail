@@ -92,9 +92,9 @@ def milestone_errors() -> list[str]:
 
     rows = dict(MILESTONE_ROW.findall(roadmap))
     active = [milestone for milestone, state in rows.items() if state == "Active"]
-    if len(active) != 1:
+    if len(active) > 1:
         errors.append(
-            "docs/roadmap.md: dependency map must contain exactly one Active "
+            "docs/roadmap.md: dependency map must contain at most one Active "
             f"milestone, found {active}"
         )
 
@@ -103,13 +103,20 @@ def milestone_errors() -> list[str]:
         status,
         re.MULTILINE,
     )
-    if not status_match:
+    no_active_match = re.search(
+        r"^## Active milestone\s*$\s*^None\s+.+$",
+        status,
+        re.MULTILINE,
+    )
+    if active and not status_match:
         errors.append("docs/STATUS.md: cannot find the active milestone")
-    elif active and status_match.group(1) != active[0]:
+    elif active and status_match and status_match.group(1) != active[0]:
         errors.append(
             "docs/STATUS.md: active milestone "
             f"{status_match.group(1)} does not match roadmap {active[0]}"
         )
+    elif not active and not no_active_match:
+        errors.append("docs/STATUS.md: must state that no milestone is active")
 
     headings = MILESTONE_HEADING.findall(roadmap)
     status_blocks = MILESTONE_STATUS.findall(roadmap)

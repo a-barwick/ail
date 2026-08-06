@@ -1,0 +1,178 @@
+{
+  "pilot_format": 1,
+  "pilot_id": "m27-amp-01",
+  "official": false,
+  "claims": {
+    "comparative": false,
+    "statistical": false,
+    "project_success": false
+  },
+  "fixture_set_digest": "ab362d96d89cbba779743dd8a3050b2bd4452ff6daddf3e7ae65109207f7e3ed",
+  "operator": {
+    "agent": "Amp",
+    "version": "0.0.1785901465-g80049c",
+    "mode": "medium",
+    "executor": "Amp orb",
+    "project": "segfault/ail",
+    "working_directory": "/home/user/workspace/repo",
+    "thread_url": "https://ampcode.com/threads/T-019fd051-5244-724a-a492-c766d9944ccc",
+    "task_thread_url": "https://ampcode.com/threads/T-019fd049-ddc4-74e3-b3dc-0b1e92d11e7f",
+    "original_output_paths": [
+      "/home/user/workspace/repo/m27-repaired-candidate.json",
+      "/home/user/workspace/repo/m27-operator-report.json"
+    ],
+    "permissions": [
+      "read-repository",
+      "write-pilot-candidate",
+      "run-local-checks"
+    ],
+    "restrictions": [
+      "work alone in the checked-out repository",
+      "use only finder, shell commands, and apply_patch",
+      "do not use the network, delegate, install anything, or modify tracked files",
+      "do not inspect the valid or helper-split candidate before final comparison",
+      "do not change the repaired candidate after final comparison"
+    ],
+    "authorization_changes": [
+      {
+        "restriction": "do not use the network or install anything",
+        "user_instruction": "Ah - do it. complete the task in full.",
+        "command": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.87.0",
+        "effect": "Installed Rust 1.87.0 after the first Cargo attempt failed, then ran the required focused test."
+      }
+    ],
+    "tools": [
+      "finder",
+      "shell_command",
+      "apply_patch"
+    ]
+  },
+  "artifacts": {
+    "prompt": {
+      "path": "prompt.txt",
+      "sha256": "17810a023bae4104ea15f66bdd5a3395a7b5103996e7110d6c1fede25cd59c4e"
+    },
+    "operator_report": {
+      "path": "operator-report.json",
+      "sha256": "495634ae7ffdabb793b819a20a20496bdfe0788a9f30cf2b7bbb4cce6bb5855c"
+    },
+    "repaired_candidate": {
+      "path": "repaired-candidate.json",
+      "sha256": "8bfd3f223b2b15f4eca72eba215e25450d61ded2cd22ae0c6d3223fa25df567d"
+    }
+  },
+  "initial_inspection": {
+    "compact_source": "locked centralized expected response",
+    "structured_findings": [
+      {
+        "code": "AIL.ARCH.HOTSPOT_GROWTH",
+        "scope": "transport:dispatch",
+        "contributors": [
+          "transport:dispatch"
+        ]
+      },
+      {
+        "code": "AIL.ARCH.AUTHORITY",
+        "scope": "group:transport",
+        "contributors": [
+          "capability:jobs_store.cancel_if_active",
+          "transport:dispatch"
+        ]
+      },
+      {
+        "code": "AIL.ARCH.STATE",
+        "scope": "group:transport",
+        "contributors": [
+          "state:jobs",
+          "transport:dispatch"
+        ]
+      },
+      {
+        "code": "AIL.ARCH.BOUNDARY",
+        "scope": "group:transport",
+        "contributors": [
+          "capability:jobs_store.cancel_if_active",
+          "state:jobs",
+          "transport:dispatch"
+        ]
+      }
+    ]
+  },
+  "validation_log": [
+    {
+      "id": "initial-policy-evaluator-path-error",
+      "command": "rg -l '\"budgets\"' specs/architecture-acceptance-fixtures --glob '!candidates.json' && python3 - <<'PY'\nimport importlib.util, json\nfrom pathlib import Path\nspec=importlib.util.spec_from_file_location('aa','specs/tools/architecture_acceptance.py')\naa=importlib.util.module_from_spec(spec); spec.loader.exec_module(aa)\nroot=Path('specs/architecture-acceptance-fixtures')\npackage=json.load(open(root/'package.json'))\nworkspace=json.load(open(root/'workspace.json'))\ncandidate=json.load(open('m27-repaired-candidate.json'))\ncase_keys=('id','outcome','calls','state','effects')\ndoc={'behavior': {'cases': [{k: x[k] for k in case_keys} for x in candidate['observed_results']]}, 'candidates': [candidate]}\nresult=aa.evaluate(package, workspace, doc)['results'][-1]\nprint(result['compact'], end='')\nPY",
+      "outcome": "failed-and-corrected",
+      "result": "Exit 1 with no output because the search found no package.json and short-circuited the Python command."
+    },
+    {
+      "id": "local-policy-evaluation",
+      "command": "python3 - <<'PY'\nimport importlib.util, json\nspec=importlib.util.spec_from_file_location('aa','specs/tools/architecture_acceptance.py')\naa=importlib.util.module_from_spec(spec); spec.loader.exec_module(aa)\npackage=json.load(open('specs/architecture-acceptance.json'))\nworkspace=json.load(open('specs/architecture-acceptance-fixtures/workspace.json'))\ncandidate=json.load(open('m27-repaired-candidate.json'))\ncase_keys=('id','outcome','calls','state','effects')\ndoc={'behavior': {'cases': [{k: x[k] for k in case_keys} for x in candidate['observed_results']]}, 'candidates': [candidate]}\nresult=aa.evaluate(package, workspace, doc)['results'][-1]\nprint(result['compact'], end='')\nPY",
+      "outcome": "passed",
+      "result": "accepted arch-r2-valid policy=m23-policy-r1 baseline=m23-baseline-r1\nbehavior: passed 6/6; architecture: accepted\npublication: published; commit: committed\ndebt: transport:dispatch unchanged (CFC=4 context=3)\ncoverage: 5 groups; unchecked external:job-api-clients\ninspect: domain:handle:job.cancel\n"
+    },
+    {
+      "id": "focused-test-before-toolchain-install",
+      "command": "python3 -m json.tool m27-repaired-candidate.json >/dev/null\ncargo +1.87.0 test --workspace --test m26_architecture_delta",
+      "outcome": "partially-passed-then-blocked",
+      "result": "JSON syntax passed; Cargo exited 127 because cargo was not installed."
+    },
+    {
+      "id": "final-candidate-comparison",
+      "command": "python3 - <<'PY'\nimport json, difflib\nfrom pathlib import Path\nrepaired=json.load(open('m27-repaired-candidate.json'))\nall_candidates=json.load(open('specs/architecture-acceptance-fixtures/candidates.json'))\nvalid=next(x for x in all_candidates['candidates'] if x['id']=='valid')\nprint('candidate_matches_valid:', repaired == valid)\nif repaired != valid:\n    a=json.dumps(repaired, indent=2).splitlines()\n    b=json.dumps(valid, indent=2).splitlines()\n    print('\\n'.join(difflib.unified_diff(a,b,fromfile='repaired',tofile='locked-valid',lineterm='')))\nresults=json.load(open('specs/architecture-fixtures/results.json'))\nresponse=next(x['expected_response'] for x in results['operations'] if x.get('candidate')=='valid')\nprint('---VALID-SNAPSHOT---')\nprint(response['snapshot']['compact'], end='')\nprint('---VALID-DELTA---')\nprint(response['delta']['compact'], end='')\nprint('status:',response['status'])\nprint('published_child_revision_id:',response['published_child_revision_id'])\nPY",
+      "outcome": "comparison-recorded-with-follow-up",
+      "result": "Exit 1. candidate_matches_valid: False. The unified diff showed only an empty changed_units field and one redundant domain-to-contract type-use edge. The locked final compact snapshot and delta printed exactly before KeyError: 'published_child_revision_id' from the incorrect top-level lookup."
+    },
+    {
+      "id": "result-key-and-environment-inspection",
+      "command": "python3 - <<'PY'\nimport json\nresults=json.load(open('specs/architecture-fixtures/results.json'))\nop=next(x for x in results['operations'] if x.get('candidate')=='valid')\nr=op['expected_response']\nprint('operation keys:', list(op))\nprint('response keys:', list(r))\nfor key in ('published_child_revision_id','current_revision_id','base_revision_id','status'):\n    print('response', key, repr(r.get(key)))\nfor key in ('published_child_revision_id','current_revision_id','base_revision_id','status'):\n    print('operation', key, repr(op.get(key)))\nPY\namp --version 2>&1 || true\ngit status --short -- m27-repaired-candidate.json m27-operator-report.json",
+      "outcome": "passed",
+      "result": "Confirmed the valid expected response has status, snapshot, delta, and completion keys; Amp version was 0.0.1785901465-g80049c; only m27-repaired-candidate.json existed and was untracked."
+    },
+    {
+      "id": "completion-field-inspection",
+      "command": "python3 - <<'PY'\nimport json\nresults=json.load(open('specs/architecture-fixtures/results.json'))\nfor candidate in ('centralized','valid'):\n r=next(x['expected_response'] for x in results['operations'] if x.get('candidate')==candidate)\n print(candidate, 'completion=',json.dumps(r.get('completion'),indent=2))\n print(candidate, 'snapshot ids=', {k:r['snapshot'].get(k) for k in r['snapshot'] if 'revision' in k})\n print(candidate, 'delta ids=', {k:r['delta'].get(k) for k in r['delta'] if 'revision' in k or 'publication' in k})\nPY",
+      "outcome": "passed",
+      "result": "Confirmed centralized completion is null and valid completion records revision_id arch-r2-valid, behavior passed 6/6, and commit committed."
+    },
+    {
+      "id": "canonical-artifact-and-worktree-check",
+      "command": "python3 -m json.tool m27-repaired-candidate.json >/dev/null && echo 'candidate_json: PASS'\npython3 -m json.tool m27-operator-report.json >/dev/null && echo 'report_json: PASS'\npython3 - <<'PY'\nimport json\nfrom pathlib import Path\nfor name in ('m27-repaired-candidate.json','m27-operator-report.json'):\n    p=Path(name)\n    value=json.loads(p.read_text())\n    canonical=json.dumps(value,ensure_ascii=False,indent=2)+'\\n'\n    print(f'{name}_canonical:', 'PASS' if p.read_text()==canonical else 'FAIL')\nPY\nif git diff --quiet -- . ':(exclude)m27-repaired-candidate.json' ':(exclude)m27-operator-report.json'; then echo 'tracked_files_modified_by_pilot: NO'; else echo 'tracked_files_modified_by_pilot: REVIEW'; git status --short; fi\ngit status --short -- m27-repaired-candidate.json m27-operator-report.json",
+      "outcome": "passed",
+      "result": "Candidate and report JSON and canonical formatting passed; no tracked file was modified; both pilot outputs were untracked."
+    },
+    {
+      "id": "pre-install-candidate-integrity",
+      "command": "git status --short -- m27-repaired-candidate.json m27-operator-report.json && sha256sum m27-repaired-candidate.json",
+      "outcome": "passed",
+      "result": "Candidate SHA-256 was 8bfd3f223b2b15f4eca72eba215e25450d61ded2cd22ae0c6d3223fa25df567d."
+    },
+    {
+      "id": "focused-test-after-authorized-install",
+      "command": ". \"$HOME/.cargo/env\"\npython3 -m json.tool m27-repaired-candidate.json >/dev/null\ncargo +1.87.0 test --workspace --test m26_architecture_delta",
+      "outcome": "passed",
+      "result": "JSON syntax passed; m26_architecture_delta passed 2 tests with 0 failures."
+    },
+    {
+      "id": "final-report-and-candidate-integrity",
+      "command": "python3 -m json.tool m27-operator-report.json >/dev/null\npython3 - <<'PY'\nimport json\nfrom pathlib import Path\np=Path('m27-operator-report.json')\nassert p.read_text() == json.dumps(json.loads(p.read_text()), ensure_ascii=False, indent=2) + '\\n'\nprint('operator_report_json: PASS (canonical two-space JSON)')\nPY\nprintf 'candidate_sha256: '; sha256sum m27-repaired-candidate.json | cut -d' ' -f1\ngit status --short",
+      "outcome": "passed",
+      "result": "Operator report was canonical; candidate SHA-256 remained 8bfd3f223b2b15f4eca72eba215e25450d61ded2cd22ae0c6d3223fa25df567d; only the two pilot outputs were untracked."
+    }
+  ],
+  "final_comparison": {
+    "matches_locked_valid": false,
+    "differences": [
+      "The repaired candidate retains an empty changed_units field.",
+      "The repaired candidate retains one redundant domain-to-contract type-use edge."
+    ],
+    "candidate_sha256_at_comparison": "8bfd3f223b2b15f4eca72eba215e25450d61ded2cd22ae0c6d3223fa25df567d",
+    "candidate_sha256_after_comparison": "8bfd3f223b2b15f4eca72eba215e25450d61ded2cd22ae0c6d3223fa25df567d",
+    "candidate_changed_after_comparison": false
+  },
+  "limitations": [
+    "This is one operator repairing one seeded candidate and supports no comparative, statistical, official, or project-success claim.",
+    "The repaired candidate is policy-equivalent but not structurally identical to the locked valid candidate.",
+    "The original no-network and no-installation restriction was explicitly lifted after the first Cargo attempt; the final focused test passed only after Rust 1.87.0 was installed."
+  ]
+}
