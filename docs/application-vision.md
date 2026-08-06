@@ -31,6 +31,12 @@ AIL should eventually be the default answer when agents are the primary
 implementers and maintainers, unless ecosystem, interoperability, hardware, or
 deployment constraints require something else.
 
+This destination is a hypothesis, not a committed breadth roadmap. General
+application coverage, native lowering, ecosystem work, and self-hosting are
+possible enablers rather than measures of progress. Each expansion must pass the
+use-case and requirements gate, identify the agent work it removes, and preserve
+a fair comparison with strong existing-language tooling.
+
 ## Intended tradeoff
 
 Existing language families offer different combinations:
@@ -213,6 +219,9 @@ contracts, supplied context, retries, correctness criteria, and environment.
 AIL fails the application thesis if it gains compact source by discarding the
 guarantees required for predictable deployment. It also fails if it recreates
 systems-language source burden merely to reach systems-language performance.
+It likewise fails if it accumulates conventional language features and compiler
+maturity without reducing measured context, consequence analysis, repair,
+regression, or review work on representative changes.
 
 ## Not the first validation target
 

@@ -1,6 +1,6 @@
 # Current status
 
-Last updated: 2026-08-05
+Last updated: 2026-08-06
 
 ## Active milestone
 
@@ -12,6 +12,14 @@ M23 through M27 are Complete. The repository has no active implementation or
 direction-selection milestone. New work requires explicit maintainer scope; one
 non-official pilot does not authorize another run, a broader claim, or a new
 language or compiler feature.
+
+Any successor must pass the
+[roadmap selection gate](roadmap.md#successor-milestone-selection). More syntax,
+native or LLVM lowering, production packaging, and self-hosting are not progress
+claims by themselves. An enabling milestone must identify the representative
+agent change and later comparison it makes possible. There is currently no
+official comparative evidence that AIL reduces total agent change cost.
+
 The execution path is:
 
 ```text
@@ -35,6 +43,10 @@ M11 five-construct contract (complete)
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
 candidate scorecard.
+
+The result sections below are historical completion snapshots. Their
+then-current boundaries explain delivered evidence; they do not activate a
+successor or override the current gate above.
 
 The [M23 acceptance record](architecture-acceptance.md) freezes the exact
 24-operation R1 workspace, six `CancelJob` behavior cases, three complete
@@ -324,6 +336,7 @@ authoritative compiler language through the first production backend. It
 supersedes ADR 0001 and the M12/M13 comparison path. The decision accepts Rust's
 ownership, compile-time, and contributor-learning risks and manages them in the
 production compiler rather than through a disposable TypeScript implementation.
+It does not select a backend or authorize lowering as the next milestone.
 
 ## M11 contract
 

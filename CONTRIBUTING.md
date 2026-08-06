@@ -1,7 +1,9 @@
 # Contributing
 
-AIL is currently a design-stage language project. Contributions should reduce
-semantic ambiguity or produce evidence for a recorded decision.
+AIL is an experimental language with an authoritative Rust compiler over a
+bounded accepted core. Contributions should reduce semantic ambiguity, remove
+measurable agent change work, or produce evidence for a recorded decision. No
+successor milestone is currently active.
 
 Read [docs/README.md](docs/README.md) before contributing. Every document or
 example must identify its layer and authority. Application illustrations,
@@ -19,10 +21,14 @@ Specify:
 5. static and dynamic behavior;
 6. effects, faults, and boundary visibility;
 7. structured diagnostics for invalid use;
-8. formatter behavior; and
-9. how the feature changes total agent work.
+8. formatter behavior;
+9. how the feature changes total agent work;
+10. which strong existing-language tools form the baseline; and
+11. what later evidence causes a go, revise, or stop decision.
 
 Syntax preference alone is not sufficient justification.
+Neither are native code generation, LLVM integration, self-hosting, feature
+parity, or source brevity without a representative agent-change rationale.
 
 Proposed use cases, requirements, and design sketches may be reviewed together,
 but the design cannot become normative until its use case and requirements are
@@ -72,8 +78,9 @@ substitute for aggregate authority, state, dependency, and context analysis.
 ## Prototypes
 
 Keep experimental implementations under `prototypes/` and follow its README.
-Do not add root dependency files for a candidate stack before M13 accepts the
-stack-selection ADR that supersedes ADR 0001.
+ADR 0004 already selects Rust for the authoritative compiler. A prototype still
+requires explicit milestone or maintainer scope, must remain isolated, and must
+identify the uncertainty and later discriminating evidence it addresses.
 
 ## Commits
 

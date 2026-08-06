@@ -46,10 +46,10 @@ freezes its 24-operation starting workspace, behavior, policy, candidates,
 minimal metrics, compact evidence, baseline comparison, budgets, and two
 independent reviews. Acceptance does not itself define compiler protocol rules.
 
-## Future cases
+## Candidate future cases
 
-After the semantic oracle and core protocol can execute the first reference
-slice, choose the next scaling case from:
+The following remain possible scaling cases, not an ordered queue or active
+directive:
 
 - **UC-002 — Outbound call control:** call a remote service with explicit
   authority, timeout, cancellation, and typed failure.
@@ -68,11 +68,16 @@ general concurrency or a production runtime.
 None of these future cases authorizes language or compiler implementation until
 its use case and requirements are accepted and numbered implementation
 milestones are added. A bounded acceptance milestone may enter the roadmap to
-produce the evidence needed for that decision.
+produce the evidence needed for that decision. Selection must also pass the
+[roadmap successor gate](../roadmap.md#successor-milestone-selection): identify
+the agent change cost at stake, the smallest discriminating mechanism, the
+strong baseline, and the go, revise, or stop result.
 
 [ADR 0006](../decisions/0006-prepare-architectural-regression-control.md)
 selected UC-007 acceptance preparation. M23 passed that bounded gate without
 defining M24 protocol rules or implementing compiler behavior.
+M24 through M26 later implemented the bounded accepted contract and M27 retained
+one non-official pilot. No candidate future case is currently selected.
 
 ## Use-case record
 

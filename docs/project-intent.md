@@ -66,6 +66,45 @@ Token efficiency therefore means reducing the total information processed to
 complete a correct change. It does not mean minimizing source tokens at the
 expense of semantics, safety, or auditability.
 
+## Progress and evidence discipline
+
+AIL is successful only if it improves the complete correct-change loop against
+strong existing-language toolchains. Conventional language milestones can
+enable that test, but they are not evidence of success by themselves. In
+particular, none of these establishes the project thesis:
+
+- a larger syntax or construct count;
+- shorter source;
+- LLVM integration, native code generation, or another backend;
+- self-hosting or bootstrapping;
+- compiler implementation volume;
+- feature parity with an existing language; or
+- performance without equal correctness and review guarantees.
+
+The project distinguishes four evidence levels:
+
+1. **Conformance evidence** shows that the compiler implements one bounded,
+   accepted contract.
+2. **Mechanism evidence** shows that a semantic query, diagnostic, or validated
+   operation works on its declared fixture and coverage boundary.
+3. **Non-official usability evidence** shows that a named operator could use a
+   mechanism in a recorded run. It supports learning, not a comparative claim.
+4. **Official comparative evidence** tests representative agent changes against
+   mainstream languages with their normal strong tools under locked correctness,
+   context, repair, regression, and review rules.
+
+Only official comparative evidence can support the claim that AIL reduces total
+agent change cost. Earlier levels are necessary engineering evidence and may
+justify the next bounded experiment, but completing them must not be reported as
+comparative project validation.
+
+Agent-first does not mean deliberately unfamiliar. Models are trained on human
+artifacts, so familiar syntax and conventional compiler techniques are useful
+when they reduce generation errors, implementation risk, or review work. They
+are inputs to the optimization, not independent goals. Human auditability
+remains a correctness and governance constraint even though unaided human
+authoring convenience is secondary.
+
 ## Why this may require a language
 
 Many agent-oriented improvements can and should be made in tooling for existing
@@ -176,13 +215,20 @@ does not override canonicality or semantic precision.
 
 Language and tooling proposals should answer:
 
-1. Which part of total agent change cost does this reduce?
-2. Why does the behavior belong in the language, the compiler protocol, or both?
-3. What semantic fact becomes more explicit or mechanically inspectable?
-4. How will the behavior be represented in canonical source?
-5. How will it be tested deterministically?
-6. How will it be exposed through structured diagnostics or semantic queries?
-7. Can a human audit the resulting behavior and change?
+1. Which accepted use case or unresolved thesis uncertainty does this address?
+2. Which part of total agent change cost does this reduce?
+3. Why does the behavior belong in the language, compiler, or protocol rather
+   than ordinary tooling for an existing language?
+4. What semantic fact becomes more explicit or mechanically inspectable?
+5. What is the smallest deterministic implementation and conformance evidence
+   that can test the mechanism?
+6. How will an agent consume the result without receiving equivalent raw
+   context?
+7. Which later representative comparison can distinguish success from a
+   plausible but ineffective mechanism?
+8. Which correctness and human-auditability gates prevent an apparent
+   efficiency gain from shifting risk elsewhere?
+9. What result causes the project to go, revise, or stop?
 
 If a proposal cannot answer these questions, it is not yet grounded in the
 project thesis.

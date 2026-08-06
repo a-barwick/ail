@@ -13,10 +13,11 @@ The benchmark tests whether AIL helps an agent finish a correct change with less
 searching and rework. It is not a contest to produce the shortest source file.
 
 The fixture, baseline, and parity foundation was delivered in M1 through M7.
-M8a through M8f added deferred calibration infrastructure. ADR 0003 moves the
-active project work to the compiler-stack contract; the statistical campaign
-resumes before comparative AIL benchmark runs, not before compiler
-implementation. The active handoff is in [the status file](../STATUS.md).
+M8a through M8f added deferred calibration infrastructure, and M27 retained one
+non-official architecture-feedback pilot. M27 is complete, no successor
+milestone is active, and zero official comparative AIL trials exist. ADR 0003
+still requires the statistical campaign and frozen targets before comparative
+AIL benchmark runs. Current authority is in [the status file](../STATUS.md).
 
 ## Decisions
 
@@ -95,12 +96,14 @@ successful result.
 These limits catch runaway tools or broken runners. They are not production AIL
 targets:
 
-- 100,000 model input tokens per run;
+- 500,000 cumulative delivered input tokens per M8 agent trial, including
+  cached and repeated delivery;
 - 30 seconds for one functional corpus run;
 - 2 seconds for runner startup; and
 - 512 MiB peak resident memory.
 
-The baseline results will be used to set the actual AIL comparison targets.
+The token limit is a runaway-work bound, not an AIL success target. The baseline
+results will be used to set the actual AIL comparison targets.
 
 ## Locked run manifest
 

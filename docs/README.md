@@ -20,7 +20,7 @@ syntax.
 | Benchmark policy | [benchmarks/README.md](benchmarks/README.md) | How are AIL and strong baselines compared fairly? | Accepted measurement policy and language-independent test data; non-normative for AIL |
 | Language design | [design-direction.md](design-direction.md) and [architectural health manifest](architecture-health.md) | Which language and compiler ideas may satisfy the requirements? | Design input; non-normative |
 | Normative specification | [M11 core contract](../specs/README.md) | What exact source, static semantics, diagnostics, and protocol behavior are required? | Proposed rules and fixtures binding on the first Rust compiler milestones; not yet accepted as the broader AIL core |
-| Implementation architecture | [ADR 0004](decisions/0004-rust-compiler-stack.md) | Which stack owns compiler semantics? | Rust is authoritative through the first production backend |
+| Implementation architecture | [ADR 0004](decisions/0004-rust-compiler-stack.md) | Which stack owns compiler semantics? | Rust is authoritative; the ADR does not select or activate a backend |
 
 Architecture decision records under `decisions/` explain why consequential
 choices were made. Reviews such as [spec-review.md](spec-review.md) assess the
@@ -47,6 +47,13 @@ The [current status](STATUS.md) records the active milestone, or states that the
 next planned milestone has not been started, and gives the next agent its
 immediate handoff.
 
+The [project intent](project-intent.md#progress-and-evidence-discipline)
+defines what counts as progress and distinguishes conformance, mechanism,
+non-official usability, and official comparative evidence. Conventional
+compiler milestones such as broader syntax, native lowering, or self-hosting do
+not validate the thesis by themselves. The roadmap's successor-selection gate
+applies before any new milestone is added.
+
 The deferred [M8 execution plan](m8-execution-plan.md) records how the baseline
 calibration campaign could be resumed. M8a through M8f produced reusable
 infrastructure and non-official pilots; M8g through M8o are not active work.
@@ -67,6 +74,8 @@ project thesis
   -> normative rule
   -> conformance fixture
   -> implementation evidence
+  -> representative comparative evidence
+  -> go, revise, or stop decision
 ```
 
 Not every thesis statement produces a language feature. Some produce tooling,
@@ -74,6 +83,10 @@ runtime, standard-library, deployment, benchmark, or governance requirements.
 
 Benchmark fixtures test accepted application behavior. They do not establish AIL
 syntax or language rules.
+
+Implementation may precede official comparative evidence when it is the
+smallest way to create a comparator or test a mechanism. Its completion remains
+enabling evidence, not proof that AIL reduces total agent change cost.
 
 ## Normativity
 

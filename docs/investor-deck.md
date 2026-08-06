@@ -1,6 +1,6 @@
 # AIL investor deck
 
-Status: **Investor presentation source; claims current through M26**
+Status: **Investor presentation source; claims current through M27**
 
 This document is the editable narrative and talk track for
 [`investor-deck.pptx`](investor-deck.pptx). The PowerPoint file imports directly
@@ -63,9 +63,12 @@ chart is visibly labeled as conceptual, not measured market data.
 
 ### 3. Today’s agents repeatedly reconstruct the program
 
-Mainstream compilers and language servers help, but the agent often still
-assembles a file-oriented view and probabilistically infers a semantic change
-surface. The reconstruction repeats after diagnostics and during review.
+Mainstream compilers, language servers, refactors, search, and tests already
+expose substantial semantics. Even with those normal strong tools, an agent
+often still assembles a file-oriented view and probabilistically infers parts of
+the change surface. The reconstruction repeats after diagnostics and during
+review. AIL must demonstrate an improvement over that strong baseline, not raw
+text editing.
 
 ### 4. AIL turns language guarantees into an agent control plane
 
@@ -93,7 +96,8 @@ The deck uses these repository facts:
 - 23 executable M24 architecture scenarios; and
 - four behavior-equivalent mainstream-language reference implementations.
 
-These are implementation and fixture counts, not performance evidence.
+These are bounded conformance and mechanism evidence, not comparative
+agent-efficiency or performance evidence.
 
 ### 7. Before editing, the compiler returns the bounded change surface
 
@@ -143,23 +147,29 @@ compiler, contracts, semantic graph, and adversarial fixtures. Held-out
 workloads, design-partner policy, integrations, production runtime, adoption,
 and switching costs remain to build and validate.
 
-### 13. Mechanism first. Economics next. Production follows evidence.
+### 13. Mechanism first. Economics next. Production only when justified.
 
-The roadmap is gate-based:
+M27 is complete and the repository has no active successor. A proposed funded
+validation program—not the authorized repository roadmap—is gate-based:
 
-1. current bounded semantic oracle and change loop;
-2. non-official operator pilot and locked comparative validation;
-3. broader service core, production lowering, runtime, and I/O; then
-4. package, deployment, application, and ecosystem expansion.
+1. retain the current bounded semantic oracle, change loop, and M27 observation;
+2. freeze fresh representative tasks, build only the comparator capabilities
+   they require, and run locked comparative validation;
+3. make an explicit go, revise, or stop decision; and
+4. select broader language, runtime, lowering, or ecosystem work only when
+   required by the resulting evidence or a concrete deployment requirement.
+
+Native lowering, LLVM integration, language breadth, and self-hosting are not
+success measures or automatic phases.
 
 ### 14. What is proven—and what the raise must prove
 
 Proven today: real compiler machinery, deterministic bounded semantics,
-fixture-exact supported impact, atomic transactions, architecture enforcement,
-and the public behavior corpus. There are zero official comparative agent
-trials today. Not yet proven: comparative agent acceleration, cross-model
-repeatability, reviewer savings, production lowering, broad language coverage,
-or ecosystem adoption.
+fixture-exact supported impact, atomic transactions, bounded architecture-policy
+enforcement on frozen scenarios, and the public behavior corpus. There are zero
+official comparative agent trials today. Not yet proven: comparative agent
+acceleration, cross-model repeatability, reviewer savings, production lowering,
+broad language coverage, or ecosystem adoption.
 
 ### 15. Fund the experiment that can falsify the thesis
 
@@ -171,13 +181,15 @@ outcomes, exclusions, and an assessor-independent reviewer rubric. Lock AIL
 success targets after baseline results and before AIL trials. Then make an
 explicit go, revise, or stop decision.
 
-### 16. Appendix — planned M27 live demo evolution
+### 16. Appendix — retained M27 architecture-feedback pilot
 
-Show an agent changing course. Use the locked `CancelJob` task, demonstrate that
-a centralized candidate passes behavior but is denied, drill into compact
-policy evidence, repair authority placement, and publish the valid child. Keep
-raw compiler output available for diligence rather than making it the primary
-presentation.
+Show the recorded operator changing course from a supplied seeded centralized
+candidate. The candidate already passed behavior and arrived with the compact
+architecture rejection; the retained evidence does not show the operator
+independently authoring that initial bad candidate. The operator drilled into
+the exact contributors, repaired authority placement, reran the checks, and
+published the valid child. Keep raw compiler output available for diligence
+rather than making it the primary presentation.
 
 ### 17. Appendix — baseline vs AIL measurement
 
@@ -188,30 +200,31 @@ failures as primary outcomes, and successful-run efficiency as conditional.
 Measure work, provider-counted tokens, repair, correctness/regressions, and
 assessor-independent review.
 
-## Live demo evolution plan
+## Retained M27 evidence and possible presentation
 
 The narrated fixture runner from the prior unmerged demo branch is useful
 diligence evidence, but it should become the evidence service behind a visual
 agent workflow rather than the main experience.
 
-### Presentation mode: one agent, visible course correction
+### Presentation mode: one recorded operator, visible course correction
 
-1. Start from the locked M23 `CancelJob` task and base revision.
-2. Show the task and an agent’s first candidate in a split view: compact source
-   diff on the left, timeline and measurements on the right.
-3. Run the six behavior cases. Show **6/6 pass** prominently.
-4. Submit the same candidate to architecture validation. Render the four
-   centralized findings as a policy card with contributors, not terminal text.
-5. Let the agent request structured drill-down and repair the change by moving
-   datastore authority to the domain handler.
-6. Revalidate. Show behavior, architecture, publication, revision identity, and
+1. Start from the locked M23 `CancelJob` task, base revision, and seeded
+   centralized candidate supplied to the operator.
+2. Show **6/6 behavior pass** and the compact denied-publication result.
+3. Render the four centralized findings as a policy card with contributors,
+   not only terminal text.
+4. Show the operator requesting structured drill-down and repairing the change
+   by moving datastore authority to the domain handler.
+5. Revalidate. Show behavior, architecture, publication, revision identity, and
    completion evidence as one bound result.
-7. End with a proof-boundary card: this is one non-official run demonstrating
+6. End with a proof-boundary card: this is one non-official run demonstrating
    actionable feedback, not a measured comparative speedup.
 
-This planned M27 mode establishes the missing causal moment: the audience sees
-compiler semantics change what the agent does. It does not exist as an
-end-to-end source-to-agent product path in the current checkout.
+The retained M27 package records that feedback-and-repair sequence and is
+available in the current checkout. It shows that the feedback was actionable in
+that one run; it does not establish an end-to-end product workflow, comparative
+advantage, statistical repeatability, or generalization beyond the seeded
+candidate.
 
 ### Measurement mode: randomized baseline vs AIL trials
 

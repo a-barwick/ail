@@ -35,6 +35,29 @@ Planned commands describe the verification interface each milestone must
 deliver. A milestone must replace any incomplete command contract before it
 becomes active.
 
+## Successor milestone selection
+
+No completed milestone creates an automatic next phase. Before adding or
+activating a successor, the proposal must state:
+
+1. the accepted use case or unresolved thesis uncertainty it addresses;
+2. the component of total agent change cost it is expected to reduce;
+3. why language, compiler, protocol, runtime, or benchmark work is needed rather
+   than ordinary tooling for an existing language;
+4. the smallest evidence-producing milestone that can test the mechanism;
+5. the strong mainstream baseline plan, baseline evidence, or prerequisite
+   evidence needed for a fair comparison, as applicable;
+6. correctness and human-auditability admission gates;
+7. the result that causes a go, revise, or stop decision; and
+8. explicit non-scope, including conventional progress proxies that the
+   milestone does not validate.
+
+An enabling milestone may precede official comparative trials when it is needed
+to build the comparator or measurement path. It must name the later
+discriminating test and must not present implementation completion as proof of
+agent efficiency. More syntax, native lowering, LLVM integration, production
+packaging, or self-hosting is not a successor rationale without this gate.
+
 ## Milestone dependency map
 
 | Milestone | Capability | Status | Depends on |
@@ -1399,28 +1422,29 @@ active.
 Architectural-health implementation should follow the core semantic graph and
 revision protocol. It does not block M19 through M21.
 
-## Long-range outlook after M17
+## Candidate directions after M27
 
-This section records intended capability order but is not an operational
-roadmap. M23 delivered the UC-007 acceptance package, M24 accepted the bounded
-contract, M25 delivered the single-revision snapshot, and M26 delivered
-cross-revision enforcement. M27 completed the non-official pilot; no later
-milestone is defined.
+This is an unordered set of possible capabilities, not an operational roadmap.
+Every candidate must pass the successor-selection gate; none is active:
 
-1. **Broader semantic oracle:** expand the M11 spike subset to the accepted
-   20–30 construct job-service core, then implement parser recovery and source
-   preservation, canonical formatting, resolution, type and minimal effect
-   checking, typed holes, structured diagnostics, deterministic interpretation,
-   and the conformance harness.
-2. **Core agent protocol:** versioned revisions and handles, semantic queries,
-   elaborated views, validated rename, identity maps, atomic validation, and
-   bounded semantic context.
-3. **Accepted scaling features:** only use cases and requirements that have
-   passed their own acceptance gates, potentially including UC-007.
-4. **Safety and controlled execution:** memory model, structured concurrency,
-   cancellation, resource limits, recordable nondeterminism, and replay policy.
-5. **Production lowering:** one authoritative backend, reproducible artifacts,
-   debugging metadata, foreign primitives, and runtime packaging.
-6. **Ecosystem and full validation:** compatible target-source emission,
-   advanced refactors, semantic review reports, package and supply-chain policy,
-   and the full empirical agent benchmark.
+- **Representative comparative validation:** fresh held-out agent changes,
+  strong mainstream toolchains, locked correctness and review rules, and an
+  explicit go, revise, or stop decision.
+- **Broader semantic oracle:** only the constructs required by a selected use
+  case, with canonical source, static and dynamic semantics, diagnostics,
+  deterministic interpretation, and conformance evidence.
+- **Agent protocol expansion:** semantic queries or validated operations that
+  remove measured context, consequence, validation, or repair work on a
+  representative change.
+- **Safety and controlled execution:** memory, concurrency, cancellation,
+  resource, nondeterminism, and replay behavior selected through accepted use
+  cases rather than general feature parity.
+- **Production execution:** lowering, runtime packaging, debugging, and foreign
+  boundaries only when a concrete comparison or deployment envelope requires
+  them. No backend, including LLVM, is selected here.
+- **Ecosystem work:** packages, supply-chain policy, deployment, and compatible
+  target emission only when they enable an accepted workload or remove measured
+  agent work.
+
+Self-hosting may eventually exercise compiler-shaped workloads, but it is not a
+project objective or maturity gate by itself.

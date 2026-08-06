@@ -174,8 +174,8 @@ def slide_01(prs):
         textbox(s, x, 5.25, 2.65, 0.68, label, size=15, color=c, bold=True, align=PP_ALIGN.CENTER)
     line(s, 3.42, 5.63, 4.25, 5.63, BLUE, 2.5, True)
     line(s, 7.12, 5.63, 7.95, 5.63, CYAN, 2.5, True)
-    textbox(s, 10.95, 5.13, 1.55, 0.95, "Mechanism\nproven today", size=12, color=GREEN, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "AIL is not another coding agent. It is the control layer beneath coding agents: an executable language plus a compiler interface that makes consequences, authority, validation, and publication mechanically inspectable. Today we can demonstrate the mechanism on a bounded compiler slice. We are raising to prove the economic result on representative workloads.")
+    textbox(s, 10.95, 5.13, 1.55, 0.95, "Bounded\nmechanisms run", size=12, color=GREEN, bold=True, align=PP_ALIGN.CENTER)
+    add_notes(s, "AIL is not another coding agent. It is the control layer beneath coding agents: an executable language plus a compiler interface that makes consequences, authority, validation, and publication mechanically inspectable. Today bounded mechanisms execute as specified. We have no official comparative evidence that they reduce total agent change cost; the funded program is intended to test that claim on representative workloads.")
 
 
 def slide_02(prs):
@@ -198,7 +198,7 @@ def slide_02(prs):
 
 def slide_03(prs):
     s = base_slide(prs, 3, "PROBLEM")
-    title(s, "Today’s agents repeatedly reconstruct the program", "Files expose syntax. The agent still has to infer the semantic change surface.")
+    title(s, "Today’s agents repeatedly reconstruct the program", "Strong tools expose substantial semantics; agents still reconstruct parts of the change surface.")
     labels = ["Search files", "Read context", "Infer effects", "Edit", "Compile / test", "Repair"]
     xs = [0.68, 2.65, 4.62, 6.59, 8.56, 10.53]
     for i, (x, label) in enumerate(zip(xs, labels)):
@@ -217,7 +217,7 @@ def slide_03(prs):
         (8.12, "Unbounded review", "Humans reconstruct what changed and what the agent may have missed."),
     ]:
         card(s, x, 4.62, 3.25, 1.6, h, b, accent=RED, body_size=11)
-    add_notes(s, "Modern compilers and language servers help, but the agent often still assembles a file-oriented view and reasons across it probabilistically. That reconstruction repeats after diagnostics and again during review. The opportunity is not to remove reasoning; it is to make mechanically knowable facts complete, structured, and revision-bound.")
+    add_notes(s, "Modern compilers, language servers, refactors, search, and tests already expose substantial semantics. Even with those normal strong tools, the agent often still assembles a file-oriented view and reasons across parts of it probabilistically. That reconstruction repeats after diagnostics and again during review. AIL must demonstrate a further reduction in total work against that baseline, not against raw text editing.")
 
 
 def slide_04(prs):
@@ -391,7 +391,7 @@ def slide_10(prs):
 
 def slide_11(prs):
     s = base_slide(prs, 11, "ECONOMIC HYPOTHESIS")
-    title(s, "The leverage is in the total cost of a correct change", "The mechanism is working. The size of the economic advantage remains to be measured.")
+    title(s, "The leverage is in the total cost of a correct change", "Bounded mechanisms execute as specified. Comparative advantage remains to be measured.")
     terms = [
         ("GENERATION", BLUE, "already falling"),
         ("CONTEXT", CYAN, "query, don’t rediscover"),
@@ -426,12 +426,12 @@ def slide_12(prs):
 
 def slide_13(prs):
     s = base_slide(prs, 13, "ROADMAP")
-    title(s, "Mechanism first. Economics next. Production follows evidence.")
+    title(s, "Mechanism first. Economics next. Production only when justified.")
     phases = [
-        (0.7, "NOW", "Semantic oracle", "parse • check • execute\nimpact • transactions\narchitecture policy", GREEN),
-        (3.8, "NEXT", "Comparative validation", "operator pilot\nlocked baseline trials\nblind review study", CYAN),
-        (6.9, "THEN", "Production wedge", "broader service core\nproduction lowering\nruntime + I/O", BLUE),
-        (10.0, "EXPAND", "Default agent stack", "packages • deployment\nmore application classes\necosystem", AMBER),
+        (0.7, "DONE", "Bounded mechanism", "semantic oracle\nchange transactions\nM27 observation", GREEN),
+        (3.8, "TEST", "Comparative validation", "fresh held-out tasks\nbounded comparator work\nstrong baseline trials", CYAN),
+        (6.9, "DECIDE", "Go / revise / stop", "correctness first\ntotal change cost\ngeneralization", BLUE),
+        (10.0, "IF NEEDED", "Broader capability", "language, runtime,\nlowering, or ecosystem\nwork evidence requires", AMBER),
     ]
     for i, (x, phase, h, b, c) in enumerate(phases):
         pill(s, x, 2.0, 1.1, phase, c, NAVY)
@@ -440,8 +440,8 @@ def slide_13(prs):
         textbox(s, x + 0.2, 3.7, 2.25, 1.15, b, size=12, color=MUTED)
         if i < 3:
             line(s, x + 2.68, 4.0, x + 3.0, 4.0, c, 2, True)
-    textbox(s, 0.75, 5.94, 11.6, 0.6, "Gates, not dates: advance when correctness, comparative evidence, and deployment constraints are demonstrated.", size=13, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "The roadmap is evidence-gated. The current semantic mechanism is implemented on a bounded service slice. Next comes the active non-official operator pilot and then a locked comparative validation against strong mainstream-language tools. Production lowering and broader runtime work follow only if the economic signal survives. This avoids spending heavily on a backend before validating the agent advantage.")
+    textbox(s, 0.75, 5.94, 11.6, 0.6, "Proposed evidence program—not an active repository roadmap. M27 is complete; no successor is selected.", size=12.5, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
+    add_notes(s, "The repository currently has no active successor milestone. M27 retained one non-official usability observation. This slide proposes a funded evidence program: freeze fresh representative tasks, build only the bounded AIL capabilities needed to create a fair comparator, compare against mainstream languages with their normal strong tools, and make an explicit go, revise, or stop decision. Broader production and ecosystem investment follows only when the result or a concrete deployment requirement justifies it. Native lowering, LLVM integration, broader syntax, and self-hosting are not automatic phases or proof of agent efficiency.")
 
 
 def slide_14(prs):
@@ -496,11 +496,11 @@ def slide_15(prs):
 
 def slide_16(prs):
     s = base_slide(prs, 16, "APPENDIX: LIVE DEMO")
-    title(s, "Planned M27 demo: show an agent changing course", "Keep compiler stdout in the evidence layer; make the workflow visible in the room.")
+    title(s, "Retained M27 pilot: an operator changes course", "The seeded bad candidate was supplied; the recorded run demonstrates one repair, not comparative advantage.")
     flow = [
-        (0.6, "TASK", "Add CancelJob", BLUE),
-        (2.67, "BASELINE", "agent proposes\ncentralized change", RED),
-        (4.74, "AIL QUERY", "impact + policy\ncontributors", CYAN),
+        (0.6, "INPUT", "seeded centralized\ncandidate", BLUE),
+        (2.67, "REJECTION", "6/6 behavior\npublication denied", RED),
+        (4.74, "DRILL-DOWN", "exact policy\ncontributors", CYAN),
         (6.81, "REPAIR", "move authority\nto domain", CYAN),
         (8.88, "VALIDATE", "6/6 behavior\n0 findings", GREEN),
         (10.95, "EVIDENCE", "publish child\nreview bundle", GREEN),
@@ -516,7 +516,7 @@ def slide_16(prs):
     card(s, 0.78, 4.35, 5.72, 1.72, "AGENT TELEMETRY", "\n".join(f"• {x}" for x in left), accent=CYAN, body_size=11)
     card(s, 6.82, 4.35, 5.72, 1.72, "OUTCOME + REVIEW", "\n".join(f"• {x}" for x in right), accent=GREEN, body_size=11)
     textbox(s, 0.8, 6.33, 11.5, 0.32, "Do not compare a strong AIL workflow with a deliberately crippled baseline.", size=11, color=AMBER, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "A compelling live demo needs an agent visibly using compiler feedback to avoid or repair a bad change. Use the locked CancelJob task. Let the agent make or receive a centralized candidate, show that behavior passes, then show the compiler’s compact policy result and structured drill-down. The agent repairs authority placement, validates, and publishes. Capture telemetry on-screen, but call it a demo run—not comparative proof. The formal experiment must give baseline languages their normal compilers, language servers, search, formatters, and tests.")
+    add_notes(s, "M27 retained one complete non-official run. The operator received the seeded centralized candidate and its compact rejection; the evidence does not show the operator independently creating that bad candidate. The operator used structured contributors, moved authority to the domain handler, reran validation, and published the valid child. Present this as one recorded usability observation, not a comparative or statistical result. A formal experiment must give baseline languages their normal compilers, language servers, refactors, search, formatters, and tests.")
 
 
 def slide_17(prs):

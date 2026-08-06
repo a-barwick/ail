@@ -514,7 +514,9 @@ after acceptance in a numbered protocol specification.
 
 ## Conformance evidence
 
-Before this feature becomes normative, proposed fixtures must cover:
+The bounded M24 contract accepted and implemented only its frozen fixture
+subset. Before any additional part of this broader proposal becomes normative,
+proposed fixtures must cover the applicable remaining behavior:
 
 1. repeated deterministic snapshot generation;
 2. a new decision-heavy function;
@@ -534,8 +536,10 @@ Before this feature becomes normative, proposed fixtures must cover:
 16. denied structural transaction rollback; and
 17. bounded analysis that returns `incomplete` instead of a false pass.
 
-The UC-007 benchmark must additionally show that an agent can use this evidence
-to avoid or repair a seeded architectural regression.
+M27 records one non-official observation that an operator used the bounded
+feedback to repair a seeded regression. It is not the comparative UC-007
+benchmark evidence required to claim lower agent change cost. Any broader
+benchmark must still compare representative runs against strong normal tooling.
 
 ## Non-goals
 
@@ -552,7 +556,7 @@ This feature does not:
 
 ## Open decisions
 
-Before normative rules are accepted:
+Before additional normative rules beyond the bounded M24 contract are accepted:
 
 1. freeze the exact metric names and semantic graph relationship kinds;
 2. decide which metrics are required in the first protocol version;

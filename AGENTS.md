@@ -49,6 +49,16 @@ Preserve these distinctions:
 - Evaluate responsibility at symbol and aggregate semantic scopes. Splitting a
   large function into helpers is not an architectural improvement when
   authority, state, dependencies, and review context remain concentrated.
+- More syntax, native or LLVM lowering, self-hosting, source brevity, compiler
+  volume, and conventional feature parity are not project success by
+  themselves. They require an accepted use case or thesis uncertainty, a named
+  agent-cost reduction, and a later discriminating comparison.
+- Distinguish conformance and mechanism evidence from non-official usability
+  evidence and official comparative evidence. Only the last can support a claim
+  that AIL reduces total agent change cost.
+- Familiar syntax and compiler techniques are useful when model priors reduce
+  errors or review work. Do not optimize for human convention, but do not make
+  AIL unfamiliar merely to signal that it is agent-first.
 
 ## Current project state
 
@@ -93,6 +103,9 @@ first compiler slices.
   `docs/STATUS.md`, and leave a concise handoff for the next agent.
 - Keep detailed requirements in their authoritative documents. Milestones link
   to those documents instead of copying them.
+- Before adding a successor milestone, apply the selection gate in
+  `docs/roadmap.md`. An enabling milestone must name the later representative
+  comparison it enables and must not claim agent-efficiency success.
 - The M8 campaign is deferred after M8f by ADR 0003. `Launch M8g` through
   `Launch M8o` are not active directives unless the user explicitly resumes the
   campaign. If resumed, read the launch-directive table and named task section

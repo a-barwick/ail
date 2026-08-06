@@ -13,8 +13,10 @@ behavior. See the [documentation model](README.md).
 ## Identity
 
 AIL is a deterministic, executable programming language designed for agents to
-author, inspect, debug, and refactor, and for an ordinary compiler to translate
-into bytecode, machine code, or compatible target source.
+author, inspect, debug, and refactor. An ordinary compiler may eventually
+translate it into bytecode, machine code, or compatible target source when an
+accepted workload, bounded measurement need, or deployment requirement justifies
+that work.
 
 AIL is not a specification language, an agent protocol, a prompt format, or a
 compiler-agent collaboration. Human authorship ergonomics are secondary, but
@@ -41,6 +43,11 @@ tokens to a correct implementation, context needed for local changes,
 repair iterations, regression frequency, diagnostic localization, diff noise,
 runtime predictability, and mechanically diagnosable target conversion.
 
+Language breadth, backend completion, native performance, and self-hosting are
+not substitutes for that comparison. They are implementation strategies or
+enabling capabilities whose value depends on the agent work and application
+risk they remove.
+
 ## Compilation model
 
 ```text
@@ -49,8 +56,8 @@ Canonical AIL source
   -> resolve names and types
   -> check effects, capabilities, safety, and concurrency
   -> typed AIL IR
-  -> optimize and lower
-  -> bytecode, machine code, or compatible target source
+  -> deterministic interpreter and, when justified, optimize and lower
+  -> possible bytecode, machine code, or compatible target source
 ```
 
 Given identical source, compiler version, target, dependency lock, and build
@@ -59,6 +66,11 @@ bit-reproducible wherever the output format permits it.
 
 The compiler applies fixed language semantics. It does not infer product
 requirements or reinterpret developer intent.
+
+This pipeline is a design boundary, not a selected backend or milestone order.
+No LLVM, bytecode, source-emission, or bootstrap strategy is selected here. The
+interpreter remains sufficient while it can test accepted semantics and
+representative change loops within their required envelope.
 
 ## Canonical source and semantic interface
 
@@ -222,6 +234,10 @@ lowering support.
 Target ecosystems and lowering packages must not distort the core language
 before its semantics are stable.
 
+A backend becomes justified by a concrete accepted workload, measurement need,
+or deployment envelope. Emitting native code, integrating LLVM, or compiling
+the compiler in AIL does not by itself validate the agent-efficiency thesis.
+
 ## Initial exclusions
 
 The first version excludes:
@@ -239,14 +255,10 @@ The first version excludes:
 - comments used as contracts; and
 - reflection over arbitrary implementation details.
 
-## Next normative artifact
+## Future normative expansion
 
-After the application-use-case and requirements gate, the next normative
-artifact is a small core of roughly 20–30 constructs, including:
-
-- a canonical grammar and formatter;
-- static and dynamic semantics;
-- a type, error, and effect model;
-- deterministic evaluation rules;
-- a module and visibility model; and
-- the compiler's versioned agent-facing semantic protocol.
+Any future normative artifact must contain the smallest construct set required
+by an accepted use case and its conformance evidence. A construct count is a
+scope estimate, not a progress measure. Expansion should define only the
+grammar, formatting, static and dynamic semantics, diagnostics, and agent-facing
+semantic facts needed to test the selected change loop.

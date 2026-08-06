@@ -22,8 +22,15 @@ governance, bounded failure, and atomic publication. M27 retained one
 non-official feedback pilot without changing compiler behavior. No successor
 milestone is defined or active.
 
+These completed slices are conformance and mechanism evidence for bounded
+contracts. M27 adds one non-official usability observation. They are not
+official comparative evidence that AIL reduces total agent change cost. Compiler
+volume, broader syntax, a native backend, or self-hosting must not be treated as
+the next maturity step without a selected use case and roadmap milestone.
+
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
 behavior. Implementation details do not create language semantics.
+No compiler feature expansion or backend work is currently authorized.
 
 Run the current compiler checks from the repository root:
 

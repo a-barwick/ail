@@ -13,6 +13,9 @@ The project has entered compiler implementation. Rust is the authoritative
 compiler stack, the root Cargo workspace is production code, and the frozen
 M11 contract constrains its first slices. The repository also contains
 language-independent benchmark data and dependency-free validation tooling.
+The executable language remains deliberately narrow, no native backend is
+selected, and no official comparative evidence yet shows lower agent change
+cost.
 
 ## Project thesis
 
@@ -44,11 +47,16 @@ primarily implemented and maintained by agents. It should combine predictable
 compiled execution and strong static semantics with compact, locally inferred
 source and a fully queryable compiler model.
 
+That destination is a hypothesis, not an automatic feature or self-hosting
+roadmap. Language breadth, native lowering, and ecosystem work are justified
+only when they enable a representative agent change or accepted deployment
+requirement and preserve a fair comparison with existing tools.
+
 The first validation wedge is backend services and workers. This is a proving
 ground, not a permanent restriction on the language. See
 [docs/application-vision.md](docs/application-vision.md).
 
-The current direction combines:
+The design direction proposes:
 
 - one canonical textual representation;
 - fixed executable semantics and explicit nondeterministic inputs;
@@ -59,7 +67,8 @@ The current direction combines:
 - revision-bound architectural facts and bounded enforceable project policy,
   with a broader health manifest still proposed;
 - deterministic replay and controlled concurrency; and
-- native compilation with optional compatible source emission.
+- possible native compilation or compatible source emission when justified by
+  a bounded measurement need, accepted evidence, or deployment requirements.
 
 See [docs/design-direction.md](docs/design-direction.md) for the captured design
 direction, [docs/architecture-health.md](docs/architecture-health.md) for the
@@ -74,6 +83,13 @@ TypeScript baselines and the M11 five-construct contract are complete. The
 authoritative compiler delivers the completed compiler slices through M26, and
 M27 retains one explicitly non-official architecture-feedback pilot. Current
 milestone state is tracked in [docs/STATUS.md](docs/STATUS.md).
+
+Those results prove bounded contracts and mechanisms. They do not yet prove the
+comparative thesis. More syntax, LLVM or another backend, production packaging,
+and self-hosting are enabling possibilities rather than success measures. The
+[project evidence discipline](docs/project-intent.md#progress-and-evidence-discipline)
+and [successor milestone gate](docs/roadmap.md#successor-milestone-selection)
+govern future work.
 
 The operational delivery sequence is defined in
 [docs/roadmap.md](docs/roadmap.md).
