@@ -9,6 +9,8 @@ language behavior.
 
 UC-001 and UC-003 were accepted as the first reference slice on 2026-07-18.
 UC-007 was accepted as the architectural-regression scaling case on 2026-07-22.
+UC-008 is proposed as the cumulative iterative-evolution case selected for M28
+acceptance preparation on 2026-08-07.
 
 ## Accepted reference slice
 
@@ -46,6 +48,18 @@ freezes its 24-operation starting workspace, behavior, policy, candidates,
 minimal metrics, compact evidence, baseline comparison, budgets, and two
 independent reviews. Acceptance does not itself define compiler protocol rules.
 
+## Selected proposed scaling case
+
+| Record | Status | Representative agent task |
+| --- | --- | --- |
+| [UC-008 — Iterative service evolution](UC-008-iterative-service-evolution.md) | Proposed | Apply six to eight cumulative requirements in fresh contexts while preserving behavior, architecture, and reviewability |
+
+[ADR 0007](../decisions/0007-prepare-iterative-service-evolution.md) selects
+only the M28 acceptance package. UC-008 must still freeze its natural-scale
+service, ordered requirement sequence, oracles, architecture expectations,
+strong baseline plan, measurements, and stop conditions before it or any
+derived requirement can be accepted.
+
 ## Candidate future cases
 
 The following remain possible scaling cases, not an ordered queue or active
@@ -77,7 +91,8 @@ strong baseline, and the go, revise, or stop result.
 selected UC-007 acceptance preparation. M23 passed that bounded gate without
 defining M24 protocol rules or implementing compiler behavior.
 M24 through M26 later implemented the bounded accepted contract and M27 retained
-one non-official pilot. No candidate future case is currently selected.
+one non-official pilot. ADR 0007 subsequently selected proposed UC-008 for M28
+acceptance preparation; it did not select or authorize any AIL language feature.
 
 ## Use-case record
 

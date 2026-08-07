@@ -65,7 +65,9 @@ Preserve these distinctions:
 The repository has entered authoritative compiler implementation. The first
 job-service use cases and requirements and the M11 five-construct contract are
 accepted inputs to the completed Rust compiler milestones. M23 through M27 are
-complete, and `docs/STATUS.md` records that no successor milestone is active.
+complete. ADR 0007 activates M28 as the language-independent acceptance package
+for proposed UC-008 iterative service evolution; it does not authorize AIL
+language or compiler implementation.
 UC-007, its requirements, and the bounded M24 contract are accepted; M25 and M26
 implement that contract, and M27 retains one non-official pilot. The broader
 architectural health manifest remains proposed and does not expand the accepted

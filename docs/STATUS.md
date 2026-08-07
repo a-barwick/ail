@@ -1,24 +1,33 @@
 # Current status
 
-Last updated: 2026-08-06
+Last updated: 2026-08-07
 
 ## Active milestone
 
-None — M27 is complete and no successor milestone is defined
+M28 — Iterative-evolution acceptance package
 
 ## Current goal
 
-M23 through M27 are Complete. The repository has no active implementation or
-direction-selection milestone. New work requires explicit maintainer scope; one
-non-official pilot does not authorize another run, a broader claim, or a new
-language or compiler feature.
+M23 through M27 are Complete. [ADR 0007](decisions/0007-prepare-iterative-service-evolution.md)
+selects proposed [UC-008](use-cases/UC-008-iterative-service-evolution.md) as the
+next acceptance direction and activates only M28.
 
-Any successor must pass the
-[roadmap selection gate](roadmap.md#successor-milestone-selection). More syntax,
-native or LLVM lowering, production packaging, and self-hosting are not progress
-claims by themselves. An enabling milestone must identify the representative
-agent change and later comparison it makes possible. There is currently no
-official comparative evidence that AIL reduces total agent change cost.
+The north-star simulation evolves a naturally medium-sized service through six
+to eight cumulative product requirements. Every change starts in a fresh agent
+context from the previous accepted revision in that same trajectory. The later
+comparison retains terminal failures and measures whether AIL controls
+cumulative context, consequence analysis, repair, behavioral and architectural
+regressions, and review work better than strong normal Rust, Go, Python, and
+TypeScript tooling.
+
+M28 must make that scenario concrete before UC-008, derived requirements, or
+AIL implementation are accepted. It may add language-independent fixtures,
+schemas, expected results, and dependency-free acceptance tooling. It must not
+add AIL syntax or compiler behavior. Approximately 2,000 lines across five to
+eight files is a natural-scale observation to test, not a quota to enforce.
+
+There remains no official comparative evidence that AIL reduces total agent
+change cost.
 
 The execution path is:
 
@@ -39,6 +48,8 @@ M11 five-construct contract (complete)
   -> M25 architectural snapshot and agent rendering (complete)
   -> M26 architectural delta, policy, and atomic enforcement (complete)
   -> M27 non-official architecture-feedback pilot (complete)
+  -> M28 iterative-evolution acceptance package (active)
+  -> M29–M36 conditional path to an official cumulative comparison
 ```
 
 M12 and M13 are superseded. Do not build TypeScript compiler semantics or a
@@ -95,8 +106,8 @@ ownership, transport adaptation, final comparison, post-comparison integrity,
 and non-official classification. One acceptance test and eight mutation tests
 cover every required rejection. Full repository checks pass. This is one
 operator repairing one seeded candidate and supports no comparative,
-statistical, official, or broader project claim. No successor milestone has
-been defined.
+statistical, official, or broader project claim. No successor milestone had
+been defined when M27 completed.
 
 ## M26 result
 
@@ -414,18 +425,50 @@ but it remains the fixed conformance boundary preserved by M14 through M17.
 These items require an explicit maintainer decision to resume.
 
 UC-007, its requirements, and the bounded M24 contract are accepted. M25 and
-M26 are Complete, and M27 is Complete. No successor milestone is active.
+M26 are Complete, and M27 is Complete. UC-008 remains Proposed and M28 is its
+active acceptance gate.
 
 ## Do not start yet
 
 - Architectural-health behavior beyond the bounded M26 contract
+- M29 baseline implementation before M28 accepts UC-008
+- AIL syntax, specification, compiler, interpreter, or protocol changes for
+  UC-008 before M30 and M31 pass
+- Non-official iterative pilots before M33 freezes the AIL trajectory
+- Official iterative trials before M35 and an explicit launch decision
 - Native code generation, production runtime work, or general concurrency
 - Official agent or performance evidence
-- Any successor milestone without explicit maintainer scope
 
 ## Blockers
 
-None.
+M28 must construct and independently review the complete language-independent
+acceptance package. The proposed service, change sequence, baseline equivalence,
+measurements, budgets, and candidate requirements are not yet frozen.
+
+## Immediate M28 handoff
+
+Implement the acceptance package under benchmark/specification tooling without
+changing the Rust compiler:
+
+1. define the mature service boundary and operation inventory;
+2. select six to eight interacting cumulative requirements;
+3. define each reference revision's behavior, state, ordered effects,
+   compatibility, architecture expectations, and human-review evidence;
+4. define separate reference and measured trajectories, fresh-context task
+   envelopes, same-trajectory revision carry-forward, terminal outcomes, and
+   not-reached accounting;
+5. define strong baseline tools, equivalence rules, cumulative measurements,
+   fixed budgets, and go/revise/stop conditions;
+6. implement `benchmarks/tools/iterative_evolution.py check` with deterministic
+   fixtures, digest closure, and rejection mutations; and
+7. obtain two independent digest-bound classifications before changing UC-008
+   or M28 to Accepted/Complete.
+
+Stop and revise if changes do not create interacting consequences,
+classifications depend on preferred source layout, or the path to AIL evidence
+requires broad feature parity before a useful comparison. M29 owns the later
+empirical stop for padding, artificial file splitting, or the wrong natural
+service class.
 
 ## Handoff checklist
 
@@ -434,8 +477,9 @@ After meaningful work:
 - preserve the M27 prompt, candidate, report, manifest, lock, fixtures, policy,
   baselines, and expected results;
 - keep M27 explicitly non-official and make no comparative or project claim;
-- obtain explicit maintainer scope before defining or starting another
-  milestone;
+- preserve UC-008 as Proposed and implement only M28 acceptance artifacts;
+- run `python3 benchmarks/tools/iterative_evolution.py check` once the M28
+  checker exists;
 - run `cargo +1.87.0 fmt --all --check`;
 - run `cargo +1.87.0 test --workspace`;
 - run `cargo +1.87.0 clippy --workspace --all-targets -- -D warnings`;

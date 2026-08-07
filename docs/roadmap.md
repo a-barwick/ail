@@ -90,6 +90,15 @@ packaging, or self-hosting is not a successor rationale without this gate.
 | M25 | Architectural snapshot and agent rendering | Complete | M24 |
 | M26 | Architectural delta, policy, and atomic enforcement | Complete | M25 |
 | M27 | Non-official architecture-feedback pilot | Complete | M26 |
+| M28 | Iterative-evolution acceptance package | Active | M27, ADR 0007 |
+| M29 | Strong baseline workspaces and trajectories | Planned | M28 acceptance |
+| M30 | AIL gap selection | Planned | M29 |
+| M31 | Iterative-workload contract | Planned | M30 |
+| M32 | Authoritative compiler implementation | Planned | M31 |
+| M33 | Canonical AIL service and cumulative evidence | Planned | M32 |
+| M34 | Non-official full-trajectory pilots | Planned | M33 |
+| M35 | Comparative campaign readiness | Planned | M29, M34 |
+| M36 | Official iterative comparison | Planned | M35 and explicit launch decision |
 
 ## Delivery milestones
 
@@ -1404,7 +1413,375 @@ a later go, revise, or stop decision but makes no comparative project claim.
 - Classified the pilot as one non-official run supporting no comparative,
   statistical, or broader project claim
 
-## Accepted scaling direction: architectural regression control
+### M28 — Iterative-evolution acceptance package
+
+**Status:** Active
+
+#### Scope
+
+- Freeze the language-independent boundary and operation inventory for the
+  proposed mature job service
+- Freeze six to eight cumulative product requirements, each starting from the
+  accepted revision produced by the previous change
+- Define public and held-back behavior, state, ordered effects, compatibility,
+  architecture expectations, and human-review evidence for every change
+- Define fresh-context task envelopes that do not carry conversation memory or
+  answer-bearing summaries between changes
+- Define per-change and cumulative measurements for context, queries, edits,
+  validation, repair, regressions, elapsed work, and review evidence
+- Freeze the scale hypothesis and language-independent pressure criteria without
+  enforcing source-line or file quotas
+- Identify normal Rust, Go, Python, and TypeScript tools and the equivalence
+  rules M29 must implement
+- Record preliminary AIL feasibility risks without selecting syntax, semantics,
+  or implementation; M30 remains the only gap-selection milestone
+- Freeze go, revise, and stop conditions, fixed budgets, exact expected
+  classifications, and two independent digest-bound reviews
+- Add a dependency-free package checker and rejection mutations covering the
+  complete acceptance evidence
+- Accept, revise, or reject UC-008 and its candidate requirements only after the
+  package passes
+
+#### Non-scope
+
+- AIL grammar, specification, compiler, interpreter, or protocol implementation
+- Treating direct calls, modules, iteration, collections, or additional
+  capabilities as accepted requirements before the gate
+- Building the four complete baseline workspaces or collecting agent evidence
+- Enforcing approximately 2,000 lines or five to eight files
+- Choosing one universal architecture or source layout
+- Native lowering, LLVM, production deployment, self-hosting, or M8 resumption
+- Official comparative evidence or an agent-efficiency claim
+
+#### Focused verification
+
+```bash
+python3 benchmarks/tools/iterative_evolution.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+Two independent readers can use only the frozen service, ordered requirements,
+reference trajectory, bounded rejecting mutations, oracles, architecture policy,
+task envelopes, measurement rules, and baseline plan to predict every expected
+behavior, architecture, package-integrity, and cumulative classification. The
+checker proves complete traceability, deterministic ordering and encoding,
+digest closure, fixed budgets, scale-hypothesis non-enforcement, and rejection
+of weakened or incomplete packages. The result explicitly accepts, revises, or
+rejects UC-008 before M29 starts.
+
+### M29 — Strong baseline workspaces and trajectories
+
+**Status:** Planned
+
+Conditional on M28 acceptance.
+
+#### Scope
+
+- Build idiomatic Rust, Go, Python, and TypeScript starting services using their
+  normal compiler, language-server, formatter, linter, test, refactoring, and
+  static-analysis tools
+- Implement and freeze one reference revision for every accepted cumulative
+  requirement in each language
+- Prove cross-language behavior, state, ordered-effect, compatibility, and
+  architecture-policy parity at every revision
+- Record observed natural source and file scale without changing the workload
+  to fit the planning range
+- Stage implementation: calibrate one idiomatic baseline first, record a go,
+  revise, or stop result for service class and maintenance pressure, and only
+  then complete the other three
+- Freeze answer-free task starts, public and held-back checks, source and tool
+  manifests, and deterministic reference results
+
+#### Non-scope
+
+- AIL language or compiler changes
+- Agent trials or comparative measurements
+- Forcing identical source architecture across languages
+- Changing M28 behavior or architecture expectations after implementations are
+  observed without returning through its revision gate
+
+#### Focused verification
+
+```bash
+python3 benchmarks/tools/iterative_evolution.py verify-baselines
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+All four idiomatic baseline trajectories satisfy every frozen revision oracle,
+their answer-free starts expose equivalent task information, and their normal
+tools and manifests are digest locked. M29 records an explicit go, revise, or
+stop result for natural service class and maintenance pressure. Padding,
+artificial file splitting, or a material workload revision returns to M28 rather
+than being hidden in a language-specific implementation.
+
+### M30 — AIL gap selection
+
+**Status:** Planned
+
+Conditional on M29.
+
+#### Scope
+
+- Compare the accepted workload with the authoritative compiler's actual
+  syntax, static semantics, interpreter, revisions, graph, and architecture
+  protocol
+- Identify the smallest language and compiler gaps that prevent a natural AIL
+  service and cumulative sequence
+- Tie every proposed gap to one accepted requirement change and one component
+  of agent work or correctness risk
+- Select a bounded contract and implementation sequence, revise the workload,
+  or stop if useful evidence requires broad conventional feature parity first
+
+#### Non-scope
+
+- Implementing syntax or compiler behavior
+- Selecting features because mainstream languages conventionally have them
+- Native lowering or production runtime work
+
+#### Focused verification
+
+```bash
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The repository records one bounded accepted direction for M31, or an explicit
+revise or stop result. Every proposed language or protocol behavior names the
+accepted workload step it enables and the later cumulative comparison that can
+discriminate its value.
+
+### M31 — Iterative-workload contract
+
+**Status:** Planned
+
+Conditional on M30.
+
+#### Scope
+
+- Accept only the grammar, formatting, static and runtime semantics,
+  diagnostics, semantic facts, protocol behavior, and canonical fixtures
+  selected by M30
+- Define deterministic behavior, coverage, ordering, revision identity, and
+  rejection results sufficiently for independent implementation
+- Extend dependency-free contract checking over every accepted behavior
+
+#### Non-scope
+
+- Rust compiler implementation
+- Features not required by the accepted sequence
+- Native code generation or production adapters
+
+#### Focused verification
+
+```bash
+python3 specs/tools/iterative_contract.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+Two independent readers can predict canonical source, static results, runtime
+observations, semantic relationships, and primary diagnostics for every new
+fixture without relying on incidental compiler behavior.
+
+### M32 — Authoritative compiler implementation
+
+**Status:** Planned
+
+Conditional on M31.
+
+#### Scope
+
+- Implement the accepted M31 syntax, formatting, checking, diagnostics,
+  semantic relationships, protocol facts, and deterministic interpretation
+- Preserve immutable revisions, complete coverage, ordered effects, structured
+  faults, architecture analysis, and prior accepted behavior
+- Add executable checks for every delivered rule and rejection
+
+#### Non-scope
+
+- Unaccepted workload features
+- Optimizing or replacing the interpreter
+- Native lowering, LLVM, JIT, production runtime, or deployment
+
+#### Focused verification
+
+```bash
+cargo test --workspace
+python3 specs/tools/iterative_contract.py check
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The authoritative compiler matches every M31 fixture without fixture-specific
+behavior, all prior compiler and workload checks pass, and the accepted
+semantics are exposed through revision-safe structured compiler facts.
+
+### M33 — Canonical AIL service and cumulative evidence
+
+**Status:** Planned
+
+Conditional on M32.
+
+#### Scope
+
+- Build the natural canonical AIL starting service and every accepted reference
+  revision
+- Keep this frozen reference trajectory separate from later measured
+  trajectories; only the common initial revision may start a measured run
+- Freeze behavior, state, ordered effects, compatibility, semantic impact,
+  architecture snapshots and deltas, completion evidence, and task starts for
+  the complete trajectory
+- Extend the shared verifier so every revision is checked through the same
+  language-independent oracle as the strong baselines
+
+#### Non-scope
+
+- Agent trials
+- Retuning the workload to improve AIL results
+- Native execution or production packaging
+
+#### Focused verification
+
+```bash
+python3 benchmarks/tools/iterative_evolution.py verify-ail
+cargo test --workspace
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The AIL starting workspace and every cumulative reference revision pass the
+shared oracle and accepted compiler contracts, all task starts are answer-free,
+and the complete trajectory is digest locked before any agent pilot.
+
+### M34 — Non-official full-trajectory pilots
+
+**Status:** Planned
+
+Conditional on M33.
+
+#### Scope
+
+- Run a small number of initiated complete or terminal trajectories with a
+  named agent configuration
+- Start every change in a fresh context from the actual accepted revision
+  produced by the previous change in that same trajectory, never from the
+  corresponding reference revision
+- Record prompts, tools, context, queries, edits, validations, repairs,
+  compiler evidence, final revisions, and limitations
+- Retain failures and timeouts as terminal outcomes with later changes marked
+  not reached; makeup runs receive new identities and never replace originals
+- Use failures to revise task wording, compiler output, measurement, or evidence
+  before campaign freeze
+
+#### Non-scope
+
+- Official comparison, statistics, or AIL success claims
+- Changing locked expectations without returning through the owning milestone
+- Selecting a favorable run as representative
+
+#### Focused verification
+
+```bash
+python3 benchmarks/tools/iterative_evolution.py verify-pilots
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+Every initiated pilot trajectory is replayable through completion or its
+terminal outcome and accounts for every input, reached change, validation,
+repair, revision, not-reached change, and limitation. The project records a go,
+revise, or stop decision for campaign readiness without making a comparative
+claim.
+
+### M35 — Comparative campaign readiness
+
+**Status:** Planned
+
+Conditional on M29 and M34.
+
+#### Scope
+
+- Freeze the measured agent, model, prompts, fresh-context protocol,
+  environments, permissions, tools, task order, trajectory order, trial counts,
+  safety limits, target-calculation formula, exclusions, replay, terminal-run
+  accounting, and evidence closure
+- Freeze the rule for computing baseline-derived AIL targets and the separate
+  continuation decision required after official baseline evidence, without
+  assigning target values before that evidence exists
+- Prove fake and dry success, failure, timeout, limit, malformed-evidence, and
+  changed-input paths
+- Require an explicit launch decision after readiness passes
+
+#### Non-scope
+
+- Official trials
+- Retuning targets after AIL results
+- Claims from readiness infrastructure
+
+#### Focused verification
+
+```bash
+python3 benchmarks/tools/iterative_evolution.py verify-readiness
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The complete campaign can be executed and independently verified without
+changing locked inputs or exposing held-back answers, and maintainers record an
+explicit launch, revise, or stop decision.
+
+### M36 — Official iterative comparison
+
+**Status:** Planned
+
+Conditional on M35 and an explicit launch decision.
+
+#### Scope
+
+- Run the locked AIL, Rust, Go, Python, and TypeScript trajectories at the
+  frozen trial counts and ordering in two phases
+- Phase one: collect and independently verify all official Rust, Go, Python,
+  and TypeScript trajectories, including every terminal result
+- Compute and digest-lock AIL targets from phase-one evidence using only the
+  preregistered formula, then require an explicit continue or stop decision
+- Phase two: only after continuation, collect the locked AIL trajectories
+- Report raw per-change and cumulative correctness, context, repair,
+  regression, elapsed-work, architecture, and review-evidence facts
+- Apply the frozen go, revise, and stop decision rule without changing targets
+
+#### Non-scope
+
+- Changing task inputs, tools, targets, or exclusions after results are seen
+- Inferring causality beyond the locked experiment
+- Treating source brevity, native performance, or one successful trajectory as
+  the project result
+
+#### Focused verification
+
+```bash
+python3 benchmarks/tools/iterative_evolution.py verify-campaign
+python3 tools/check_docs.py
+```
+
+#### Exit criterion
+
+The repository contains complete independently verifiable evidence for every
+initiated trajectory and reports the frozen factual and decision outcomes. A
+stop after phase one preserves all official baseline evidence and collects no
+AIL result. Only a completed valid two-phase campaign may support a bounded
+comparative claim about cumulative agent change cost.
+
+## Completed scaling direction: architectural regression control
 
 [UC-007](use-cases/UC-007-architectural-regression-control.md), its
 [accepted requirements](requirements/architectural-health.md), and the proposed
@@ -1416,13 +1793,27 @@ cancel-job behavior, project policy, minimal metric set, fixtures, baseline
 comparison, and budgets passed the gate, so UC-007 and its requirements are
 accepted. M24 accepted its bounded contract, M25 delivered the single-revision
 snapshot, M26 delivered cross-revision enforcement, and M27 completed one
-bounded non-official usability pilot. No successor milestone is defined or
-active.
+bounded non-official usability pilot. ADR 0007 subsequently selected iterative
+service evolution as the next conditional scaling direction and activated only
+its M28 acceptance package.
 
 Architectural-health implementation should follow the core semantic graph and
 revision protocol. It does not block M19 through M21.
 
-## Candidate directions after M27
+## Selected direction after M27
+
+[ADR 0007](decisions/0007-prepare-iterative-service-evolution.md) selects the
+proposed [UC-008 iterative service evolution](use-cases/UC-008-iterative-service-evolution.md)
+as the next acceptance direction. The north-star comparison applies six to
+eight cumulative requirements to a naturally medium-sized service, starts each
+change in a fresh agent context, and compares all initiated complete or terminal
+trajectories against strong normal Rust, Go, Python, and TypeScript tooling.
+
+Only M28 is active. UC-008 and its requirements remain proposed, M29 through
+M36 are conditional, and no AIL syntax or implementation is authorized until
+the acceptance and gap-selection gates pass.
+
+## Other candidate directions
 
 This is an unordered set of possible capabilities, not an operational roadmap.
 Every candidate must pass the successor-selection gate; none is active:

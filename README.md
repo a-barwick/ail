@@ -81,8 +81,10 @@ The job-service workload, use cases, requirements, public JSON fixtures, and
 benchmark harness/task contract are accepted. The Rust, Go, Python, and
 TypeScript baselines and the M11 five-construct contract are complete. The
 authoritative compiler delivers the completed compiler slices through M26, and
-M27 retains one explicitly non-official architecture-feedback pilot. Current
-milestone state is tracked in [docs/STATUS.md](docs/STATUS.md).
+M27 retains one explicitly non-official architecture-feedback pilot. M28 is the
+active acceptance package for a proposed cumulative iterative-evolution
+comparison; it does not yet authorize new AIL syntax or compiler behavior.
+Current milestone state is tracked in [docs/STATUS.md](docs/STATUS.md).
 
 Those results prove bounded contracts and mechanisms. They do not yet prove the
 comparative thesis. More syntax, LLVM or another backend, production packaging,

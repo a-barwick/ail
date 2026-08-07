@@ -40,8 +40,10 @@ accepted UC-007 and its requirements through a frozen, independently reviewed
 acceptance package. M24 accepted the bounded architectural regression
 contract. M25 implemented its single-revision snapshot and compact rendering,
 M26 implemented cross-revision policy enforcement and atomic publication, and
-M27 completed one bounded non-official usability pilot. No successor milestone
-is defined or active. A roadmap entry does not make planned behavior normative.
+M27 completed one bounded non-official usability pilot. ADR 0007 selects
+iterative service evolution as the next direction: M28 is the active acceptance
+package for proposed UC-008, while M29 through M36 remain conditional. A roadmap
+entry does not make planned behavior normative.
 
 The [current status](STATUS.md) records the active milestone, or states that the
 next planned milestone has not been started, and gives the next agent its
@@ -147,8 +149,10 @@ budgets. Two independent readers classified every candidate identically, so
 UC-007 and its requirements are accepted. M24 accepted the bounded normative
 contract, M25 implemented its revision-bound snapshot and compact rendering,
 M26 implemented cross-revision policy and atomic publication, and M27 retained
-one explicitly non-official repair pilot. No successor milestone is defined or
-active, and the broader architectural-health proposal remains non-normative.
+one explicitly non-official repair pilot. M28 now prepares the proposed
+iterative service-evolution use case without authorizing language or compiler
+implementation, and the broader architectural-health proposal remains
+non-normative.
 
 There is no accepted broad AIL syntax or normative language core yet. The M11
 subset is the fixed conformance boundary for the first Rust compiler slices.

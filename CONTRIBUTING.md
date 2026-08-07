@@ -2,8 +2,9 @@
 
 AIL is an experimental language with an authoritative Rust compiler over a
 bounded accepted core. Contributions should reduce semantic ambiguity, remove
-measurable agent change work, or produce evidence for a recorded decision. No
-successor milestone is currently active.
+measurable agent change work, or produce evidence for a recorded decision. M28
+is the active language-independent acceptance package for proposed UC-008;
+compiler implementation for that use case is not yet authorized.
 
 Read [docs/README.md](docs/README.md) before contributing. Every document or
 example must identify its layer and authority. Application illustrations,

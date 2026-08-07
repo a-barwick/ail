@@ -19,8 +19,9 @@ control as the next direction, M23 accepted its concrete evidence package, M24
 accepted the bounded contract, M25 implemented the read-only architectural
 snapshot and compact rendering, and M26 implemented cross-revision policy,
 governance, bounded failure, and atomic publication. M27 retained one
-non-official feedback pilot without changing compiler behavior. No successor
-milestone is defined or active.
+non-official feedback pilot without changing compiler behavior. M28 is now the
+active language-independent acceptance package for proposed iterative service
+evolution; it does not authorize compiler changes.
 
 These completed slices are conformance and mechanism evidence for bounded
 contracts. M27 adds one non-official usability observation. They are not
@@ -30,7 +31,8 @@ the next maturity step without a selected use case and roadmap milestone.
 
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
 behavior. Implementation details do not create language semantics.
-No compiler feature expansion or backend work is currently authorized.
+No compiler feature expansion for UC-008 or backend work is currently
+authorized.
 
 Run the current compiler checks from the repository root:
 

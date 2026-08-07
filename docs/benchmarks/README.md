@@ -14,10 +14,11 @@ searching and rework. It is not a contest to produce the shortest source file.
 
 The fixture, baseline, and parity foundation was delivered in M1 through M7.
 M8a through M8f added deferred calibration infrastructure, and M27 retained one
-non-official architecture-feedback pilot. M27 is complete, no successor
-milestone is active, and zero official comparative AIL trials exist. ADR 0003
-still requires the statistical campaign and frozen targets before comparative
-AIL benchmark runs. Current authority is in [the status file](../STATUS.md).
+non-official architecture-feedback pilot. M28 is the active acceptance package
+for proposed iterative service evolution, while zero official comparative AIL
+trials exist. ADR 0003 still governs the deferred M8 campaign; ADR 0007 defines
+the separate conditional M28–M36 path for a cumulative comparison. Current
+authority is in [the status file](../STATUS.md).
 
 ## Decisions
 
