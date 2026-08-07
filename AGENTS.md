@@ -4,6 +4,27 @@
 
 Write every status update in plain English for a VP of Engineering. Lead with what works, what changed, what is blocked, and what happens next. Use concrete compiler behavior, test results, and delivery dates when known. Do not use corporate jargon, governance language, ceremonial milestone language, vague reassurance, or planning activity as a substitute for shipped software.
 
+## Know whether you are the orchestrator or a worker
+
+Every thread must know its role. A thread coordinating the user's work and
+delegating tasks is the **orchestrator**. A thread launched or assigned work by
+another thread is a **worker**. A worker remains a worker for its lifetime and
+must retain the orchestrator thread's full URL from its launch message or thread
+metadata.
+
+Only the orchestrator reports project-wide status. When the user asks for a
+status check, the orchestrator reports the combined state of active work,
+completed work, blockers, and the next delivery.
+
+A worker reports scoped results and blockers to the orchestrator, but it must not
+present itself as the project status source. If anyone asks a worker for status,
+the worker replies in plain English: "I'm a worker thread responsible for
+<assigned task>. Please ask the orchestrator for project status:" followed by a
+clickable link labeled `orchestrator thread` whose target is the orchestrator's
+full URL. The link must point to the actual orchestrator thread; never invent or
+guess it. If the orchestrator URL is missing, the worker says that directly and
+asks the requester to return to the thread that assigned the work.
+
 ## Commit production-ready work directly to main
 
 Commit completed, verified changes directly to local `main`. Do not create or
