@@ -200,7 +200,7 @@ pub(crate) fn interpret(
         match &parameter.ty {
             ParameterType::Named(expected) => {
                 let value = values.next().expect("value argument count was checked");
-                if value.type_name() != expected || !value_matches_type(unit, &value, expected) {
+                if !value_matches_type(unit, &value, expected) {
                     return Err(failure(RuntimeFault::new(
                         "AIL.RUNTIME.ARGUMENT_TYPE",
                         parameter.span,
@@ -323,7 +323,7 @@ impl Evaluator<'_> {
                 payload,
                 ..
             } => Ok(RuntimeValue::Variant {
-                type_name: type_name.clone(),
+                type_name: source_name(type_name).to_owned(),
                 case: case.clone(),
                 payload: match payload {
                     Some(payload) => Some(Box::new(self.eval_expr(payload, locals)?)),
@@ -469,7 +469,7 @@ impl Evaluator<'_> {
             values.insert(field.name.clone(), self.eval_expr(&field.value, locals)?);
         }
         Ok(RuntimeValue::Record {
-            type_name: name.to_owned(),
+            type_name: source_name(name).to_owned(),
             fields: values,
         })
     }
@@ -611,7 +611,7 @@ impl Evaluator<'_> {
         };
         let Some(arm) = arms
             .iter()
-            .find(|arm| arm.type_name == type_name && arm.case == case)
+            .find(|arm| source_name(&arm.type_name) == type_name && arm.case == case)
         else {
             return Err(RuntimeFault::new(
                 "AIL.RUNTIME.NON_EXHAUSTIVE_MATCH",
@@ -668,7 +668,7 @@ fn value_matches_type(unit: &SourceUnit, value: &RuntimeValue, expected: &str) -
             .iter()
             .any(|declaration| match (declaration, value) {
                 (Declaration::Record(record), RuntimeValue::Record { type_name, fields })
-                    if record.name == expected && type_name == expected =>
+                    if record.name == expected && type_name == source_name(expected) =>
                 {
                     fields.len() == record.fields.len()
                         && record.fields.iter().all(|field| {
@@ -684,7 +684,7 @@ fn value_matches_type(unit: &SourceUnit, value: &RuntimeValue, expected: &str) -
                         case,
                         payload,
                     },
-                ) if variant.name == expected && type_name == expected => variant
+                ) if variant.name == expected && type_name == source_name(expected) => variant
                     .cases
                     .iter()
                     .find(|candidate| candidate.name == *case)
@@ -698,6 +698,10 @@ fn value_matches_type(unit: &SourceUnit, value: &RuntimeValue, expected: &str) -
                 _ => false,
             }),
     }
+}
+
+fn source_name(name: &str) -> &str {
+    name.rsplit('.').next().unwrap_or(name)
 }
 
 fn eval_intrinsic(

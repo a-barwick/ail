@@ -128,6 +128,16 @@ fn module_headers_and_imports_format_canonically() {
             "}\n",
         )
     );
+
+    let import_without_module = "import domain; fn run() -> Text { \"ok\" }";
+    assert_eq!(
+        format_source(import_without_module).expect("imports remain representable before linking"),
+        "import domain;\n\nfn run() -> Text {\n  \"ok\"\n}\n"
+    );
+    assert!(
+        module_failure(vec![("service.ail", import_without_module)])
+            .contains(&"AIL.MODULE.MISSING_IDENTITY")
+    );
 }
 
 #[test]
@@ -311,5 +321,153 @@ fn modules_reject_invalid_identity_import_visibility_and_cycles() {
         ),
     ]);
     assert!(ambiguous.contains(&"AIL.MODULE.AMBIGUOUS_IMPORT"));
-    assert!(ambiguous.contains(&"AIL.MODULE.AMBIGUOUS_DECLARATION"));
+}
+
+#[test]
+fn independent_modules_may_reuse_names_and_entry_selection_is_explicit_when_needed() {
+    let sources = vec![
+        EvolutionSource::new("z.ail", "module z;\nfn shared() -> Text { \"z\" }\n"),
+        EvolutionSource::new("a.ail", "module a;\nfn shared() -> Text { \"a\" }\n"),
+    ];
+    let workspace = EvolutionWorkspace::new(
+        "duplicate-source-names",
+        "r1",
+        sources.into_iter().rev().collect(),
+        &CapabilityEnvironment::new(),
+        no_coverage(),
+    )
+    .expect("independent module namespaces do not collide");
+    let mut capabilities = TestCapabilities::default();
+
+    for (selector, expected) in [("a.shared", "a"), ("z.shared", "z")] {
+        assert!(matches!(
+            workspace.execute("r1", selector, Vec::new(), &mut capabilities),
+            ExecutionResponse::Completed(result)
+                if result.value == RuntimeValue::Text(expected.to_owned())
+                    && result.function_handle.local_id.starts_with(
+                        if selector.starts_with('a') { "a.ail#shared:" } else { "z.ail#shared:" }
+                    )
+        ));
+    }
+    assert!(matches!(
+        workspace.execute("r1", "shared", Vec::new(), &mut capabilities),
+        ExecutionResponse::Failed(failure)
+            if failure.fault.code == "AIL.RUNTIME.AMBIGUOUS_FUNCTION"
+    ));
+}
+
+#[test]
+fn module_qualified_linking_preserves_identity_graph_targets() {
+    let workspace = EvolutionWorkspace::new(
+        "duplicate-schema-names",
+        "r1",
+        vec![
+            EvolutionSource::new(
+                "a.ail",
+                concat!(
+                    "module a;\n",
+                    "record Item identity \"a.item.v1\" { value identity \"value\": Text; }\n\n",
+                    "fn make() -> Item { Item { value: \"a\" } }\n",
+                ),
+            ),
+            EvolutionSource::new(
+                "b.ail",
+                concat!(
+                    "module b;\n",
+                    "record Item identity \"b.item.v1\" { value identity \"value\": Text; }\n\n",
+                    "fn make() -> Item { Item { value: \"b\" } }\n",
+                ),
+            ),
+        ],
+        &CapabilityEnvironment::new(),
+        no_coverage(),
+    )
+    .expect("independent schemas may share a source name");
+
+    let constructs = workspace
+        .graph("r1")
+        .unwrap()
+        .iter()
+        .filter(|edge| edge.kind == "constructs")
+        .map(|edge| (edge.site.path.as_str(), edge.target.as_str()))
+        .collect::<Vec<_>>();
+    assert_eq!(constructs, [("a.ail", "a.item.v1"), ("b.ail", "b.item.v1")]);
+}
+
+#[test]
+fn cross_module_calls_enforce_multi_hop_effects() {
+    let leaf = EvolutionSource::new(
+        "leaf.ail",
+        concat!(
+            "module leaf;\n",
+            "fn mark(value: Text, store: capability Store) -> Text effects { store.mark } {\n",
+            "  store.mark(value)\n",
+            "}\n",
+        ),
+    );
+    let middle = EvolutionSource::new(
+        "middle.ail",
+        concat!(
+            "module middle;\n",
+            "import leaf;\n\n",
+            "fn forward(value: Text, store: capability Store) -> Text effects { store.mark } {\n",
+            "  mark(value)\n",
+            "}\n",
+        ),
+    );
+    let invalid = EvolutionSource::new(
+        "service.ail",
+        concat!(
+            "module service;\n",
+            "import middle;\n\n",
+            "fn run(value: Text, store: capability Store) -> Text {\n",
+            "  forward(value)\n",
+            "}\n",
+        ),
+    );
+    let failure = EvolutionWorkspace::new(
+        "transitive-effects",
+        "invalid",
+        vec![leaf.clone(), middle.clone(), invalid],
+        &environment(),
+        no_coverage(),
+    )
+    .expect_err("the entry point must declare its reachable effect");
+    assert!(
+        failure
+            .diagnostics
+            .iter()
+            .any(|diagnostic| { diagnostic.code == "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT" })
+    );
+
+    let valid = EvolutionSource::new(
+        "service.ail",
+        concat!(
+            "module service;\n",
+            "import middle;\n\n",
+            "fn run(value: Text, store: capability Store) -> Text effects { store.mark } {\n",
+            "  forward(value)\n",
+            "}\n",
+        ),
+    );
+    let workspace = EvolutionWorkspace::new(
+        "transitive-effects",
+        "valid",
+        vec![valid, middle, leaf],
+        &environment(),
+        no_coverage(),
+    )
+    .expect("the complete effect declaration is valid");
+    let mut capabilities = TestCapabilities::default();
+    assert!(matches!(
+        workspace.execute(
+            "valid",
+            "service.run",
+            vec![RuntimeValue::Text("work".to_owned())],
+            &mut capabilities,
+        ),
+        ExecutionResponse::Completed(result)
+            if result.value == RuntimeValue::Text("work".to_owned())
+    ));
+    assert_eq!(capabilities.calls, ["work"]);
 }

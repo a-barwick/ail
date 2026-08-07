@@ -331,12 +331,22 @@ impl EvolutionWorkspace {
                 calls: Vec::new(),
             });
         };
-        let Some(declaration) = stored.unit.declarations.iter().find_map(|declaration| {
-            let Declaration::Function(candidate) = declaration else {
-                return None;
-            };
-            (candidate.name == function).then_some(candidate)
-        }) else {
+        let matching_functions = entry_functions(&stored.unit, function);
+        if matching_functions.len() > 1 {
+            return ExecutionResponse::Failed(ExecutionFailure {
+                status: "failed",
+                revision_id: revision_id.to_owned(),
+                function: function.to_owned(),
+                fault: RuntimeFault::new(
+                    "AIL.RUNTIME.AMBIGUOUS_FUNCTION",
+                    Span::empty(0),
+                    [("selector", "module.function")],
+                    [("function", function)],
+                ),
+                calls: Vec::new(),
+            });
+        }
+        let Some(declaration) = matching_functions.first().copied() else {
             return ExecutionResponse::Failed(ExecutionFailure {
                 status: "failed",
                 revision_id: revision_id.to_owned(),
@@ -350,16 +360,17 @@ impl EvolutionWorkspace {
                 calls: Vec::new(),
             });
         };
+        let linked_function = &declaration.name;
         let function_handle = handle(
             revision_id,
-            source_path_for_function(&stored.sources, function),
+            source_path_for_function(&stored.sources, linked_function),
             HandleKind::Symbol,
-            function,
+            source_name(linked_function),
             declaration.span,
         );
         match crate::interpreter::interpret(
             &stored.unit,
-            function,
+            linked_function,
             arguments,
             &self.capabilities,
             capabilities,
@@ -479,18 +490,8 @@ impl StoredSourceSet {
                 diagnostics: module_diagnostics,
             });
         }
-        let declarations = parsed_sources
-            .iter()
-            .flat_map(|(_, parsed)| parsed.unit.declarations.iter().cloned())
-            .collect::<Vec<_>>();
         let merged = ParseResult {
-            unit: SourceUnit {
-                module: None,
-                imports: Vec::new(),
-                declarations,
-                span: Span::empty(0),
-                tokens: Vec::new(),
-            },
+            unit: link_source_set(&parsed_sources),
             tokens: Vec::new(),
             diagnostics: Vec::new(),
         };
@@ -608,20 +609,19 @@ fn validate_modules(parsed_sources: &[(String, ParseResult)]) -> Vec<SourceSetDi
             ));
         }
     }
-    for (name, owners) in &declarations {
-        for (_, path, span) in owners.iter().skip(1) {
-            diagnostics.push(source_set_diagnostic(
-                "AIL.MODULE.AMBIGUOUS_DECLARATION",
-                path,
-                *span,
-                [("declaration", name.as_str())],
-            ));
-        }
-    }
-
     for (module_name, (path, parsed)) in &modules {
         let mut imported_modules = BTreeSet::new();
-        let mut imported_declarations = BTreeMap::<String, String>::new();
+        let mut imported_declarations = parsed
+            .unit
+            .declarations
+            .iter()
+            .map(|declaration| {
+                (
+                    declaration_name(declaration).0.to_owned(),
+                    module_name.clone(),
+                )
+            })
+            .collect::<BTreeMap<_, _>>();
         for import in &parsed.unit.imports {
             if !imported_modules.insert(import.module.as_str()) {
                 diagnostics.push(source_set_diagnostic(
@@ -660,13 +660,10 @@ fn validate_modules(parsed_sources: &[(String, ParseResult)]) -> Vec<SourceSetDi
             }
         }
 
-        let mut visible = parsed
-            .unit
-            .declarations
-            .iter()
-            .map(|declaration| declaration_name(declaration).0.to_owned())
+        let visible = imported_declarations
+            .keys()
+            .cloned()
             .collect::<BTreeSet<_>>();
-        visible.extend(imported_declarations.keys().cloned());
         for (name, span, role) in source_references(&parsed.unit) {
             if declarations.contains_key(&name) && !visible.contains(&name) {
                 diagnostics.push(source_set_diagnostic(
@@ -703,6 +700,203 @@ fn validate_modules(parsed_sources: &[(String, ParseResult)]) -> Vec<SourceSetDi
             .then(left.code.cmp(right.code))
     });
     diagnostics
+}
+
+fn link_source_set(parsed_sources: &[(String, ParseResult)]) -> SourceUnit {
+    if parsed_sources
+        .iter()
+        .all(|(_, parsed)| parsed.unit.module.is_none())
+    {
+        return SourceUnit {
+            module: None,
+            imports: Vec::new(),
+            declarations: parsed_sources
+                .iter()
+                .flat_map(|(_, parsed)| parsed.unit.declarations.iter().cloned())
+                .collect(),
+            span: Span::empty(0),
+            tokens: Vec::new(),
+        };
+    }
+
+    let modules = parsed_sources
+        .iter()
+        .filter_map(|(_, parsed)| {
+            parsed
+                .unit
+                .module
+                .as_ref()
+                .map(|module| (module.name.as_str(), &parsed.unit))
+        })
+        .collect::<BTreeMap<_, _>>();
+    let mut declarations = Vec::new();
+    for (_, parsed) in parsed_sources {
+        let module = parsed
+            .unit
+            .module
+            .as_ref()
+            .expect("module validation requires every source identity");
+        let mut scope = parsed
+            .unit
+            .declarations
+            .iter()
+            .map(|declaration| {
+                (
+                    declaration_name(declaration).0.to_owned(),
+                    module.name.clone(),
+                )
+            })
+            .collect::<BTreeMap<_, _>>();
+        for import in &parsed.unit.imports {
+            let imported = modules
+                .get(import.module.as_str())
+                .expect("module validation resolves every import");
+            for declaration in &imported.declarations {
+                scope.insert(
+                    declaration_name(declaration).0.to_owned(),
+                    import.module.clone(),
+                );
+            }
+        }
+        declarations.extend(
+            parsed
+                .unit
+                .declarations
+                .iter()
+                .cloned()
+                .map(|declaration| qualify_declaration(declaration, &module.name, &scope)),
+        );
+    }
+    SourceUnit {
+        module: None,
+        imports: Vec::new(),
+        declarations,
+        span: Span::empty(0),
+        tokens: Vec::new(),
+    }
+}
+
+fn qualify_declaration(
+    mut declaration: Declaration,
+    module: &str,
+    scope: &BTreeMap<String, String>,
+) -> Declaration {
+    match &mut declaration {
+        Declaration::Record(record) => {
+            record.name = qualified_name(module, &record.name);
+            for field in &mut record.fields {
+                field.ty = resolve_linked_name(scope, &field.ty);
+            }
+        }
+        Declaration::Variant(variant) => {
+            variant.name = qualified_name(module, &variant.name);
+            for case in &mut variant.cases {
+                if let Some(payload) = &mut case.payload {
+                    *payload = resolve_linked_name(scope, payload);
+                }
+            }
+        }
+        Declaration::Function(function) => {
+            function.name = qualified_name(module, &function.name);
+            for parameter in &mut function.parameters {
+                if let ParameterType::Named(ty) = &mut parameter.ty {
+                    *ty = resolve_linked_name(scope, ty);
+                }
+            }
+            function.result_type = resolve_linked_name(scope, &function.result_type);
+            qualify_block(&mut function.body, scope);
+        }
+    }
+    declaration
+}
+
+fn qualify_block(block: &mut Block, scope: &BTreeMap<String, String>) {
+    for binding in &mut block.bindings {
+        qualify_expression(&mut binding.value, scope);
+    }
+    qualify_expression(&mut block.tail, scope);
+}
+
+fn qualify_expression(expression: &mut Expr, scope: &BTreeMap<String, String>) {
+    match expression {
+        Expr::Call {
+            function,
+            arguments,
+            ..
+        } => {
+            *function = resolve_linked_name(scope, function);
+            for argument in arguments {
+                qualify_expression(argument, scope);
+            }
+        }
+        Expr::Record { name, fields, .. } => {
+            *name = resolve_linked_name(scope, name);
+            for field in fields {
+                qualify_expression(&mut field.value, scope);
+            }
+        }
+        Expr::Variant {
+            type_name, payload, ..
+        } => {
+            *type_name = resolve_linked_name(scope, type_name);
+            if let Some(payload) = payload {
+                qualify_expression(payload, scope);
+            }
+        }
+        Expr::CapabilityCall { arguments, .. } => {
+            for argument in arguments {
+                qualify_expression(argument, scope);
+            }
+        }
+        Expr::FieldAccess { target, .. } => qualify_expression(target, scope),
+        Expr::If {
+            condition,
+            then_branch,
+            else_branch,
+            ..
+        } => {
+            qualify_expression(condition, scope);
+            qualify_block(then_branch, scope);
+            qualify_block(else_branch, scope);
+        }
+        Expr::Match {
+            scrutinee, arms, ..
+        } => {
+            qualify_expression(scrutinee, scope);
+            for arm in arms {
+                arm.type_name = resolve_linked_name(scope, &arm.type_name);
+                qualify_block(&mut arm.body, scope);
+            }
+        }
+        Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => {}
+    }
+}
+
+fn resolve_linked_name(scope: &BTreeMap<String, String>, name: &str) -> String {
+    scope
+        .get(name)
+        .map_or_else(|| name.to_owned(), |module| qualified_name(module, name))
+}
+
+fn qualified_name(module: &str, name: &str) -> String {
+    format!("{module}.{name}")
+}
+
+fn source_name(name: &str) -> &str {
+    name.rsplit('.').next().unwrap_or(name)
+}
+
+fn entry_functions<'a>(unit: &'a SourceUnit, selector: &str) -> Vec<&'a FunctionDecl> {
+    unit.declarations
+        .iter()
+        .filter_map(|declaration| {
+            let Declaration::Function(candidate) = declaration else {
+                return None;
+            };
+            (candidate.name == selector || source_name(&candidate.name) == selector)
+                .then_some(candidate)
+        })
+        .collect()
 }
 
 fn declaration_name(declaration: &Declaration) -> (&str, Span) {
@@ -889,12 +1083,19 @@ fn valid_source_path(path: &str) -> bool {
 }
 
 fn source_path_for_function<'a>(sources: &'a [EvolutionSource], function: &str) -> &'a str {
+    let (module, source_function) = function
+        .rsplit_once('.')
+        .map_or((None, function), |(module, function)| {
+            (Some(module), function)
+        });
     sources
         .iter()
         .find(|source| {
             let parsed = parse(&source.source);
-            parsed.unit.declarations.iter().any(|declaration| {
-                matches!(declaration, Declaration::Function(candidate) if candidate.name == function)
+            module.is_none_or(|module| {
+                parsed.unit.module.as_ref().map(|item| item.name.as_str()) == Some(module)
+            }) && parsed.unit.declarations.iter().any(|declaration| {
+                matches!(declaration, Declaration::Function(candidate) if candidate.name == source_function)
             })
         })
         .map_or("<unknown>", |source| source.path.as_str())
@@ -1036,6 +1237,29 @@ fn build_graph(
     coverage: &EvolutionCoverage,
 ) -> Vec<RelationshipEdge> {
     let identity_by_name = identity_by_display(identities);
+    let identity_by_path_and_name = identities
+        .iter()
+        .filter(|identity| identity.parent_identity.is_none())
+        .map(|identity| {
+            (
+                (
+                    identity_path(identity).to_owned(),
+                    identity.display_name.clone(),
+                ),
+                identity.identity.as_str(),
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
+    let module_paths = parsed_sources
+        .iter()
+        .filter_map(|(path, parsed)| {
+            parsed
+                .unit
+                .module
+                .as_ref()
+                .map(|module| (module.name.as_str(), path.as_str()))
+        })
+        .collect::<BTreeMap<_, _>>();
     let mut graph = Vec::new();
     for identity in identities {
         if let Some(parent) = &identity.parent_identity {
@@ -1048,6 +1272,26 @@ fn build_graph(
         }
     }
     for (path, parsed) in parsed_sources {
+        let mut visible_identities = if parsed.unit.module.is_none() {
+            identity_by_name.clone()
+        } else {
+            identity_by_path_and_name
+                .iter()
+                .filter_map(|((identity_path, name), identity)| {
+                    (identity_path == path).then_some((name.as_str(), *identity))
+                })
+                .collect::<BTreeMap<_, _>>()
+        };
+        for import in &parsed.unit.imports {
+            let imported_path = module_paths
+                .get(import.module.as_str())
+                .expect("validated imports have a source path");
+            for ((identity_path, name), identity) in &identity_by_path_and_name {
+                if identity_path == imported_path {
+                    visible_identities.insert(name.as_str(), *identity);
+                }
+            }
+        }
         for declaration in &parsed.unit.declarations {
             let Declaration::Function(function) = declaration else {
                 continue;
@@ -1062,7 +1306,7 @@ fn build_graph(
             let source = format!("handle:{}", function_handle.local_id);
             for parameter in &function.parameters {
                 if let ParameterType::Named(ty) = &parameter.ty {
-                    if let Some(identity) = identity_by_name.get(ty.as_str()) {
+                    if let Some(identity) = visible_identities.get(ty.as_str()) {
                         graph.push(edge(
                             &source,
                             "signature-input",
@@ -1075,7 +1319,7 @@ fn build_graph(
                     }
                 }
             }
-            if let Some(identity) = identity_by_name.get(function.result_type.as_str()) {
+            if let Some(identity) = visible_identities.get(function.result_type.as_str()) {
                 graph.push(edge(
                     &source,
                     "signature-output",
@@ -1102,14 +1346,14 @@ fn build_graph(
                 &source,
                 revision_id,
                 path,
-                &identity_by_name,
+                &visible_identities,
                 &mut graph,
             );
             if function.name.contains("adapt_") || function.name.contains("decode_") {
                 if let Some(ParameterType::Named(input)) =
                     function.parameters.first().map(|parameter| &parameter.ty)
                 {
-                    if let Some(identity) = identity_by_name.get(input.as_str()) {
+                    if let Some(identity) = visible_identities.get(input.as_str()) {
                         graph.push(edge(
                             &source,
                             "adapts-from",
@@ -1123,7 +1367,7 @@ fn build_graph(
                 }
             }
             if function.name.starts_with("project_") {
-                if let Some(identity) = identity_by_name.get(function.result_type.as_str()) {
+                if let Some(identity) = visible_identities.get(function.result_type.as_str()) {
                     graph.push(edge(
                         &source,
                         "projects-to",
@@ -1136,7 +1380,7 @@ fn build_graph(
                 }
             }
             if function.name.starts_with("fixture_") {
-                if let Some(identity) = identity_by_name.get(function.result_type.as_str()) {
+                if let Some(identity) = visible_identities.get(function.result_type.as_str()) {
                     graph.push(edge(
                         &source,
                         "verifies",

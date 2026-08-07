@@ -10,7 +10,8 @@ use crate::{
 
 use super::{
     EvolutionSource, EvolutionWorkspace, ImpactEntry, ImpactReport, ProposedSchemaChange,
-    SourceSetRevision, StoredSourceSet, UncheckedBoundary, handle,
+    SourceSetRevision, StoredSourceSet, UncheckedBoundary, entry_functions, handle, source_name,
+    source_path_for_function,
 };
 
 /// Complete source-set candidate associated with one already-computed impact report.
@@ -149,18 +150,22 @@ impl CandidateRevision<'_> {
         arguments: Vec<RuntimeValue>,
         capabilities: &mut dyn CapabilityProvider,
     ) -> ExecutionResponse {
-        let Some(declaration) = self
-            .stored
-            .unit
-            .declarations
-            .iter()
-            .find_map(|declaration| {
-                let Declaration::Function(candidate) = declaration else {
-                    return None;
-                };
-                (candidate.name == function).then_some(candidate)
-            })
-        else {
+        let matching_functions = entry_functions(&self.stored.unit, function);
+        if matching_functions.len() > 1 {
+            return ExecutionResponse::Failed(ExecutionFailure {
+                status: "failed",
+                revision_id: self.stored.revision.revision_id.clone(),
+                function: function.to_owned(),
+                fault: RuntimeFault::new(
+                    "AIL.RUNTIME.AMBIGUOUS_FUNCTION",
+                    Span::empty(0),
+                    [("selector", "module.function")],
+                    [("function", function)],
+                ),
+                calls: Vec::new(),
+            });
+        }
+        let Some(declaration) = matching_functions.first().copied() else {
             return ExecutionResponse::Failed(ExecutionFailure {
                 status: "failed",
                 revision_id: self.stored.revision.revision_id.clone(),
@@ -174,16 +179,17 @@ impl CandidateRevision<'_> {
                 calls: Vec::new(),
             });
         };
+        let linked_function = &declaration.name;
         let function_handle = handle(
             &self.stored.revision.revision_id,
-            function_path(&self.stored.sources, function),
+            source_path_for_function(&self.stored.sources, linked_function),
             HandleKind::Symbol,
-            function,
+            source_name(linked_function),
             declaration.span,
         );
         match interpret(
             &self.stored.unit,
-            function,
+            linked_function,
             arguments,
             self.capabilities,
             capabilities,
@@ -520,13 +526,6 @@ fn impact_id(entry: &ImpactEntry) -> String {
     .to_owned()
 }
 
-fn function_path<'a>(sources: &'a [EvolutionSource], function: &str) -> &'a str {
-    sources
-        .iter()
-        .find(|source| source.source.contains(&format!("fn {function}(")))
-        .map_or("", |source| source.path.as_str())
-}
-
 fn canonical_edits(base: &StoredSourceSet, candidate: &StoredSourceSet) -> Vec<CanonicalEdit> {
     base.sources
         .iter()
@@ -698,8 +697,8 @@ fn added_effect_location(stored: &StoredSourceSet, effect: &str) -> String {
                 .then(|| {
                     format!(
                         "{}#{}",
-                        function_path(&stored.sources, &function.name),
-                        function.name
+                        source_path_for_function(&stored.sources, &function.name),
+                        source_name(&function.name)
                     )
                 })
         })

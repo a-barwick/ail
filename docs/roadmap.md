@@ -1466,6 +1466,9 @@ and all prior compiler and public runtime checks remain passing.
   tree-walking interpreter and source-set execution API
 - Added explicit source-set module linking and structured diagnostics for all
   bounded module and import rejection cases
+- Kept declaration namespaces module-local, rejected collisions only when they
+  enter the same import scope, and added `module.function` entry selection for
+  source names that are not globally unique
 - Added and executed a three-file service example under
   `compiler/examples/composed-service/`
 

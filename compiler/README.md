@@ -56,8 +56,12 @@ completion evidence.
 An explicit multi-file source set uses one `module name;` header per file and
 zero or more `import dependency;` headers. Imports expose a dependency's
 records, variants, and functions under their declared names; declarations in
-non-imported modules are inaccessible. `EvolutionWorkspace::execute` runs a
-checked cross-module entry point. AIL calls use `function(arguments)` syntax,
+non-imported modules are inaccessible. Independent modules may reuse declaration
+names, while importing two declarations with the same name is rejected as
+ambiguous. `EvolutionWorkspace::execute` runs a checked cross-module entry point;
+an unqualified function name is accepted when unique, and `module.function`
+selects an entry point when source names repeat. AIL calls use
+`function(arguments)` syntax,
 evaluate arguments left-to-right, propagate same-named capability parameters,
 and require callers to declare all transitively reachable effects. Recursive
 call cycles are rejected.
