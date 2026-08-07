@@ -1,14 +1,13 @@
-# M23 architectural regression acceptance package
+# `CancelJob` architecture test case
 
-Status: **Accepted — M23 evidence package**
-
-This language-independent package freezes the UC-007 acceptance evidence. It is
-non-normative, defines no AIL syntax, protocol transport, or `ARCH` diagnostic,
-and is not the M24 contract. The machine-readable lock is
+This language-independent case defines the UC-007 workspace, candidates,
+expected classifications, and analysis budgets. It defines no AIL syntax or
+`ARCH` diagnostic; those rules are in the M24 contract. The machine-readable
+lock is
 [`architecture-acceptance.json`](../specs/architecture-acceptance.json); its
 three byte-locked fixtures describe R1, the candidates, and the non-normative
 oracle. [`architecture-acceptance-reviews.json`](../specs/architecture-acceptance-reviews.json)
-records two independent approvals bound to both
+binds two recorded reviews to both
 fixture-set digest `ab362d96d89cbba779743dd8a3050b2bd4452ff6daddf3e7ae65109207f7e3ed` and review-subject digest
 `fcb454729e6c2c228802d471d97c1eecd7abc793da407b0ced2bbd76fe9624cf`. The latter also binds the use case, requirements, metrics,
 rules, traceability, policy, budgets, and every child path and hash.
@@ -63,7 +62,7 @@ unchanged policy, baseline, and exception set. A denied or budget-exhausted requ
 contributors, rules, baseline, coverage, inspection identities, and compact
 text. New failures precede unchanged debt.
 
-## Frozen budgets and comparison
+## Budgets and comparison
 
 Budgets were fixed before implementation results: 24 R1 operations, three
 candidates, zero false findings, zero missed required findings, at most 512
@@ -83,7 +82,7 @@ Equivalent baselines must use the strongest practical normal, pinned toolchain:
   complexity rules.
 
 Each must implement identical behavior and preserve the same classification and
-policy intent, with zero false or missed findings and governance protection.
+policy intent, with zero false or missed findings and protected policy inputs.
 Parser-specific complexity numbers need not be equal. No baseline run has been
 performed. Wall time, peak memory, repair cycles, and comparative model-context
 thresholds require future baseline measurement; this package makes no claim
@@ -91,5 +90,4 @@ that those values are calibrated.
 
 Run `python3 specs/tools/architecture_acceptance.py check`. The command derives
 the complete structured and compact results, rejects 37 mutations, and reports
-the pending gate until two distinct approvals bind the current review-subject
-digest.
+`review gate: accepted` for the recorded review bindings.

@@ -109,21 +109,19 @@ The runner owns fixture JSON/Base64 decoding, deterministic capability state,
 and versioned response projection. Canonical AIL source owns request validation,
 V1 adaptation, priority propagation, the store call, and outcome mapping.
 
-## M27 architecture-feedback pilot
+## Recorded M27 architecture repair
 
-[`architecture-pilot/`](architecture-pilot/README.md) retains one complete,
-explicitly non-official Amp run against the locked M23 centralized `CancelJob`
-regression. Its external lock and manifest bind the exact prompt, operator,
-restrictions, outputs, repair, checks, comparison, and limitations. The verifier
-also checks the six behavior cases and the repair's domain and transport
-ownership directly:
+[`architecture-pilot/`](architecture-pilot/README.md) retains one Amp run
+against the locked M23 centralized `CancelJob` regression. Its lock and manifest
+bind the prompt, operator, restrictions, outputs, repair, checks, comparison,
+and limitations. The verifier also checks the six behavior cases and the
+repair's domain and transport ownership directly:
 
 ```bash
 python3 benchmarks/tools/harness.py verify-architecture-pilot
 ```
 
-This single run shows only that the feedback was actionable in that run. It is
-not comparative, statistical, official, or an AIL success claim.
+This is one recorded repair, not a language comparison.
 
 ## M7 parity freeze
 
@@ -175,8 +173,7 @@ terminal classifications used by M8. It also records the reviewed NFR-002
 amendment from the infeasible 100,000-token pilot limit to a 500,000 cumulative
 delivered-input-token safety limit.
 
-The decision is a configuration contract, not official evidence. M8b encodes
-it in the locked
+M8b encodes the decision in the locked
 [calibration evidence contract](calibration/README.md), eight JSON schemas, and
 `verify-calibration`. The verifier accepts structurally complete empty, pilot,
 and partial campaigns, requires final counts for a campaign marked complete,
@@ -189,9 +186,9 @@ revision-bound completion evidence, and fresh functional replay. M8e adds
 four persistent language adapters and one shared warm/cold harness with
 functional and trace gating, native monotonic samples, percentile and variance
 derivation, throughput, process readiness, RSS, package identity, and
-network-denial observation. Its eight retained warm/cold pilots are explicitly
-non-official. M8f recorded representative provider-backed readiness and an
-enforced safety-limit path. ADR 0003 defers official collection after the first
+network-denial observation. Its eight retained warm/cold pilots do not satisfy
+the required complete-run counts. M8f recorded provider-backed readiness and an
+enforced safety-limit path. ADR 0003 defers collection after the first
 M8g pre-start check found a TypeScript UC-001 task-start failure.
 
 Run the M8b gate with:

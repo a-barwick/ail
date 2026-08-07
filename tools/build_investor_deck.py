@@ -166,7 +166,7 @@ def metric(slide, x, y, w, value, label, *, color=CYAN):
 def slide_01(prs):
     s = base_slide(prs, 1, "THESIS")
     pill(s, 0.64, 0.82, 1.55, "Investor brief", CYAN)
-    textbox(s, 0.64, 1.52, 9.5, 1.5, "The control layer for\nsoftware built by agents", size=39, bold=True)
+    textbox(s, 0.64, 1.52, 9.5, 1.5, "A programming language for\nsoftware built by agents", size=39, bold=True)
     textbox(s, 0.68, 3.45, 8.3, 0.65, "AIL is an executable language and semantic compiler designed to reduce the work between generated code and a trusted change.", size=18, color=MUTED)
     # Visual: model -> control layer -> publish
     for x, label, c in [(0.72, "MODEL +\nAGENT", BLUE), (4.42, "AIL\nCOMPILER", CYAN), (8.12, "VALIDATED\nCANDIDATE", GREEN)]:
@@ -174,8 +174,8 @@ def slide_01(prs):
         textbox(s, x, 5.25, 2.65, 0.68, label, size=15, color=c, bold=True, align=PP_ALIGN.CENTER)
     line(s, 3.42, 5.63, 4.25, 5.63, BLUE, 2.5, True)
     line(s, 7.12, 5.63, 7.95, 5.63, CYAN, 2.5, True)
-    textbox(s, 10.95, 5.13, 1.55, 0.95, "Bounded\nmechanisms run", size=12, color=GREEN, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "AIL is not another coding agent. It is the control layer beneath coding agents: an executable language plus a compiler interface that makes consequences, authority, validation, and publication mechanically inspectable. Today bounded mechanisms execute as specified. We have no official comparative evidence that they reduce total agent change cost; the funded program is intended to test that claim on representative workloads.")
+    textbox(s, 10.95, 5.13, 1.55, 0.95, "Compiler\nruns today", size=12, color=GREEN, bold=True, align=PP_ALIGN.CENTER)
+    add_notes(s, "AIL is not another coding agent. It is an executable language plus a compiler interface that makes consequences, authority, validation, and publication mechanically inspectable. The compiler runs today. No AIL-versus-baseline agent comparison has run.")
 
 
 def slide_02(prs):
@@ -222,7 +222,7 @@ def slide_03(prs):
 
 def slide_04(prs):
     s = base_slide(prs, 4, "PRODUCT THESIS")
-    title(s, "AIL turns language guarantees into an agent control plane")
+    title(s, "AIL exposes language guarantees through the compiler")
     rect(s, 0.68, 2.0, 12.0, 4.35, PANEL, PANEL_2)
     # center compiler
     rect(s, 4.72, 2.72, 3.9, 2.9, PANEL_2, CYAN)
@@ -266,7 +266,7 @@ def slide_05(prs):
 
 def slide_06(prs):
     s = base_slide(prs, 6, "PROOF TODAY")
-    title(s, "A real compiler already closes bounded change loops", "Authoritative Rust implementation; checked-in contracts and deterministic fixtures.")
+    title(s, "The Rust compiler already validates complete changes", "Checked-in contracts and deterministic fixtures define the behavior.")
     stages = [
         ("SOURCE", "lossless parse\ncanonical format", BLUE),
         ("SEMANTICS", "types • effects\ncapabilities", CYAN),
@@ -285,8 +285,8 @@ def slide_06(prs):
     metric(s, 3.72, 4.48, 2.72, "12", "semantic relationship kinds", color=CYAN)
     metric(s, 6.70, 4.48, 2.72, "23", "architecture contract scenarios", color=CYAN)
     metric(s, 9.68, 4.48, 2.72, "4", "behavior-equivalent references", color=BLUE)
-    textbox(s, 0.76, 6.2, 11.6, 0.45, "PROVEN: bounded semantics and deterministic enforcement  •  NOT PROVEN: comparative agent acceleration", size=12, color=AMBER, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "This is not a mock interface. The Rust compiler parses and checks canonical AIL, executes the reference service, stores immutable revisions, computes exact impact, validates whole-workspace schema evolution, and enforces architecture policy atomically. The counts here are repository facts, not performance claims: 37 public behavior fixtures, 12 relationship kinds in the impact graph, 23 architecture scenarios, and four equivalent baseline implementations.")
+    textbox(s, 0.76, 6.2, 11.6, 0.45, "WORKS NOW: deterministic compiler enforcement  •  NOT RUN: AIL-versus-baseline agent comparison", size=12, color=AMBER, bold=True, align=PP_ALIGN.CENTER)
+    add_notes(s, "This is not a mock interface. The Rust compiler parses and checks canonical AIL, executes the reference service, stores immutable revisions, computes exact impact, validates whole-workspace schema evolution, enforces architecture policy atomically, and supports modules, import aliases, qualified references, and ordinary calls. The counts here are repository facts, not performance claims: 37 public behavior fixtures, 12 relationship kinds in the impact graph, 23 architecture scenarios, and four equivalent baseline implementations.")
 
 
 def slide_07(prs):
@@ -338,7 +338,7 @@ def slide_08(prs):
         textbox(s, x + 0.26, 4.27, 2.9, 0.88, body, size=10.5, color=MUTED)
         textbox(s, x + 0.26, 5.28, 2.9, 0.27, result, size=11, color=c, bold=True)
     textbox(s, 0.76, 6.17, 11.6, 0.5, "The compiler evaluates primitive facts and project policy—not a universal “architecture score.”", size=12, color=AMBER, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "This is the strongest bounded transaction proof. All three frozen semantic candidates carry accepted six-of-six behavior evidence supplied at the transaction boundary. The compiler evaluates their validated semantic graphs against locked policy. The domain-owned version publishes. The centralized version is rolled back for dispatch growth and transport authority, state, and dependency violations. A superficial helper split is also rolled back because aggregate responsibility remains in transport. This is not yet a complete source-to-agent product loop.")
+    add_notes(s, "All three frozen semantic candidates carry accepted six-of-six behavior results supplied at the transaction boundary. The compiler evaluates their validated semantic graphs against locked policy. The domain-owned version publishes. The centralized version is rolled back for dispatch growth and transport authority, state, and dependency violations. A superficial helper split is also rolled back because aggregate responsibility remains in transport. This is not yet a complete source-to-agent product loop.")
 
 
 def slide_09(prs):
@@ -391,7 +391,7 @@ def slide_10(prs):
 
 def slide_11(prs):
     s = base_slide(prs, 11, "ECONOMIC HYPOTHESIS")
-    title(s, "The leverage is in the total cost of a correct change", "Bounded mechanisms execute as specified. Comparative advantage remains to be measured.")
+    title(s, "The leverage is in the total cost of a correct change", "Compiler mechanisms execute as specified. Comparative advantage remains to be measured.")
     terms = [
         ("GENERATION", BLUE, "already falling"),
         ("CONTEXT", CYAN, "query, don’t rediscover"),
@@ -428,9 +428,9 @@ def slide_13(prs):
     s = base_slide(prs, 13, "ROADMAP")
     title(s, "Mechanism first. Economics next. Production only when justified.")
     phases = [
-        (0.7, "DONE", "Bounded mechanism", "semantic oracle\nchange transactions\nM27 observation", GREEN),
-        (3.8, "TEST", "Comparative validation", "fresh held-out tasks\nbounded comparator work\nstrong baseline trials", CYAN),
-        (6.9, "DECIDE", "Go / revise / stop", "correctness first\ntotal change cost\ngeneralization", BLUE),
+        (0.7, "DONE", "Working compiler", "semantic inspection\nchange transactions\nM28 calls + modules", GREEN),
+        (3.8, "TEST", "Comparative validation", "fresh held-out tasks\nrequired AIL capability\nstrong baseline trials", CYAN),
+        (6.9, "DECIDE", "Use the results", "correctness first\ntotal change cost\ngeneralization", BLUE),
         (10.0, "IF NEEDED", "Broader capability", "language, runtime,\nlowering, or ecosystem\nwork evidence requires", AMBER),
     ]
     for i, (x, phase, h, b, c) in enumerate(phases):
@@ -440,19 +440,19 @@ def slide_13(prs):
         textbox(s, x + 0.2, 3.7, 2.25, 1.15, b, size=12, color=MUTED)
         if i < 3:
             line(s, x + 2.68, 4.0, x + 3.0, 4.0, c, 2, True)
-    textbox(s, 0.75, 5.94, 11.6, 0.6, "Proposed evidence program—not an active repository roadmap. M27 is complete; no successor is selected.", size=12.5, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "The repository currently has no active successor milestone. M27 retained one non-official usability observation. This slide proposes a funded evidence program: freeze fresh representative tasks, build only the bounded AIL capabilities needed to create a fair comparator, compare against mainstream languages with their normal strong tools, and make an explicit go, revise, or stop decision. Broader production and ecosystem investment follows only when the result or a concrete deployment requirement justifies it. Native lowering, LLVM integration, broader syntax, and self-hosting are not automatic phases or proof of agent efficiency.")
+    textbox(s, 0.75, 5.94, 11.6, 0.6, "M28 is complete. No successor is active; this comparison is one possible next investment.", size=12.5, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
+    add_notes(s, "M28 shipped modules, import aliases, qualified references, and ordinary calls. The repository has no active successor milestone. One possible next investment is to freeze representative tasks, build only the AIL capabilities needed for a fair comparator, and compare against mainstream languages with their normal strong tools. Native lowering, LLVM integration, broader syntax, and self-hosting are not automatic next steps.")
 
 
 def slide_14(prs):
-    s = base_slide(prs, 14, "PROOF BOUNDARIES")
-    title(s, "What is proven—and what the raise must prove")
+    s = base_slide(prs, 14, "CURRENT LIMITS")
+    title(s, "What works—and what remains to build or measure")
     rect(s, 0.7, 1.95, 5.72, 4.55, PANEL, GREEN)
     pill(s, 0.98, 2.23, 1.45, "Proven today", GREEN, NAVY)
     proven = [
         "Executable Rust compiler, not a UI mock",
         "Deterministic parse, check, execute, and revisions",
-        "Exact bounded schema-impact report",
+        "Exact schema-impact report for the M19 contract",
         "Atomic whole-candidate validation",
         "Architecture policy blocks behavior-passing regressions",
         "37-case public AIL behavior corpus passes",
@@ -473,17 +473,17 @@ def slide_14(prs):
     for i, item in enumerate(unproven):
         dot(s, 7.2, 3.02 + i * 0.5, 0.11, AMBER)
         textbox(s, 7.46, 2.93 + i * 0.5, 4.7, 0.35, item, size=11.5)
-    textbox(s, 7.45, 6.03, 4.7, 0.24, "OFFICIAL COMPARATIVE AGENT TRIALS: 0", size=10, color=RED, bold=True)
-    add_notes(s, "This boundary is deliberate. We have real compiler machinery and can demonstrate exact semantic impact and atomic architecture enforcement. We have not yet proved lower cost than Rust, Go, Python, or TypeScript with their normal tools. We also do not yet have native lowering, production I/O, general concurrency, or broad ecosystem support. The raise is for converting technical feasibility into comparative and production evidence.")
+    textbox(s, 7.45, 6.03, 4.7, 0.24, "AIL-VS-BASELINE AGENT TRIALS: 0", size=10, color=RED, bold=True)
+    add_notes(s, "The compiler provides exact semantic impact for the M19 contract and atomic enforcement of the M24 architecture rules. No comparison has yet shown lower cost than Rust, Go, Python, or TypeScript with their normal tools. AIL also lacks native lowering, production I/O, general concurrency, and broad ecosystem support.")
 
 
 def slide_15(prs):
-    s = base_slide(prs, 15, "FUNDED VALIDATION")
-    title(s, "Fund the experiment that can falsify the thesis", "A concrete evidence program—not a request to believe an unmeasured speedup.")
+    s = base_slide(prs, 15, "NEXT EXPERIMENT")
+    title(s, "Run the comparison that can falsify the thesis", "Measure the result instead of assuming a speedup.")
     plans = [
         (0.7, "1", "LOCK", "Fresh held-out design-partner tasks\nEquivalent Rust / Go / Python / TS starts\nFixed max attempts, tools, oracles, review rubric", BLUE),
         (4.47, "2", "RUN", "Mechanism fixtures calibrate the pipeline\nBaseline targets lock before AIL trials\nCompletion, tokens, time, repairs, regressions", CYAN),
-        (8.24, "3", "DECIDE", "Randomized assessor-independent review\nUncertainty + failure distributions\nGo / revise / stop gates\nProduction-wedge decision", GREEN),
+        (8.24, "3", "DECIDE", "Independent randomized review\nUncertainty + failure distributions\nChoose the next build from results\nProduction decision", GREEN),
     ]
     for x, n, h, b, c in plans:
         rect(s, x, 2.08, 3.42, 3.5, PANEL, c)
@@ -491,7 +491,7 @@ def slide_15(prs):
         textbox(s, x + 0.88, 2.46, 2.2, 0.32, h, size=15, color=c, bold=True)
         textbox(s, x + 0.25, 3.22, 2.9, 1.75, b, size=11.5, color=MUTED)
     textbox(s, 0.78, 5.95, 11.55, 0.58, "Fund: compiler/runtime engineering  •  agent-evaluation infrastructure  •  design-partner workload access", size=13, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "The funded plan has three gates. First, use UC-003 and CancelJob only to calibrate the pipeline, then freeze fresh held-out design-partner tasks before adapting AIL to them. Build equivalent strong mainstream workspaces and pre-register a fixed maximum number of attempts, outcomes, exclusions, and reviewer rubric. Second, establish baseline distributions, lock AIL success targets before comparative AIL trials, and treat completion rate and terminal failures as primary outcomes. Third, run randomized assessor-independent review and make a go, revise, or stop decision. The exact financing amount, runway, and team plan require founder input before external use.")
+    add_notes(s, "First, use UC-003 and CancelJob to test the runner, then freeze fresh held-out tasks before adapting AIL to them. Build equivalent mainstream-language workspaces and fix the maximum attempts, outcomes, exclusions, and reviewer rubric before running. Second, establish baseline distributions and lock AIL success targets before AIL trials. Third, run randomized independent review and choose the next build from the results. Financing, runway, and team requirements are not specified here.")
 
 
 def slide_16(prs):
@@ -516,7 +516,7 @@ def slide_16(prs):
     card(s, 0.78, 4.35, 5.72, 1.72, "AGENT TELEMETRY", "\n".join(f"• {x}" for x in left), accent=CYAN, body_size=11)
     card(s, 6.82, 4.35, 5.72, 1.72, "OUTCOME + REVIEW", "\n".join(f"• {x}" for x in right), accent=GREEN, body_size=11)
     textbox(s, 0.8, 6.33, 11.5, 0.32, "Do not compare a strong AIL workflow with a deliberately crippled baseline.", size=11, color=AMBER, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "M27 retained one complete non-official run. The operator received the seeded centralized candidate and its compact rejection; the evidence does not show the operator independently creating that bad candidate. The operator used structured contributors, moved authority to the domain handler, reran validation, and published the valid child. Present this as one recorded usability observation, not a comparative or statistical result. A formal experiment must give baseline languages their normal compilers, language servers, refactors, search, formatters, and tests.")
+    add_notes(s, "M27 retained one complete run. The operator received the seeded centralized candidate and its compact rejection; the run does not show the operator independently creating that bad candidate. The operator used structured contributors, moved authority to the domain handler, reran validation, and published the valid child. A comparison must give baseline languages their normal compilers, language servers, refactors, search, formatters, and tests.")
 
 
 def slide_17(prs):
@@ -536,24 +536,24 @@ def slide_17(prs):
         ("TOKENS", "provider-counted input by category • repeated context"),
         ("REPAIR", "validation attempts • repair cycles • terminal failures"),
         ("QUALITY", "public/private checks • seeded misses • new authority"),
-        ("REVIEW", "assessor-independent time • questions • defects • confidence"),
+        ("REVIEW", "independent reviewer time • questions • defects • confidence"),
     ]
     for i, (h, b) in enumerate(dimensions):
         y = 3.84 + i * 0.52
         textbox(s, 0.92, y, 1.35, 0.28, h, size=10, color=CYAN, bold=True)
         textbox(s, 2.25, y, 9.8, 0.28, b, size=10.5, color=WHITE)
     textbox(s, 0.76, 6.52, 11.7, 0.28, "Fixed max attempts • pre-registered summaries + uncertainty • targets locked before AIL results", size=10.5, color=AMBER, bold=True, align=PP_ALIGN.CENTER)
-    add_notes(s, "The comparison uses the exact same task contract and correctness oracle. Baselines receive strong normal tooling. The same model and agent policy should be used where possible, with all version and permission differences recorded. Pre-register a fixed maximum number of attempts per cell. Completion and terminal-failure distributions are primary outcomes; token, time, and repair comparisons among successful runs are explicitly conditional secondary estimands. Reviewer effort uses randomized assessor-independent packages; reviewers are blinded to hypothesis and provenance where feasible, but not falsely described as treatment-blind when the language is visible.")
+    add_notes(s, "The comparison uses the same task contract and correctness oracle. Baselines receive strong normal tooling. Use the same model and agent policy where possible, and record version and permission differences. Fix the maximum attempts per cell before starting. Completion and terminal-failure distributions are primary outcomes; token, time, and repair comparisons among successful runs are conditional secondary measurements. Randomize reviewer assignments. Reviewers can be blinded to the hypothesis and provenance where feasible, but not to a language that is visible in source.")
 
 
 def build(output: Path) -> None:
     prs = Presentation()
     prs.slide_width = W
     prs.slide_height = H
-    prs.core_properties.title = "AIL — The control layer for software built by agents"
-    prs.core_properties.subject = "Investor presentation and funded validation plan"
+    prs.core_properties.title = "AIL — A programming language for software built by agents"
+    prs.core_properties.subject = "Investor presentation and current engineering status"
     prs.core_properties.author = "AIL"
-    prs.core_properties.keywords = "AIL, agents, compiler, investor, semantic control layer"
+    prs.core_properties.keywords = "AIL, agents, compiler, investor, programming language"
 
     for builder in (
         slide_01, slide_02, slide_03, slide_04, slide_05, slide_06,

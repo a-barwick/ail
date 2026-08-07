@@ -1,80 +1,76 @@
 # AIL compiler
 
-This directory contains the authoritative Rust implementation of AIL.
+This directory contains the Rust compiler and deterministic interpreter.
 
-The compiler is delivered in conformance slices:
+## Implemented
 
-- M14: lossless syntax, deterministic recovery, and canonical formatting
-  (complete);
-- M15: static semantics and structured diagnostics (complete);
-- M16: immutable revisions, inspection, validated rename, and identity maps
-  (complete);
-- M17: deterministic interpretation of the accepted core (complete).
+- lossless UTF-8 tokenization, typed syntax, recovery, and canonical formatting;
+- name resolution, local type inference, exact type checking, capability-effect
+  checking, and structured diagnostics;
+- immutable canonical revisions with SHA-256 identities and revision-scoped
+  syntax and symbol handles;
+- elaborated semantic inspection, validated rename, canonical edits, and
+  complete identity maps;
+- ordered multi-file source sets, schema identities, semantic relationships,
+  exact impact queries, semantic diffs, and atomic candidate validation;
+- deterministic interpretation with caller-supplied capabilities and ordered
+  observed calls;
+- architecture snapshots, compatible deltas, policy evaluation, bounded
+  incomplete results, and atomic publication; and
+- explicit modules, import aliases, qualified references, and checked local and
+  imported function calls.
 
-M18 selected compiler-guided UC-003 priority evolution as the next validation
-slice. M19 accepted its conformance contract, M20 implemented the ordered
-source-set semantic graph and impact query, and M21 completed atomic schema
-evolution and completion evidence. M22 selected architectural regression
-control as the next direction, M23 accepted its concrete evidence package, M24
-accepted the bounded contract, M25 implemented the read-only architectural
-snapshot and compact rendering, and M26 implemented cross-revision policy,
-governance, bounded failure, and atomic publication. M27 retained one
-non-official feedback pilot without changing compiler behavior. A maintainer
-scope correction redirects M28 to language composition. M28 adds statically
-checked AIL calls plus explicit modules and imports over the existing ordered
-source-set model.
+## Calls and modules
 
-These completed slices are conformance and mechanism evidence for bounded
-contracts. M27 adds one non-official usability observation. They are not
-official comparative evidence that AIL reduces total agent change cost. Compiler
-volume, broader syntax, a native backend, or self-hosting must not be treated as
-the next maturity step without a selected use case and roadmap milestone.
+Each source file declares one `module name;` and may import other modules with
+`import dependency;` or `import dependency as alias;`. Imports control
+visibility. Bare names remain available when unique. Qualification such as
+`domain.Request` or `alias.validate` resolves collisions explicitly. Missing,
+duplicate, ambiguous, inaccessible, or cyclic imports and references are
+rejected.
 
-The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
-the earlier slices. The M28 implementation and focused executable tests define
-the new bounded composition behavior authorized directly by the maintainer.
-Backend work remains outside scope.
+AIL calls use `function(arguments)`. Arguments are checked exactly and evaluated
+left to right. Same-named capability parameters propagate through calls, and the
+caller must declare every transitively reachable capability effect. Direct and
+mutual recursion are rejected.
 
-Run the current compiler checks from the repository root:
+`EvolutionWorkspace::execute` runs a checked source-set entry point. An
+unqualified name works when unique; `module.function` selects among repeated
+function names. See `examples/composed-service/` for a working three-file
+program.
+
+## APIs
+
+- `check_source` checks one source revision and returns canonical source,
+  elaborated type facts, and structured diagnostics.
+- `Workspace` stores immutable revisions, inspects revision-scoped handles, and
+  validates atomic renames.
+- `EvolutionWorkspace` stores ordered source sets, reports impact, validates a
+  complete candidate, exposes it to a behavior oracle, and publishes only after
+  all checks pass.
+- `architecture_snapshot` derives the implemented four-scope, seven-metric
+  architecture result or an explicit incomplete result.
+- `ArchitectureWorkspace::validate_architecture_change` compares a candidate
+  with its base, evaluates policy, and publishes one child only when behavior and
+  architecture pass.
+
+The exact protocol and language contracts are under [`../specs`](../specs/README.md).
+
+## Unsupported
+
+There is no iteration, general collection library, concurrency, networking,
+package registry, foreign-function interface, production runtime, native
+backend, JIT, LLVM lowering, or deployment system. The interpreter is for
+semantic execution and tests. Recursive calls are rejected.
+
+## Verify
+
+From the repository root:
 
 ```bash
-cargo fmt --all --check
-cargo test --workspace
-cargo clippy --workspace --all-targets -- -D warnings
+cargo +1.87.0 fmt --all --check
+cargo +1.87.0 test --workspace
+cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
+cargo +1.87.0 test --workspace --test m28_composition
+PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public
 ```
-
-The `ail_compiler::check_source` API checks one source revision using
-caller-supplied capability interfaces. It returns canonical source, inferred
-local and explicit public type facts, and structured diagnostics.
-`ail_compiler::Workspace` stores immutable canonical revisions, exposes
-deterministic revision-scoped handles and elaborated inspection, and validates
-atomic rename transactions with canonical edits and complete identity maps.
-`ail_compiler::EvolutionWorkspace` additionally validates complete multi-source
-candidates atomically, exposes the exact uncommitted revision to a behavior
-oracle, and returns revision-bound impact, edit, identity, semantic-diff, and
-completion evidence.
-An explicit multi-file source set uses one `module name;` header per file and
-zero or more `import dependency;` or `import dependency as alias;` headers.
-An unaliased import preserves bare lookup and also permits explicit
-`dependency.Name` references. An aliased import exposes declarations only as
-`alias.Name`. Local declarations retain bare lookup and may be written
-explicitly as `module.Name`. These forms apply to records, variants, functions,
-signatures, constructions, and match arms. Colliding plain imports are valid
-when references are qualified; a colliding bare reference is rejected
-deterministically. Duplicate qualifiers and declarations in non-imported
-modules are rejected. `EvolutionWorkspace::execute` runs a checked cross-module
-entry point; an unqualified function name is accepted when unique, and
-`module.function` selects an entry point when source names repeat. Runtime
-record and variant values carry that exact linked type name, so same-named types
-from different modules remain distinct at execution boundaries. AIL calls use
-`function(arguments)` syntax,
-evaluate arguments left-to-right, propagate same-named capability parameters,
-and require callers to declare all transitively reachable effects. Recursive
-call cycles are rejected.
-`ail_compiler::architecture_snapshot` derives the accepted four-scope,
-seven-metric architecture snapshot from validated immutable semantic facts and
-returns bounded incomplete results when coverage or a fixed budget is exhausted.
-`ail_compiler::ArchitectureWorkspace::validate_architecture_change` compares a
-validated candidate with the current immutable revision, derives the canonical
-snapshot and delta, evaluates trusted policy and governance, and publishes one
-child only when behavior passes and no denied or incomplete finding remains.

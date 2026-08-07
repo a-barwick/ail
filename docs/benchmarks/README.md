@@ -1,7 +1,5 @@
 # Job-service benchmark
 
-Status: **Accepted benchmark policy**
-
 This benchmark compares the same two engineering tasks in Rust, Go, Python,
 TypeScript, and eventually AIL:
 
@@ -12,12 +10,10 @@ TypeScript, and eventually AIL:
 The benchmark tests whether AIL helps an agent finish a correct change with less
 searching and rework. It is not a contest to produce the shortest source file.
 
-The fixture, baseline, and parity foundation was delivered in M1 through M7.
-M8a through M8f added deferred calibration infrastructure, and M27 retained one
-non-official architecture-feedback pilot. A maintainer scope correction
-redirected M28 to AIL language composition; the proposed iterative-evolution
-benchmark path is inactive, and zero official comparative AIL trials exist.
-ADR 0003 still governs the deferred M8 campaign. Current authority is in
+The repository contains the fixtures, four baseline implementations, parity
+checks, and measurement infrastructure. M27 also records one repair using the
+architecture output. No AIL-versus-baseline agent comparison has run. M28 shipped
+language composition instead of more benchmark work. See
 [the status file](../STATUS.md).
 
 ## Decisions

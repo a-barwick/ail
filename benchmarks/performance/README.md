@@ -1,6 +1,6 @@
 # M8 performance measurement adapters
 
-Status: **M8e implementation; non-official pilots only**
+Status: **M8e implementation; test runs retained, full collection deferred**
 
 The four adapters expose the same line-delimited JSON protocol around each
 accepted V2 fixture boundary. They live outside the frozen M7 checkpoint file
@@ -25,6 +25,6 @@ classification, and evidence serialization. The adapters contain no network
 operation. The harness launches them with the campaign's network-denial policy
 and records any policy monitor event as an external-access attempt.
 
-M8e pilots are explicitly non-official. M8f must run the full readiness gate
-and freeze the adapter, host, load, affinity, package, and monitoring
-configuration before any measurement can count toward M8.
+The M8e test runs verify the adapters and record format. They do not satisfy the
+complete-run counts. M8f readiness work is complete; broader collection is
+deferred.

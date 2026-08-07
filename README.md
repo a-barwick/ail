@@ -1,139 +1,105 @@
 # AIL
 
-AIL is an experimental deterministic programming language designed for software
-agents as its primary authors and operators. It aims to minimize the total work
-and risk required for an agent to make a correct, reviewable change. Canonical
-text is the durable artifact; the compiler's typed semantic model is the primary
-interface for navigation, diagnostics, structural edits, and impact analysis.
+AIL is an executable programming language for software agents. Agents are its
+primary authors and operators. Humans must still be able to read the canonical
+source, inspect compiler facts, review every change, and understand the program's
+authority and observable behavior.
 
-Human authorship ergonomics are secondary. Human auditability is a hard
-requirement.
+The Rust compiler works today. It parses and canonically formats AIL, checks
+types and capability effects, stores immutable source revisions, reports
+structured diagnostics, executes the supported language in a deterministic
+interpreter, computes schema impact, validates atomic multi-file changes, and
+enforces a small architecture policy. M28 added ordinary function calls and
+explicit modules, import aliases, and qualified references.
 
-The project has entered compiler implementation. Rust is the authoritative
-compiler stack, the root Cargo workspace is production code, and the frozen
-M11 contract constrains its first slices. The repository also contains
-language-independent benchmark data and dependency-free validation tooling.
-The executable language remains deliberately narrow, no native backend is
-selected, and no official comparative evidence yet shows lower agent change
-cost.
+## What works now
 
-## Project thesis
+- records, closed variants, functions, local `let` bindings, field access,
+  conditionals, exhaustive matching, capability calls, and ordinary AIL calls;
+- explicit `module` and `import` headers, import aliases, and qualified
+  references for ordered multi-file source sets;
+- exact argument and type checking for local and imported calls;
+- transitive capability-effect checking;
+- deterministic left-to-right argument evaluation and nested interpretation;
+- rejection of recursive call cycles and import cycles;
+- canonical formatting and structured parse, type, import, and effect errors;
+- immutable revisions, revision-scoped handles, inspected semantic facts,
+  validated rename, and identity maps;
+- complete impact results for the implemented schema-evolution model;
+- atomic candidate validation: a failed candidate publishes no revision;
+- revision-bound architecture snapshots and deltas for the implemented metrics
+  and policy rules; and
+- a three-file executable service in `compiler/examples/composed-service/`.
 
-Existing languages were largely designed around the constraints of human
-programming. As agents make plausible code generation inexpensive, the dominant
-costs shift toward context discovery, consequence analysis, validation, repair,
-process control, and regression prevention.
+The AIL job-service runner passes all 37 public cases. The architecture checker
+accepts the domain-owned `CancelJob` change and rejects both the centralized and
+helper-split versions that move store authority into transport.
 
-AIL treats that complete change loop as the unit of language design:
+## Hard limits
 
-```text
-total_agent_change_cost =
-    generation_work
-  + context_discovery_work
-  + consequence_analysis_work
-  + validation_work
-  + diagnostic_work
-  + repair_work
-  + regression_risk
+AIL is not ready for production application development. It has no iteration,
+general collections, concurrency, networking, package registry, foreign-function
+system, production runtime, native-code backend, or deployment toolchain.
+Recursion is rejected rather than bounded or executed. The interpreter is a
+semantic test engine, not a production runtime.
+
+The broader designs for memory, concurrency, replay, resources, packages, and
+foreign code remain unresolved. The implemented architecture API covers the
+M24 metric and policy set, not the full catalog in
+[docs/architecture-health.md](docs/architecture-health.md).
+
+## Why build AIL
+
+Generating plausible code is cheap. Finding the right context, understanding
+effects and downstream consequences, validating a complete change, repairing
+failures, and preventing regressions consume most of an agent's work.
+
+AIL moves those costs into language rules and compiler operations:
+
+- one canonical source representation cuts irrelevant variation;
+- explicit public contracts expose what callers depend on;
+- capabilities expose authority and external effects;
+- deterministic execution makes failures reproducible;
+- semantic queries replace repeated reconstruction from raw files; and
+- atomic validation prevents partial multi-file changes from becoming revisions.
+
+The project must eventually compare this workflow with Rust, Go, Python, and
+TypeScript using their normal compilers and language servers. It has not yet run
+that comparison. Source brevity, feature count, compiler size, LLVM integration,
+and self-hosting do not answer the question.
+
+Read [the project intent](docs/project-intent.md),
+[current compiler design](docs/design-direction.md), and
+[current status](docs/STATUS.md) next.
+
+## Build and test
+
+From the repository root:
+
+```bash
+cargo +1.87.0 fmt --all --check
+cargo +1.87.0 test --workspace
+cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
+python3 tools/check_docs.py
 ```
 
-The detailed thesis, its limits, and the claim the project must eventually prove
-are in [docs/project-intent.md](docs/project-intent.md).
+The repository also contains locked language-independent fixtures, baseline
+implementations, specification checkers, and architecture-policy tests. See
+[compiler/README.md](compiler/README.md) for the Rust APIs and focused commands.
 
-## Application vision
-
-AIL's intended destination is a default greenfield language for software
-primarily implemented and maintained by agents. It should combine predictable
-compiled execution and strong static semantics with compact, locally inferred
-source and a fully queryable compiler model.
-
-That destination is a hypothesis, not an automatic feature or self-hosting
-roadmap. Language breadth, native lowering, and ecosystem work are justified
-only when they enable a representative agent change or accepted deployment
-requirement and preserve a fair comparison with existing tools.
-
-The first validation wedge is backend services and workers. This is a proving
-ground, not a permanent restriction on the language. See
-[docs/application-vision.md](docs/application-vision.md).
-
-The design direction proposes:
-
-- one canonical textual representation;
-- fixed executable semantics and explicit nondeterministic inputs;
-- explicit public types, effects, capabilities, and guarantees;
-- local inference with a compiler-provided elaborated view;
-- typed incomplete programs and structured diagnostics;
-- semantic context slicing, diffs, and transactional edits;
-- revision-bound architectural facts and bounded enforceable project policy,
-  with a broader health manifest still proposed;
-- deterministic replay and controlled concurrency; and
-- possible native compilation or compatible source emission when justified by
-  a bounded measurement need, accepted evidence, or deployment requirements.
-
-See [docs/design-direction.md](docs/design-direction.md) for the captured design
-direction, [docs/architecture-health.md](docs/architecture-health.md) for the
-proposed architectural-regression feature, and
-[docs/spec-review.md](docs/spec-review.md) for the initial review.
-
-## Repository status
-
-The job-service workload, use cases, requirements, public JSON fixtures, and
-benchmark harness/task contract are accepted. The Rust, Go, Python, and
-TypeScript baselines and the M11 five-construct contract are complete. The
-authoritative compiler delivers the completed compiler slices through M26, and
-M27 retains one explicitly non-official architecture-feedback pilot. M28 is the
-active acceptance package for a proposed cumulative iterative-evolution
-comparison; it does not yet authorize new AIL syntax or compiler behavior.
-Current milestone state is tracked in [docs/STATUS.md](docs/STATUS.md).
-
-Those results prove bounded contracts and mechanisms. They do not yet prove the
-comparative thesis. More syntax, LLVM or another backend, production packaging,
-and self-hosting are enabling possibilities rather than success measures. The
-[project evidence discipline](docs/project-intent.md#progress-and-evidence-discipline)
-and [successor milestone gate](docs/roadmap.md#successor-milestone-selection)
-govern future work.
-
-The operational delivery sequence is defined in
-[docs/roadmap.md](docs/roadmap.md).
-The immediate handoff is in [docs/STATUS.md](docs/STATUS.md).
-The Rust decision is recorded in
-[ADR 0004](docs/decisions/0004-rust-compiler-stack.md).
-
-## Working in this repository
-
-The repository contains documentation, language-independent benchmark tooling,
-and four baseline implementations:
+## Repository map
 
 ```text
-AGENTS.md          Repository guidance and thesis guardrails for agent work
-benchmarks/        Frozen cases, schemas, tools, and baseline implementations
-docs/
-  README.md        Documentation layers, authority, and traceability
-  STATUS.md        Active milestone and next-agent handoff
-  application-vision.md
-  architecture-health.md
-  benchmarks/      Shared benchmark rules and language-independent test format
-  decisions/       Architecture decision records
-  design-direction.md
-  project-intent.md
-  requirements/    Numbered requirements and their status
-  roadmap.md
-  spec-review.md
-  stack-evaluation.md
-  use-cases/       Concrete application and agent-change scenarios
-compiler/          Authoritative Rust compiler crates
-tools/             Dependency-free repository documentation checks
+compiler/      Rust compiler, semantic APIs, interpreter, and examples
+specs/         Numbered rules, protocol shapes, fixtures, and contract checkers
+benchmarks/    Job-service cases, baseline implementations, and harnesses
+docs/          Product intent, requirements, design, decisions, and status
+tools/         Repository checks
 ```
 
-The root Cargo workspace and `compiler/` tree are authoritative. Keep benchmark
-baselines and any future experiments isolated from compiler semantics.
+The numbered rules and conformance fixtures under `specs/` define required
+behavior where they apply. Examples explain behavior but do not create new
+language rules.
 
-## Project policy
-
-- The canonical formatter is part of the language definition.
-- Examples are non-normative until linked to a numbered semantic rule.
-- Every externally observable behavior must eventually have a specified
-  deterministic meaning.
-- Changes to public semantics require a decision record.
-- The license has not yet been selected; all rights remain with the copyright
-  holder until one is added.
+The repository does not yet have a license. All rights remain with the copyright
+holder until one is added.

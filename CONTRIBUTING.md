@@ -1,15 +1,16 @@
 # Contributing
 
-AIL is an experimental language with an authoritative Rust compiler over a
-bounded accepted core. Contributions should reduce semantic ambiguity, remove
-measurable agent change work, or produce evidence for a recorded decision. M28
-is the active language-independent acceptance package for proposed UC-008;
-compiler implementation for that use case is not yet authorized.
+AIL has a working Rust compiler for a narrow language. M28 is complete: the
+compiler checks and executes local and imported calls across explicit modules,
+enforces transitive effects, and rejects recursion and import cycles. No next
+milestone is active.
 
-Read [docs/README.md](docs/README.md) before contributing. Every document or
-example must identify its layer and authority. Application illustrations,
-proposed language syntax, normative rules, conformance fixtures, and prototype
-behavior are not interchangeable.
+Contributions should ship a tested compiler capability, remove ambiguity from an
+existing contract, or improve a measurement tied to a real change. Start with
+[the current limits and next move](docs/STATUS.md).
+
+Read [docs/README.md](docs/README.md) before contributing. Examples do not define
+language behavior; numbered rules and conformance fixtures do.
 
 ## Before proposing a language feature
 
@@ -25,23 +26,22 @@ Specify:
 8. formatter behavior;
 9. how the feature changes total agent work;
 10. which strong existing-language tools form the baseline; and
-11. what later evidence causes a go, revise, or stop decision.
+11. the executable result that would prove the design wrong.
 
 Syntax preference alone is not sufficient justification.
 Neither are native code generation, LLVM integration, self-hosting, feature
 parity, or source brevity without a representative agent-change rationale.
 
-Proposed use cases, requirements, and design sketches may be reviewed together,
-but the design cannot become normative until its use case and requirements are
-accepted.
+Design sketches do not change compiler behavior. Add numbered rules and
+conformance fixtures before implementation when the change extends a locked
+contract.
 
-## Milestone workflow
+## Delivery workflow
 
-Before implementation work, read [docs/STATUS.md](docs/STATUS.md) and the active
-milestone in [docs/roadmap.md](docs/roadmap.md). Work within that milestone,
-keep checkpoints independently buildable, run its focused and repository-wide
-checks, and update both documents when its exit criterion passes. The
-repository-wide documentation and local-link check is:
+Before implementation work, read [docs/STATUS.md](docs/STATUS.md). If no build is
+active, obtain a concrete scope instead of starting an old deferred plan. Keep
+checkpoints independently buildable and run the focused and repository-wide
+checks. The documentation and local-link check is:
 
 ```bash
 python3 tools/check_docs.py
@@ -79,9 +79,8 @@ substitute for aggregate authority, state, dependency, and context analysis.
 ## Prototypes
 
 Keep experimental implementations under `prototypes/` and follow its README.
-ADR 0004 already selects Rust for the authoritative compiler. A prototype still
-requires explicit milestone or maintainer scope, must remain isolated, and must
-identify the uncertainty and later discriminating evidence it addresses.
+ADR 0004 selects Rust for the compiler. Keep prototypes isolated and state the
+technical question and executable result they test.
 
 ## Commits
 

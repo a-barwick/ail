@@ -1,12 +1,10 @@
 # Architectural-health requirements
 
-Status: **Accepted**
-
-Documentation layer: requirements derived from
-[UC-007](../use-cases/UC-007-architectural-regression-control.md). Acceptance
-authorized the bounded M24 language and protocol specification; M25 and M26
-implemented that contract. These requirements do not themselves define language
-or protocol rules, select syntax, or expand the implemented scope.
+These requirements come from
+[UC-007](../use-cases/UC-007-architectural-regression-control.md). M25 and M26
+implement the exact M24 subset. The numbered rules in
+[`specs/architecture.md`](../../specs/architecture.md), not this summary, define
+compiler behavior.
 
 ## Traceability summary
 
@@ -41,16 +39,15 @@ consequence analysis, repair work, and concentration risk.
 Acceptance evidence: The UC-007 centralized implementation passes behavior
 tests and fails architecture policy. The valid implementation passes both. The
 completion manifest shows that no unauthorized policy, baseline, capability,
-state, or dependency change occurred.
+state, or dependency change occurred I.
 
-Target milestone and scope: The completed M24–M27 scaling sequence after the
-core semantic graph and revision protocol. It is not part of M0–M17. Constrains
-application completion, compiler policy, benchmark, and governance. It does not
-prescribe one module layout.
+Implemented scope: M24 defines the rules; M25–M26 implement snapshots, deltas,
+policy, and atomic publication. The requirement does not prescribe one module
+layout.
 
 Dependencies and open questions: Depends on LANG-006, PROTO-006, PROTO-007, and
-the frozen UC-007 architecture policy. The exact cancel-job behavior and M23
-acceptance thresholds are frozen in the acceptance package.
+the UC-007 architecture policy. The exact `CancelJob` behavior and thresholds
+are in the [architecture case](../architecture-acceptance.md).
 
 ## Language requirement
 
@@ -231,29 +228,20 @@ implementation, a superficial helper-extraction variant, and a policy-compliant
 implementation. Hidden checks verify the final semantic graph rather than
 source layout alone.
 
-Target milestone and scope: A future numbered scaling benchmark after the core
-semantic graph and revision protocol exist, and only after UC-007 is accepted.
-It is not part of M0–M17. Constrains benchmark and governance.
+Implementation state: the semantic graph and revision protocol exist. The
+cross-language benchmark has not been run.
 
 Dependencies and open questions: Depends on NFR-001, PROTO-006, PROTO-007, and
 the frozen UC-007 workspace. M23 fixes a zero false/missed-finding allowance.
 Trial count, repair-cycle, wall-time, peak-memory, and comparative model-context
 envelopes require later baseline calibration.
 
-## Acceptance evidence
+## Implemented result
 
-M23 passed the acceptance gate on 2026-07-22:
+The fixtures fix the starting workspace, `CancelJob` behavior, architecture
+policy, seven metrics, four scopes, expected classifications, and output budgets.
+M25–M26 implement those fixtures. M27 records one repair using the compiler
+output. NFR-007 still requires a cross-language benchmark.
 
-1. UC-007 fixes the starting workspace, operation behavior, and architecture
-   policy;
-2. the feature specification defines every required metric and policy result
-   unambiguously;
-3. frozen fixtures demonstrate both symbol-level and aggregate analysis;
-4. baseline tools and comparison rules are identified; and
-5. two independent readers classify every seeded change the same way.
-
-M24 subsequently accepted the bounded normative protocol and conformance
-fixtures, and M25–M26 implemented them. M27 retained one non-official
-actionability pilot; it does not satisfy the comparative benchmark in NFR-007.
-None of this makes a project-selected complexity threshold part of universal
-AIL language semantics.
+Project policy chooses complexity thresholds. The AIL language does not define
+one threshold for every program.

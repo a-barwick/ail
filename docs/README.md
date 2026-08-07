@@ -1,158 +1,85 @@
-# AIL documentation model
+# AIL documentation
 
-Status: **Project guidance**
+Start with the running system, then follow the link to the exact contract.
 
-Purpose: keep the project's vision, application goals, requirements, language
-design, normative semantics, and implementation evidence distinct.
+## Current reader path
 
-AIL documentation is intentionally layered. A statement can be important without
-being a language rule, and an example can clarify a use case without establishing
-syntax.
+1. [Project intent](project-intent.md) — what AIL optimizes and why.
+2. [Application vision](application-vision.md) — the software AIL is meant to
+   build and the first workloads used to test it.
+3. [Design direction](design-direction.md) — implemented design and unresolved
+   technical choices.
+4. [Compiler README](../compiler/README.md) — current APIs and commands.
+5. [Current status](STATUS.md) — shipped capability, hard limits, and next move.
 
-## Layers
+Use [use cases](use-cases/README.md) for application behavior,
+[requirements](requirements/README.md) for exact constraints, and
+[`specs/`](../specs/README.md) for numbered language and compiler-interface
+rules. [Decisions](decisions/) record expensive technical choices. The
+[roadmap](roadmap.md) is a compact delivery history, not a second specification.
 
-| Layer | Current artifact | Question answered | Authority |
-| --- | --- | --- | --- |
-| Project thesis | [project-intent.md](project-intent.md) | Why should AIL exist, and what must it prove? | Enduring direction; non-normative for program behavior |
-| Application vision | [application-vision.md](application-vision.md) | Where should AIL be used, by whom, and what tradeoff should it change? | Product direction; non-normative |
-| Use cases | [use-cases/README.md](use-cases/README.md) | Which systems and agent changes must AIL support first? | Scenario evidence; non-normative |
-| Derived requirements | [requirements/README.md](requirements/README.md) | What observable capabilities and constraints follow from the use cases? | Proposed until explicitly accepted |
-| Benchmark policy | [benchmarks/README.md](benchmarks/README.md) | How are AIL and strong baselines compared fairly? | Accepted measurement policy and language-independent test data; non-normative for AIL |
-| Language design | [design-direction.md](design-direction.md) and [architectural health manifest](architecture-health.md) | Which language and compiler ideas may satisfy the requirements? | Design input; non-normative |
-| Normative specification | [M11 core contract](../specs/README.md) | What exact source, static semantics, diagnostics, and protocol behavior are required? | Proposed rules and fixtures binding on the first Rust compiler milestones; not yet accepted as the broader AIL core |
-| Implementation architecture | [ADR 0004](decisions/0004-rust-compiler-stack.md) | Which stack owns compiler semantics? | Rust is authoritative; the ADR does not select or activate a backend |
+## What defines behavior
 
-Architecture decision records under `decisions/` explain why consequential
-choices were made. Reviews such as [spec-review.md](spec-review.md) assess the
-state of another artifact at a point in time; they do not silently update that
-artifact. The [post-M27 cleanup ledger](post-m27-cleanup-ledger.md) records the
-confirmed outcomes of an independent repository audit without creating another
-milestone.
+Only numbered specification rules and their conformance fixtures define AIL
+language or compiler-interface behavior. The Rust compiler must match those
+rules where they apply. M28 call and module behavior is locked by its executable
+tests while that material is incorporated into the broader specification.
 
-The [roadmap](roadmap.md) sequences work across layers. M14–M17 are the completed
-authoritative compiler sequence through the deterministic interpreter. M18
-selected compiler-guided UC-003 priority evolution as the next validation
-slice. M19 accepted its bounded contract, M20 implemented its semantic graph
-and impact query, and M21 completed the atomic change and evidence loop. M22
-selected architectural regression control as the next direction in
-[ADR 0006](decisions/0006-prepare-architectural-regression-control.md). M23
-accepted UC-007 and its requirements through a frozen, independently reviewed
-acceptance package. M24 accepted the bounded architectural regression
-contract. M25 implemented its single-revision snapshot and compact rendering,
-M26 implemented cross-revision policy enforcement and atomic publication, and
-M27 completed one bounded non-official usability pilot. A maintainer scope
-correction amended ADR 0007 and redirected M28 to AIL language composition.
-M28 implements calls, explicit modules and imports, transitive effect checking,
-and deterministic nested interpretation. The former M29 through M36 iterative
-path is deferred. A roadmap entry does not make planned behavior normative.
+The other documents have narrower jobs:
 
-The [current status](STATUS.md) records the active milestone, or states that the
-next planned milestone has not been started, and gives the next agent its
-immediate handoff.
+- use cases state application inputs, outputs, effects, and changes;
+- requirements state observable constraints;
+- design documents explain intended system properties and unresolved choices;
+- examples illustrate behavior but do not invent syntax;
+- benchmark fixtures define application results, not AIL semantics; and
+- decision records explain why a technical choice was made.
 
-The [project intent](project-intent.md#progress-and-evidence-discipline)
-defines what counts as progress and distinguishes conformance, mechanism,
-non-official usability, and official comparative evidence. Conventional
-compiler milestones such as broader syntax, native lowering, or self-hosting do
-not validate the thesis by themselves. The roadmap's successor-selection gate
-applies before any new milestone is added.
+If an example conflicts with a specification fixture, the fixture wins. If
+implementation behavior conflicts with a numbered rule, fix the implementation
+or change the rule explicitly; do not bless the accident in prose.
 
-The deferred [M8 execution plan](m8-execution-plan.md) records how the baseline
-calibration campaign could be resumed. M8a through M8f produced reusable
-infrastructure and non-official pilots; M8g through M8o are not active work.
-The plan is not benchmark policy or language semantics. The
-[M8 agent experiment contract](decisions/0002-m8-agent-experiment-contract.md)
-records the fixed treatment used by those tasks.
+## Compiler state
 
-## Required flow
+The current Rust compiler implements:
 
-Material decisions should be traceable through these layers:
+- lossless parsing and canonical formatting;
+- type, name, capability-effect, call, module, and import checking;
+- immutable source revisions and revision-scoped semantic handles;
+- deterministic interpretation of the supported language;
+- schema-impact analysis and atomic multi-file candidate validation; and
+- the M24 architecture snapshot, delta, policy, and publication rules.
 
-```text
-project thesis
-  -> application vision
-  -> concrete use case
-  -> numbered requirement
-  -> language or protocol design
-  -> normative rule
-  -> conformance fixture
-  -> implementation evidence
-  -> representative comparative evidence
-  -> go, revise, or stop decision
+M28 added direct and imported calls, explicit modules, import aliases, qualified
+references, transitive effect checking, left-to-right argument evaluation, and
+nested execution. The compiler rejects recursion and import cycles.
+
+It does not implement iteration, general collections, concurrency, networking,
+packages, foreign code, a production runtime, native lowering, or deployment.
+The full architectural-health catalog is also not implemented; only the M24 set
+is.
+
+## Precise terms
+
+- **Canonical source** is the one formatted textual representation stored in
+  version control.
+- **Normative** means a numbered rule or fixture requires the behavior.
+- **Conformance** means an implementation matches those required results.
+- **Deterministic** means identical declared inputs produce identical ordered
+  logical results. It does not imply bit-identical native binaries.
+- **Revision-bound** means a result names the exact immutable source revision it
+  describes and cannot be reused silently after an edit.
+- **Coverage** names what the compiler analyzed and every boundary it could not
+  inspect.
+
+Use these words only with those concrete meanings.
+
+## Documentation checks
+
+Run:
+
+```bash
+python3 tools/check_docs.py
 ```
 
-Not every thesis statement produces a language feature. Some produce tooling,
-runtime, standard-library, deployment, benchmark, or governance requirements.
-
-Benchmark fixtures test accepted application behavior. They do not establish AIL
-syntax or language rules.
-
-Implementation may precede official comparative evidence when it is the
-smallest way to create a comparator or test a mechanism. Its completion remains
-enabling evidence, not proof that AIL reduces total agent change cost.
-
-## Normativity
-
-- Project intent and application vision constrain project direction but do not
-  define program behavior.
-- Use-case examples describe desired outcomes. They must not accidentally choose
-  AIL syntax or semantics.
-- Design documents compare and motivate possible solutions.
-- Only accepted, numbered specification rules and their conformance fixtures are
-  normative for language or protocol behavior.
-- Prototypes test written rules. A successful prototype does not make its
-  incidental behavior normative.
-- Architecture decisions identify their scope and do not override unrelated
-  layers implicitly.
-
-When documents disagree, record the disagreement explicitly. Do not reconcile it
-by treating an example or prototype as the latest specification.
-
-## Example labels
-
-Every example must use one of these labels:
-
-- **Behavior illustration:** language-independent scenario or pseudocode.
-- **Illustrative AIL:** proposed syntax with no normative authority.
-- **Proposed fixture:** candidate canonical source tied to proposed rules.
-- **Conformance fixture:** accepted canonical source and expected outcomes tied
-  to accepted numbered rules.
-
-## Current position
-
-The job-service reference workload, its two use cases, its first requirements,
-its frozen public JSON fixtures, and its language-independent benchmark harness
-and task contract are accepted. The Rust, Go, Python, and TypeScript baselines
-are complete. M7 froze cross-baseline parity, the public and private benchmark
-inputs, and eight deterministic answer-free task starts. M8a through M8f built
-calibration, replay, measurement, and provider-readiness infrastructure, but no
-official evidence exists. ADR 0003 defers the remaining calibration campaign,
-numeric benchmark targets, and illustrative syntax variants because they do not
-inform the compiler-stack decision. M11 completed the proposed five-construct
-shared contract. ADR 0004 selects Rust directly and supersedes the M12/M13
-comparison path. M14 delivered lossless syntax, deterministic recovery, and
-canonical formatting. M15 delivered name resolution, local inference,
-capability checking, and structured diagnostics in the authoritative Rust
-compiler. M16 delivered immutable revisions, deterministic revision-scoped
-inspection, validated rename, canonical edits, and identity mapping. M17
-delivered the accepted bounded runtime rules, canonical reference service,
-deterministic revision-scoped interpreter, and a locked AIL runner that matches
-all 37 public job-service fixtures. M18 selected compiler-guided UC-003 priority
-evolution in [ADR 0005](decisions/0005-next-validation-slice.md). M19 froze the
-bounded schema-identity, impact-query, transaction, semantic-diff, and
-completion-evidence contract. M20 implemented its ordered source-set semantic
-graph and exact impact query. M21 implemented the atomic R1-to-R2 transaction
-and completion evidence. M22 selected architectural regression control as the
-next scaling direction. M23 froze its acceptance evidence, including the
-starting workspace, `CancelJob` behavior, good and seeded bad changes, project
-policy, metrics, expected structured and compact text, baseline comparison, and
-budgets. Two independent readers classified every candidate identically, so
-UC-007 and its requirements are accepted. M24 accepted the bounded normative
-contract, M25 implemented its revision-bound snapshot and compact rendering,
-M26 implemented cross-revision policy and atomic publication, M27 retained one
-explicitly non-official repair pilot, and M28 implemented ordinary AIL calls and
-explicit multi-file modules. The proposed iterative-evolution use case remains
-inactive, and the broader architectural-health proposal remains non-normative.
-
-There is no accepted broad AIL syntax or normative language core yet. The M11
-subset is the fixed conformance boundary for the first Rust compiler slices.
+The command checks local links, decision-record structure, and agreement between
+`roadmap.md` and `STATUS.md`.

@@ -1,138 +1,55 @@
 # AIL use cases
 
-Status: **Active discovery**
+Use cases define application behavior and representative changes. They do not
+define AIL syntax.
 
-Documentation layer: concrete application scenarios. Use cases translate the
-[application vision](../application-vision.md) into inputs for
-[numbered requirements](../requirements/README.md). They are non-normative for
-language behavior.
+## Implemented workloads
 
-UC-001 and UC-003 were accepted as the first reference slice on 2026-07-18.
-UC-007 was accepted as the architectural-regression scaling case on 2026-07-22.
-UC-008 is proposed as the cumulative iterative-evolution case selected for M28
-acceptance preparation on 2026-08-07.
-
-## Accepted reference slice
-
-The first reference system is a small, transport-independent job-submission
-service:
-
-- accept a structured create-job request;
-- validate bounded input;
-- conditionally persist one job through an explicit datastore capability;
-- return one closed success or domain-failure result; and
-- evolve the public and stored schema with a required priority field while
-  identifying and updating every affected consumer.
-
-This combines the two smallest candidate cases without requiring concurrency,
-networking infrastructure, a production datastore, or a production runtime.
-
-| Record | Status | Representative agent task |
+| Use case | What the system must do | Compiler capability exercised |
 | --- | --- | --- |
-| [UC-001 — Request validation and persistence](UC-001-request-validation-and-persistence.md) | Accepted | Implement or repair the bounded handler and prove its ordered effects |
-| [UC-003 — Public schema evolution](UC-003-public-schema-evolution.md) | Accepted | Add priority, preserve the declared compatibility policy, and update every affected semantic role |
+| [UC-001](UC-001-request-validation-and-persistence.md) | Validate a create-job request, make at most one jobs-store call, and return a closed result | types, variants, effects, deterministic interpretation |
+| [UC-003](UC-003-public-schema-evolution.md) | Add priority to public and stored schemas and update every affected consumer | schema identity, impact query, atomic multi-file validation |
+| [UC-007](UC-007-architectural-regression-control.md) | Add `CancelJob` without growing dispatch or moving store authority into transport | architecture snapshots, deltas, policy, rollback |
 
-Their first derived requirements are collected in
-[requirements/reference-slice.md](../requirements/reference-slice.md).
-The shared test format and comparison rules are under
-[benchmarks](../benchmarks/README.md).
+UC-001 and UC-003 were accepted on 2026-07-18. UC-007 was accepted on
+2026-07-22. Their exact requirements are under
+[`docs/requirements/`](../requirements/README.md).
 
-## Accepted scaling case
+## Proposed workload
 
-| Record | Status | Representative agent task |
-| --- | --- | --- |
-| [UC-007 — Architectural regression control](UC-007-architectural-regression-control.md) | Accepted | Add `CancelJob` without growing the dispatch hotspot or moving store authority into transport |
+[UC-008](UC-008-iterative-service-evolution.md) asks whether fresh agents can
+apply a sequence of product changes without cumulative context, repair, and
+architecture costs exploding. The workload and requirement sequence are not
+defined, and no work on it is active. The old M29–M36 plan is retained only in
+delivery history.
 
-The language-independent [M23 acceptance package](../architecture-acceptance.md)
-freezes its 24-operation starting workspace, behavior, policy, candidates,
-minimal metrics, compact evidence, baseline comparison, budgets, and two
-independent reviews. Acceptance does not itself define compiler protocol rules.
+## Candidate behaviors
 
-## Selected proposed scaling case
+The next compiler increment should start from one executable behavior the
+current language cannot express:
 
-| Record | Status | Representative agent task |
-| --- | --- | --- |
-| [UC-008 — Iterative service evolution](UC-008-iterative-service-evolution.md) | Proposed | Apply six to eight cumulative requirements in fresh contexts while preserving behavior, architecture, and reviewability |
+- an outbound call with explicit timeout, cancellation, authority, and typed
+  failure;
+- bounded fan-out with fixed result order and child-failure behavior;
+- an event worker with idempotency and deterministic acknowledgement; or
+- replay of supplied time, randomness, configuration, filesystem, or network
+  values.
 
-[ADR 0007](../decisions/0007-prepare-iterative-service-evolution.md) originally
-selected an M28 acceptance package. A maintainer scope correction redirected
-M28 to AIL language composition. UC-008 remains proposed and inactive; its
-service, sequence, oracles, baseline plan, measurements, and stop conditions
-have not been accepted.
+These are options, not queued work.
 
-## Candidate future cases
+## Required contents
 
-The following remain possible scaling cases, not an ordered queue or active
-directive:
+A use case must state:
 
-- **UC-002 — Outbound call control:** call a remote service with explicit
-  authority, timeout, cancellation, and typed failure.
-- **UC-004 — Bounded fan-out:** perform independent work concurrently with fixed
-  ordering, bounds, cancellation, and child-failure behavior.
-- **UC-005 — Event worker:** consume an ordered event, enforce idempotency,
-  update state, emit telemetry, and acknowledge or reject deterministically.
-- **UC-006 — Replayable external inputs:** test behavior involving time,
-  randomness, configuration, secrets, filesystem state, or network responses
-  through supplied or recorded capabilities.
+- system boundary and actor;
+- input, output, state, and capability authority;
+- exact success, domain-error, and runtime-fault behavior;
+- effect order, concurrency, cancellation, and resource bounds;
+- schema and compatibility rules;
+- the change an agent must make;
+- executable correctness checks; and
+- what a human must inspect to approve the result.
 
-UC-001 and UC-003 were selected first because they exercise public contracts,
-errors, stored state, change impact, and safe multi-file edits without requiring
-general concurrency or a production runtime.
-
-None of these future cases authorizes language or compiler implementation until
-its use case and requirements are accepted and numbered implementation
-milestones are added. A bounded acceptance milestone may enter the roadmap to
-produce the evidence needed for that decision. Selection must also pass the
-[roadmap successor gate](../roadmap.md#successor-milestone-selection): identify
-the agent change cost at stake, the smallest discriminating mechanism, the
-strong baseline, and the go, revise, or stop result.
-
-[ADR 0006](../decisions/0006-prepare-architectural-regression-control.md)
-selected UC-007 acceptance preparation. M23 passed that bounded gate without
-defining M24 protocol rules or implementing compiler behavior.
-M24 through M26 later implemented the bounded accepted contract and M27 retained
-one non-official pilot. ADR 0007 subsequently selected proposed UC-008, but the
-maintainer scope correction superseded its M28 restriction and authorized the
-bounded language-composition implementation instead.
-
-## Use-case record
-
-Each accepted use-case document should contain:
-
-1. **Identifier and status**
-2. **Actor and desired outcome**
-3. **System boundary**
-4. **Inputs and required capabilities**
-5. **Nominal behavior**
-6. **Domain errors and language/runtime faults**
-7. **Observable state and effects**
-8. **Ordering, concurrency, cancellation, and resource bounds**
-9. **Schema, serialization, and compatibility constraints**
-10. **Representative change tasks**
-11. **Human review and operational evidence**
-12. **Baseline implementation and tools**
-13. **Measurable success criteria**
-14. **Derived requirement identifiers**
-15. **Explicit exclusions and unresolved questions**
-
-## Examples
-
-Start with language-independent behavior tables, traces, data shapes, or
-pseudocode. Do not invent AIL syntax merely to make a use case feel concrete.
-
-Illustrative AIL code may be added only after it is clearly labeled and the
-semantic question it explores is identified. It remains non-normative until
-linked to proposed numbered rules; it becomes a conformance fixture only after
-those rules are accepted.
-
-## Acceptance gate
-
-A use case is ready to drive requirements when two independent readers can agree
-on:
-
-- what is inside and outside the system;
-- which inputs and effects are observable;
-- what success and each failure mean;
-- which change the agent must make;
-- which evidence proves the change correct; and
-- which runtime or operational measurements matter.
+Use language-independent tables, traces, and data shapes first. An AIL example
+does not become required behavior until a numbered specification and fixture say
+so.

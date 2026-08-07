@@ -1,264 +1,124 @@
-# AIL design direction
+# AIL design and current implementation
 
-Status: **Design input**
+AIL is deterministic executable software, not a specification language or agent
+protocol. Canonical source is the durable program. The compiler exposes the
+typed, revision-bound model that agents and humans use to inspect and change it.
 
-Purpose: capture the agreed identity and constraints that precede a normative
-language specification.
-
-Documentation layer: language and compiler design. This document proposes how
-AIL may satisfy the [project intent](project-intent.md) and
-[application vision](application-vision.md). It does not define normative program
-behavior. See the [documentation model](README.md).
-
-## Identity
-
-AIL is a deterministic, executable programming language designed for agents to
-author, inspect, debug, and refactor. An ordinary compiler may eventually
-translate it into bytecode, machine code, or compatible target source when an
-accepted workload, bounded measurement need, or deployment requirement justifies
-that work.
-
-AIL is not a specification language, an agent protocol, a prompt format, or a
-compiler-agent collaboration. Human authorship ergonomics are secondary, but
-human auditability is a hard requirement.
-
-Two choices anchor the design:
-
-1. Canonical text is authoritative, with a first-class structural interface
-   exposed by the compiler.
-2. Public boundaries are explicit, while local implementation details may be
-   inferred and inspected through an elaborated compiler view.
-
-## Optimization target
-
-AIL should optimize the total cost of reaching a correct change, not source
-brevity in isolation:
+## Compiler pipeline
 
 ```text
-generation + context + diagnostics + repair + regression risk
+canonical AIL source
+  -> lossless parse and canonical format
+  -> module and name resolution
+  -> type, call, effect, and capability checks
+  -> revision-bound semantic graph
+  -> deterministic interpreter
 ```
 
-The eventual benchmark suite should measure first-pass parse and compile rates,
-tokens to a correct implementation, context needed for local changes,
-repair iterations, regression frequency, diagnostic localization, diff noise,
-runtime predictability, and mechanically diagnosable target conversion.
+The pipeline has no native backend. LLVM, bytecode, source emission, JIT
+execution, and self-hosting are not implemented.
 
-Language breadth, backend completion, native performance, and self-hosting are
-not substitutes for that comparison. They are implementation strategies or
-enabling capabilities whose value depends on the agent work and application
-risk they remove.
+## Source and modules
 
-## Compilation model
+AIL uses one canonical representation for each supported construct. Formatting
+is part of the language contract, not a style preference.
+
+Each file in a multi-file source set declares one `module name;` header and zero
+or more `import dependency;` or `import dependency as alias;` headers. Imports
+expose records, variants, and functions by declared name. Non-imported
+declarations are inaccessible. Qualified references such as `domain.Request`
+and `alias.validate` resolve collisions explicitly. Bare colliding references
+are rejected. Import cycles are rejected.
+
+Independent modules may reuse declaration names. Entry points can use
+`module.function` when an unqualified name is not unique.
+
+## Calls and effects
+
+Calls use `function(arguments)` syntax. The compiler resolves local and imported
+functions, checks exact value argument counts and types, and propagates
+same-named capability parameters. Every caller must declare all capability
+effects reachable through its callees.
+
+The interpreter evaluates arguments left to right and executes nested calls
+deterministically. The compiler rejects direct and mutual recursion. AIL does
+not yet provide bounded recursion or iteration.
+
+Capabilities identify the accessible instance or namespace. Code cannot obtain
+store, clock, network, filesystem, environment, randomness, or telemetry access
+unless its contract receives that authority. Pure functions cannot call
+effectful functions.
+
+## Revisions and changes
+
+Compiler results identify an immutable source revision. Syntax and symbol handles
+from one revision cannot be applied silently to another.
+
+A validated rename produces canonical byte edits, checks the complete candidate,
+publishes one child revision, and returns an identity map. Invalid names,
+collisions, stale handles, and failed checking publish nothing.
+
+The schema-evolution API extends this rule to ordered multi-file source sets. It
+reports `must_change`, `review`, and `unchecked` impact categories, validates
+caller-supplied behavior evidence, returns semantic and textual diffs, and
+publishes only a complete valid candidate.
+
+## Determinism
+
+Logical execution is deterministic relative to explicit inputs:
 
 ```text
-Canonical AIL source
-  -> parse and canonicalize
-  -> resolve names and types
-  -> check effects, capabilities, safety, and concurrency
-  -> typed AIL IR
-  -> deterministic interpreter and, when justified, optimize and lower
-  -> possible bytecode, machine code, or compatible target source
+initial state + ordered input + supplied capability outcomes
+  = result + final state + ordered capability calls
 ```
 
-Given identical source, compiler version, target, dependency lock, and build
-configuration, compilation must produce the same result. Builds should be
-bit-reproducible wherever the output format permits it.
+This requirement covers observable language behavior. It does not claim
+bit-identical native output, because no native backend exists. Future floating
+point, collections, concurrency, time-zone data, filesystem access, and resource
+exhaustion rules must define their observable inputs before they can preserve
+this property.
 
-The compiler applies fixed language semantics. It does not infer product
-requirements or reinterpret developer intent.
+## Diagnostics
 
-This pipeline is a design boundary, not a selected backend or milestone order.
-No LLVM, bytecode, source-emission, or bootstrap strategy is selected here. The
-interpreter remains sufficient while it can test accepted semantics and
-representative change loops within their required envelope.
+Diagnostics carry a stable code, source revision, semantic location, category,
+expected and actual facts where applicable, related declarations, and causal
+relationships. Text is a rendering of those fields. Agents should branch on
+structured data, and humans should be able to read both.
 
-## Canonical source and semantic interface
+## Architecture checks
 
-Repository source is ordinary text. The compiler additionally exposes modules,
-symbols, types, calls, effects, capabilities, data dependencies, control flow,
-public contracts, implementations, and diagnostics.
+The implemented API computes architecture facts for executable units, modules,
+dependency components, and configured groups. It reports contributors for seven
+implemented metrics, compares compatible revisions, evaluates project policy,
+and blocks publication on denied or incomplete results.
 
-Structural operations include rename, move, expression replacement, parameter
-addition, and function extraction. Each operation validates the result and
-rewrites canonical text transactionally.
+This catches helper splitting that leaves authority, state, and dependencies in
+the same transport group. It does not infer the best architecture or define a
+universal complexity limit. See [architecture-health.md](architecture-health.md)
+for the implemented boundary and the larger unimplemented design.
 
-Node and symbol handles are scoped to a source revision. After an edit, the
-compiler returns an identity map from old handles to surviving, replaced, or
-new handles. Persistent identities exist only where they carry semantic value,
-such as ABI, schema, serialization, migration, service, or message identity.
+## Required safety properties
 
-## Low-entropy language surface
+These are real design requirements even where the necessary language features
+are not implemented yet:
 
-AIL selects one canonical representation for each construct. The canonical
-formatter is the language's textual encoder, not an optional style tool.
-Declaration and import order, escaping, numeric notation, generics, error
-propagation, collection construction, function bodies, matching, visibility,
-and formatting must not have stylistic aliases.
+- ordinary AIL has no undefined behavior;
+- integer overflow cannot be silent;
+- public errors are closed typed values;
+- external authority is explicit;
+- nondeterministic inputs are explicit and recordable;
+- concurrency is structured and bounded;
+- potentially unbounded loops, recursion, queues, retries, tasks, and memory are
+  visible to policy; and
+- incomplete analysis cannot be reported as complete.
 
-The grammar should use familiar tokens where model priors make them reliable
-while remaining compact, context-free where practical, incrementally parsable,
-resistant to cascading errors, free of significant whitespace and textual
-preprocessing, and free of optional syntax that changes parsing.
+Do not infer current support from this list. Today the compiler avoids several
+of these problems by not implementing the corresponding feature.
 
-Names remain semantically meaningful rather than minified.
+## Unresolved design
 
-## Explicit boundaries and inferred internals
-
-Anything another unit may depend on is explicit. Anything confined to one
-implementation may be inferred.
-
-Public parameter and result types, generic constraints, error variants, effects,
-capabilities, escaping ownership or aliasing, visible mutation, concurrency and
-ordering guarantees, resource contracts, and nondeterministic inputs are
-explicit.
-
-Local variable types, obvious generic arguments, temporary representation,
-internal effect propagation, non-escaping lifetimes, internal scheduling,
-unobservable evaluation details, internal storage choices, and pure
-intermediate values may be inferred.
-
-The compiler provides a fully elaborated view and can temporarily materialize
-selected inferred types or effects into source for debugging.
-
-## Determinism and replay
-
-Execution is deterministic relative to explicit inputs:
-
-```text
-initial state + ordered input stream = state transitions + output stream
-```
-
-Time, randomness, environment variables, filesystem state, network responses,
-and scheduler decisions enter through explicit capabilities. Recorded external
-values and orderings can reproduce the same logical execution.
-
-## Controlled execution
-
-Concurrency is structured and lexically owned. Parallel result ordering is
-defined by declaration order. A task must be joined, cancelled under defined
-semantics, or have ownership explicitly transferred. Detached tasks are not the
-default.
-
-Race-based behavior is explicit and its outcome is a recordable input. Safe AIL
-either forbids shared mutable memory or constrains it so that data races are
-impossible.
-
-Potentially unbounded behavior is visible. Loops, recursion, retries, queues,
-buffers, worker counts, task counts, memory, and blocking behavior have explicit
-bounds or an explicit `unbounded` declaration that policy can reject.
-
-Integer overflow cannot be silent.
-
-## Effects, capabilities, and errors
-
-Public behavior declares its effects. Pure functions cannot call effectful
-functions. Capabilities identify the accessible instance or namespace, not just
-a broad category, and ambient authority is absent.
-
-Errors are closed, typed values in function signatures. Callers propagate,
-transform, or exhaustively handle them. Unchecked exceptions do not form a
-hidden control-flow system.
-
-## Safety
-
-Ordinary AIL has no undefined behavior. Overflow, bounds errors, invalid shifts,
-invalid references, use-after-free, and races have fixed safe meanings or are
-rejected. Wrapping and saturating arithmetic are explicit operations.
-
-Low-level foreign primitives may exist behind narrowly defined requirements and
-guarantees, but they do not weaken ordinary source semantics.
-
-## Incomplete programs and diagnostics
-
-Typed holes allow incomplete expressions to survive parsing, type analysis,
-indexing, and structural editing. Production builds fail while holes remain.
-Hole diagnostics report the expected type, in-scope values, constructors, and
-relevant constraints.
-
-Structured diagnostics are authoritative. They include stable diagnostic codes,
-the source revision, semantic location, category, expected and actual
-semantics, related declarations, a minimal causal chain, bounded repair
-categories, and cascading-error relationships. Human prose is a secondary
-rendering.
-
-## Agent-oriented program operations
-
-The compiler returns a deterministic, budgeted semantic context slice for a
-symbol: its signature, direct types, effects, interfaces, impacted callers,
-state invariants, relevant tests, serialization constraints, and conversion
-constraints.
-
-Semantic diffs supplement text diffs with public API, effect, error, state,
-call-graph, control-flow, and target-compatibility changes.
-
-Multi-file refactors are transactions: the complete transformation commits only
-if it validates.
-
-## Architectural health and project policy
-
-Complete impact analysis prevents missed consequences, but it does not prevent a
-behaviorally correct change from concentrating control flow, authority, state,
-and dependencies in one unit. The compiler should therefore expose primitive
-architectural facts for executable units and aggregate semantic scopes.
-
-Given a compatible base and candidate revision, the compiler reports an
-architectural delta: new or enlarged hotspots, dependency and capability
-changes, state concentration, cycles, context growth, coverage loss, and policy
-or baseline changes. Unchanged accepted debt remains visible without becoming a
-new regression.
-
-The language creates analyzable relationships; the compiler measures them; the
-project decides which thresholds and boundaries to enforce. Universal AIL
-semantics do not declare that every large function is invalid or infer the
-project's preferred architecture.
-
-Project policy may record facts, warn, or deny validation. Denied results and
-incomplete analysis required by a denied rule prevent a structural transaction
-from committing. Exceptions are explicit, scoped, versioned policy artifacts,
-not source-comment suppressions.
-
-The broader proposed metric catalog, manifest, baseline, exception, diagnostic,
-and validation behavior are defined in the
-[architectural health manifest](architecture-health.md). UC-007, its
-requirements, and the bounded M24 rules and conformance fixtures are accepted;
-M25 and M26 implement that slice. Everything outside that bounded contract
-remains non-normative.
-
-## Targets
-
-Native AIL semantics are authoritative. Compatible target source may be emitted
-when the source semantics can be preserved. Conversion failures identify the
-unsupported source capability, its location, target coverage, and available
-lowering support.
-
-Target ecosystems and lowering packages must not distort the core language
-before its semantics are stable.
-
-A backend becomes justified by a concrete accepted workload, measurement need,
-or deployment envelope. Emitting native code, integrating LLVM, or compiling
-the compiler in AIL does not by itself validate the agent-efficiency thesis.
-
-## Initial exclusions
-
-The first version excludes:
-
-- textual macros;
-- wildcard imports;
-- implicit numeric conversions;
-- operator overloading;
-- ambient global capabilities;
-- unchecked exceptions;
-- multiple equivalent syntaxes;
-- undefined behavior;
-- detached concurrency by default;
-- unrestricted build-script authority;
-- comments used as contracts; and
-- reflection over arbitrary implementation details.
-
-## Future normative expansion
-
-Any future normative artifact must contain the smallest construct set required
-by an accepted use case and its conformance evidence. A construct count is a
-scope estimate, not a progress measure. Expansion should define only the
-grammar, formatting, static and dynamic semantics, diagnostics, and agent-facing
-semantic facts needed to test the selected change loop.
+The project still needs exact rules for memory and aliasing, integer widths and
+additional numeric types, collections and iteration, concurrency and
+cancellation, replay, packages and dependency versions, foreign code, runtime
+resource limits, protocol versioning, and native builds. Those decisions must be
+made with executable fixtures, not examples alone.

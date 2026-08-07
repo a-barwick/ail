@@ -1,12 +1,10 @@
-# M27 non-official architecture-feedback pilot
+# Recorded M27 architecture repair
 
-This directory retains one complete, explicitly non-official run of the locked
-M23 `CancelJob` repair task. It shows that one Amp operator could use M26's
-compact rejection and structured contributors to produce an accepted repair.
-It is not comparative, statistical, official, or evidence of broader project
-success.
+This directory retains one complete run of the locked M23 `CancelJob` repair
+task. One Amp operator used M26's compact rejection and structured contributors
+to produce an accepted repair. This is one repair, not a language comparison.
 
-The evidence package contains:
+The retained files are:
 
 - `prompt.txt`: the exact operator prompt;
 - `operator-report.json`: the operator's final canonical report;
@@ -40,8 +38,7 @@ python3 benchmarks/tools/harness.py verify-architecture-pilot
 cargo +1.87.0 test --workspace --test m26_architecture_delta
 ```
 
-To replay the operator procedure itself, start from the locked M23 fixtures in
-a clean checkout and follow `prompt.txt`. Preserve the recorded version, mode,
-permissions, restrictions, and tool availability when interpreting any result.
-One operator repairing one seeded candidate supports only a later go, revise,
-or stop decision; no broader claim follows.
+To replay the operator procedure, start from the locked M23 fixtures in a clean
+checkout and follow `prompt.txt`. Preserve the recorded version, mode,
+permissions, restrictions, and tool availability. The run does not compare AIL
+with another language or measure repeatability across operators.

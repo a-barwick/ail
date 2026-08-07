@@ -3,7 +3,7 @@
   "artifacts": [
     {
       "path": "benchmarks/calibration/README.md",
-      "sha256": "7d8e09b90cc495a0e854e4d17f0c7dc0c021233d0421b166a7ca2757462aaddc"
+      "sha256": "b2555bd795c22b19d1f1699e70019f348ff3f1f7d148c60f5ec11aa64f788477"
     },
     {
       "path": "benchmarks/calibration/experiment-contract.json",
@@ -87,7 +87,7 @@
     },
     {
       "path": "benchmarks/performance/README.md",
-      "sha256": "5ede5047e1a96bc47633c583abcf44bebafa03a9f7a73a01e974f73636d30d29"
+      "sha256": "42d407321531409715f8f5139ed5e1498a0e29c436878f35a5652a53b546e470"
     },
     {
       "path": "benchmarks/performance/typescript-tsconfig.json",

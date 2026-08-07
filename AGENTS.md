@@ -1,23 +1,22 @@
-# AIL repository guidance
+# AIL engineering instructions
 
 ## Report status like an engineer, not a committee
 
-Write every status update in plain English for a VP of Engineering. Lead with
-what works, what changed, what is blocked, and what happens next. Use concrete
-compiler behavior, test results, and delivery dates when known. Do not use
-corporate jargon, governance language, ceremonial milestone language, vague
-reassurance, or planning activity as a substitute for shipped software.
+Write every status update in plain English for a VP of Engineering. Lead with what works, what changed, what is blocked, and what happens next. Use concrete compiler behavior, test results, and delivery dates when known. Do not use corporate jargon, governance language, ceremonial milestone language, vague reassurance, or planning activity as a substitute for shipped software.
 
 ## Commit production-ready work directly to main
 
-Make every repository change directly on `main`. Do not create feature branches
-or use branches to hold work that is not ready. Read the relevant code, make the
-smallest complete change, run the checks that establish confidence, and commit
-the finished result to `main`. Every commit must be coherent, reviewable, and
-worthy of the mainline. Do not push unless the user explicitly requests it.
+Commit completed, verified changes directly to local `main`. Do not create or
+use feature branches. Keep each commit production-ready and reviewable. Do not
+push unless the maintainer explicitly asks.
 
-Before proposing language features, implementation architecture, or repository
-tooling, read these documents in order:
+AIL is an executable language for software agents. Agents are the primary
+authors and operators. Humans must be able to audit canonical source, compiler
+facts, diagnostics, authority, behavior, and every proposed change.
+
+## Read before changing the system
+
+Read these files in order:
 
 1. `docs/README.md`
 2. `docs/project-intent.md`
@@ -28,133 +27,87 @@ tooling, read these documents in order:
 7. `docs/architecture-health.md`
 8. `docs/spec-review.md`
 9. `docs/roadmap.md`
-10. `docs/stack-evaluation.md`
+10. `docs/STATUS.md`
 
-Before implementation work, also read `docs/STATUS.md` and the active milestone
-in `docs/roadmap.md`.
+Then read the numbered specification, use case, requirement, and decision that
+owns the behavior you will change.
 
-## Thesis guardrails
+## Current system
 
-AIL is an executable programming language designed for software agents as its
-primary authors and operators. It optimizes the total work and risk required to
-make a correct, reviewable change, rather than source brevity or human typing
-convenience in isolation.
+The Rust compiler implements canonical syntax, static checking, structured
+diagnostics, immutable revisions, semantic inspection, validated rename,
+schema-impact queries, atomic multi-file validation, deterministic
+interpretation, the M24 architecture checks, ordinary calls, and explicit
+modules, imports, aliases, and qualified cross-module references.
 
-Preserve these distinctions:
+The compiler rejects recursive calls and import cycles. It has no iteration,
+general collections, concurrency, networking, production runtime, native
+backend, package registry, or deployment system. Do not write about proposed
+features as if they work.
 
-- Plausible code generation is cheap; context discovery, consequence analysis,
-  validation, repair, and regression control are the dominant costs.
-- Canonical source is the durable artifact. The compiler's structured semantic
-  model is the primary interface for inspection and change.
-- The agent protocol exposes guarantees created by the language; it must not
-  merely compensate for ambiguous language semantics.
-- Human authorship ergonomics are secondary, but human auditability is a hard
-  requirement.
-- Token efficiency means reducing total task information and repair work, not
-  minimizing source tokens at any cost.
-- AIL must be evaluated against existing languages with their normal compiler
-  and language-server tooling, not against raw text editing.
-- The long-term destination is a default greenfield language for agent-built
-  application software. Backend services and workers are the first validation
-  wedge, not the permanent limit of the language.
-- AIL is not optimized for unaided human typing, but it must not become obscure
-  or unauditable merely to appear agent-native.
-- Architectural health is reported as primitive, revision-bound semantic facts.
-  Project policy decides which facts warn or deny; do not turn one complexity
-  threshold or composite score into universal language semantics.
-- Evaluate responsibility at symbol and aggregate semantic scopes. Splitting a
-  large function into helpers is not an architectural improvement when
-  authority, state, dependencies, and review context remain concentrated.
-- More syntax, native or LLVM lowering, self-hosting, source brevity, compiler
-  volume, and conventional feature parity are not project success by
-  themselves. They require an accepted use case or thesis uncertainty, a named
-  agent-cost reduction, and a later discriminating comparison.
-- Distinguish conformance and mechanism evidence from non-official usability
-  evidence and official comparative evidence. Only the last can support a claim
-  that AIL reduces total agent change cost.
-- Familiar syntax and compiler techniques are useful when model priors reduce
-  errors or review work. Do not optimize for human convention, but do not make
-  AIL unfamiliar merely to signal that it is agent-first.
+`docs/STATUS.md` states the current executable move. If no work is active, do
+not infer a new project from old plans.
 
-## Current project state
+## Engineering rules
 
-The repository has entered authoritative compiler implementation. The first
-job-service use cases and requirements and the M11 five-construct contract are
-accepted inputs to the completed Rust compiler milestones. M23 through M27 are
-complete. A maintainer scope correction supersedes ADR 0007's original M28
-restriction and redirects M28 to ordinary language composition: statically
-checked AIL calls, explicit modules and imports, transitive capability effects,
-and deterministic interpretation. The iterative-evolution benchmark path is
-not active.
-UC-007, its requirements, and the bounded M24 contract are accepted; M25 and M26
-implement that contract, and M27 retains one non-official pilot. The broader
-architectural health manifest remains proposed and does not expand the accepted
-scope.
+- Start from the failing behavior, missing capability, or measured constraint.
+- Ship the smallest coherent implementation that changes the result.
+- Add an executable check for every delivered behavior and rejection path.
+- Keep canonical source as the durable artifact. Expose inferred facts through
+  the compiler instead of requiring hidden agent reasoning.
+- Keep public types, errors, effects, capabilities, and stable identities
+  explicit. Local facts may be inferred only when the compiler can report them.
+- Preserve deterministic ordering and revision binding in compiler results.
+- Reject stale handles and incomplete analysis. Never report a partial result as
+  complete.
+- Validate multi-file changes atomically. A failed change publishes nothing.
+- Treat capability access as authority. Do not introduce ambient access to time,
+  randomness, storage, network, filesystem, environment, or telemetry.
+- Measure architecture with primitive facts at function and aggregate scopes.
+  Splitting a function into helpers does not fix concentrated authority, state,
+  dependencies, or review context.
+- Keep project policy separate from language semantics. A project may reject a
+  metric delta; AIL does not declare one universal complexity threshold.
+- Use familiar syntax when it reduces errors. Do not add syntax novelty for
+  aesthetics.
+- Do not optimize for source-token count at the cost of more context retrieval,
+  repair work, or human review risk.
 
-Behavior examples at this stage are non-normative and must not establish syntax.
+## Delivery
 
-The narrow normative core specification, canonical fixtures, and minimal
-transport-independent semantic protocol contract follow the use-case and
-requirements gate.
+Work directly on local `main`. Do not disturb unrelated changes. Commit only
+complete changes that build and pass their focused checks.
 
-[ADR 0004](docs/decisions/0004-rust-compiler-stack.md) selects Rust and
-authorizes the root Cargo workspace and production `compiler/` tree. The M11
-contract and fixtures, not incidental implementation behavior, constrain the
-first compiler slices.
+For compiler work, run the narrow test first, then the full Rust checks before
+declaring completion:
 
-## Milestone workflow
+```bash
+cargo +1.87.0 fmt --all --check
+cargo +1.87.0 test --workspace
+cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
+python3 tools/check_docs.py
+```
 
-- `docs/roadmap.md` owns milestone scope, dependencies, non-scope, and exit
-  criteria.
-- `docs/STATUS.md` names the active milestone and contains the immediate handoff
-  for the next agent.
-- Work only within the active milestone unless the user changes scope.
-- Commit completed work directly to local `main`; do not use feature branches.
-  Every commit must be coherent, reviewed, tested, and ready to remain on main.
-  Do not disturb unrelated or user-owned changes.
-- Add executable checks for every behavior delivered by a milestone.
-- Record consequential or expensive-to-reverse choices in `docs/decisions/`.
-- A milestone is complete only when its exit criterion, focused checks, and
-  full repository checks pass.
-- The repository-wide documentation and local-link check is
-  `python3 tools/check_docs.py`.
-- When a milestone completes, update its status in `docs/roadmap.md`, advance
-  `docs/STATUS.md`, and leave a concise handoff for the next agent.
-- Keep detailed requirements in their authoritative documents. Milestones link
-  to those documents instead of copying them.
-- Before adding a successor milestone, apply the selection gate in
-  `docs/roadmap.md`. An enabling milestone must name the later representative
-  comparison it enables and must not claim agent-efficiency success.
-- The M8 campaign is deferred after M8f by ADR 0003. `Launch M8g` through
-  `Launch M8o` are not active directives unless the user explicitly resumes the
-  campaign. If resumed, read the launch-directive table and named task section
-  in `docs/m8-execution-plan.md`, verify the predecessor and repaired freeze,
-  and do not infer authority to start later work, change configuration, merge,
-  or push.
+Run the relevant specification or benchmark checker when the change touches its
+contract. Do not edit locked fixtures or manifests merely to make a test pass.
 
-## Communication style
+Record a decision in `docs/decisions/` when it changes public semantics or makes
+an expensive implementation choice. Keep the record technical: decision,
+constraints, consequences, rejected alternatives, and validation.
 
-Write for an experienced software engineer using plain workplace English.
-Apply this style in agent conversations, review summaries, public
-documentation, READMEs, proposals, and decision records.
+## Writing
 
-- Start with the concrete system, behavior, decision, or outcome.
-- Prefer familiar engineering terms over project-specific terminology.
-- Explain a new term in ordinary language before using it as shorthand.
-- Use examples to introduce abstractions.
-- Keep sentences direct and make the practical consequence clear.
-- Preserve technical precision, but do not make the reader translate layers of
-  abstract terminology to understand what the software does.
-- Write so an engineer can review the behavior, tradeoff, and next decision
-  without first learning an AIL-specific vocabulary.
+Write direct engineering English.
 
-## Test for proposed decisions
+- Lead with what works, what fails, and what to do next.
+- Name the compiler behavior: “the compiler rejects recursive calls.”
+- Prefer test results and concrete constraints to reassurance.
+- Remove committee language, process narration, and status adjectives that do
+  not change technical meaning.
+- Preserve terms such as deterministic, revision-bound, conformance, and
+  normative only when they identify an exact property.
+- Never turn a prototype, example, or planned feature into a language rule.
 
-A proposal should explain:
-
-1. which accepted use case and requirement it serves;
-2. which agent change cost it reduces;
-3. why the behavior belongs in the language rather than only in tooling;
-4. how the compiler exposes the resulting semantics;
-5. how the behavior becomes deterministic and conformantly testable; and
-6. how a human can audit the resulting program and change.
+A proposal must identify the user-visible behavior, the agent work or risk it
+removes, why the compiler or language must own it, the exact deterministic test,
+and how a human audits the result.

@@ -1,23 +1,14 @@
 # Architectural health manifest
 
-Status: **Proposed feature specification**
+The compiler implements the seven metrics, four scopes, policy rules, ordering,
+budgets, and diagnostics defined by the [M24 contract](../specs/architecture.md).
+That implementation is exercised by [UC-007](use-cases/UC-007-architectural-regression-control.md)
+and its [requirements](requirements/architectural-health.md).
 
-Documentation layer: language and compiler design. This document proposes the
-compiler contract for [UC-007](use-cases/UC-007-architectural-regression-control.md)
-and its [derived requirements](requirements/architectural-health.md). It is not
-yet a normative AIL language or protocol specification.
-
-[ADR 0006](decisions/0006-prepare-architectural-regression-control.md) selected
-an M23 acceptance package for this direction. That bounded package passed, and
-the [M24 contract](../specs/architecture.md) selected its smallest exact rule,
-metric, protocol, and diagnostic subset. This broader manifest remains Proposed;
-only the bounded contract rules are accepted rather than the full design catalog.
-
-The [accepted M23 package](architecture-acceptance.md) freezes that technical
-evidence and records two review-subject-digest-bound approvals. Its acceptance
-scope is only a minimal subset of this broader design as input to later
-specification work; it does not accept these proposed diagnostic codes or define
-an M24 protocol.
+This document also describes a larger design that is not implemented. Metric
+definitions and diagnostic codes outside M24 are proposals. The exact shipped
+boundary and fixtures are in the [architecture case](architecture-acceptance.md)
+and M24 contract.
 
 ## Outcome
 
@@ -512,11 +503,10 @@ after acceptance in a numbered protocol specification.
 | `ARCH.INVALID_POLICY` | policy is ambiguous, incompatible, or references invalid selectors |
 | `ARCH.UNAUTHORIZED_GOVERNANCE_CHANGE` | policy, baseline, or exception changed outside task authority |
 
-## Conformance evidence
+## Tests required for expansion
 
-The bounded M24 contract accepted and implemented only its frozen fixture
-subset. Before any additional part of this broader proposal becomes normative,
-proposed fixtures must cover the applicable remaining behavior:
+Before the compiler implements more of this catalog, fixtures must cover the
+new behavior that applies:
 
 1. repeated deterministic snapshot generation;
 2. a new decision-heavy function;
@@ -536,10 +526,8 @@ proposed fixtures must cover the applicable remaining behavior:
 16. denied structural transaction rollback; and
 17. bounded analysis that returns `incomplete` instead of a false pass.
 
-M27 records one non-official observation that an operator used the bounded
-feedback to repair a seeded regression. It is not the comparative UC-007
-benchmark evidence required to claim lower agent change cost. Any broader
-benchmark must still compare representative runs against strong normal tooling.
+M27 records one operator using the M24 output to repair a seeded regression.
+A cross-language cost comparison has not been run.
 
 ## Non-goals
 
@@ -554,15 +542,15 @@ This feature does not:
 - treat source-file splitting as sufficient modularity; or
 - authorize automatic refactoring without validating the complete result.
 
-## Open decisions
+## Open technical decisions
 
-Before additional normative rules beyond the bounded M24 contract are accepted:
+Before extending the M24 behavior:
 
-1. freeze the exact metric names and semantic graph relationship kinds;
-2. decide which metrics are required in the first protocol version;
+1. define exact metric names and semantic graph relationship kinds;
+2. choose the additional metrics required by the protocol;
 3. define canonical manifest encoding and ordering;
 4. define architecture-group selector semantics;
-5. decide how policy and baseline governance authority is represented;
+5. define authorization for policy and baseline changes;
 6. calibrate default advisory thresholds, if any, from strong baselines;
 7. set analysis and manifest budgets for UC-007;
 8. specify generated and foreign-source coverage;

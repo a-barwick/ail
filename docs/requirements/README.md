@@ -1,68 +1,36 @@
 # AIL requirements
 
-Status: **Active**
+Requirements state observable system constraints. Numbered specification rules
+state the language and compiler behavior that satisfies them.
 
-Documentation layer: requirements derived from accepted use cases. The first
-numbered requirements were accepted on 2026-07-18 from UC-001 and UC-003.
+## Current sets
 
-## Accepted requirement sets
+- [Job-service requirements](reference-slice.md): `APP-001`–`APP-005`,
+  `LANG-001`–`LANG-005`, `PROTO-001`–`PROTO-005`, and `NFR-001`–`NFR-005`.
+- [Architecture requirements](architectural-health.md): `APP-006`, `LANG-006`,
+  `PROTO-006`, `PROTO-007`, `NFR-006`, and `NFR-007`.
 
-The [initial job-submission reference-slice requirements](reference-slice.md)
-contain the accepted `APP-*`, `LANG-*`, `PROTO-*`, and `NFR-*` records for
-UC-001 and UC-003. The shared JSON format and measure-first benchmark policy are
-documented under [benchmarks](../benchmarks/README.md).
+The first set drives request validation, one conditional store effect, closed
+outcomes, schema evolution, revision-safe semantic inspection, impact analysis,
+atomic changes, and benchmark measurement. The second drives revision-bound
+architecture snapshots, deltas, policy enforcement, honest coverage, and
+rollback.
 
-The [architectural-health requirements](architectural-health.md) derive
-`APP-006`, `LANG-006`, `PROTO-006`, `PROTO-007`, `NFR-006`, and `NFR-007` from
-accepted UC-007. M23 accepted them after freezing and independently reviewing
-the scaling workspace, architecture policy, metrics, fixtures, baseline
-comparison, and budgets. They authorize later specification work, not compiler
-implementation by themselves.
+## Identifier classes
 
-## Requirement classes
-
-- `APP-###`: application behavior or operability
-- `LANG-###`: language semantics or source representation
-- `PROTO-###`: compiler semantic-interface behavior
+- `APP-###`: application behavior and operations
+- `LANG-###`: language semantics or analyzability
+- `PROTO-###`: compiler-interface behavior
 - `NFR-###`: measurable performance, scale, portability, security, or
-  reliability constraint
+  reliability
 
-An identifier classifies a requirement; it does not make the requirement
-normative. Each record also has a status.
+Each requirement names its source use case, exact behavior, rationale,
+executable or measurable result, dependencies, and unresolved technical choices.
 
-## Statuses
+Application requirements must not smuggle in an implementation. “No store call
+before validation” is a requirement. “Use ownership and borrowing” is a design
+choice.
 
-- **Proposed:** derived and reviewable, but not accepted.
-- **Accepted:** approved as an input to design or specification.
-- **Deferred:** valid but outside the current validation slice.
-- **Rejected:** considered and intentionally not required.
-- **Superseded:** replaced by identified later requirements.
-
-## Requirement record
-
-Each requirement must state:
-
-1. identifier, title, and status;
-2. source use cases;
-3. precise requirement using observable terms;
-4. rationale tied to total agent change cost;
-5. acceptance evidence or measurement;
-6. target milestone;
-7. dependencies and conflicts;
-8. whether it constrains the language, protocol, runtime, standard library,
-   deployment system, benchmark, or governance; and
-9. unresolved questions.
-
-Avoid prescribing a language mechanism in an application requirement. For
-example, “the default service runtime must satisfy an agreed tail-latency
-envelope without opaque unbounded pauses” is an application or non-functional
-requirement. “AIL uses ownership and borrowing” is a candidate design decision.
-
-## Traceability
-
-Every accepted language or protocol rule must reference at least one accepted
-requirement or a foundational safety/determinism invariant. Every conformance
-fixture must reference the rules it tests.
-
-Prototype results may support, challenge, or refine a requirement. They may not
-create one implicitly.
+Every language or compiler-interface rule must trace to a requirement or a
+foundational safety or determinism property. Every conformance fixture must name
+the rule it tests.

@@ -28,8 +28,8 @@ inside their own directories.
 
 ## Consequences
 
-- Application use cases and requirements can proceed immediately; normative
-  semantics and protocol work follow from their accepted validation slice.
+- Application use cases and requirements can proceed immediately. Language and
+  protocol work follows when a specified behavior requires it.
 - There is no runnable compiler until a spike is selected.
 - Candidate comparisons have a common scope and evidence format.
 - Root build tooling will be introduced only after M13 accepts the

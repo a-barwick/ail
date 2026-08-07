@@ -1,13 +1,13 @@
-# Initial requirements for the job-submission reference slice
+# Job-service requirements
 
 Status: **Accepted 2026-07-18**
 
-Documentation layer: requirements derived from
+These requirements come from
 [UC-001](../use-cases/UC-001-request-validation-and-persistence.md) and
-[UC-003](../use-cases/UC-003-public-schema-evolution.md). These are accepted
-project requirements. They are not language rules and do not select AIL syntax,
-memory management, runtime architecture, protocol transport, or compiler
-implementation.
+[UC-003](../use-cases/UC-003-public-schema-evolution.md). Numbered specification
+rules define the corresponding language and compiler behavior. These
+requirements do not select syntax, memory management, protocol transport, or a
+runtime architecture.
 
 ## Accepted reference workload
 
@@ -15,7 +15,7 @@ The first reference system is the transport-independent job-submission service
 defined by UC-001, evolved by UC-003. The workload and both use cases were
 accepted on 2026-07-18.
 
-This slice is selected because it combines:
+The workload combines:
 
 - explicit public data and closed domain outcomes;
 - bounded validation;
@@ -25,7 +25,7 @@ This slice is selected because it combines:
 - complete semantic-impact analysis; and
 - revision-safe completion evidence.
 
-It deliberately avoids concurrency, networking infrastructure, production
+It excludes concurrency, networking infrastructure, production
 datastores, clocks, randomness, and a production runtime. This keeps the first
 comparison focused on context discovery, consequence analysis, validation,
 repair, and regression control.
@@ -695,21 +695,12 @@ AIL startup and memory targets before measuring an AIL production runtime.
 Package size and bit-reproducibility limits are deferred until the compilation
 and deployment target is selected.
 
-## Acceptance and sequencing
+## Implementation state
 
-These requirements were accepted on 2026-07-18. ADR 0003 changes their delivery
-order so stack selection and semantic-oracle implementation no longer wait for
-the full statistical campaign:
+These requirements were accepted on 2026-07-18. The repository contains the
+language-independent fixtures, Rust/Go/Python/TypeScript baselines, Rust compiler,
+deterministic interpreter, semantic impact query, and atomic change API.
 
-1. a frozen language-independent fixture and trace corpus;
-2. a baseline benchmark protocol and equivalent Rust, Go, Python, and
-   TypeScript reference implementations;
-3. a five-construct language and protocol contract;
-4. the accepted Rust implementation-stack decision;
-5. authoritative compiler implementation through M14–M17; and
-6. resumed baseline calibration and frozen numeric targets before comparative
-   AIL benchmark runs.
-
-[ADR 0004](../decisions/0004-rust-compiler-stack.md) authorizes the production
-Rust compiler tree. The numbered rules and fixtures remain authoritative over
-incidental implementation behavior.
+The comparative agent and production-runtime measurements remain deferred. The
+numbered rules and fixtures define required compiler behavior; implementation
+accidents do not.

@@ -41,7 +41,7 @@ dependencies of the stack spikes.
 ## Decision
 
 Stop M8 after the completed M8a–M8f preparation work. Preserve its code,
-contracts, pilots, and failed readiness finding as non-official evidence.
+contracts, recorded pilots, and the failed readiness result as engineering data.
 Defer M8g through M8o; do not collect or represent any official M8 campaign
 result.
 
@@ -107,7 +107,7 @@ the comparison meaningless. The M11 contract remains a hard gate.
 This decision is implemented when:
 
 1. the roadmap marks M8, M9, and M10 deferred;
-2. M11 is active and depends only on the accepted reference slice and M7;
+2. M11 starts with only the accepted reference slice and M7 as dependencies;
 3. current status gives a concrete M11 handoff;
 4. deferred M8 launch directives cannot be mistaken for active authority; and
 5. `python3 tools/check_docs.py` passes.

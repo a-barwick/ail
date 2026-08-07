@@ -1,9 +1,9 @@
-# M8 calibration evidence contract
+# M8 calibration contract
 
-Status: **M8f campaign freeze; no official evidence**
+Status: **Tooling retained; data collection deferred after M8f**
 
-This directory defines the machine-checkable evidence boundary for the M8
-baseline campaign. It implements the accepted
+This directory defines the machine-checkable inputs, records, and checks for the
+M8 baseline experiment. It implements
 [M8 agent experiment decision](../../docs/decisions/0002-m8-agent-experiment-contract.md)
 without running an agent or measuring a baseline.
 
@@ -47,7 +47,7 @@ when the cumulative 500,000-token limit would be exceeded, streams the provider
 response back to Codex, and reconciles the completed provider usage with zero
 tolerance.
 
-Run one non-official live readiness trial with:
+Run one live readiness trial with:
 
 ```bash
 export OPENAI_API_KEY='...'
@@ -124,10 +124,10 @@ retained with the corresponding stable exclusion.
 
 The adapters are outside the M7 checkpoint file lists; instrumentation does not
 change the accepted baseline source digests. The eight records under
-`pilots/m8e/` are one non-official warm and cold pilot per baseline. They all
-pass, but count as zero official measurements.
+`pilots/m8e/` are one warm and cold test run per baseline. They pass the
+verifier but do not satisfy the complete-run counts.
 
-## Evidence layout
+## Record layout
 
 One campaign directory contains:
 
@@ -178,9 +178,9 @@ category totals plus explicit protocol overhead must equal both the preflight
 count and provider-reported usage with zero tolerance. Cached input is recorded
 as a subset and never deducted. Repeated delivery is counted every time.
 
-M8f proved this exact rule against the selected Codex binary with
-provider-backed successes and retained live safety-limit classifications. A
-mismatch remains incomplete evidence, not a permitted approximation.
+M8f exercised this exact rule against the selected Codex binary with
+provider-backed successful runs and retained live safety-limit classifications.
+A mismatch makes the run incomplete; the verifier does not approximate it.
 
 ## Verification
 
@@ -197,11 +197,10 @@ python3 benchmarks/tools/harness.py verify-calibration \
   --campaign /path/to/evidence-index.json
 ```
 
-Valid campaigns may report `empty`, `pilot`, or `partial` while evidence is
+Valid campaigns may report `empty`, `pilot`, or `partial` while records are
 being prepared or accumulated. A campaign marked `complete` must satisfy the
-locked official counts. The synthetic fixtures use one record per
-configuration or language so the same rules can be tested without creating
-official evidence.
+locked counts. The synthetic fixtures use one record per configuration or
+language so the same rules can be tested without a full experiment.
 
 The recipes under `synthetic/` cover valid empty, pilot, partial, and complete
 campaigns plus stable rejection cases for malformed evidence, missing counts,

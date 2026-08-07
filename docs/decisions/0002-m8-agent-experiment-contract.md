@@ -385,7 +385,7 @@ rejects the configuration.
 ### M8f readiness gate
 
 This is the selected candidate contract, but no official evidence may exist
-before M8f. M8f must demonstrate at least one non-official provider-backed
+before M8f. M8f must demonstrate at least one provider-backed test
 successful trial with zero-difference token reconciliation and at least one
 provider-backed safety-limit classification. The pinned-agent fake-upstream
 integration, all eight task-start gates, all eight M8e warm/cold pilots, and the
@@ -463,6 +463,6 @@ agent loop, recorder, token reconciliation, limits, process termination,
 permissions, edit/validation/repair accounting, and classifications with fake
 or dry streams. M8d must prove final public/private correctness and replay.
 
-M8f is the empirical infrastructure acceptance gate for this decision.
+M8f verifies the empirical infrastructure for this decision.
 Official collection cannot begin until the amended representative live gate
 and every deterministic calibration verifier check pass.

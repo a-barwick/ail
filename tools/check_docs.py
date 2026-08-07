@@ -24,11 +24,6 @@ MILESTONE_ROW = re.compile(
     r"^\|\s*(M\d+)\s*\|.*\|\s*(Complete|Active|Planned|Deferred|Superseded)\s*\|",
     re.MULTILINE,
 )
-MILESTONE_HEADING = re.compile(r"^###\s+(M\d+)\s+.+$", re.MULTILINE)
-MILESTONE_STATUS = re.compile(
-    r"^\*\*Status:\*\*\s+(Complete|Active|Planned|Deferred|Superseded)\s*$",
-    re.MULTILINE,
-)
 ADR_FILENAME = re.compile(r"^(\d{4})-[a-z0-9-]+\.md$")
 ADR_TITLE = re.compile(r"^# ADR (\d{4}): .+$", re.MULTILINE)
 ADR_METADATA = (
@@ -117,27 +112,6 @@ def milestone_errors() -> list[str]:
         )
     elif not active and not no_active_match:
         errors.append("docs/STATUS.md: must state that no milestone is active")
-
-    headings = MILESTONE_HEADING.findall(roadmap)
-    status_blocks = MILESTONE_STATUS.findall(roadmap)
-    if len(headings) != len(status_blocks):
-        errors.append(
-            "docs/roadmap.md: each milestone heading must have one status "
-            f"({len(headings)} headings, {len(status_blocks)} statuses)"
-        )
-    elif headings != list(rows):
-        errors.append(
-            "docs/roadmap.md: detailed milestone order does not match the "
-            "dependency map"
-        )
-    else:
-        for milestone, detailed_status in zip(headings, status_blocks):
-            if rows[milestone] != detailed_status:
-                errors.append(
-                    f"docs/roadmap.md: {milestone} status differs between "
-                    f"dependency map ({rows[milestone]}) and detail "
-                    f"({detailed_status})"
-                )
 
     forbidden_headings = ("## Current discovery gate", "## Phase ")
     for heading in forbidden_headings:

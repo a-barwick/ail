@@ -1,118 +1,19 @@
-# Implementation stack evaluation
+# Compiler implementation decision
 
-Status: **Closed by maintainer decision**
+Rust is the compiler implementation language. ADR 0004 made that decision and
+superseded the planned Rust/TypeScript spike comparison.
 
-Decision owner: project maintainers
+The technical reasons remain:
 
-Deferral record: [decisions/0001-implementation-stack.md](decisions/0001-implementation-stack.md)
-Selection record: [decisions/0004-rust-compiler-stack.md](decisions/0004-rust-compiler-stack.md)
+- strong representation invariants for syntax and semantic data;
+- memory safety without a garbage collector;
+- algebraic data types and pattern matching;
+- mature parsing, testing, profiling, and native build tools; and
+- a direct path to future native-code libraries if a backend is selected.
 
-Documentation layer: implementation evidence plan. Candidate behavior is not
-normative language or protocol behavior.
+The costs are longer compile times, ownership friction in graph-heavy code, and
+a steeper contributor learning curve. Manage those costs in the production Rust
+compiler; do not maintain a second semantic implementation.
 
-This document preserves the comparison plan that preceded the maintainer's
-direct Rust selection. ADR 0004 accepts the foregone comparison and makes Rust
-authoritative; the criteria below remain useful as historical risks and review
-questions, not an active gate.
-
-## Prerequisites
-
-Do not begin the common spikes until:
-
-1. the first application use cases and relevant requirements are accepted;
-2. the five-construct semantic subset is written;
-3. the canonical fixtures and structured diagnostic shape are shared; and
-4. the minimal protocol contract for handles, revisions, rename, and identity
-   mapping is reviewable.
-
-Candidate prototypes test the same written contract. They must not resolve
-semantic ambiguity independently, because that would make their results
-incomparable.
-
-ADR 0003 made this the project's active execution path. ADR 0004 supersedes the
-candidate-comparison step. Baseline calibration, numeric AIL targets, and
-illustrative syntax variants remain outside the compiler critical path.
-
-## Decision criteria
-
-Score each candidate against the same evidence:
-
-| Criterion | Weight | Evidence |
-| --- | ---: | --- |
-| Correctness and maintainability of compiler internals | 25% | Typed AST/IR spike and tests |
-| Incremental parsing and source rewriting | 15% | Parse/format round-trip spike |
-| Type/effect-system implementation ergonomics | 15% | Constraint-checker spike |
-| Native performance and deployment | 10% | Build size, startup, throughput |
-| Agent protocol and tooling integration | 10% | Versioned protocol spike |
-| Cross-platform and WebAssembly support | 10% | CI/build matrix |
-| Debugging, profiling, and test ecosystem | 10% | Tooling exercise |
-| Contributor accessibility | 5% | Setup time and documentation |
-
-Weights should be changed before results are known, not after.
-
-## Candidates worth testing
-
-### Rust
-
-Likely strengths: memory safety without a garbage collector, strong algebraic
-data types, mature parser/compiler crates, predictable native binaries, good
-WebAssembly support, and a natural path to code generation libraries.
-
-Main costs: longer compile times, ownership friction while graph-heavy compiler
-structures are evolving, and additional complexity for contributors new to
-Rust.
-
-### TypeScript
-
-Likely strengths: fastest protocol and tooling iteration, excellent JSON and
-editor integration, low setup cost, and easy distribution of early web or
-language-server experiments.
-
-Main costs: weaker representation invariants, runtime and memory overhead, and a
-likely second implementation or native component once compilation and runtime
-performance become central.
-
-### OCaml — not in the active comparison
-
-Likely strengths: excellent fit for typed ASTs, pattern matching, type-system
-work, and persistent data structures; concise compiler implementation.
-
-Main costs: a smaller contributor and library ecosystem, less familiar
-deployment tooling, and a less direct path to some IDE and WebAssembly targets.
-
-OCaml is excluded from M12 unless a maintainer explicitly commits to supporting
-it operationally. The active comparison is Rust versus TypeScript.
-
-## Recommended spikes
-
-Each candidate should implement the same bounded work under
-`prototypes/<candidate>/`:
-
-1. Parse a five-construct AIL subset into a lossless syntax tree.
-2. Canonically print it and prove parse/print idempotence with fixtures.
-3. Assign revision-scoped node handles.
-4. Type-check local inference plus one explicit public function signature.
-5. Detect one undeclared capability and emit the agreed structured diagnostic.
-6. Apply a handle-based rename transaction and return an identity map.
-7. Expose the result through a minimal versioned request/response interface.
-
-Capture:
-
-- implementation time and code size;
-- cold and incremental test times;
-- memory use on a shared fixture;
-- quality of parser recovery;
-- ease of maintaining source spans and stable handles;
-- packaging on macOS, Linux, Windows, and WebAssembly; and
-- friction encountered, not just successful output.
-
-## Decision rule
-
-Use the smallest stack that can plausibly remain the authoritative compiler
-implementation through the first native backend. A prototype can be discarded;
-a semantic oracle is expensive to rewrite.
-
-Rust is selected. Its lossless-syntax, revision-identity, semantic-graph, and
-source-rewriting friction must now be managed and measured in the authoritative
-compiler rather than used as a reason to maintain a second semantic
-implementation.
+See [ADR 0004](decisions/0004-rust-compiler-stack.md) for the decision and
+[compiler/README.md](../compiler/README.md) for the running implementation.
