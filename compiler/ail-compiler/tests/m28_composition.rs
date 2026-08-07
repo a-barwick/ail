@@ -80,7 +80,7 @@ fn multi_file_service_imports_calls_and_executes() {
         "r1",
         "handle",
         vec![RuntimeValue::record(
-            "Request",
+            "domain.Request",
             [("name", RuntimeValue::Text("build".to_owned()))],
         )],
         &mut capabilities,
@@ -89,7 +89,7 @@ fn multi_file_service_imports_calls_and_executes() {
         accepted,
         ExecutionResponse::Completed(result)
             if result.value == RuntimeValue::variant(
-                "Response",
+                "domain.Response",
                 "Accepted",
                 Some(RuntimeValue::Text("build".to_owned()))
             )
@@ -99,7 +99,7 @@ fn multi_file_service_imports_calls_and_executes() {
         "r1",
         "handle",
         vec![RuntimeValue::record(
-            "Request",
+            "domain.Request",
             [("name", RuntimeValue::Text(String::new()))],
         )],
         &mut capabilities,
@@ -107,7 +107,7 @@ fn multi_file_service_imports_calls_and_executes() {
     assert!(matches!(
         rejected,
         ExecutionResponse::Completed(result)
-            if result.value == RuntimeValue::variant("Response", "Rejected", None)
+            if result.value == RuntimeValue::variant("domain.Response", "Rejected", None)
     ));
 }
 
@@ -137,6 +137,25 @@ fn module_headers_and_imports_format_canonically() {
     assert!(
         module_failure(vec![("service.ail", import_without_module)])
             .contains(&"AIL.MODULE.MISSING_IDENTITY")
+    );
+}
+
+#[test]
+fn aliases_and_qualified_references_format_canonically() {
+    let source = concat!(
+        "module service.api; import right.models as right; import left.models as left; ",
+        "fn echo(value: left.Item) -> right.Result { right.make(value) }",
+    );
+    assert_eq!(
+        format_source(source).expect("qualified source parses"),
+        concat!(
+            "module service.api;\n",
+            "import left.models as left;\n",
+            "import right.models as right;\n\n",
+            "fn echo(value: left.Item) -> right.Result {\n",
+            "  right.make(value)\n",
+            "}\n",
+        )
     );
 }
 
@@ -204,6 +223,32 @@ fn function_calls_check_resolution_arguments_effects_and_recursion() {
             .iter()
             .any(|diagnostic| diagnostic.code == "AIL.CALL.RECURSIVE_CYCLE")
     );
+}
+
+#[test]
+fn qualification_preserves_capability_intrinsic_and_field_parsing() {
+    let source = concat!(
+        "module store;\n",
+        "record Request { enabled: Bool; }\n\n",
+        "variant Outcome { Ready; Waiting; }\n\n",
+        "record State { outcome: Outcome; }\n\n",
+        "fn use_store(value: Text, store: capability Store) -> Text effects { store.mark } {\n",
+        "  store.mark(value)\n",
+        "}\n\n",
+        "fn empty(value: Text) -> Bool { text.is_empty(value) }\n\n",
+        "fn choose(request: Request) -> Text {\n",
+        "  if request.enabled { \"yes\" } else { \"no\" }\n",
+        "}\n\n",
+        "fn inspect(state: State) -> Text {\n",
+        "  match state.outcome {\n",
+        "    Outcome::Ready => { \"ready\" },\n",
+        "    Outcome::Waiting => { \"waiting\" },\n",
+        "  }\n",
+        "}\n",
+    );
+    let result = check_source(source, "dotted-parsing", &environment());
+    assert_eq!(result.type_result.status, TypeCheckStatus::Ok);
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
 }
 
 #[test]
@@ -284,6 +329,27 @@ fn modules_reject_invalid_identity_import_visibility_and_cycles() {
         .contains(&"AIL.MODULE.INACCESSIBLE_DECLARATION")
     );
 
+    for hidden_call in ["a.hidden()", "a.deep.hidden()"] {
+        let module = if hidden_call.starts_with("a.deep") {
+            "a.deep"
+        } else {
+            "a"
+        };
+        assert!(
+            module_failure(vec![
+                (
+                    "a.ail",
+                    &format!("module {module};\nfn hidden() -> Text {{ \"a\" }}\n")
+                ),
+                (
+                    "b.ail",
+                    &format!("module b;\nfn use() -> Text {{ {hidden_call} }}\n")
+                ),
+            ])
+            .contains(&"AIL.MODULE.INACCESSIBLE_DECLARATION")
+        );
+    }
+
     assert!(
         module_failure(vec![(
             "a.ail",
@@ -321,6 +387,223 @@ fn modules_reject_invalid_identity_import_visibility_and_cycles() {
         ),
     ]);
     assert!(ambiguous.contains(&"AIL.MODULE.AMBIGUOUS_IMPORT"));
+}
+
+#[test]
+fn duplicate_alias_rejection_is_source_order_independent() {
+    let sources = vec![
+        ("a.ail", "module a;\nfn one() -> Text { \"a\" }\n"),
+        ("b.ail", "module b;\nfn two() -> Text { \"b\" }\n"),
+        (
+            "c.ail",
+            concat!(
+                "module c;\n",
+                "import a as dependency;\n",
+                "import b as dependency;\n",
+                "fn run() -> Text { dependency.one() }\n",
+            ),
+        ),
+    ];
+    let forward = module_failure(sources.clone());
+    let reverse = module_failure(sources.into_iter().rev().collect());
+    assert_eq!(forward, reverse);
+    assert!(forward.contains(&"AIL.MODULE.DUPLICATE_QUALIFIER"));
+}
+
+fn aliased_collision_sources() -> Vec<EvolutionSource> {
+    vec![
+        EvolutionSource::new(
+            "left.ail",
+            concat!(
+                "module left;\n",
+                "record Item identity \"left.item\" { text identity \"text\": Text; }\n\n",
+                "variant Result identity \"left.result\" { Value identity \"value\"(Item); }\n\n",
+                "fn read(item: Item) -> Text { item.text }\n",
+            ),
+        ),
+        EvolutionSource::new(
+            "right.ail",
+            concat!(
+                "module right;\n",
+                "record Item identity \"right.item\" { number identity \"number\": Int; }\n\n",
+                "variant Result identity \"right.result\" { Value identity \"value\"(Text); }\n\n",
+                "fn make(value: Text) -> Result { Result::Value(value) }\n",
+            ),
+        ),
+        EvolutionSource::new(
+            "service.ail",
+            concat!(
+                "module service;\n",
+                "import left as input;\n",
+                "import right as output;\n\n",
+                "fn text(item: input.Item) -> Text { input.read(item) }\n\n",
+                "fn copy(item: input.Item) -> input.Item {\n",
+                "  input.Item { text: input.read(item) }\n",
+                "}\n\n",
+                "fn direct(item: input.Item) -> output.Result {\n",
+                "  output.Result::Value(service.text(item))\n",
+                "}\n\n",
+                "fn run(item: input.Item) -> output.Result {\n",
+                "  output.make(service.text(service.copy(item)))\n",
+                "}\n",
+            ),
+        ),
+    ]
+}
+
+#[test]
+fn aliases_disambiguate_calls_types_variants_execution_and_graph_facts() {
+    let sources = aliased_collision_sources();
+    let forward = EvolutionWorkspace::new(
+        "qualified-collisions",
+        "r1",
+        sources.clone(),
+        &CapabilityEnvironment::new(),
+        no_coverage(),
+    )
+    .expect("source order does not affect qualification");
+    let workspace = EvolutionWorkspace::new(
+        "qualified-collisions",
+        "r1",
+        sources.into_iter().rev().collect(),
+        &CapabilityEnvironment::new(),
+        no_coverage(),
+    )
+    .expect("aliases make every colliding reference explicit");
+    assert_eq!(
+        forward.revision("r1"),
+        workspace.revision("r1"),
+        "source-set revisions must be independent of input order"
+    );
+
+    let mut capabilities = TestCapabilities::default();
+    assert!(matches!(
+        workspace.execute(
+            "r1",
+            "service.run",
+            vec![RuntimeValue::record(
+                "left.Item",
+                [("text", RuntimeValue::Text("qualified".to_owned()))],
+            )],
+            &mut capabilities,
+        ),
+        ExecutionResponse::Completed(result)
+            if result.value == RuntimeValue::variant(
+                "right.Result",
+                "Value",
+                Some(RuntimeValue::Text("qualified".to_owned())),
+            )
+    ));
+    assert!(matches!(
+        workspace.execute(
+            "r1",
+            "service.run",
+            vec![RuntimeValue::record(
+                "right.Item",
+                [("text", RuntimeValue::Text("wrong module".to_owned()))],
+            )],
+            &mut capabilities,
+        ),
+        ExecutionResponse::Failed(failure)
+            if failure.fault.code == "AIL.RUNTIME.ARGUMENT_TYPE"
+    ));
+
+    let graph = workspace.graph("r1").expect("revision is retained");
+    assert!(graph.iter().any(|edge| {
+        edge.site.path == "service.ail"
+            && edge.kind == "signature-input"
+            && edge.target == "left.item"
+    }));
+    assert!(graph.iter().any(|edge| {
+        edge.site.path == "service.ail"
+            && edge.kind == "signature-output"
+            && edge.target == "right.result"
+    }));
+    assert!(graph.iter().any(|edge| {
+        edge.site.path == "service.ail" && edge.kind == "constructs" && edge.target == "left.item"
+    }));
+    assert!(graph.iter().any(|edge| {
+        edge.site.path == "service.ail"
+            && edge.kind == "constructs"
+            && edge.target == "right.result"
+    }));
+}
+
+#[test]
+fn explicit_module_qualification_disambiguates_plain_imports() {
+    let workspace = EvolutionWorkspace::new(
+        "qualified-plain-imports",
+        "r1",
+        vec![
+            EvolutionSource::new(
+                "a.ail",
+                concat!(
+                    "module a;\n",
+                    "record Item { value: Text; }\n\n",
+                    "fn read(item: Item) -> Text { item.value }\n",
+                ),
+            ),
+            EvolutionSource::new(
+                "b.ail",
+                concat!(
+                    "module b;\n",
+                    "record Item { value: Text; }\n\n",
+                    "fn read(item: Item) -> Text { item.value }\n",
+                ),
+            ),
+            EvolutionSource::new(
+                "service.ail",
+                concat!(
+                    "module service;\n",
+                    "import a;\n",
+                    "import b;\n\n",
+                    "fn run(item: a.Item) -> Text { b.read(b.Item { value: a.read(item) }) }\n",
+                ),
+            ),
+        ],
+        &CapabilityEnvironment::new(),
+        no_coverage(),
+    )
+    .expect("qualified references resolve colliding plain imports");
+    let mut capabilities = TestCapabilities::default();
+    assert!(matches!(
+        workspace.execute(
+            "r1",
+            "service.run",
+            vec![RuntimeValue::record(
+                "a.Item",
+                [("value", RuntimeValue::Text("selected".to_owned()))],
+            )],
+            &mut capabilities,
+        ),
+        ExecutionResponse::Completed(result)
+            if result.value == RuntimeValue::Text("selected".to_owned())
+    ));
+}
+
+#[test]
+fn qualified_local_calls_participate_in_recursion_detection() {
+    let failure = EvolutionWorkspace::new(
+        "qualified-recursion",
+        "r1",
+        vec![EvolutionSource::new(
+            "loop.ail",
+            concat!(
+                "module loop;\n",
+                "fn first(value: Text) -> Text { loop.second(value) }\n\n",
+                "fn second(value: Text) -> Text { loop.first(value) }\n",
+            ),
+        )],
+        &CapabilityEnvironment::new(),
+        no_coverage(),
+    )
+    .expect_err("qualification must not hide recursion");
+    assert!(
+        failure
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "AIL.CALL.RECURSIVE_CYCLE")
+    );
 }
 
 #[test]
@@ -409,9 +692,9 @@ fn cross_module_calls_enforce_multi_hop_effects() {
         "middle.ail",
         concat!(
             "module middle;\n",
-            "import leaf;\n\n",
+            "import leaf as writer;\n\n",
             "fn forward(value: Text, store: capability Store) -> Text effects { store.mark } {\n",
-            "  mark(value)\n",
+            "  writer.mark(value)\n",
             "}\n",
         ),
     );
@@ -419,9 +702,9 @@ fn cross_module_calls_enforce_multi_hop_effects() {
         "service.ail",
         concat!(
             "module service;\n",
-            "import middle;\n\n",
+            "import middle as pipeline;\n\n",
             "fn run(value: Text, store: capability Store) -> Text {\n",
-            "  forward(value)\n",
+            "  pipeline.forward(value)\n",
             "}\n",
         ),
     );
@@ -444,9 +727,9 @@ fn cross_module_calls_enforce_multi_hop_effects() {
         "service.ail",
         concat!(
             "module service;\n",
-            "import middle;\n\n",
+            "import middle as pipeline;\n\n",
             "fn run(value: Text, store: capability Store) -> Text effects { store.mark } {\n",
-            "  forward(value)\n",
+            "  pipeline.forward(value)\n",
             "}\n",
         ),
     );

@@ -28,9 +28,17 @@ pub(crate) fn format(unit: &SourceUnit) -> String {
         writeln!(output, "module {};", module.name).expect("writing to String cannot fail");
     }
     let mut imports = unit.imports.iter().collect::<Vec<_>>();
-    imports.sort_by(|left, right| left.module.cmp(&right.module));
+    imports.sort_by(|left, right| {
+        left.module
+            .cmp(&right.module)
+            .then(left.alias.cmp(&right.alias))
+    });
     for import in imports {
-        writeln!(output, "import {};", import.module).expect("writing to String cannot fail");
+        write!(output, "import {}", import.module).expect("writing to String cannot fail");
+        if let Some(alias) = &import.alias {
+            write!(output, " as {alias}").expect("writing to String cannot fail");
+        }
+        writeln!(output, ";").expect("writing to String cannot fail");
     }
     if unit.module.is_some() || !unit.imports.is_empty() {
         output.push('\n');

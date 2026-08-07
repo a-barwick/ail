@@ -1,6 +1,6 @@
 module validation;
-import domain;
+import domain as model;
 
-fn is_invalid(request: Request) -> Bool {
+fn is_invalid(request: model.Request) -> Bool {
   text.is_empty(request.name)
 }

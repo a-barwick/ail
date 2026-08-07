@@ -183,23 +183,23 @@
     },
     {
       "path": "compiler/ail-compiler/src/evolution.rs",
-      "sha256": "8fd9132c48aa485da4e70a31eb20180714250d29f9f34842473abdae45c28c00"
+      "sha256": "0b6e88e1fbde8c11ee0bc97d70db804bcef99937533edfce3c67a0da92b893e9"
     },
     {
       "path": "compiler/ail-compiler/src/evolution/transaction.rs",
-      "sha256": "3296d37e40b5f7f92f03155df046d80c58d6843e61b90c2b77796f8387725c68"
+      "sha256": "17ee0378b3013a3c5ef3838666da74ad9f8daac7fb2b599cfa68780c8a4e276f"
     },
     {
       "path": "compiler/ail-compiler/src/formatter.rs",
-      "sha256": "88cbea87b232dc23c6953d5bf1cde302cc03d5b86f9532121ed07ebbc478c3a2"
+      "sha256": "1202b48be2c9aa6ec9b2bdf149daebfae629fc09441035dada58245c0dbc1cff"
     },
     {
       "path": "compiler/ail-compiler/src/interpreter.rs",
-      "sha256": "090697140ee4f9cfa6989d7f7d1ce5caee352759483aae459edb1ec688072d0e"
+      "sha256": "d76d76fae0487a7312b8b73aaafe24d9540f65a853c3bfd797bc6017f40192ab"
     },
     {
       "path": "compiler/ail-compiler/src/lexer.rs",
-      "sha256": "3907080563d3d96c9ba10e9f753dfc906526ee4af7349942a672bbe7ebfe9e5a"
+      "sha256": "60b4091edb8aededbd77c5fe1cb5fc3b1464bf1c63db791fedaf471cbd5a69eb"
     },
     {
       "path": "compiler/ail-compiler/src/lib.rs",
@@ -207,7 +207,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/parser.rs",
-      "sha256": "b7287530911f69ffd5891a7c5a8fb3ef65485eddb3deafee33f36b081a5a7ec3"
+      "sha256": "0cb1756921189828c6bcabdeca8c8aa74b70e5014fe59385ceb6b2c1e23b654f"
     },
     {
       "path": "compiler/ail-compiler/src/protocol.rs",
@@ -219,7 +219,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/syntax.rs",
-      "sha256": "d85440600f9a6b268dd0371517bb8720004d1a20c5c6a9cf22ee162a1d8aff2a"
+      "sha256": "98f72fc18a930b31da4cbe9f52e23e875fdd0b011f52c4eff409598c412b876f"
     },
     {
       "path": "compiler/ail-compiler/tests/m17_runtime.rs",
@@ -243,7 +243,7 @@
     },
     {
       "path": "compiler/ail-compiler/tests/m28_composition.rs",
-      "sha256": "4f717811aeb1a3c9adc4d12887cf47b74bb0ac0d2823da71c08509d94e4f4839"
+      "sha256": "3fddfd66117ee6ce2bf904401859a72a5f8c01c5cd38e97142e9f9722070937c"
     },
     {
       "path": "compiler/examples/composed-service/domain.ail",
@@ -251,11 +251,11 @@
     },
     {
       "path": "compiler/examples/composed-service/service.ail",
-      "sha256": "ed7217d80da2308edfbd5bd52aa663b328a1748414ba0387c5dcf0240643ec15"
+      "sha256": "142bb60382667bf67306c3a5ace297343ef4605eb4e0174693093126317b4cd8"
     },
     {
       "path": "compiler/examples/composed-service/validation.ail",
-      "sha256": "3aa624e83219e69e6de96f105f89530725ea55aeeaf460abc217147597fb4265"
+      "sha256": "22f3870a2f7c3e3dc1e9e0701af0fab5c7e3081c2c310d1ae68aae7710df2c5d"
     },
     {
       "path": "specs/README.md",

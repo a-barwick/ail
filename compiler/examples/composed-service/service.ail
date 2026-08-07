@@ -1,11 +1,11 @@
 module service;
-import domain;
-import validation;
+import domain as model;
+import validation as checks;
 
-fn handle(request: Request) -> Response {
-  if is_invalid(request) {
-    Response::Rejected
+fn handle(request: model.Request) -> model.Response {
+  if checks.is_invalid(request) {
+    model.Response::Rejected
   } else {
-    Response::Accepted(domain_name(request))
+    model.Response::Accepted(model.domain_name(request))
   }
 }

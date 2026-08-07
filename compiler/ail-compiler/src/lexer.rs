@@ -21,6 +21,7 @@ impl Span {
 pub enum Keyword {
     Module,
     Import,
+    As,
     Record,
     Variant,
     Fn,
@@ -73,6 +74,7 @@ impl TokenKind {
             Self::LineComment | Self::BlockComment => "comment",
             Self::Keyword(Keyword::Module) => "module",
             Self::Keyword(Keyword::Import) => "import",
+            Self::Keyword(Keyword::As) => "as",
             Self::Keyword(Keyword::Record) => "record",
             Self::Keyword(Keyword::Variant) => "variant",
             Self::Keyword(Keyword::Fn) => "fn",
@@ -243,6 +245,7 @@ fn keyword_or_identifier(text: &str) -> TokenKind {
     match text {
         "module" => TokenKind::Keyword(Keyword::Module),
         "import" => TokenKind::Keyword(Keyword::Import),
+        "as" => TokenKind::Keyword(Keyword::As),
         "record" => TokenKind::Keyword(Keyword::Record),
         "variant" => TokenKind::Keyword(Keyword::Variant),
         "fn" => TokenKind::Keyword(Keyword::Fn),

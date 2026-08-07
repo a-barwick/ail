@@ -109,9 +109,9 @@ first compiler slices.
 - `docs/STATUS.md` names the active milestone and contains the immediate handoff
   for the next agent.
 - Work only within the active milestone unless the user changes scope.
-- Work directly on `main` and do not disturb unrelated or user-owned changes.
-- Commit only complete changes that build and pass the milestone's focused
-  checks; do not commit speculative or partially working checkpoints.
+- Commit completed work directly to local `main`; do not use feature branches.
+  Every commit must be coherent, reviewed, tested, and ready to remain on main.
+  Do not disturb unrelated or user-owned changes.
 - Add executable checks for every behavior delivered by a milestone.
 - Record consequential or expensive-to-reverse choices in `docs/decisions/`.
 - A milestone is complete only when its exit criterion, focused checks, and

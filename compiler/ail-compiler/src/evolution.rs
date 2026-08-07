@@ -611,17 +611,14 @@ fn validate_modules(parsed_sources: &[(String, ParseResult)]) -> Vec<SourceSetDi
     }
     for (module_name, (path, parsed)) in &modules {
         let mut imported_modules = BTreeSet::new();
-        let mut imported_declarations = parsed
+        let mut qualifiers = BTreeMap::from([(module_name.as_str(), module_name.as_str())]);
+        let local_declarations = parsed
             .unit
             .declarations
             .iter()
-            .map(|declaration| {
-                (
-                    declaration_name(declaration).0.to_owned(),
-                    module_name.clone(),
-                )
-            })
-            .collect::<BTreeMap<_, _>>();
+            .map(|declaration| declaration_name(declaration).0.to_owned())
+            .collect::<BTreeSet<_>>();
+        let mut imported_declarations = BTreeMap::<String, BTreeSet<String>>::new();
         for import in &parsed.unit.imports {
             if !imported_modules.insert(import.module.as_str()) {
                 diagnostics.push(source_set_diagnostic(
@@ -629,6 +626,19 @@ fn validate_modules(parsed_sources: &[(String, ParseResult)]) -> Vec<SourceSetDi
                     path,
                     import.span,
                     [("module", import.module.as_str())],
+                ));
+                continue;
+            }
+            if let Some(existing) = qualifiers.insert(import.qualifier(), import.module.as_str()) {
+                diagnostics.push(source_set_diagnostic(
+                    "AIL.MODULE.DUPLICATE_QUALIFIER",
+                    path,
+                    import.span,
+                    [
+                        ("qualifier", import.qualifier()),
+                        ("first_module", existing),
+                        ("second_module", import.module.as_str()),
+                    ],
                 ));
                 continue;
             }
@@ -641,31 +651,63 @@ fn validate_modules(parsed_sources: &[(String, ParseResult)]) -> Vec<SourceSetDi
                 ));
                 continue;
             };
-            for declaration in &imported.unit.declarations {
-                let (name, _) = declaration_name(declaration);
-                if let Some(existing) =
-                    imported_declarations.insert(name.to_owned(), import.module.clone())
-                {
-                    diagnostics.push(source_set_diagnostic(
-                        "AIL.MODULE.AMBIGUOUS_IMPORT",
-                        path,
-                        import.span,
-                        [
-                            ("declaration", name),
-                            ("first_module", existing.as_str()),
-                            ("second_module", import.module.as_str()),
-                        ],
-                    ));
+            if import.alias.is_none() {
+                for declaration in &imported.unit.declarations {
+                    let (name, _) = declaration_name(declaration);
+                    imported_declarations
+                        .entry(name.to_owned())
+                        .or_default()
+                        .insert(import.module.clone());
                 }
             }
         }
 
-        let visible = imported_declarations
-            .keys()
-            .cloned()
-            .collect::<BTreeSet<_>>();
+        let mut visible = local_declarations.clone();
+        visible.extend(
+            imported_declarations
+                .iter()
+                .filter(|(name, modules)| modules.len() == 1 && !local_declarations.contains(*name))
+                .map(|(name, _)| name.clone()),
+        );
+        for declaration in &parsed.unit.declarations {
+            let (name, _) = declaration_name(declaration);
+            visible.insert(qualified_name(module_name, name));
+        }
+        for import in &parsed.unit.imports {
+            let Some((_, imported)) = modules.get(&import.module) else {
+                continue;
+            };
+            for declaration in &imported.unit.declarations {
+                let (name, _) = declaration_name(declaration);
+                visible.insert(qualified_name(import.qualifier(), name));
+            }
+        }
         for (name, span, role) in source_references(&parsed.unit) {
-            if declarations.contains_key(&name) && !visible.contains(&name) {
+            if !name.contains('.') && !local_declarations.contains(&name) {
+                if let Some(imports) = imported_declarations.get(&name) {
+                    if imports.len() > 1 {
+                        let mut imports = imports.iter();
+                        diagnostics.push(source_set_diagnostic(
+                            "AIL.MODULE.AMBIGUOUS_IMPORT",
+                            path,
+                            span,
+                            [
+                                ("declaration", name.as_str()),
+                                (
+                                    "first_module",
+                                    imports.next().expect("at least two imports"),
+                                ),
+                                (
+                                    "second_module",
+                                    imports.next().expect("at least two imports"),
+                                ),
+                            ],
+                        ));
+                        continue;
+                    }
+                }
+            }
+            if declarations.contains_key(source_name(&name)) && !visible.contains(&name) {
                 diagnostics.push(source_set_diagnostic(
                     "AIL.MODULE.INACCESSIBLE_DECLARATION",
                     path,
@@ -741,21 +783,43 @@ fn link_source_set(parsed_sources: &[(String, ParseResult)]) -> SourceUnit {
             .declarations
             .iter()
             .map(|declaration| {
-                (
-                    declaration_name(declaration).0.to_owned(),
-                    module.name.clone(),
-                )
+                let name = declaration_name(declaration).0;
+                (name.to_owned(), qualified_name(&module.name, name))
             })
             .collect::<BTreeMap<_, _>>();
+        for declaration in &parsed.unit.declarations {
+            let name = declaration_name(declaration).0;
+            scope.insert(
+                qualified_name(&module.name, name),
+                qualified_name(&module.name, name),
+            );
+        }
+        let local_names = parsed
+            .unit
+            .declarations
+            .iter()
+            .map(|declaration| declaration_name(declaration).0)
+            .collect::<BTreeSet<_>>();
+        let mut bare_imports = BTreeMap::<String, Vec<String>>::new();
         for import in &parsed.unit.imports {
             let imported = modules
                 .get(import.module.as_str())
                 .expect("module validation resolves every import");
             for declaration in &imported.declarations {
-                scope.insert(
-                    declaration_name(declaration).0.to_owned(),
-                    import.module.clone(),
-                );
+                let name = declaration_name(declaration).0;
+                let target = qualified_name(&import.module, name);
+                scope.insert(qualified_name(import.qualifier(), name), target.clone());
+                if import.alias.is_none() && !local_names.contains(name) {
+                    bare_imports
+                        .entry(name.to_owned())
+                        .or_default()
+                        .push(target);
+                }
+            }
+        }
+        for (name, targets) in bare_imports {
+            if targets.len() == 1 {
+                scope.insert(name, targets.into_iter().next().expect("one target"));
             }
         }
         declarations.extend(
@@ -873,9 +937,7 @@ fn qualify_expression(expression: &mut Expr, scope: &BTreeMap<String, String>) {
 }
 
 fn resolve_linked_name(scope: &BTreeMap<String, String>, name: &str) -> String {
-    scope
-        .get(name)
-        .map_or_else(|| name.to_owned(), |module| qualified_name(module, name))
+    scope.get(name).cloned().unwrap_or_else(|| name.to_owned())
 }
 
 fn qualified_name(module: &str, name: &str) -> String {
@@ -1272,23 +1334,40 @@ fn build_graph(
         }
     }
     for (path, parsed) in parsed_sources {
+        let local_identity_names = identity_by_path_and_name
+            .keys()
+            .filter_map(|(identity_path, name)| (identity_path == path).then_some(name.as_str()))
+            .collect::<BTreeSet<_>>();
         let mut visible_identities = if parsed.unit.module.is_none() {
-            identity_by_name.clone()
+            identity_by_name
+                .iter()
+                .map(|(name, identity)| ((*name).to_owned(), *identity))
+                .collect::<BTreeMap<_, _>>()
         } else {
             identity_by_path_and_name
                 .iter()
                 .filter_map(|((identity_path, name), identity)| {
-                    (identity_path == path).then_some((name.as_str(), *identity))
+                    (identity_path == path).then_some((name.clone(), *identity))
                 })
                 .collect::<BTreeMap<_, _>>()
         };
+        if let Some(module) = &parsed.unit.module {
+            for ((identity_path, name), identity) in &identity_by_path_and_name {
+                if identity_path == path {
+                    visible_identities.insert(qualified_name(&module.name, name), *identity);
+                }
+            }
+        }
         for import in &parsed.unit.imports {
             let imported_path = module_paths
                 .get(import.module.as_str())
                 .expect("validated imports have a source path");
             for ((identity_path, name), identity) in &identity_by_path_and_name {
                 if identity_path == imported_path {
-                    visible_identities.insert(name.as_str(), *identity);
+                    visible_identities.insert(qualified_name(import.qualifier(), name), *identity);
+                    if import.alias.is_none() && !local_identity_names.contains(name.as_str()) {
+                        visible_identities.insert(name.clone(), *identity);
+                    }
                 }
             }
         }
@@ -1471,7 +1550,7 @@ fn walk_block(
     source: &str,
     revision_id: &str,
     path: &str,
-    identities: &BTreeMap<&str, &str>,
+    identities: &BTreeMap<String, &str>,
     graph: &mut Vec<RelationshipEdge>,
 ) {
     for binding in &block.bindings {
@@ -1486,7 +1565,7 @@ fn walk_expr(
     source: &str,
     revision_id: &str,
     path: &str,
-    identities: &BTreeMap<&str, &str>,
+    identities: &BTreeMap<String, &str>,
     graph: &mut Vec<RelationshipEdge>,
 ) {
     match expression {
@@ -1612,11 +1691,13 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     else {
         unreachable!("impact validates the subject identity")
     };
+    let subject_type = linked_type_name_for_identity(stored, &change.subject_identity)
+        .unwrap_or(subject.display_name.as_str());
     let functions = functions_with_paths(&stored.sources, &stored.unit);
     let handler = functions.iter().find(|(_, function)| {
-        function.parameters.iter().any(|parameter| {
-            matches!(&parameter.ty, ParameterType::Named(ty) if ty == &subject.display_name)
-        }) && function
+        function.parameters.iter().any(
+            |parameter| matches!(&parameter.ty, ParameterType::Named(ty) if ty == subject_type),
+        ) && function
             .parameters
             .iter()
             .any(|parameter| matches!(parameter.ty, ParameterType::Capability(_)))
@@ -1624,9 +1705,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     let stored_name = handler
         .and_then(|(_, function)| capability_argument_record(function))
         .unwrap_or_default();
-    let stored_schema = stored.identities.iter().find(|identity| {
-        identity.parent_identity.is_none() && identity.display_name == stored_name
-    });
+    let stored_schema = top_identity_for_type(stored, &stored_name);
     let stored_identity = stored_schema.map_or("", |identity| identity.identity.as_str());
     let subject_path = identity_path(subject);
     let mut must_change = vec![
@@ -1663,8 +1742,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
         );
     }
     if let Some((path, function)) = functions.iter().find(|(_, function)| {
-        named_parameter(function, &subject.display_name)
-            && function.result_type == subject.display_name
+        named_parameter(function, subject_type) && function.result_type == subject_type
     }) {
         must_change.push(impact_entry(
             &format!("{path}#{}", function.name),
@@ -1724,7 +1802,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
             && expression_constructs(&function.body, &function.result_type)
     });
     if let Some((path, function)) = projection {
-        let output_identity = identity_for_name(&stored.identities, &function.result_type);
+        let output_identity = identity_for_type(stored, &function.result_type);
         must_change.push(impact_entry(
             &format!("{path}#{}", function.name),
             "v1-response-projection",
@@ -1743,9 +1821,9 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
         ));
     }
     if let Some((path, function)) = functions.iter().find(|(_, function)| {
-        function.result_type == subject.display_name
-            && !named_parameter(function, &subject.display_name)
-            && expression_constructs(&function.body, &subject.display_name)
+        function.result_type == subject_type
+            && !named_parameter(function, subject_type)
+            && expression_constructs(&function.body, subject_type)
     }) {
         must_change.push(impact_entry(
             &format!("{path}#{}", function.name),
@@ -1769,9 +1847,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     }
     let mut review = Vec::new();
     if let Some((path, function)) = handler {
-        if let Some(result_schema) = stored.identities.iter().find(|identity| {
-            identity.parent_identity.is_none() && identity.display_name == function.result_type
-        }) {
+        if let Some(result_schema) = top_identity_for_type(stored, &function.result_type) {
             review.push(impact_entry(
                 &format!(
                     "{}#{}",
@@ -1784,9 +1860,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
             ));
         }
         if let Some(outcome_name) = last_match_type(&function.body) {
-            if let Some(outcome_identity) = stored.identities.iter().find(|identity| {
-                identity.parent_identity.is_none() && identity.display_name == outcome_name
-            }) {
+            if let Some(outcome_identity) = top_identity_for_type(stored, &outcome_name) {
                 review.push(impact_entry(
                     &format!("{path}#{outcome_name}.match"),
                     "closed-outcome-consumer",
@@ -1822,10 +1896,7 @@ fn functions_with_paths<'a>(
     let mut sites = Vec::new();
     for declaration in &unit.declarations {
         if let Declaration::Function(function) = declaration {
-            let path = sources
-                .iter()
-                .find(|source| source.source.contains(&format!("fn {}(", function.name)))
-                .map_or("", |source| source.path.as_str());
+            let path = source_path_for_function(sources, &function.name);
             sites.push((path, function));
         }
     }
@@ -1841,11 +1912,47 @@ fn identity_path(identity: &PersistentIdentity) -> &str {
         .unwrap_or_default()
 }
 
-fn identity_for_name<'a>(identities: &'a [PersistentIdentity], name: &str) -> &'a str {
-    identities
+fn linked_type_name_for_identity<'a>(
+    stored: &'a StoredSourceSet,
+    identity: &str,
+) -> Option<&'a str> {
+    stored
+        .unit
+        .declarations
         .iter()
-        .find(|identity| identity.parent_identity.is_none() && identity.display_name == name)
-        .map_or("", |identity| identity.identity.as_str())
+        .find_map(|declaration| match declaration {
+            Declaration::Record(record) if record.identity.as_deref() == Some(identity) => {
+                Some(record.name.as_str())
+            }
+            Declaration::Variant(variant) if variant.identity.as_deref() == Some(identity) => {
+                Some(variant.name.as_str())
+            }
+            Declaration::Record(_) | Declaration::Variant(_) | Declaration::Function(_) => None,
+        })
+}
+
+fn top_identity_for_type<'a>(
+    stored: &'a StoredSourceSet,
+    name: &str,
+) -> Option<&'a PersistentIdentity> {
+    let identity = identity_for_type(stored, name);
+    stored
+        .identities
+        .iter()
+        .find(|candidate| candidate.identity == identity)
+}
+
+fn identity_for_type<'a>(stored: &'a StoredSourceSet, name: &str) -> &'a str {
+    stored
+        .unit
+        .declarations
+        .iter()
+        .find_map(|declaration| match declaration {
+            Declaration::Record(record) if record.name == name => record.identity.as_deref(),
+            Declaration::Variant(variant) if variant.name == name => variant.identity.as_deref(),
+            Declaration::Record(_) | Declaration::Variant(_) | Declaration::Function(_) => None,
+        })
+        .unwrap_or("")
 }
 
 fn persistent_type_identity(subject_identity: &str, display_name: &str) -> String {

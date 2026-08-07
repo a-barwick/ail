@@ -18,7 +18,15 @@ pub struct ModuleDecl {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {
     pub module: String,
+    pub alias: Option<String>,
     pub span: Span,
+}
+
+impl ImportDecl {
+    #[must_use]
+    pub fn qualifier(&self) -> &str {
+        self.alias.as_deref().unwrap_or(&self.module)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

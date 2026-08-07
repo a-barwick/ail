@@ -54,13 +54,19 @@ candidates atomically, exposes the exact uncommitted revision to a behavior
 oracle, and returns revision-bound impact, edit, identity, semantic-diff, and
 completion evidence.
 An explicit multi-file source set uses one `module name;` header per file and
-zero or more `import dependency;` headers. Imports expose a dependency's
-records, variants, and functions under their declared names; declarations in
-non-imported modules are inaccessible. Independent modules may reuse declaration
-names, while importing two declarations with the same name is rejected as
-ambiguous. `EvolutionWorkspace::execute` runs a checked cross-module entry point;
-an unqualified function name is accepted when unique, and `module.function`
-selects an entry point when source names repeat. AIL calls use
+zero or more `import dependency;` or `import dependency as alias;` headers.
+An unaliased import preserves bare lookup and also permits explicit
+`dependency.Name` references. An aliased import exposes declarations only as
+`alias.Name`. Local declarations retain bare lookup and may be written
+explicitly as `module.Name`. These forms apply to records, variants, functions,
+signatures, constructions, and match arms. Colliding plain imports are valid
+when references are qualified; a colliding bare reference is rejected
+deterministically. Duplicate qualifiers and declarations in non-imported
+modules are rejected. `EvolutionWorkspace::execute` runs a checked cross-module
+entry point; an unqualified function name is accepted when unique, and
+`module.function` selects an entry point when source names repeat. Runtime
+record and variant values carry that exact linked type name, so same-named types
+from different modules remain distinct at execution boundaries. AIL calls use
 `function(arguments)` syntax,
 evaluate arguments left-to-right, propagate same-named capability parameters,
 and require callers to declare all transitively reachable effects. Recursive

@@ -23,6 +23,7 @@ pub fn parse(source: &str) -> ParseResult {
         tokens: significant,
         cursor: 0,
         diagnostics: Vec::new(),
+        capability_receivers: Vec::new(),
     };
     let module = parser.parse_module();
     let imports = parser.parse_imports();
@@ -45,6 +46,7 @@ struct Parser {
     tokens: Vec<Token>,
     cursor: usize,
     diagnostics: Vec<Diagnostic>,
+    capability_receivers: Vec<String>,
 }
 
 impl Parser {
@@ -68,9 +70,18 @@ impl Parser {
             let Some(module) = self.parse_module_name() else {
                 break;
             };
+            let alias = if self.consume_if(TokenKind::Keyword(Keyword::As)) {
+                let Some(alias) = self.take_identifier() else {
+                    break;
+                };
+                Some(alias)
+            } else {
+                None
+            };
             self.expect(TokenKind::Semicolon, ";");
             imports.push(ImportDecl {
                 module,
+                alias,
                 span: Span::new(start, self.previous().span.end),
             });
         }
@@ -144,7 +155,7 @@ impl Parser {
                 continue;
             }
 
-            let ty = self.take_identifier()?;
+            let ty = self.parse_qualified_name()?;
             self.expect(TokenKind::Semicolon, ";");
             fields.push(Field {
                 name: field_name,
@@ -173,7 +184,7 @@ impl Parser {
             let case_name = self.take_identifier()?;
             let identity = self.parse_identity()?;
             let payload = if self.consume_if(TokenKind::LeftParen) {
-                let payload = self.take_identifier()?;
+                let payload = self.parse_qualified_name()?;
                 self.expect(TokenKind::RightParen, ")");
                 Some(payload)
             } else {
@@ -218,13 +229,21 @@ impl Parser {
         let parameters = self.parse_parameters()?;
         self.expect(TokenKind::RightParen, ")");
         self.expect(TokenKind::Arrow, "->");
-        let result_type = self.take_identifier()?;
+        let result_type = self.parse_qualified_name()?;
         let effects = if self.consume_if(TokenKind::Keyword(Keyword::Effects)) {
             self.parse_effects()?
         } else {
             Vec::new()
         };
+        self.capability_receivers = parameters
+            .iter()
+            .filter_map(|parameter| {
+                matches!(parameter.ty, ParameterType::Capability(_))
+                    .then_some(parameter.name.clone())
+            })
+            .collect();
         let body = self.parse_block()?;
+        self.capability_receivers.clear();
         let end = body.span.end;
         Some(FunctionDecl {
             name,
@@ -248,7 +267,7 @@ impl Parser {
             let ty = if self.consume_if(TokenKind::Keyword(Keyword::Capability)) {
                 ParameterType::Capability(self.take_identifier()?)
             } else {
-                ParameterType::Named(self.take_identifier()?)
+                ParameterType::Named(self.parse_qualified_name()?)
             };
             parameters.push(Parameter {
                 name,
@@ -342,19 +361,41 @@ impl Parser {
                 }
             }
             TokenKind::Identifier => {
-                self.advance();
-                let name = token.text;
+                let (parts, end) = self.parse_reference_parts()?;
+                let name = parts.join(".");
                 if self.consume_if(TokenKind::LeftParen) {
+                    if parts.len() == 1 {
+                        return self.parse_call_expression(name, token.span.start);
+                    }
+                    if parts.len() == 2
+                        && (self.capability_receivers.contains(&parts[0])
+                            || crate::semantics::intrinsic_signature(&parts[0], &parts[1])
+                                .is_some())
+                    {
+                        return self.parse_capability_call_expression(
+                            parts[0].clone(),
+                            parts[1].clone(),
+                            token.span.start,
+                        );
+                    }
                     return self.parse_call_expression(name, token.span.start);
                 } else if self.consume_if(TokenKind::LeftBrace) {
                     return self.parse_record_expression(name, token.span.start);
                 } else if self.consume_if(TokenKind::ColonColon) {
                     return self.parse_variant_expression(name, token.span.start);
                 }
-                Expr::Name {
-                    name,
-                    span: token.span,
+                let mut expression = Expr::Name {
+                    name: parts[0].clone(),
+                    span: Span::new(token.span.start, end),
+                };
+                for field in &parts[1..] {
+                    expression = Expr::FieldAccess {
+                        target: Box::new(expression),
+                        field: field.clone(),
+                        span: Span::new(token.span.start, end),
+                    };
                 }
+                expression
             }
             _ => {
                 self.report_expected("expression");
@@ -380,6 +421,34 @@ impl Parser {
         self.expect(TokenKind::RightParen, ")");
         let expression = Expr::Call {
             function,
+            arguments,
+            span: Span::new(start, self.previous().span.end),
+        };
+        self.parse_postfix_expression(expression)
+    }
+
+    fn parse_capability_call_expression(
+        &mut self,
+        receiver: String,
+        operation: String,
+        start: usize,
+    ) -> Option<Expr> {
+        let mut arguments = Vec::new();
+        if !self.at(TokenKind::RightParen) {
+            loop {
+                arguments.push(self.parse_expression()?);
+                if !self.consume_if(TokenKind::Comma) {
+                    break;
+                }
+                if self.at(TokenKind::RightParen) {
+                    break;
+                }
+            }
+        }
+        self.expect(TokenKind::RightParen, ")");
+        let expression = Expr::CapabilityCall {
+            receiver,
+            operation,
             arguments,
             span: Span::new(start, self.previous().span.end),
         };
@@ -448,7 +517,7 @@ impl Parser {
         let mut arms = Vec::new();
         while !self.at(TokenKind::RightBrace) && !self.at(TokenKind::Eof) {
             let arm_start = self.current().span.start;
-            let type_name = self.take_identifier()?;
+            let type_name = self.parse_qualified_name()?;
             self.expect(TokenKind::ColonColon, "::");
             let case = self.take_identifier()?;
             let binding = if self.consume_if(TokenKind::LeftParen) {
@@ -481,20 +550,46 @@ impl Parser {
     }
 
     fn parse_expression_before_block(&mut self) -> Option<Expr> {
-        if self.at(TokenKind::Identifier)
-            && self
-                .tokens
-                .get(self.cursor + 1)
-                .is_some_and(|token| token.kind == TokenKind::LeftBrace)
+        let mut lookahead = self.cursor;
+        if self
+            .tokens
+            .get(lookahead)
+            .is_some_and(|token| token.kind == TokenKind::Identifier)
         {
-            let token = self.advance();
-            Some(Expr::Name {
-                name: token.text,
-                span: token.span,
-            })
-        } else {
-            self.parse_expression()
+            lookahead += 1;
+            while self
+                .tokens
+                .get(lookahead)
+                .is_some_and(|token| token.kind == TokenKind::Dot)
+                && self
+                    .tokens
+                    .get(lookahead + 1)
+                    .is_some_and(|token| token.kind == TokenKind::Identifier)
+            {
+                lookahead += 2;
+            }
+            if self
+                .tokens
+                .get(lookahead)
+                .is_some_and(|token| token.kind == TokenKind::LeftBrace)
+            {
+                let start = self.current().span.start;
+                let (parts, end) = self.parse_reference_parts()?;
+                let mut expression = Expr::Name {
+                    name: parts[0].clone(),
+                    span: Span::new(start, end),
+                };
+                for field in &parts[1..] {
+                    expression = Expr::FieldAccess {
+                        target: Box::new(expression),
+                        field: field.clone(),
+                        span: Span::new(start, end),
+                    };
+                }
+                return Some(expression);
+            }
         }
+        self.parse_expression()
     }
 
     fn parse_record_expression(&mut self, name: String, start: usize) -> Option<Expr> {
@@ -550,6 +645,19 @@ impl Parser {
             self.report_expected("Identifier");
             None
         }
+    }
+
+    fn parse_qualified_name(&mut self) -> Option<String> {
+        self.parse_reference_parts()
+            .map(|(parts, _)| parts.join("."))
+    }
+
+    fn parse_reference_parts(&mut self) -> Option<(Vec<String>, usize)> {
+        let mut parts = vec![self.take_identifier()?];
+        while self.consume_if(TokenKind::Dot) {
+            parts.push(self.take_identifier()?);
+        }
+        Some((parts, self.previous().span.end))
     }
 
     fn expect(&mut self, kind: TokenKind, expected: &str) {

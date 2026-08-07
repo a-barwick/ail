@@ -563,10 +563,20 @@ fn persistent_identity_changes(
 
 fn normalized_types(stored: &StoredSourceSet) -> BTreeMap<String, String> {
     stored
-        .identities
+        .unit
+        .declarations
         .iter()
-        .filter(|identity| identity.parent_identity.is_none())
-        .map(|identity| (identity.display_name.clone(), identity.identity.clone()))
+        .filter_map(|declaration| match declaration {
+            Declaration::Record(record) => record
+                .identity
+                .as_ref()
+                .map(|identity| (record.name.clone(), identity.clone())),
+            Declaration::Variant(variant) => variant
+                .identity
+                .as_ref()
+                .map(|identity| (variant.name.clone(), identity.clone())),
+            Declaration::Function(_) => None,
+        })
         .collect()
 }
 
@@ -839,7 +849,17 @@ fn semantic_diff(
         .difference(&before_identities)
         .cloned()
         .collect::<BTreeSet<_>>();
-    let type_identity = identity_for_display(candidate, &change.member_type).unwrap_or_default();
+    let expected_type_identity =
+        super::persistent_type_identity(&change.subject_identity, &change.member_type);
+    let type_identity = candidate
+        .identities
+        .iter()
+        .find(|identity| {
+            identity.parent_identity.is_none() && identity.identity == expected_type_identity
+        })
+        .map(|identity| identity.identity.as_str())
+        .or_else(|| identity_for_display(candidate, &change.member_type))
+        .expect("validated schema candidate resolves its required member type");
     let mut changes = Vec::new();
     if added.contains(type_identity) {
         changes.push(SemanticChange {
@@ -921,7 +941,7 @@ fn operation_changes(
     let base_functions = function_names(base);
     let mut changes = function_names(candidate)
         .difference(&base_functions)
-        .filter(|function| function.starts_with("adapt_"))
+        .filter(|function| source_name(function).starts_with("adapt_"))
         .map(|function| SemanticChange {
             kind: "adapter-added".to_owned(),
             identity: function.clone(),
@@ -933,9 +953,10 @@ fn operation_changes(
         let Declaration::Function(function) = declaration else {
             return None;
         };
-        (!base_functions.contains(&function.name) && function.name.starts_with("project_"))
-            .then(|| identity_for_display(candidate, &function.result_type))
-            .flatten()
+        (!base_functions.contains(&function.name)
+            && source_name(&function.name).starts_with("project_"))
+        .then(|| identity_for_display(candidate, &function.result_type))
+        .flatten()
     });
     if let Some(identity) = projection_identity {
         changes.push(SemanticChange {
@@ -949,11 +970,27 @@ fn operation_changes(
 }
 
 fn identity_for_display<'a>(stored: &'a StoredSourceSet, display: &str) -> Option<&'a str> {
-    stored
-        .identities
-        .iter()
-        .find(|identity| identity.parent_identity.is_none() && identity.display_name == display)
-        .map(|identity| identity.identity.as_str())
+    let exact = stored.unit.declarations.iter().find_map(|declaration| {
+        let (name, identity) = match declaration {
+            Declaration::Record(record) => (record.name.as_str(), record.identity.as_deref()),
+            Declaration::Variant(variant) => (variant.name.as_str(), variant.identity.as_deref()),
+            Declaration::Function(_) => return None,
+        };
+        (name == display).then_some(identity).flatten()
+    });
+    if exact.is_some() {
+        return exact;
+    }
+    let mut matches = stored.unit.declarations.iter().filter_map(|declaration| {
+        let (name, identity) = match declaration {
+            Declaration::Record(record) => (record.name.as_str(), record.identity.as_deref()),
+            Declaration::Variant(variant) => (variant.name.as_str(), variant.identity.as_deref()),
+            Declaration::Function(_) => return None,
+        };
+        (source_name(name) == display).then_some(identity).flatten()
+    });
+    let identity = matches.next()?;
+    matches.next().is_none().then_some(identity)
 }
 
 fn schema_description(stored: &StoredSourceSet, identity: &str) -> Option<String> {
@@ -1052,4 +1089,85 @@ fn capability_record_identity(stored: &StoredSourceSet) -> Option<String> {
         let name = super::capability_argument_record(function)?;
         identity_for_display(stored, &name).map(str::to_owned)
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{CapabilityEnvironment, EvolutionCoverage};
+
+    fn stored(revision: &str, domain: &str) -> StoredSourceSet {
+        StoredSourceSet::build(
+            "transaction-qualification",
+            revision,
+            None,
+            vec![
+                EvolutionSource::new("domain.ail", domain),
+                EvolutionSource::new(
+                    "other.ail",
+                    concat!(
+                        "module other;\n",
+                        "record Priority identity \"other.priority.v1\" {\n",
+                        "  label identity \"label\": Text;\n",
+                        "}\n",
+                    ),
+                ),
+            ],
+            &CapabilityEnvironment::new(),
+            EvolutionCoverage {
+                declared_complete: true,
+                ..EvolutionCoverage::default()
+            },
+        )
+        .expect("test source set is valid")
+    }
+
+    #[test]
+    fn semantic_diff_uses_persistent_identity_when_display_names_collide() {
+        let base = stored(
+            "r1",
+            concat!(
+                "module domain;\n",
+                "record Request identity \"job.request.v1\" {\n",
+                "  name identity \"name\": Text;\n",
+                "}\n",
+            ),
+        );
+        let candidate = stored(
+            "r2",
+            concat!(
+                "module domain;\n",
+                "record Request identity \"job.request.v1\" {\n",
+                "  name identity \"name\": Text;\n",
+                "}\n\n",
+                "record Priority identity \"job.priority.v1\" {\n",
+                "  label identity \"label\": Text;\n",
+                "}\n\n",
+                "record RequestV2 identity \"job.request.v2\" {\n",
+                "  name identity \"name\": Text;\n",
+                "  priority identity \"priority\": Priority;\n",
+                "}\n",
+            ),
+        );
+        let diff = semantic_diff(
+            &base,
+            &candidate,
+            &ProposedSchemaChange {
+                kind: "add-required-field-with-version-successor".to_owned(),
+                subject_identity: "job.request.v1".to_owned(),
+                successor_identity: "job.request.v2".to_owned(),
+                member_display_name: "priority".to_owned(),
+                member_identity: "priority".to_owned(),
+                member_type: "Priority".to_owned(),
+            },
+        );
+
+        assert!(diff.changes.iter().any(|change| {
+            change.kind == "schema-added" && change.identity == "job.priority.v1"
+        }));
+        assert!(diff.changes.iter().any(|change| {
+            change.identity == "job.request.v2"
+                && change.after.as_deref() == Some("required priority:job.priority.v1")
+        }));
+    }
 }
