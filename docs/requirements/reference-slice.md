@@ -235,9 +235,9 @@ identity.
 Target milestone and scope: M11 proposed normative semantics and fixture
 contract. Constrains the language and compiler protocol, not concrete syntax.
 
-Dependencies, conflicts, and open questions: Depends on the future module,
-visibility, schema-identity, and type rules. Which boundaries require persistent
-identities beyond source revisions remains open.
+Dependencies, conflicts, and open questions: Module and visibility rules now
+cover source composition. Which boundaries require persistent identities beyond
+source revisions remains open.
 
 ### LANG-002 — Closed domain errors and exhaustive consumption
 
@@ -354,9 +354,9 @@ contract followed by M15 and M16 implementation. Constrains language
 analyzability and protocol exposure, not source file layout or code generation
 strategy.
 
-Dependencies, conflicts, and open questions: Depends on modules, generics,
-serialization identities, and rules for generated or foreign code. The first
-slice may exclude general reflection rather than model it.
+Dependencies, conflicts, and open questions: Depends on serialization identities
+and future rules for generics and generated or foreign code. The first slice may
+exclude general reflection rather than model it.
 
 ## Compiler semantic-interface requirements
 
@@ -516,10 +516,12 @@ diagnostic codes remain open.
 
 ## Non-functional and benchmark requirements
 
-The first run is a calibration pilot. It measures the four baseline languages
-before setting AIL targets. Correctness rules and basic resource limits are
-fixed now. The targets used to judge AIL will be recorded after the baseline
-results are available and before any AIL benchmark run starts.
+These requirements remain accepted, but their statistical collection is
+inactive. If maintainers explicitly resume it, the first run is a calibration
+pilot that measures the four baseline languages before setting AIL targets.
+Correctness rules and basic resource limits are already fixed. The targets used
+to judge AIL would be recorded after baseline results are available and before
+any AIL benchmark run starts.
 
 ### NFR-001 — Reproducible comparative benchmark
 
@@ -589,9 +591,9 @@ category totals to provider usage, and publish median, range, and category
 totals for successful and failed runs separately. Task correctness is a
 prerequisite; an incomplete low-token run does not count.
 
-Target milestone and scope: the resumed baseline calibration and AIL target
-decision before comparative AIL benchmark runs. Constrains measurement and
-agent protocol output budgeting, not source token count.
+Target milestone and scope: a future explicitly resumed baseline calibration
+and AIL target decision before comparative AIL benchmark runs. Constrains
+measurement and agent protocol output budgeting, not source token count.
 
 Dependencies, conflicts, and open questions: Depends on NFR-001 and a stable
 agent execution harness. After the four baseline results are recorded, the
@@ -618,10 +620,10 @@ category. Hidden tests seed affected consumers and UC-001 invariants. Reports
 separate incomplete runs, detected repairs, escaped regressions, and final
 success.
 
-Target milestone and scope: M2 repair-cycle contract and the resumed baseline
-measurement and AIL target decision before comparative AIL benchmark runs.
-Constrains benchmark and protocol diagnostic quality; it does not mandate a
-particular repair strategy.
+Target milestone and scope: M2 repair-cycle contract and a future explicitly
+resumed baseline measurement and AIL target decision before comparative AIL
+benchmark runs. Constrains benchmark and protocol diagnostic quality; it does
+not mandate a particular repair strategy.
 
 Dependencies, conflicts, and open questions: Depends on NFR-001, PROTO-002, and
 PROTO-005. The run manifest defines how pre-edit agent checks are counted. After
@@ -652,9 +654,10 @@ corpus, clock, affinity, load, and summary procedure. Report median throughput,
 p50/p95/p99 latency, variance, host/container identity, and profiler evidence
 for outliers for AIL and every baseline.
 
-Target milestone and scope: the resumed baseline calibration and AIL target
-decision before production-runtime comparison. Constrains benchmark procedure,
-not the initial semantic oracle interpreter's production performance.
+Target milestone and scope: a future explicitly resumed baseline calibration
+and AIL target decision before production-runtime comparison. Constrains
+benchmark procedure, not the initial semantic oracle interpreter's production
+performance.
 
 Dependencies, conflicts, and open questions: Depends on NFR-001 and the shared
 corpus. After baseline measurement, the maintainers set the production AIL
@@ -684,10 +687,10 @@ time, idle and peak RSS, exit status, package manifest, dependency lock, and
 attempted external access. Functional results and traces must match before
 resource measurements count.
 
-Target milestone and scope: the resumed baseline calibration and AIL target
-decision before production-runtime comparison. Constrains packaging and
-measurement, not static versus dynamic linking, memory management, artifact
-format, or baseline idioms.
+Target milestone and scope: a future explicitly resumed baseline calibration
+and AIL target decision before production-runtime comparison. Constrains
+packaging and measurement, not static versus dynamic linking, memory management,
+artifact format, or baseline idioms.
 
 Dependencies, conflicts, and open questions: Depends on NFR-001 and a defined
 readiness signal. After baseline measurement, the maintainers set the production

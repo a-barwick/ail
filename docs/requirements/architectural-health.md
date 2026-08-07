@@ -39,7 +39,7 @@ consequence analysis, repair work, and concentration risk.
 Acceptance evidence: The UC-007 centralized implementation passes behavior
 tests and fails architecture policy. The valid implementation passes both. The
 completion manifest shows that no unauthorized policy, baseline, capability,
-state, or dependency change occurred I.
+state, or dependency change occurred.
 
 Implemented scope: M24 defines the rules; M25–M26 implement snapshots, deltas,
 policy, and atomic publication. The requirement does not prescribe one module
@@ -82,9 +82,8 @@ project architecture.
 
 Dependencies and open questions: The bounded M24 contract uses explicit module,
 capability, state, and typed-edge facts. Applying the requirement beyond that
-slice still depends on future general module, effect, foreign-code, and
-generated-source rules. Opaque reflection may remain excluded instead of being
-modeled.
+slice still depends on future general effect, foreign-code, and generated-source
+rules. Opaque reflection may remain excluded instead of being modeled.
 
 ## Compiler semantic-interface requirements
 
