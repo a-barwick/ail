@@ -8,6 +8,14 @@ compiler behavior, test results, and delivery dates when known. Do not use
 corporate jargon, governance language, ceremonial milestone language, vague
 reassurance, or planning activity as a substitute for shipped software.
 
+## Commit production-ready work directly to main
+
+Make every repository change directly on `main`. Do not create feature branches
+or use branches to hold work that is not ready. Read the relevant code, make the
+smallest complete change, run the checks that establish confidence, and commit
+the finished result to `main`. Every commit must be coherent, reviewable, and
+worthy of the mainline. Do not push unless the user explicitly requests it.
+
 Before proposing language features, implementation architecture, or repository
 tooling, read these documents in order:
 
@@ -101,10 +109,9 @@ first compiler slices.
 - `docs/STATUS.md` names the active milestone and contains the immediate handoff
   for the next agent.
 - Work only within the active milestone unless the user changes scope.
-- Use a scoped `codex/` branch for milestone implementation when the worktree
-  and coordinator allow it. Do not disturb unrelated or user-owned changes.
-- Commit coherent checkpoints that build and pass the milestone's focused
-  checks.
+- Work directly on `main` and do not disturb unrelated or user-owned changes.
+- Commit only complete changes that build and pass the milestone's focused
+  checks; do not commit speculative or partially working checkpoints.
 - Add executable checks for every behavior delivered by a milestone.
 - Record consequential or expensive-to-reverse choices in `docs/decisions/`.
 - A milestone is complete only when its exit criterion, focused checks, and
