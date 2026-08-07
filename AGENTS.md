@@ -27,9 +27,11 @@ asks the requester to return to the thread that assigned the work.
 
 ## Commit production-ready work directly to main
 
-Commit completed, verified changes directly to local `main`. Do not create or
-use feature branches. Keep each commit production-ready and reviewable. Do not
-push unless the maintainer explicitly asks.
+Commit completed, verified changes directly to `main`. Do not create or use
+feature branches. Keep each commit production-ready and reviewable. After every
+commit, immediately push `main` to its remote with `git push origin main`. Work
+is not delivered until the push succeeds. If the push fails, report the exact
+blocker and leave the verified local commit intact.
 
 AIL is an executable language for software agents. Agents are the primary
 authors and operators. Humans must be able to audit canonical source, compiler
