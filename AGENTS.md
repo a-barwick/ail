@@ -1,5 +1,13 @@
 # AIL repository guidance
 
+## Report status like an engineer, not a committee
+
+Write every status update in plain English for a VP of Engineering. Lead with
+what works, what changed, what is blocked, and what happens next. Use concrete
+compiler behavior, test results, and delivery dates when known. Do not use
+corporate jargon, governance language, ceremonial milestone language, vague
+reassurance, or planning activity as a substitute for shipped software.
+
 Before proposing language features, implementation architecture, or repository
 tooling, read these documents in order:
 
