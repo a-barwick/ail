@@ -24,6 +24,15 @@ pub(crate) fn format(unit: &SourceUnit) -> String {
         .collect::<BTreeMap<_, _>>();
 
     let mut output = String::new();
+    if let Some(module) = &unit.module {
+        writeln!(output, "module {};", module.name).expect("writing to String cannot fail");
+        let mut imports = unit.imports.iter().collect::<Vec<_>>();
+        imports.sort_by(|left, right| left.module.cmp(&right.module));
+        for import in imports {
+            writeln!(output, "import {};", import.module).expect("writing to String cannot fail");
+        }
+        output.push('\n');
+    }
     for (index, declaration) in unit.declarations.iter().enumerate() {
         if index > 0 {
             output.push('\n');
@@ -147,6 +156,17 @@ fn format_expression(
             output.push_str(&canonical);
         }
         Expr::Name { name, .. } => output.push_str(name),
+        Expr::Call {
+            function,
+            arguments,
+            ..
+        } => {
+            write!(output, "{function}(").expect("writing to String cannot fail");
+            format_joined(output, arguments, |output, argument| {
+                format_expression(output, argument, records, indent);
+            });
+            output.push(')');
+        }
         Expr::Record { name, fields, .. } => {
             write!(output, "{name} {{ ").expect("writing to String cannot fail");
             let mut ordered = fields.iter().collect::<Vec<_>>();

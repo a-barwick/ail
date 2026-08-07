@@ -4,8 +4,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::semantics::check_parsed_source;
 use crate::{
-    Block, CapabilityEnvironment, Declaration, Expr, FunctionDecl, HandleKind, ParameterType,
-    ParseResult, SemanticHandle, SourceUnit, Span, TypeCheckStatus, parse, source_digest,
+    Block, CapabilityEnvironment, CapabilityProvider, Declaration, ExecutionFailure,
+    ExecutionResponse, ExecutionSuccess, Expr, FunctionDecl, HandleKind, ParameterType,
+    ParseResult, RuntimeFault, RuntimeValue, SemanticHandle, SourceUnit, Span, TypeCheckStatus,
+    parse, source_digest,
 };
 
 mod transaction;
@@ -173,6 +175,16 @@ pub struct ImpactFailure {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EvolutionBuildFailure {
     pub causes: Vec<String>,
+    pub diagnostics: Vec<SourceSetDiagnostic>,
+}
+
+/// One structured diagnostic produced while linking an ordered source set.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceSetDiagnostic {
+    pub code: &'static str,
+    pub path: String,
+    pub span: Span,
+    pub details: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone)]
@@ -240,12 +252,14 @@ impl EvolutionWorkspace {
         if self.revisions.contains_key(&revision_id) {
             return Err(EvolutionBuildFailure {
                 causes: vec![format!("duplicate revision {revision_id}")],
+                diagnostics: Vec::new(),
             });
         }
         if let Some(parent) = parent_revision_id.as_deref() {
             if !self.revisions.contains_key(parent) {
                 return Err(EvolutionBuildFailure {
                     causes: vec![format!("unknown parent revision {parent}")],
+                    diagnostics: Vec::new(),
                 });
             }
         }
@@ -294,6 +308,79 @@ impl EvolutionWorkspace {
             .map(|stored| stored.graph.as_slice())
     }
 
+    /// Execute a checked function from one retained ordered source-set revision.
+    #[must_use]
+    pub fn execute(
+        &self,
+        revision_id: &str,
+        function: &str,
+        arguments: Vec<RuntimeValue>,
+        capabilities: &mut dyn CapabilityProvider,
+    ) -> ExecutionResponse {
+        let Some(stored) = self.revisions.get(revision_id) else {
+            return ExecutionResponse::Failed(ExecutionFailure {
+                status: "failed",
+                revision_id: revision_id.to_owned(),
+                function: function.to_owned(),
+                fault: RuntimeFault::new(
+                    "AIL.RUNTIME.UNKNOWN_REVISION",
+                    Span::empty(0),
+                    [("revision", revision_id)],
+                    std::iter::empty::<(&str, &str)>(),
+                ),
+                calls: Vec::new(),
+            });
+        };
+        let Some(declaration) = stored.unit.declarations.iter().find_map(|declaration| {
+            let Declaration::Function(candidate) = declaration else {
+                return None;
+            };
+            (candidate.name == function).then_some(candidate)
+        }) else {
+            return ExecutionResponse::Failed(ExecutionFailure {
+                status: "failed",
+                revision_id: revision_id.to_owned(),
+                function: function.to_owned(),
+                fault: RuntimeFault::new(
+                    "AIL.RUNTIME.UNKNOWN_FUNCTION",
+                    Span::empty(0),
+                    [("function", function)],
+                    std::iter::empty::<(&str, &str)>(),
+                ),
+                calls: Vec::new(),
+            });
+        };
+        let function_handle = handle(
+            revision_id,
+            source_path_for_function(&stored.sources, function),
+            HandleKind::Symbol,
+            function,
+            declaration.span,
+        );
+        match crate::interpreter::interpret(
+            &stored.unit,
+            function,
+            arguments,
+            &self.capabilities,
+            capabilities,
+        ) {
+            Ok(result) => ExecutionResponse::Completed(ExecutionSuccess {
+                status: "completed",
+                revision_id: revision_id.to_owned(),
+                function_handle,
+                value: result.value,
+                calls: result.calls,
+            }),
+            Err(result) => ExecutionResponse::Failed(ExecutionFailure {
+                status: "failed",
+                revision_id: revision_id.to_owned(),
+                function: function.to_owned(),
+                fault: result.fault,
+                calls: result.calls,
+            }),
+        }
+    }
+
     /// Return the accepted exact categorized impact report for a typed field addition.
     ///
     /// # Errors
@@ -339,6 +426,7 @@ impl EvolutionWorkspace {
 }
 
 impl StoredSourceSet {
+    #[allow(clippy::too_many_lines)]
     fn build(
         workspace_id: &str,
         revision_id: &str,
@@ -376,7 +464,20 @@ impl StoredSourceSet {
             parsed_sources.push((source.path.clone(), parsed));
         }
         if !causes.is_empty() {
-            return Err(EvolutionBuildFailure { causes });
+            return Err(EvolutionBuildFailure {
+                causes,
+                diagnostics: Vec::new(),
+            });
+        }
+        let module_diagnostics = validate_modules(&parsed_sources);
+        if !module_diagnostics.is_empty() {
+            return Err(EvolutionBuildFailure {
+                causes: module_diagnostics
+                    .iter()
+                    .map(|diagnostic| diagnostic.code.to_owned())
+                    .collect(),
+                diagnostics: module_diagnostics,
+            });
         }
         let declarations = parsed_sources
             .iter()
@@ -384,6 +485,8 @@ impl StoredSourceSet {
             .collect::<Vec<_>>();
         let merged = ParseResult {
             unit: SourceUnit {
+                module: None,
+                imports: Vec::new(),
                 declarations,
                 span: Span::empty(0),
                 tokens: Vec::new(),
@@ -394,12 +497,32 @@ impl StoredSourceSet {
         let check = check_parsed_source(&merged, revision_id, capabilities);
         if !matches!(check.type_result.status, TypeCheckStatus::Ok) || !check.diagnostics.is_empty()
         {
+            let diagnostics = check
+                .diagnostics
+                .iter()
+                .map(|diagnostic| SourceSetDiagnostic {
+                    code: diagnostic.code,
+                    path: "<source-set>".to_owned(),
+                    span: diagnostic.primary_span,
+                    details: diagnostic
+                        .expected
+                        .iter()
+                        .map(|(key, value)| {
+                            (format!("expected.{key}"), diagnostic_value_text(value))
+                        })
+                        .chain(diagnostic.actual.iter().map(|(key, value)| {
+                            (format!("actual.{key}"), diagnostic_value_text(value))
+                        }))
+                        .collect(),
+                })
+                .collect();
             return Err(EvolutionBuildFailure {
                 causes: check
                     .diagnostics
                     .iter()
                     .map(|diagnostic| diagnostic.code.to_owned())
                     .collect(),
+                diagnostics,
             });
         }
         let identities = build_identities(revision_id, &parsed_sources)?;
@@ -438,6 +561,312 @@ impl StoredSourceSet {
     }
 }
 
+#[allow(clippy::too_many_lines)]
+fn validate_modules(parsed_sources: &[(String, ParseResult)]) -> Vec<SourceSetDiagnostic> {
+    if parsed_sources
+        .iter()
+        .all(|(_, parsed)| parsed.unit.module.is_none() && parsed.unit.imports.is_empty())
+    {
+        return Vec::new();
+    }
+
+    let mut diagnostics = Vec::new();
+    let mut modules = BTreeMap::<String, (&str, &ParseResult)>::new();
+    for (path, parsed) in parsed_sources {
+        let Some(module) = &parsed.unit.module else {
+            diagnostics.push(source_set_diagnostic(
+                "AIL.MODULE.MISSING_IDENTITY",
+                path,
+                Span::empty(0),
+                [("requirement", "explicit module identity")],
+            ));
+            continue;
+        };
+        if let Some((existing_path, _)) = modules.get(&module.name) {
+            diagnostics.push(source_set_diagnostic(
+                "AIL.MODULE.DUPLICATE_IDENTITY",
+                path,
+                module.span,
+                [
+                    ("module", module.name.as_str()),
+                    ("existing_path", *existing_path),
+                ],
+            ));
+        } else {
+            modules.insert(module.name.clone(), (path, parsed));
+        }
+    }
+
+    let mut declarations = BTreeMap::<String, Vec<(String, String, Span)>>::new();
+    for (module, (path, parsed)) in &modules {
+        for declaration in &parsed.unit.declarations {
+            let (name, span) = declaration_name(declaration);
+            declarations.entry(name.to_owned()).or_default().push((
+                module.clone(),
+                (*path).to_owned(),
+                span,
+            ));
+        }
+    }
+    for (name, owners) in &declarations {
+        for (_, path, span) in owners.iter().skip(1) {
+            diagnostics.push(source_set_diagnostic(
+                "AIL.MODULE.AMBIGUOUS_DECLARATION",
+                path,
+                *span,
+                [("declaration", name.as_str())],
+            ));
+        }
+    }
+
+    for (module_name, (path, parsed)) in &modules {
+        let mut imported_modules = BTreeSet::new();
+        let mut imported_declarations = BTreeMap::<String, String>::new();
+        for import in &parsed.unit.imports {
+            if !imported_modules.insert(import.module.as_str()) {
+                diagnostics.push(source_set_diagnostic(
+                    "AIL.MODULE.DUPLICATE_IMPORT",
+                    path,
+                    import.span,
+                    [("module", import.module.as_str())],
+                ));
+                continue;
+            }
+            let Some((_, imported)) = modules.get(&import.module) else {
+                diagnostics.push(source_set_diagnostic(
+                    "AIL.MODULE.MISSING_IMPORT",
+                    path,
+                    import.span,
+                    [("module", import.module.as_str())],
+                ));
+                continue;
+            };
+            for declaration in &imported.unit.declarations {
+                let (name, _) = declaration_name(declaration);
+                if let Some(existing) =
+                    imported_declarations.insert(name.to_owned(), import.module.clone())
+                {
+                    diagnostics.push(source_set_diagnostic(
+                        "AIL.MODULE.AMBIGUOUS_IMPORT",
+                        path,
+                        import.span,
+                        [
+                            ("declaration", name),
+                            ("first_module", existing.as_str()),
+                            ("second_module", import.module.as_str()),
+                        ],
+                    ));
+                }
+            }
+        }
+
+        let mut visible = parsed
+            .unit
+            .declarations
+            .iter()
+            .map(|declaration| declaration_name(declaration).0.to_owned())
+            .collect::<BTreeSet<_>>();
+        visible.extend(imported_declarations.keys().cloned());
+        for (name, span, role) in source_references(&parsed.unit) {
+            if declarations.contains_key(&name) && !visible.contains(&name) {
+                diagnostics.push(source_set_diagnostic(
+                    "AIL.MODULE.INACCESSIBLE_DECLARATION",
+                    path,
+                    span,
+                    [
+                        ("declaration", name.as_str()),
+                        ("role", role),
+                        ("module", module_name.as_str()),
+                    ],
+                ));
+            }
+        }
+    }
+
+    let mut cycles = BTreeMap::<String, (String, Span, Vec<String>)>::new();
+    for module in modules.keys() {
+        find_import_cycles(module, &modules, &mut Vec::new(), &mut cycles);
+    }
+    for (_, (path, span, cycle)) in cycles {
+        diagnostics.push(source_set_diagnostic(
+            "AIL.MODULE.IMPORT_CYCLE",
+            &path,
+            span,
+            [("cycle", cycle.join(" -> ").as_str())],
+        ));
+    }
+
+    diagnostics.sort_by(|left, right| {
+        left.path
+            .cmp(&right.path)
+            .then(left.span.start.cmp(&right.span.start))
+            .then(left.code.cmp(right.code))
+    });
+    diagnostics
+}
+
+fn declaration_name(declaration: &Declaration) -> (&str, Span) {
+    match declaration {
+        Declaration::Record(record) => (&record.name, record.span),
+        Declaration::Variant(variant) => (&variant.name, variant.span),
+        Declaration::Function(function) => (&function.name, function.span),
+    }
+}
+
+fn source_references(unit: &SourceUnit) -> Vec<(String, Span, &'static str)> {
+    let mut references = Vec::new();
+    for declaration in &unit.declarations {
+        match declaration {
+            Declaration::Record(record) => {
+                for field in &record.fields {
+                    references.push((field.ty.clone(), field.span, "type"));
+                }
+            }
+            Declaration::Variant(variant) => {
+                for case in &variant.cases {
+                    if let Some(payload) = &case.payload {
+                        references.push((payload.clone(), case.span, "type"));
+                    }
+                }
+            }
+            Declaration::Function(function) => {
+                for parameter in &function.parameters {
+                    if let ParameterType::Named(ty) = &parameter.ty {
+                        references.push((ty.clone(), parameter.span, "type"));
+                    }
+                }
+                references.push((function.result_type.clone(), function.span, "type"));
+                collect_source_references_block(&function.body, &mut references);
+            }
+        }
+    }
+    references
+}
+
+fn collect_source_references_block(
+    block: &Block,
+    references: &mut Vec<(String, Span, &'static str)>,
+) {
+    for binding in &block.bindings {
+        collect_source_references(&binding.value, references);
+    }
+    collect_source_references(&block.tail, references);
+}
+
+fn collect_source_references(
+    expression: &Expr,
+    references: &mut Vec<(String, Span, &'static str)>,
+) {
+    match expression {
+        Expr::Call {
+            function,
+            arguments,
+            span,
+        } => {
+            references.push((function.clone(), *span, "function"));
+            for argument in arguments {
+                collect_source_references(argument, references);
+            }
+        }
+        Expr::Record { name, fields, span } => {
+            references.push((name.clone(), *span, "record"));
+            for field in fields {
+                collect_source_references(&field.value, references);
+            }
+        }
+        Expr::Variant {
+            type_name,
+            payload,
+            span,
+            ..
+        } => {
+            references.push((type_name.clone(), *span, "variant"));
+            if let Some(payload) = payload {
+                collect_source_references(payload, references);
+            }
+        }
+        Expr::CapabilityCall { arguments, .. } => {
+            for argument in arguments {
+                collect_source_references(argument, references);
+            }
+        }
+        Expr::FieldAccess { target, .. } => collect_source_references(target, references),
+        Expr::If {
+            condition,
+            then_branch,
+            else_branch,
+            ..
+        } => {
+            collect_source_references(condition, references);
+            collect_source_references_block(then_branch, references);
+            collect_source_references_block(else_branch, references);
+        }
+        Expr::Match {
+            scrutinee, arms, ..
+        } => {
+            collect_source_references(scrutinee, references);
+            for arm in arms {
+                references.push((arm.type_name.clone(), arm.span, "variant"));
+                collect_source_references_block(&arm.body, references);
+            }
+        }
+        Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => {}
+    }
+}
+
+fn find_import_cycles(
+    module: &str,
+    modules: &BTreeMap<String, (&str, &ParseResult)>,
+    stack: &mut Vec<String>,
+    cycles: &mut BTreeMap<String, (String, Span, Vec<String>)>,
+) {
+    if stack.iter().any(|entry| entry == module) {
+        return;
+    }
+    let Some((path, parsed)) = modules.get(module) else {
+        return;
+    };
+    stack.push(module.to_owned());
+    for import in &parsed.unit.imports {
+        if let Some(start) = stack.iter().position(|entry| *entry == import.module) {
+            let mut cycle = stack[start..].to_vec();
+            cycle.push(import.module.clone());
+            let mut members = cycle[..cycle.len() - 1].to_vec();
+            members.sort();
+            cycles
+                .entry(members.join("\0"))
+                .or_insert(((*path).to_owned(), import.span, cycle));
+        } else {
+            find_import_cycles(&import.module, modules, stack, cycles);
+        }
+    }
+    stack.pop();
+}
+
+fn source_set_diagnostic<const N: usize>(
+    code: &'static str,
+    path: &str,
+    span: Span,
+    details: [(&str, &str); N],
+) -> SourceSetDiagnostic {
+    SourceSetDiagnostic {
+        code,
+        path: path.to_owned(),
+        span,
+        details: details
+            .into_iter()
+            .map(|(key, value)| (key.to_owned(), value.to_owned()))
+            .collect(),
+    }
+}
+
+fn diagnostic_value_text(value: &crate::DiagnosticValue) -> String {
+    match value {
+        crate::DiagnosticValue::Text(value) => value.clone(),
+        crate::DiagnosticValue::TextList(values) => values.join(", "),
+    }
+}
+
 fn source_set_digest(sources: &[EvolutionSource]) -> String {
     let mut encoded = String::new();
     for source in sources {
@@ -457,6 +886,18 @@ fn valid_source_path(path: &str) -> bool {
         && path
             .split('/')
             .all(|component| !matches!(component, "" | "." | ".."))
+}
+
+fn source_path_for_function<'a>(sources: &'a [EvolutionSource], function: &str) -> &'a str {
+    sources
+        .iter()
+        .find(|source| {
+            let parsed = parse(&source.source);
+            parsed.unit.declarations.iter().any(|declaration| {
+                matches!(declaration, Declaration::Function(candidate) if candidate.name == function)
+            })
+        })
+        .map_or("<unknown>", |source| source.path.as_str())
 }
 
 fn valid_identity(identity: &str) -> bool {
@@ -572,7 +1013,10 @@ fn build_identities(
         identities.sort_by(|left, right| left.identity.cmp(&right.identity));
         Ok(identities)
     } else {
-        Err(EvolutionBuildFailure { causes })
+        Err(EvolutionBuildFailure {
+            causes,
+            diagnostics: Vec::new(),
+        })
     }
 }
 
@@ -802,6 +1246,11 @@ fn walk_expr(
     graph: &mut Vec<RelationshipEdge>,
 ) {
     match expression {
+        Expr::Call { arguments, .. } => {
+            for argument in arguments {
+                walk_expr(argument, source, revision_id, path, identities, graph);
+            }
+        }
         Expr::Record {
             name, fields, span, ..
         } => {
@@ -1192,6 +1641,9 @@ fn expression_constructs(block: &Block, type_name: &str) -> bool {
 
 fn expr_constructs(expression: &Expr, type_name: &str) -> bool {
     match expression {
+        Expr::Call { arguments, .. } => arguments
+            .iter()
+            .any(|argument| expr_constructs(argument, type_name)),
         Expr::Record { name, fields, .. } => {
             name == type_name
                 || fields
@@ -1267,6 +1719,7 @@ fn collect_nested_bindings(expression: &Expr, bindings: &mut BTreeMap<String, St
         Expr::Text { .. }
         | Expr::Integer { .. }
         | Expr::Name { .. }
+        | Expr::Call { .. }
         | Expr::Record { .. }
         | Expr::Variant { .. }
         | Expr::CapabilityCall { .. }
@@ -1313,6 +1766,9 @@ fn find_capability_expr(
     receivers: &BTreeSet<&str>,
 ) -> Option<(String, String, Vec<Expr>)> {
     match expression {
+        Expr::Call { arguments, .. } => arguments
+            .iter()
+            .find_map(|argument| find_capability_expr(argument, receivers)),
         Expr::CapabilityCall {
             receiver,
             operation,
@@ -1395,7 +1851,7 @@ fn collect_match_types(expression: &Expr, types: &mut Vec<String>) {
                 collect_match_types(payload, types);
             }
         }
-        Expr::CapabilityCall { arguments, .. } => {
+        Expr::CapabilityCall { arguments, .. } | Expr::Call { arguments, .. } => {
             for argument in arguments {
                 collect_match_types(argument, types);
             }

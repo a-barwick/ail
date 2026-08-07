@@ -1123,6 +1123,7 @@ impl<'a> IndexBuilder<'a> {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     fn index_expression(
         &mut self,
         expression: &Expr,
@@ -1142,6 +1143,26 @@ impl<'a> IndexBuilder<'a> {
             Expr::Name { name, span } => {
                 self.add_syntax(*span, "name-reference", format!("{identity_key}:name"));
                 self.add_local_reference(locals, name, *span);
+            }
+            Expr::Call {
+                function,
+                arguments,
+                ..
+            } => {
+                let function_span = identifier_at(&self.unit.tokens, span.start);
+                self.add_syntax(
+                    function_span,
+                    "function-reference",
+                    format!("{identity_key}:function"),
+                );
+                self.add_top_reference(function, function_span);
+                for (argument_index, argument) in arguments.iter().enumerate() {
+                    self.index_expression(
+                        argument,
+                        &format!("{identity_key}:argument:{argument_index}"),
+                        locals,
+                    );
+                }
             }
             Expr::Record { name, fields, .. } => {
                 let type_span = identifier_at(&self.unit.tokens, span.start);
@@ -1379,6 +1400,12 @@ impl<'a> IndexBuilder<'a> {
             Expr::Name { name, .. } => locals
                 .get(name)
                 .and_then(|binding| binding.value_type.clone()),
+            Expr::Call { function, .. } => self.unit.declarations.iter().find_map(|declaration| {
+                let Declaration::Function(candidate) = declaration else {
+                    return None;
+                };
+                (candidate.name == *function).then(|| candidate.result_type.clone())
+            }),
             Expr::Record { name, .. } => Some(name.clone()),
             Expr::Variant { type_name, .. } => Some(type_name.clone()),
             Expr::CapabilityCall {
@@ -1461,6 +1488,7 @@ impl<'a> IndexBuilder<'a> {
         dependencies.into_iter().collect()
     }
 
+    #[allow(clippy::too_many_lines)]
     fn collect_expression_dependencies(
         &self,
         expression: &Expr,
@@ -1472,6 +1500,16 @@ impl<'a> IndexBuilder<'a> {
             Expr::Name { name, .. } => {
                 if let Some(Some(ty)) = locals.get(name).map(|binding| &binding.value_type) {
                     dependencies.insert(ty.clone());
+                }
+            }
+            Expr::Call {
+                function,
+                arguments,
+                ..
+            } => {
+                dependencies.insert(function.clone());
+                for argument in arguments {
+                    self.collect_expression_dependencies(argument, locals, dependencies);
                 }
             }
             Expr::Record { name, fields, .. } => {
@@ -1766,6 +1804,7 @@ fn expression_kind(expression: &Expr) -> &'static str {
         Expr::Text { .. } => "text-literal",
         Expr::Integer { .. } => "integer-literal",
         Expr::Name { .. } => "name-reference",
+        Expr::Call { .. } => "function-call",
         Expr::Record { .. } => "record-construction",
         Expr::Variant { .. } => "variant-construction",
         Expr::CapabilityCall { .. } => "capability-call",

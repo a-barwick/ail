@@ -40,10 +40,11 @@ accepted UC-007 and its requirements through a frozen, independently reviewed
 acceptance package. M24 accepted the bounded architectural regression
 contract. M25 implemented its single-revision snapshot and compact rendering,
 M26 implemented cross-revision policy enforcement and atomic publication, and
-M27 completed one bounded non-official usability pilot. ADR 0007 selects
-iterative service evolution as the next direction: M28 is the active acceptance
-package for proposed UC-008, while M29 through M36 remain conditional. A roadmap
-entry does not make planned behavior normative.
+M27 completed one bounded non-official usability pilot. A maintainer scope
+correction amended ADR 0007 and redirected M28 to AIL language composition.
+M28 implements calls, explicit modules and imports, transitive effect checking,
+and deterministic nested interpretation. The former M29 through M36 iterative
+path is deferred. A roadmap entry does not make planned behavior normative.
 
 The [current status](STATUS.md) records the active milestone, or states that the
 next planned milestone has not been started, and gives the next agent its
@@ -148,11 +149,10 @@ policy, metrics, expected structured and compact text, baseline comparison, and
 budgets. Two independent readers classified every candidate identically, so
 UC-007 and its requirements are accepted. M24 accepted the bounded normative
 contract, M25 implemented its revision-bound snapshot and compact rendering,
-M26 implemented cross-revision policy and atomic publication, and M27 retained
-one explicitly non-official repair pilot. M28 now prepares the proposed
-iterative service-evolution use case without authorizing language or compiler
-implementation, and the broader architectural-health proposal remains
-non-normative.
+M26 implemented cross-revision policy and atomic publication, M27 retained one
+explicitly non-official repair pilot, and M28 implemented ordinary AIL calls and
+explicit multi-file modules. The proposed iterative-evolution use case remains
+inactive, and the broader architectural-health proposal remains non-normative.
 
 There is no accepted broad AIL syntax or normative language core yet. The M11
 subset is the fixed conformance boundary for the first Rust compiler slices.

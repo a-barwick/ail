@@ -5,11 +5,10 @@ Status: **Proposed**
 Documentation layer: concrete application scenario. This record is
 language-independent and non-normative for AIL syntax or semantics.
 
-[ADR 0007](../decisions/0007-prepare-iterative-service-evolution.md) selects a
-bounded acceptance package for this direction. M28 must make the service,
-change sequence, behavior, architecture expectations, baseline tools, and
-measurement rules concrete before this use case or any derived requirement can
-be accepted.
+[ADR 0007](../decisions/0007-prepare-iterative-service-evolution.md) originally
+selected a bounded acceptance package for this direction. A maintainer scope
+correction redirected M28 to AIL language composition, so this use case and its
+acceptance work remain proposed and inactive.
 
 ## Actor and desired outcome
 
@@ -52,12 +51,12 @@ boundary. Deterministic host capabilities may stand in for external systems.
 
 ## Cumulative requirement sequence
 
-M28 must freeze six to eight requirements before measured trials. The sequence
-must be ordinary product work that creates natural pressure on existing
-responsibilities; it must not tell an agent to create or avoid a particular
-source shape.
+A future acceptance effort must freeze six to eight requirements before measured
+trials. The sequence must be ordinary product work that creates natural pressure
+on existing responsibilities; it must not tell an agent to create or avoid a
+particular source shape.
 
-Candidate changes to make concrete during M28 include:
+Candidate changes for that future acceptance effort include:
 
 1. record cancellation reasons and audit facts;
 2. retry a failed job under explicit transition rules;
@@ -69,8 +68,9 @@ Candidate changes to make concrete during M28 include:
 8. add an administrative override without enlarging an existing dispatch
    hotspot.
 
-This list is behavior illustration, not accepted scope or AIL syntax. M28 may
-revise, replace, reorder, or reduce it. Every retained change must define:
+This list is behavior illustration, not accepted scope or AIL syntax. A future
+acceptance package may revise, replace, reorder, or reduce it. Every retained
+change must define:
 
 - the requirement text shown to the agent;
 - starting and expected observable behavior;
@@ -185,19 +185,17 @@ policy, task information, and evidence requirements. It does not require
 identical source structures. Language-specific checks may enforce equivalent
 facts using the strongest normal mechanism available to that ecosystem.
 
-M28 must identify the concrete tool and version plan. M29 is responsible for
-building and freezing the baseline workspaces and reference trajectories if the
-M28 gate passes. M29 also observes whether idiomatic implementations naturally
-fall in the intended service class and records a go, revise, or stop result; M28
-cannot establish that from a language-independent package alone.
+A future acceptance package must identify the concrete tool and version plan.
+The deferred baseline milestone would own workspaces and reference trajectories
+only after that package is activated and passes.
 
 ## Why this may require AIL work
 
 Existing AIL semantics are intentionally too narrow to assume this service can
 be expressed naturally. The sequence may require direct AIL calls, modules,
 bounded iteration, collections, additional capabilities, or other behavior.
-M28 must identify these only as observed gaps. It must not select syntax or
-make them language requirements.
+The maintainer independently selected direct calls and modules for M28. The
+remaining items are not selected language requirements.
 
 After baseline evidence exists, a separate gap-selection milestone may propose
 the smallest AIL semantic and protocol slice needed for the accepted sequence.
@@ -217,7 +215,7 @@ The comparison reports each change and the cumulative trajectory. It must not
 hide an expensive early failure behind a successful final revision or infer
 success from source size alone.
 
-## M28 acceptance gate
+## Inactive acceptance gate
 
 UC-008 is ready to drive requirements only if two independent readers can use
 the frozen package to agree on:
@@ -237,15 +235,16 @@ the frozen package to agree on:
 The gate stops if the changes do not interact meaningfully, equivalent strong
 baselines cannot be defined, expected classifications depend on preferred
 source layout, or a credible AIL path would require broad feature parity before
-producing evidence. M29 separately returns to M28 or stops if idiomatic baseline
-implementations reach the planning range only through padding or artificial
-file splitting, or do not create the intended maintenance pressure.
+producing evidence. A future baseline effort must return to its owning gate or
+stop if idiomatic baseline implementations reach the planning range only through
+padding or artificial file splitting, or do not create the intended maintenance
+pressure.
 
 ## Status and derived requirements
 
-No requirement is accepted from this proposed use case yet. M28 may draft
-candidate requirements, but their acceptance depends on the complete package
-and independent review.
+No requirement is accepted from this proposed use case yet. Candidate
+requirements still depend on an activated complete package and independent
+review.
 
 ## Explicit exclusions
 

@@ -19,6 +19,8 @@ impl Span {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Keyword {
+    Module,
+    Import,
     Record,
     Variant,
     Fn,
@@ -69,6 +71,8 @@ impl TokenKind {
         match self {
             Self::Whitespace => "whitespace",
             Self::LineComment | Self::BlockComment => "comment",
+            Self::Keyword(Keyword::Module) => "module",
+            Self::Keyword(Keyword::Import) => "import",
             Self::Keyword(Keyword::Record) => "record",
             Self::Keyword(Keyword::Variant) => "variant",
             Self::Keyword(Keyword::Fn) => "fn",
@@ -237,6 +241,8 @@ fn is_identifier_continue(ch: char) -> bool {
 
 fn keyword_or_identifier(text: &str) -> TokenKind {
     match text {
+        "module" => TokenKind::Keyword(Keyword::Module),
+        "import" => TokenKind::Keyword(Keyword::Import),
         "record" => TokenKind::Keyword(Keyword::Record),
         "variant" => TokenKind::Keyword(Keyword::Variant),
         "fn" => TokenKind::Keyword(Keyword::Fn),

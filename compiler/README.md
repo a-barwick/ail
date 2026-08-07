@@ -19,9 +19,10 @@ control as the next direction, M23 accepted its concrete evidence package, M24
 accepted the bounded contract, M25 implemented the read-only architectural
 snapshot and compact rendering, and M26 implemented cross-revision policy,
 governance, bounded failure, and atomic publication. M27 retained one
-non-official feedback pilot without changing compiler behavior. M28 is now the
-active language-independent acceptance package for proposed iterative service
-evolution; it does not authorize compiler changes.
+non-official feedback pilot without changing compiler behavior. A maintainer
+scope correction redirects M28 to language composition. M28 adds statically
+checked AIL calls plus explicit modules and imports over the existing ordered
+source-set model.
 
 These completed slices are conformance and mechanism evidence for bounded
 contracts. M27 adds one non-official usability observation. They are not
@@ -30,9 +31,9 @@ volume, broader syntax, a native backend, or self-hosting must not be treated as
 the next maturity step without a selected use case and roadmap milestone.
 
 The numbered rules and fixtures under [`../specs`](../specs/README.md) constrain
-behavior. Implementation details do not create language semantics.
-No compiler feature expansion for UC-008 or backend work is currently
-authorized.
+the earlier slices. The M28 implementation and focused executable tests define
+the new bounded composition behavior authorized directly by the maintainer.
+Backend work remains outside scope.
 
 Run the current compiler checks from the repository root:
 
@@ -52,6 +53,14 @@ atomic rename transactions with canonical edits and complete identity maps.
 candidates atomically, exposes the exact uncommitted revision to a behavior
 oracle, and returns revision-bound impact, edit, identity, semantic-diff, and
 completion evidence.
+An explicit multi-file source set uses one `module name;` header per file and
+zero or more `import dependency;` headers. Imports expose a dependency's
+records, variants, and functions under their declared names; declarations in
+non-imported modules are inaccessible. `EvolutionWorkspace::execute` runs a
+checked cross-module entry point. AIL calls use `function(arguments)` syntax,
+evaluate arguments left-to-right, propagate same-named capability parameters,
+and require callers to declare all transitively reachable effects. Recursive
+call cycles are rejected.
 `ail_compiler::architecture_snapshot` derives the accepted four-scope,
 seven-metric architecture snapshot from validated immutable semantic facts and
 returns bounded incomplete results when coverage or a fixed budget is exhausted.

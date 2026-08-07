@@ -1,11 +1,26 @@
 # ADR 0007: Prepare iterative service evolution next
 
-- Status: Accepted
+- Status: Amended by maintainer scope correction
 - Date: 2026-08-07
 - Owners: project maintainers
 - Documentation layer and scope: validation-slice selection and roadmap
 
 ## Context
+
+### Maintainer scope correction
+
+On 2026-08-07 the maintainer superseded this ADR's M28 acceptance-package
+restriction. M28 was redirected to implement ordinary AIL composition directly:
+AIL-to-AIL calls, explicit modules and imports, transitive capability-effect
+checking, recursion rejection, and deterministic interpretation. The original
+iterative-evolution package, baseline, and campaign path described below is
+historical and inactive; M29 through M36 are not authorized by this ADR.
+
+The correction preserves the existing compiler, interpreter, revision,
+source-set, impact, and architecture behavior and does not authorize benchmark
+infrastructure, native lowering, concurrency, networking, or deployment work.
+
+### Original context
 
 M23 through M27 established and exercised one bounded architectural-regression
 change. The compiler can reject a behaviorally correct `CancelJob` change that
@@ -58,11 +73,11 @@ features accepted.
 Select **iterative service evolution** as the next validation direction and
 activate M28 as its acceptance package.
 
-M28 must freeze a language-independent mature service, six to eight cumulative
+The original M28 plan was to freeze a language-independent mature service, six to eight cumulative
 requirements, per-change and cumulative correctness evidence, architecture
 expectations, fresh-context rules, strong-baseline plan, measurements, budgets,
 and stop conditions. It may implement fixtures and dependency-free acceptance
-tooling. It may not implement AIL language or compiler behavior.
+tooling. That restriction is superseded by the maintainer correction above.
 
 The bounded path to the north-star simulation is:
 
@@ -102,8 +117,8 @@ The bounded path to the north-star simulation is:
    compute and lock AIL targets using the preregistered formula, obtain a
    separate continuation decision, and only then run AIL trajectories.
 
-Only M28 is active. Later milestones are conditional map points. Their names do
-not authorize early implementation, evidence collection, or feature selection.
+This original conditional map is inactive. M29 through M36 remain historical
+map points and do not authorize implementation or evidence collection.
 
 ## Near-term operating plan
 

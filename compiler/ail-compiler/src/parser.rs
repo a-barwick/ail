@@ -1,7 +1,7 @@
 use crate::{
-    Block, Declaration, Diagnostic, Effect, Expr, Field, FunctionDecl, Keyword, LetBinding,
-    MatchArm, Parameter, ParameterType, RecordDecl, RecordFieldValue, SourceUnit, Span, Token,
-    TokenKind, VariantCase, VariantDecl, lex,
+    Block, Declaration, Diagnostic, Effect, Expr, Field, FunctionDecl, ImportDecl, Keyword,
+    LetBinding, MatchArm, ModuleDecl, Parameter, ParameterType, RecordDecl, RecordFieldValue,
+    SourceUnit, Span, Token, TokenKind, VariantCase, VariantDecl, lex,
 };
 
 #[derive(Debug, Clone)]
@@ -24,8 +24,12 @@ pub fn parse(source: &str) -> ParseResult {
         cursor: 0,
         diagnostics: Vec::new(),
     };
+    let module = parser.parse_module();
+    let imports = parser.parse_imports();
     let declarations = parser.parse_declarations();
     let unit = SourceUnit {
+        module,
+        imports,
         declarations,
         span: Span::new(0, source.len()),
         tokens: tokens.clone(),
@@ -44,6 +48,44 @@ struct Parser {
 }
 
 impl Parser {
+    fn parse_module(&mut self) -> Option<ModuleDecl> {
+        if !self.consume_if(TokenKind::Keyword(Keyword::Module)) {
+            return None;
+        }
+        let start = self.previous().span.start;
+        let name = self.parse_module_name()?;
+        self.expect(TokenKind::Semicolon, ";");
+        Some(ModuleDecl {
+            name,
+            span: Span::new(start, self.previous().span.end),
+        })
+    }
+
+    fn parse_imports(&mut self) -> Vec<ImportDecl> {
+        let mut imports = Vec::new();
+        while self.consume_if(TokenKind::Keyword(Keyword::Import)) {
+            let start = self.previous().span.start;
+            let Some(module) = self.parse_module_name() else {
+                break;
+            };
+            self.expect(TokenKind::Semicolon, ";");
+            imports.push(ImportDecl {
+                module,
+                span: Span::new(start, self.previous().span.end),
+            });
+        }
+        imports
+    }
+
+    fn parse_module_name(&mut self) -> Option<String> {
+        let mut name = self.take_identifier()?;
+        while self.consume_if(TokenKind::Dot) {
+            name.push('.');
+            name.push_str(&self.take_identifier()?);
+        }
+        Some(name)
+    }
+
     fn parse_declarations(&mut self) -> Vec<Declaration> {
         let mut declarations = Vec::new();
         while !self.at(TokenKind::Eof) {
@@ -302,7 +344,9 @@ impl Parser {
             TokenKind::Identifier => {
                 self.advance();
                 let name = token.text;
-                if self.consume_if(TokenKind::LeftBrace) {
+                if self.consume_if(TokenKind::LeftParen) {
+                    return self.parse_call_expression(name, token.span.start);
+                } else if self.consume_if(TokenKind::LeftBrace) {
                     return self.parse_record_expression(name, token.span.start);
                 } else if self.consume_if(TokenKind::ColonColon) {
                     return self.parse_variant_expression(name, token.span.start);
@@ -316,6 +360,28 @@ impl Parser {
                 self.report_expected("expression");
                 return None;
             }
+        };
+        self.parse_postfix_expression(expression)
+    }
+
+    fn parse_call_expression(&mut self, function: String, start: usize) -> Option<Expr> {
+        let mut arguments = Vec::new();
+        if !self.at(TokenKind::RightParen) {
+            loop {
+                arguments.push(self.parse_expression()?);
+                if !self.consume_if(TokenKind::Comma) {
+                    break;
+                }
+                if self.at(TokenKind::RightParen) {
+                    break;
+                }
+            }
+        }
+        self.expect(TokenKind::RightParen, ")");
+        let expression = Expr::Call {
+            function,
+            arguments,
+            span: Span::new(start, self.previous().span.end),
         };
         self.parse_postfix_expression(expression)
     }

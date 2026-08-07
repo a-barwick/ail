@@ -236,6 +236,7 @@ pub(crate) fn check_parsed_source(
 enum ProblemClass {
     UnresolvedName,
     DuplicateDeclaration,
+    Recursion,
     Type,
     Capability,
 }
@@ -264,6 +265,7 @@ struct Checker<'a> {
     unit: &'a SourceUnit,
     records: BTreeMap<&'a str, &'a RecordDecl>,
     variants: BTreeMap<&'a str, &'a VariantDecl>,
+    functions: BTreeMap<&'a str, &'a FunctionDecl>,
     top_level_names: BTreeMap<&'a str, Span>,
     problems: Vec<Problem>,
     facts: Vec<TypeFact>,
@@ -281,6 +283,7 @@ impl<'a> Checker<'a> {
             unit,
             records: BTreeMap::new(),
             variants: BTreeMap::new(),
+            functions: BTreeMap::new(),
             top_level_names: BTreeMap::new(),
             problems: Vec::new(),
             facts: Vec::new(),
@@ -290,6 +293,7 @@ impl<'a> Checker<'a> {
     fn check(&mut self) {
         self.collect_top_level_names();
         self.check_type_references();
+        self.check_recursion();
         for declaration in &self.unit.declarations {
             if let Declaration::Function(function) = declaration {
                 self.check_function(function);
@@ -365,7 +369,9 @@ impl<'a> Checker<'a> {
                     self.variants.entry(&variant.name).or_insert(variant);
                     self.check_unique_variant_cases(variant);
                 }
-                Declaration::Function(_) => {}
+                Declaration::Function(function) => {
+                    self.functions.entry(&function.name).or_insert(function);
+                }
             }
         }
     }
@@ -425,6 +431,58 @@ impl<'a> Checker<'a> {
                 }
             }
         }
+    }
+
+    fn check_recursion(&mut self) {
+        let mut cycles = BTreeMap::<String, (Span, Vec<String>)>::new();
+        for name in self.functions.keys().copied() {
+            let mut stack = Vec::new();
+            self.find_cycles(name, &mut stack, &mut cycles);
+        }
+        for (_, (span, cycle)) in cycles {
+            let related = cycle
+                .iter()
+                .filter_map(|name| self.functions.get(name.as_str()))
+                .map(|function| self.symbol_handle("function", function.span, &function.name))
+                .collect();
+            self.push_problem(
+                ProblemClass::Recursion,
+                "AIL.CALL.RECURSIVE_CYCLE",
+                "call",
+                span,
+                fields([("rule", text("acyclic AIL call graph"))]),
+                fields([("cycle", DiagnosticValue::TextList(cycle))]),
+                related,
+                "detect-recursive-call-cycle",
+            );
+        }
+    }
+
+    fn find_cycles(
+        &self,
+        name: &str,
+        stack: &mut Vec<String>,
+        cycles: &mut BTreeMap<String, (Span, Vec<String>)>,
+    ) {
+        if stack.iter().any(|entry| entry == name) {
+            return;
+        }
+        let Some(function) = self.functions.get(name).copied() else {
+            return;
+        };
+        stack.push(name.to_owned());
+        for (callee, span) in calls_in_block(&function.body) {
+            if let Some(start) = stack.iter().position(|entry| *entry == callee) {
+                let mut cycle = stack[start..].to_vec();
+                cycle.push(callee);
+                let mut members = cycle[..cycle.len() - 1].to_vec();
+                members.sort();
+                cycles.entry(members.join("\0")).or_insert((span, cycle));
+            } else {
+                self.find_cycles(&callee, stack, cycles);
+            }
+        }
+        stack.pop();
     }
 
     fn require_value_type(&mut self, name: &str, span: Span) {
@@ -587,6 +645,11 @@ impl<'a> Checker<'a> {
                     None
                 }
             },
+            Expr::Call {
+                function: callee,
+                arguments,
+                span,
+            } => self.check_function_call(callee, arguments, *span, function, locals),
             Expr::Record {
                 name,
                 fields: values,
@@ -631,6 +694,157 @@ impl<'a> Checker<'a> {
                 scrutinee, arms, ..
             } => self.check_match_expression(scrutinee, arms, function, locals),
         }
+    }
+
+    #[allow(clippy::too_many_lines)]
+    fn check_function_call(
+        &mut self,
+        callee_name: &str,
+        arguments: &[Expr],
+        span: Span,
+        caller: &FunctionDecl,
+        locals: &BTreeMap<String, LocalBinding>,
+    ) -> Option<String> {
+        let Some(target_function) = self.functions.get(callee_name).copied() else {
+            self.push_problem(
+                ProblemClass::UnresolvedName,
+                "AIL.NAME.UNKNOWN_FUNCTION",
+                "name",
+                span,
+                fields([("function", text(callee_name))]),
+                BTreeMap::new(),
+                Vec::new(),
+                "resolve-function-call",
+            );
+            for argument in arguments {
+                let _ = self.check_expr(argument, caller, locals);
+            }
+            return None;
+        };
+
+        let value_parameters = target_function
+            .parameters
+            .iter()
+            .filter_map(|parameter| match &parameter.ty {
+                ParameterType::Named(ty) => Some((parameter, ty)),
+                ParameterType::Capability(_) => None,
+            })
+            .collect::<Vec<_>>();
+        let argument_types = arguments
+            .iter()
+            .map(|argument| self.check_expr(argument, caller, locals))
+            .collect::<Vec<_>>();
+        if value_parameters.len() != arguments.len() {
+            self.type_problem(
+                "AIL.TYPE.FUNCTION_ARGUMENTS",
+                span,
+                fields([("count", text(value_parameters.len().to_string()))]),
+                fields([("count", text(arguments.len().to_string()))]),
+                vec![self.symbol_handle("function", target_function.span, &target_function.name)],
+                "check-function-arguments",
+            );
+        }
+        for ((argument, actual), (_, expected)) in
+            arguments.iter().zip(argument_types).zip(&value_parameters)
+        {
+            if let Some(actual) = actual {
+                if actual != **expected {
+                    self.type_problem(
+                        "AIL.TYPE.FUNCTION_ARGUMENT",
+                        argument.span(),
+                        fields([("type", text(*expected))]),
+                        fields([("type", text(actual))]),
+                        vec![self.symbol_handle(
+                            "function",
+                            target_function.span,
+                            &target_function.name,
+                        )],
+                        "check-function-arguments",
+                    );
+                }
+            }
+        }
+
+        for parameter in &target_function.parameters {
+            let ParameterType::Capability(expected_interface) = &parameter.ty else {
+                continue;
+            };
+            if !matches!(
+                locals.get(&parameter.name),
+                Some(LocalBinding::Capability(actual)) if actual == expected_interface
+            ) {
+                self.capability_problem(
+                    "AIL.CAPABILITY.MISSING_TRANSITIVE_CAPABILITY",
+                    span,
+                    fields([
+                        ("receiver", text(&parameter.name)),
+                        ("interface", text(expected_interface)),
+                    ]),
+                    BTreeMap::new(),
+                    vec![self.symbol_handle(
+                        "function",
+                        target_function.span,
+                        &target_function.name,
+                    )],
+                    "resolve-transitive-capability",
+                );
+            }
+        }
+
+        let declared = effect_names(&caller.effects)
+            .into_iter()
+            .collect::<BTreeSet<_>>();
+        for required in self.transitive_effects(callee_name, &mut BTreeSet::new()) {
+            if !declared.contains(&required) {
+                self.push_problem_with_chain(
+                    ProblemClass::Capability,
+                    "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT",
+                    "capability",
+                    span,
+                    fields([(
+                        "declared_effects",
+                        DiagnosticValue::TextList(declared.iter().cloned().collect()),
+                    )]),
+                    fields([("required_effect", text(required))]),
+                    vec![
+                        self.symbol_handle("function", caller.span, &caller.name),
+                        self.symbol_handle("function", target_function.span, &target_function.name),
+                    ],
+                    vec![
+                        CausalStep {
+                            step: "resolve-function-call".to_owned(),
+                            handle: self.expression_handle(span),
+                        },
+                        CausalStep {
+                            step: "compare-transitive-effects".to_owned(),
+                            handle: self.symbol_handle("function", caller.span, &caller.name),
+                        },
+                    ],
+                );
+            }
+        }
+        Some(target_function.result_type.clone())
+    }
+
+    fn transitive_effects(
+        &self,
+        function_name: &str,
+        visiting: &mut BTreeSet<String>,
+    ) -> BTreeSet<String> {
+        if !visiting.insert(function_name.to_owned()) {
+            return BTreeSet::new();
+        }
+        let Some(function) = self.functions.get(function_name).copied() else {
+            return BTreeSet::new();
+        };
+        let mut effects = effect_names(&function.effects)
+            .into_iter()
+            .collect::<BTreeSet<_>>();
+        for (callee, _) in calls_in_block(&function.body) {
+            effects.extend(self.transitive_effects(&callee, visiting));
+        }
+        visiting.remove(function_name);
+        effects
     }
 
     fn check_field_access(
@@ -1275,6 +1489,65 @@ impl<'a> Checker<'a> {
             kind,
             local_id: local_id.to_owned(),
         }
+    }
+}
+
+fn calls_in_block(block: &crate::Block) -> Vec<(String, Span)> {
+    let mut calls = Vec::new();
+    for binding in &block.bindings {
+        collect_calls(&binding.value, &mut calls);
+    }
+    collect_calls(&block.tail, &mut calls);
+    calls
+}
+
+fn collect_calls(expression: &Expr, calls: &mut Vec<(String, Span)>) {
+    match expression {
+        Expr::Call {
+            function,
+            arguments,
+            span,
+        } => {
+            calls.push((function.clone(), *span));
+            for argument in arguments {
+                collect_calls(argument, calls);
+            }
+        }
+        Expr::Record { fields, .. } => {
+            for field in fields {
+                collect_calls(&field.value, calls);
+            }
+        }
+        Expr::Variant { payload, .. } => {
+            if let Some(payload) = payload {
+                collect_calls(payload, calls);
+            }
+        }
+        Expr::CapabilityCall { arguments, .. } => {
+            for argument in arguments {
+                collect_calls(argument, calls);
+            }
+        }
+        Expr::FieldAccess { target, .. } => collect_calls(target, calls),
+        Expr::If {
+            condition,
+            then_branch,
+            else_branch,
+            ..
+        } => {
+            collect_calls(condition, calls);
+            calls.extend(calls_in_block(then_branch));
+            calls.extend(calls_in_block(else_branch));
+        }
+        Expr::Match {
+            scrutinee, arms, ..
+        } => {
+            collect_calls(scrutinee, calls);
+            for arm in arms {
+                calls.extend(calls_in_block(&arm.body));
+            }
+        }
+        Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => {}
     }
 }
 

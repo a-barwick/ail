@@ -90,15 +90,15 @@ packaging, or self-hosting is not a successor rationale without this gate.
 | M25 | Architectural snapshot and agent rendering | Complete | M24 |
 | M26 | Architectural delta, policy, and atomic enforcement | Complete | M25 |
 | M27 | Non-official architecture-feedback pilot | Complete | M26 |
-| M28 | Iterative-evolution acceptance package | Active | M27, ADR 0007 |
-| M29 | Strong baseline workspaces and trajectories | Planned | M28 acceptance |
-| M30 | AIL gap selection | Planned | M29 |
-| M31 | Iterative-workload contract | Planned | M30 |
-| M32 | Authoritative compiler implementation | Planned | M31 |
-| M33 | Canonical AIL service and cumulative evidence | Planned | M32 |
-| M34 | Non-official full-trajectory pilots | Planned | M33 |
-| M35 | Comparative campaign readiness | Planned | M29, M34 |
-| M36 | Official iterative comparison | Planned | M35 and explicit launch decision |
+| M28 | AIL language composition | Complete | M27, maintainer scope correction |
+| M29 | Strong baseline workspaces and trajectories | Deferred | inactive iterative path |
+| M30 | AIL gap selection | Deferred | inactive iterative path |
+| M31 | Iterative-workload contract | Deferred | inactive iterative path |
+| M32 | Authoritative compiler implementation | Deferred | inactive iterative path |
+| M33 | Canonical AIL service and cumulative evidence | Deferred | inactive iterative path |
+| M34 | Non-official full-trajectory pilots | Deferred | inactive iterative path |
+| M35 | Comparative campaign readiness | Deferred | inactive iterative path |
+| M36 | Official iterative comparison | Deferred | inactive iterative path |
 
 ## Delivery milestones
 
@@ -1413,67 +1413,65 @@ a later go, revise, or stop decision but makes no comparative project claim.
 - Classified the pilot as one non-official run supporting no comparative,
   statistical, or broader project claim
 
-### M28 — Iterative-evolution acceptance package
+### M28 — AIL language composition
 
-**Status:** Active
+**Status:** Complete
 
 #### Scope
 
-- Freeze the language-independent boundary and operation inventory for the
-  proposed mature job service
-- Freeze six to eight cumulative product requirements, each starting from the
-  accepted revision produced by the previous change
-- Define public and held-back behavior, state, ordered effects, compatibility,
-  architecture expectations, and human-review evidence for every change
-- Define fresh-context task envelopes that do not carry conversation memory or
-  answer-bearing summaries between changes
-- Define per-change and cumulative measurements for context, queries, edits,
-  validation, repair, regressions, elapsed work, and review evidence
-- Freeze the scale hypothesis and language-independent pressure criteria without
-  enforcing source-line or file quotas
-- Identify normal Rust, Go, Python, and TypeScript tools and the equivalence
-  rules M29 must implement
-- Record preliminary AIL feasibility risks without selecting syntax, semantics,
-  or implementation; M30 remains the only gap-selection milestone
-- Freeze go, revise, and stop conditions, fixed budgets, exact expected
-  classifications, and two independent digest-bound reviews
-- Add a dependency-free package checker and rejection mutations covering the
-  complete acceptance evidence
-- Accept, revise, or reject UC-008 and its candidate requirements only after the
-  package passes
+- Add statically checked local and imported AIL function calls with exact value
+  argument count and type checking
+- Enforce every transitively reachable capability effect and reject recursive
+  call cycles
+- Evaluate call arguments left-to-right and execute nested calls through the
+  deterministic interpreter
+- Add explicit `module` and `import` headers to ordered multi-file source sets
+- Resolve imported records, variants, and functions while rejecting missing or
+  duplicate modules, missing, duplicate, or ambiguous imports, inaccessible
+  declarations, and import cycles with structured diagnostics
+- Preserve canonical formatting, immutable source-set revisions, semantic
+  identities, impact queries, atomic validation, and prior runtime behavior
+- Add one executable three-file service example using imported domain and
+  validation functions
 
 #### Non-scope
 
-- AIL grammar, specification, compiler, interpreter, or protocol implementation
-- Treating direct calls, modules, iteration, collections, or additional
-  capabilities as accepted requirements before the gate
-- Building the four complete baseline workspaces or collecting agent evidence
-- Enforcing approximately 2,000 lines or five to eight files
-- Choosing one universal architecture or source layout
-- Native lowering, LLVM, production deployment, self-hosting, or M8 resumption
-- Official comparative evidence or an agent-efficiency claim
+- Iterative-evolution benchmark infrastructure, schemas, digests, review
+  bundles, baseline workspaces, agent experiments, or comparative measurements
+- Iteration, collections, concurrency, networking, deployment, package
+  registries, native lowering, LLVM, or self-hosting
+- Unbounded recursion or a production runtime
 
 #### Focused verification
 
 ```bash
-python3 benchmarks/tools/iterative_evolution.py check
-python3 tools/check_docs.py
+cargo test --workspace --test m28_composition
 ```
 
 #### Exit criterion
 
-Two independent readers can use only the frozen service, ordered requirements,
-reference trajectory, bounded rejecting mutations, oracles, architecture policy,
-task envelopes, measurement rules, and baseline plan to predict every expected
-behavior, architecture, package-integrity, and cumulative classification. The
-checker proves complete traceability, deterministic ordering and encoding,
-digest closure, fixed budgets, scale-hypothesis non-enforcement, and rejection
-of weakened or incomplete packages. The result explicitly accepts, revises, or
-rejects UC-008 before M29 starts.
+Real AIL source can be split into explicit modules whose imports control name
+visibility. Local and cross-module calls are statically checked and interpreted;
+transitive effects are enforced; recursive calls and import cycles are rejected;
+and all prior compiler and public runtime checks remain passing.
+
+#### Delivered
+
+- Added canonical `module` and `import` syntax and ordinary `function(args)`
+  call expressions to the existing lexer, parser, syntax tree, and formatter
+- Added deterministic call resolution, exact value argument checks, implicit
+  same-named capability propagation, transitive effect enforcement, and
+  recursion-cycle diagnostics to the existing semantic checker
+- Added nested function execution with left-to-right argument evaluation to the
+  tree-walking interpreter and source-set execution API
+- Added explicit source-set module linking and structured diagnostics for all
+  bounded module and import rejection cases
+- Added and executed a three-file service example under
+  `compiler/examples/composed-service/`
 
 ### M29 — Strong baseline workspaces and trajectories
 
-**Status:** Planned
+**Status:** Deferred
 
 Conditional on M28 acceptance.
 
@@ -1520,7 +1518,7 @@ than being hidden in a language-specific implementation.
 
 ### M30 — AIL gap selection
 
-**Status:** Planned
+**Status:** Deferred
 
 Conditional on M29.
 
@@ -1557,7 +1555,7 @@ discriminate its value.
 
 ### M31 — Iterative-workload contract
 
-**Status:** Planned
+**Status:** Deferred
 
 Conditional on M30.
 
@@ -1591,7 +1589,7 @@ fixture without relying on incidental compiler behavior.
 
 ### M32 — Authoritative compiler implementation
 
-**Status:** Planned
+**Status:** Deferred
 
 Conditional on M31.
 
@@ -1625,7 +1623,7 @@ semantics are exposed through revision-safe structured compiler facts.
 
 ### M33 — Canonical AIL service and cumulative evidence
 
-**Status:** Planned
+**Status:** Deferred
 
 Conditional on M32.
 
@@ -1663,7 +1661,7 @@ and the complete trajectory is digest locked before any agent pilot.
 
 ### M34 — Non-official full-trajectory pilots
 
-**Status:** Planned
+**Status:** Deferred
 
 Conditional on M33.
 
@@ -1704,7 +1702,7 @@ claim.
 
 ### M35 — Comparative campaign readiness
 
-**Status:** Planned
+**Status:** Deferred
 
 Conditional on M29 and M34.
 
@@ -1742,7 +1740,7 @@ explicit launch, revise, or stop decision.
 
 ### M36 — Official iterative comparison
 
-**Status:** Planned
+**Status:** Deferred
 
 Conditional on M35 and an explicit launch decision.
 
@@ -1794,24 +1792,19 @@ comparison, and budgets passed the gate, so UC-007 and its requirements are
 accepted. M24 accepted its bounded contract, M25 delivered the single-revision
 snapshot, M26 delivered cross-revision enforcement, and M27 completed one
 bounded non-official usability pilot. ADR 0007 subsequently selected iterative
-service evolution as the next conditional scaling direction and activated only
-its M28 acceptance package.
+service evolution, but the maintainer scope correction redirected M28 and left
+that conditional scaling direction inactive.
 
 Architectural-health implementation should follow the core semantic graph and
 revision protocol. It does not block M19 through M21.
 
-## Selected direction after M27
+## Maintainer direction after M27
 
-[ADR 0007](decisions/0007-prepare-iterative-service-evolution.md) selects the
-proposed [UC-008 iterative service evolution](use-cases/UC-008-iterative-service-evolution.md)
-as the next acceptance direction. The north-star comparison applies six to
-eight cumulative requirements to a naturally medium-sized service, starts each
-change in a fresh agent context, and compares all initiated complete or terminal
-trajectories against strong normal Rust, Go, Python, and TypeScript tooling.
-
-Only M28 is active. UC-008 and its requirements remain proposed, M29 through
-M36 are conditional, and no AIL syntax or implementation is authorized until
-the acceptance and gap-selection gates pass.
+[ADR 0007](decisions/0007-prepare-iterative-service-evolution.md) originally
+selected proposed UC-008 acceptance preparation. A maintainer scope correction
+superseded that M28 restriction and redirected M28 to AIL language composition.
+M28 is complete. UC-008 remains proposed, and the iterative M29 through M36 path
+is deferred rather than active.
 
 ## Other candidate directions
 

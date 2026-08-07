@@ -309,6 +309,11 @@ impl Evaluator<'_> {
                     std::iter::empty::<(&str, &str)>(),
                 )),
             },
+            Expr::Call {
+                function,
+                arguments,
+                span,
+            } => self.eval_function_call(function, arguments, *span, locals),
             Expr::Record { name, fields, .. } => {
                 self.eval_record(name, fields, expression.span(), locals)
             }
@@ -346,6 +351,96 @@ impl Evaluator<'_> {
                 scrutinee, arms, ..
             } => self.eval_match(scrutinee, arms, expression.span(), locals),
         }
+    }
+
+    fn eval_function_call(
+        &mut self,
+        function_name: &str,
+        arguments: &[Expr],
+        span: Span,
+        caller_bindings: &BTreeMap<String, RuntimeBinding>,
+    ) -> Result<RuntimeValue, RuntimeFault> {
+        let function = self
+            .unit
+            .declarations
+            .iter()
+            .find_map(|declaration| {
+                let Declaration::Function(function) = declaration else {
+                    return None;
+                };
+                (function.name == function_name).then_some(function)
+            })
+            .ok_or_else(|| {
+                RuntimeFault::new(
+                    "AIL.RUNTIME.UNKNOWN_FUNCTION",
+                    span,
+                    [("function", function_name)],
+                    std::iter::empty::<(&str, &str)>(),
+                )
+            })?;
+
+        let mut values = Vec::with_capacity(arguments.len());
+        for argument in arguments {
+            values.push(self.eval_expr(argument, caller_bindings)?);
+        }
+        let mut values = values.into_iter();
+        let mut callee_locals = BTreeMap::new();
+        for parameter in &function.parameters {
+            match &parameter.ty {
+                ParameterType::Named(expected) => {
+                    let value = values.next().ok_or_else(|| {
+                        RuntimeFault::new(
+                            "AIL.RUNTIME.ARGUMENT_COUNT",
+                            span,
+                            [("function", function_name)],
+                            [("count", arguments.len().to_string())],
+                        )
+                    })?;
+                    if !value_matches_type(self.unit, &value, expected) {
+                        return Err(RuntimeFault::new(
+                            "AIL.RUNTIME.ARGUMENT_TYPE",
+                            span,
+                            [("type", expected.as_str())],
+                            [("type", value.type_name())],
+                        ));
+                    }
+                    callee_locals.insert(parameter.name.clone(), RuntimeBinding::Value(value));
+                }
+                ParameterType::Capability(expected) => {
+                    let Some(RuntimeBinding::Capability(actual)) =
+                        caller_bindings.get(&parameter.name)
+                    else {
+                        return Err(RuntimeFault::new(
+                            "AIL.RUNTIME.MISSING_CAPABILITY",
+                            span,
+                            [("receiver", parameter.name.as_str())],
+                            std::iter::empty::<(&str, &str)>(),
+                        ));
+                    };
+                    if actual != expected {
+                        return Err(RuntimeFault::new(
+                            "AIL.RUNTIME.CAPABILITY_INTERFACE",
+                            span,
+                            [("interface", expected.as_str())],
+                            [("interface", actual.as_str())],
+                        ));
+                    }
+                    callee_locals.insert(
+                        parameter.name.clone(),
+                        RuntimeBinding::Capability(actual.clone()),
+                    );
+                }
+            }
+        }
+        if values.next().is_some() {
+            return Err(RuntimeFault::new(
+                "AIL.RUNTIME.ARGUMENT_COUNT",
+                span,
+                [("function", function_name)],
+                [("count", arguments.len().to_string())],
+            ));
+        }
+        self.eval_block(&function.body, &callee_locals)
     }
 
     fn eval_record(

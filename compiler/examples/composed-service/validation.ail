@@ -1,0 +1,6 @@
+module validation;
+import domain;
+
+fn is_invalid(request: Request) -> Bool {
+  text.is_empty(request.name)
+}

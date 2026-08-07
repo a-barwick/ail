@@ -1,0 +1,11 @@
+module service;
+import domain;
+import validation;
+
+fn handle(request: Request) -> Response {
+  if is_invalid(request) {
+    Response::Rejected
+  } else {
+    Response::Accepted(domain_name(request))
+  }
+}

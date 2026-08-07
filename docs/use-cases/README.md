@@ -54,11 +54,11 @@ independent reviews. Acceptance does not itself define compiler protocol rules.
 | --- | --- | --- |
 | [UC-008 — Iterative service evolution](UC-008-iterative-service-evolution.md) | Proposed | Apply six to eight cumulative requirements in fresh contexts while preserving behavior, architecture, and reviewability |
 
-[ADR 0007](../decisions/0007-prepare-iterative-service-evolution.md) selects
-only the M28 acceptance package. UC-008 must still freeze its natural-scale
-service, ordered requirement sequence, oracles, architecture expectations,
-strong baseline plan, measurements, and stop conditions before it or any
-derived requirement can be accepted.
+[ADR 0007](../decisions/0007-prepare-iterative-service-evolution.md) originally
+selected an M28 acceptance package. A maintainer scope correction redirected
+M28 to AIL language composition. UC-008 remains proposed and inactive; its
+service, sequence, oracles, baseline plan, measurements, and stop conditions
+have not been accepted.
 
 ## Candidate future cases
 
@@ -91,8 +91,9 @@ strong baseline, and the go, revise, or stop result.
 selected UC-007 acceptance preparation. M23 passed that bounded gate without
 defining M24 protocol rules or implementing compiler behavior.
 M24 through M26 later implemented the bounded accepted contract and M27 retained
-one non-official pilot. ADR 0007 subsequently selected proposed UC-008 for M28
-acceptance preparation; it did not select or authorize any AIL language feature.
+one non-official pilot. ADR 0007 subsequently selected proposed UC-008, but the
+maintainer scope correction superseded its M28 restriction and authorized the
+bounded language-composition implementation instead.
 
 ## Use-case record
 

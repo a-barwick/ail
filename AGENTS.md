@@ -65,9 +65,11 @@ Preserve these distinctions:
 The repository has entered authoritative compiler implementation. The first
 job-service use cases and requirements and the M11 five-construct contract are
 accepted inputs to the completed Rust compiler milestones. M23 through M27 are
-complete. ADR 0007 activates M28 as the language-independent acceptance package
-for proposed UC-008 iterative service evolution; it does not authorize AIL
-language or compiler implementation.
+complete. A maintainer scope correction supersedes ADR 0007's original M28
+restriction and redirects M28 to ordinary language composition: statically
+checked AIL calls, explicit modules and imports, transitive capability effects,
+and deterministic interpretation. The iterative-evolution benchmark path is
+not active.
 UC-007, its requirements, and the bounded M24 contract are accepted; M25 and M26
 implement that contract, and M27 retains one non-official pilot. The broader
 architectural health manifest remains proposed and does not expand the accepted

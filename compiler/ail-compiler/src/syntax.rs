@@ -2,9 +2,23 @@ use crate::{Span, Token};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceUnit {
+    pub module: Option<ModuleDecl>,
+    pub imports: Vec<ImportDecl>,
     pub declarations: Vec<Declaration>,
     pub span: Span,
     pub tokens: Vec<Token>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ModuleDecl {
+    pub name: String,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ImportDecl {
+    pub module: String,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -113,6 +127,11 @@ pub enum Expr {
         name: String,
         span: Span,
     },
+    Call {
+        function: String,
+        arguments: Vec<Expr>,
+        span: Span,
+    },
     Record {
         name: String,
         fields: Vec<RecordFieldValue>,
@@ -155,6 +174,7 @@ impl Expr {
             Self::Text { span, .. }
             | Self::Integer { span, .. }
             | Self::Name { span, .. }
+            | Self::Call { span, .. }
             | Self::Record { span, .. }
             | Self::Variant { span, .. }
             | Self::CapabilityCall { span, .. }

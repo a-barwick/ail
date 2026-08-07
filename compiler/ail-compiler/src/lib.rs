@@ -34,8 +34,8 @@ pub use evolution::{
     EvolutionBuildFailure, EvolutionCoverage, EvolutionSource, EvolutionWorkspace, ImpactEntry,
     ImpactFailure, ImpactReport, ImpactRequest, PersistentIdentity, PersistentIdentityChanges,
     ProposedSchemaChange, PublicBehaviorFailure, RelationshipEdge, SemanticChange, SemanticDiff,
-    SemanticLocation, SourceArtifact, SourceFileMetadata, SourceSetRevision, UncheckedBoundary,
-    ValidationSummary, relationship_kinds,
+    SemanticLocation, SourceArtifact, SourceFileMetadata, SourceSetDiagnostic, SourceSetRevision,
+    UncheckedBoundary, ValidationSummary, relationship_kinds,
 };
 pub use interpreter::{CapabilityProvider, ObservedCapabilityCall, RuntimeFault, RuntimeValue};
 pub use lexer::{Keyword, Span, Token, TokenKind, lex, reconstruct};
@@ -52,8 +52,9 @@ pub use semantics::{
     TypeCheckStatus, TypeFact, check_source,
 };
 pub use syntax::{
-    Block, Declaration, Effect, Expr, Field, FunctionDecl, LetBinding, MatchArm, Parameter,
-    ParameterType, RecordDecl, RecordFieldValue, SourceUnit, VariantCase, VariantDecl,
+    Block, Declaration, Effect, Expr, Field, FunctionDecl, ImportDecl, LetBinding, MatchArm,
+    ModuleDecl, Parameter, ParameterType, RecordDecl, RecordFieldValue, SourceUnit, VariantCase,
+    VariantDecl,
 };
 
 /// Parse and canonically format one M11 source unit.

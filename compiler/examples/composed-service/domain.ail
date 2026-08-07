@@ -1,0 +1,14 @@
+module domain;
+
+record Request {
+  name: Text;
+}
+
+variant Response {
+  Accepted(Text);
+  Rejected;
+}
+
+fn domain_name(request: Request) -> Text {
+  request.name
+}
