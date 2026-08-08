@@ -1,7 +1,11 @@
 # Design overview
 
-AIL's compiler pipeline is canonical source, parse and format, resolution and
-checking, a revision-bound semantic graph, and deterministic interpretation.
+AIL's compiler pipeline is:
+
+```text
+canonical source -> parse and format -> resolution and checking
+  -> revision-bound semantic graph -> deterministic interpreter
+```
 
 Canonical formatting, explicit capability authority, ordered observable effects,
 immutable revisions, structured diagnostics, and atomic candidate validation

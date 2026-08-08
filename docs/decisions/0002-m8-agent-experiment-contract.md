@@ -14,8 +14,7 @@ configurations receive the same agent treatment and if every model input, tool
 result, edit, validation, repair, limit, and final correctness result is
 reviewable.
 
-This decision serves accepted requirements
-[NFR-001 through NFR-003](../requirements/reference-slice.md#nfr-001--reproducible-comparative-benchmark).
+This decision records the deferred benchmark experiment contract.
 It does not select AIL syntax, an AIL target, or a production compiler stack.
 
 M7 supplies eight locked, answer-free

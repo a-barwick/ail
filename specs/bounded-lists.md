@@ -3,8 +3,8 @@
 Status: **Accepted 2026-08-08**
 
 This contract adds only the immutable bounded list type and deterministic
-sequential map needed by
-[UC-009](../docs/use-cases/UC-009-bounded-ordered-batch-cancellation.md). It
+sequential map needed by the
+[bounded batch-cancellation workload](../docs/workloads/bounded-batch-cancellation.md). It
 depends on the shipped M28 module, import, alias, qualified-reference, ordinary
 call, transitive-effect, recursion-rejection, and source-set execution behavior.
 It does not add general generics, iteration, mutable collections, concurrency,

@@ -46,8 +46,7 @@ collection library, mutation, concurrency, networking, package registry,
 foreign-code boundary, production runtime, native backend, or deployment
 system. Recursion is rejected rather than bounded.
 
-The architecture API implements the exact M24 metrics and policy behavior. The
-larger catalog in `architecture-health.md` is design work, not compiler behavior.
+The architecture API implements the exact M24 metrics and policy behavior.
 
 ## Next executable move
 

@@ -70,11 +70,10 @@ Examples must identify whether they are:
 - proposed normative fixtures; or
 - accepted conformance fixtures.
 
-Architectural-health changes must preserve the distinction in
-[the proposed manifest specification](docs/architecture-health.md): the compiler
-defines primitive semantic facts, while versioned project policy decides which
-facts record, warn, or deny. Do not use a single score or source-size limit as a
-substitute for aggregate authority, state, dependency, and context analysis.
+Architecture changes must preserve the distinction in
+[the architecture contract](specs/architecture.md): the compiler defines
+primitive semantic facts, while project policy decides which facts record, warn,
+or deny.
 
 ## Prototypes
 

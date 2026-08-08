@@ -50,8 +50,7 @@ interpreter is a semantic test engine, not a production runtime.
 
 The broader designs for memory, concurrency, replay, resources, packages, and
 foreign code remain unresolved. The implemented architecture API covers the
-M24 metric and policy set, not the full catalog in
-[docs/architecture-health.md](docs/architecture-health.md).
+M24 metric and policy set.
 
 ## Why build AIL
 
@@ -73,7 +72,7 @@ TypeScript using their normal compilers and language servers. It has not yet run
 that comparison. Source brevity, feature count, compiler size, LLVM integration,
 and self-hosting do not answer the question.
 
-Read [the project intent](docs/project-intent.md),
+Read [the product intent](docs/product.md),
 [current compiler design](docs/design-direction.md), and
 [current status](docs/STATUS.md) next.
 
