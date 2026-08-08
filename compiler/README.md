@@ -68,6 +68,10 @@ general loops, nested lists, or parallel evaluation. See
   all checks pass.
 - `EvolutionWorkspace::inspect_function` exposes revision-bound linked function,
   module, list, effect, capability, and dependency facts.
+- `EvolutionWorkspace::validate_source_architecture_change` derives functions,
+  calls, control flow, capabilities, and configured state ownership from a
+  complete checked AIL source candidate, evaluates architecture policy, and
+  publishes the source revision only when behavior and architecture pass.
 - `architecture_snapshot` derives the implemented four-scope, seven-metric
   architecture result or an explicit incomplete result.
 - `ArchitectureWorkspace::validate_architecture_change` compares a candidate

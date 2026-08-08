@@ -29,15 +29,15 @@ pub use architecture::{
 };
 pub use diagnostic::Diagnostic;
 pub use evolution::{
-    BoundedListInspection, CandidateChangeRequest, CandidateRevision, ChangeCapabilitySummary,
-    ChangeEffectSummary, ChangeFailure, ChangeResponse, ChangeSuccess, CompletionEvidence,
-    EffectSummary, EvolutionBuildFailure, EvolutionCoverage, EvolutionSource, EvolutionWorkspace,
-    ImpactEntry, ImpactFailure, ImpactReport, ImpactRequest, PersistentIdentity,
-    PersistentIdentityChanges, ProposedSchemaChange, PublicBehaviorFailure, RelationshipEdge,
-    SemanticChange, SemanticDiff, SemanticLocation, SourceArtifact, SourceFileMetadata,
-    SourceSetDiagnostic, SourceSetFunctionInspection, SourceSetInspectionFailure,
-    SourceSetRevision, UncheckedBoundary, ValidationSummary, ValueParameterInspection,
-    relationship_kinds,
+    ArchitectureSourceChangeRequest, BoundedListInspection, CandidateChangeRequest,
+    CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary, ChangeFailure, ChangeResponse,
+    ChangeSuccess, CompletionEvidence, EffectSummary, EvolutionBuildFailure, EvolutionCoverage,
+    EvolutionSource, EvolutionWorkspace, ImpactEntry, ImpactFailure, ImpactReport, ImpactRequest,
+    PersistentIdentity, PersistentIdentityChanges, ProposedSchemaChange, PublicBehaviorFailure,
+    RelationshipEdge, SemanticChange, SemanticDiff, SemanticLocation, SourceArchitectureConfig,
+    SourceArtifact, SourceFileMetadata, SourceOperationArchitecture, SourceSetDiagnostic,
+    SourceSetFunctionInspection, SourceSetInspectionFailure, SourceSetRevision, SourceStateAccess,
+    UncheckedBoundary, ValidationSummary, ValueParameterInspection, relationship_kinds,
 };
 pub use interpreter::{CapabilityProvider, ObservedCapabilityCall, RuntimeFault, RuntimeValue};
 pub use lexer::{Keyword, Span, Token, TokenKind, lex, reconstruct};

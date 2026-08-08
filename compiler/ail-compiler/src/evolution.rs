@@ -4,18 +4,20 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::semantics::check_parsed_source;
 use crate::{
-    Block, CapabilityEnvironment, CapabilityProvider, Declaration, ExecutionFailure,
-    ExecutionResponse, ExecutionSuccess, Expr, FunctionDecl, HandleKind, ParameterType,
-    ParseResult, RuntimeFault, RuntimeValue, SemanticHandle, SourceUnit, Span, TypeCheckStatus,
-    TypeRef, parse, source_digest,
+    ArchitectureCoverage, ArchitectureEdge, ArchitecturePolicyContext, ArchitectureRevision,
+    ArchitectureRevisionError, ArchitectureUnit, Block, CapabilityEnvironment, CapabilityProvider,
+    ControlFlowGraph, Declaration, ExecutionFailure, ExecutionResponse, ExecutionSuccess, Expr,
+    FunctionDecl, HandleKind, ParameterType, ParseResult, RuntimeFault, RuntimeValue,
+    SemanticHandle, SourceUnit, Span, TypeCheckStatus, TypeRef, parse, source_digest,
 };
 
 mod transaction;
 
 pub use transaction::{
-    CandidateChangeRequest, CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary,
-    ChangeFailure, ChangeResponse, ChangeSuccess, CompletionEvidence, PersistentIdentityChanges,
-    PublicBehaviorFailure, SemanticChange, SemanticDiff, ValidationSummary,
+    ArchitectureSourceChangeRequest, CandidateChangeRequest, CandidateRevision,
+    ChangeCapabilitySummary, ChangeEffectSummary, ChangeFailure, ChangeResponse, ChangeSuccess,
+    CompletionEvidence, PersistentIdentityChanges, PublicBehaviorFailure, SemanticChange,
+    SemanticDiff, ValidationSummary,
 };
 
 const RELATIONSHIP_KINDS: [&str; 12] = [
@@ -70,6 +72,39 @@ pub struct EvolutionCoverage {
     pub declared_complete: bool,
     pub unchecked: Vec<UncheckedBoundary>,
     pub artifacts: Vec<SourceArtifact>,
+}
+
+/// Project-owned interpretation of one capability operation's state effects.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SourceStateAccess {
+    Read,
+    Write,
+    ReadWrite,
+}
+
+/// Project-owned state interpretation for one capability operation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SourceOperationArchitecture {
+    Stateless,
+    State {
+        domain: String,
+        access: SourceStateAccess,
+    },
+}
+
+/// Project-owned architecture facts not represented by AIL source syntax.
+///
+/// Keys in `capability_namespaces` are capability interface names. Keys in
+/// `operations` are `Interface.operation`. Every source-visible capability
+/// interface and operation must have an explicit entry.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SourceArchitectureConfig {
+    pub module_groups: BTreeMap<String, String>,
+    pub capability_namespaces: BTreeMap<String, String>,
+    pub endpoint_groups: BTreeMap<String, String>,
+    pub operations: BTreeMap<String, SourceOperationArchitecture>,
+    pub policy: ArchitecturePolicyContext,
+    pub semantic_model_version: String,
 }
 
 /// Immutable ordered source-set metadata.
@@ -565,6 +600,139 @@ impl EvolutionWorkspace {
 
 impl StoredSourceSet {
     #[allow(clippy::too_many_lines)]
+    fn architecture_revision(
+        &self,
+        workspace_id: &str,
+        config: &SourceArchitectureConfig,
+    ) -> Result<ArchitectureRevision, ArchitectureRevisionError> {
+        let mut units = Vec::new();
+        let mut edges = BTreeSet::new();
+        let mut endpoint_groups = config.endpoint_groups.clone();
+        for declaration in &self.unit.declarations {
+            let Declaration::Function(function) = declaration else {
+                continue;
+            };
+            let (module, local) = function
+                .name
+                .rsplit_once('.')
+                .unwrap_or(("", &function.name));
+            let id = format!("{module}:{local}");
+            let group = config.module_groups.get(module).cloned().ok_or_else(|| {
+                ArchitectureRevisionError(format!("no architecture group for module {module}"))
+            })?;
+            endpoint_groups.insert(id.clone(), group.clone());
+            let receivers = function
+                .parameters
+                .iter()
+                .filter_map(|parameter| match &parameter.ty {
+                    ParameterType::Capability(interface) => {
+                        Some((parameter.name.clone(), interface.clone()))
+                    }
+                    ParameterType::Value(_) => None,
+                })
+                .collect::<BTreeMap<_, _>>();
+            let mut capabilities = BTreeSet::new();
+            for interface in receivers.values() {
+                let namespace = config.capability_namespaces.get(interface).ok_or_else(|| {
+                    ArchitectureRevisionError(format!(
+                        "no architecture namespace for capability interface {interface}"
+                    ))
+                })?;
+                capabilities.insert(namespace.clone());
+                let endpoint = format!("capability:{namespace}");
+                let endpoint_group = config.endpoint_groups.get(&endpoint).ok_or_else(|| {
+                    ArchitectureRevisionError(format!("no endpoint group for {endpoint}"))
+                })?;
+                endpoint_groups.insert(endpoint.clone(), endpoint_group.clone());
+                edges.insert((id.clone(), endpoint, "capability-use".to_owned()));
+            }
+            validate_architecture_operations(
+                &function.body,
+                &receivers,
+                config,
+                &mut endpoint_groups,
+            )?;
+            let mut reads = BTreeSet::new();
+            let mut writes = BTreeSet::new();
+            let mut decisions = 0;
+            derive_architecture_expr(
+                &function.body,
+                &id,
+                &receivers,
+                config,
+                &mut edges,
+                &mut reads,
+                &mut writes,
+                &mut decisions,
+            );
+            units.push(ArchitectureUnit {
+                id,
+                module: module.to_owned(),
+                group,
+                cfg: ControlFlowGraph {
+                    nodes: decisions + 1,
+                    edges: decisions * 2,
+                },
+                capabilities: capabilities.into_iter().collect(),
+                state_reads: reads.into_iter().collect(),
+                state_writes: writes.into_iter().collect(),
+            });
+        }
+        units.sort_by(|a, b| a.id.cmp(&b.id));
+        let mut analyzed_groups = units
+            .iter()
+            .map(|unit| unit.group.clone())
+            .collect::<BTreeSet<_>>();
+        analyzed_groups.extend(endpoint_groups.values().cloned());
+        let required = [
+            "contract",
+            "transport",
+            "domain",
+            "persistence-adapter",
+            "verification",
+        ];
+        let complete_for_policy = self.coverage.declared_complete
+            && required
+                .iter()
+                .all(|group| analyzed_groups.contains(*group));
+        let analyzed_groups = if complete_for_policy {
+            required.iter().map(|group| (*group).to_owned()).collect()
+        } else {
+            analyzed_groups.into_iter().collect()
+        };
+        ArchitectureRevision::new(
+            workspace_id.to_owned(),
+            self.revision.revision_id.clone(),
+            config.semantic_model_version.clone(),
+            units,
+            edges
+                .into_iter()
+                .map(|(source, target, kind)| ArchitectureEdge {
+                    source,
+                    target,
+                    kind,
+                })
+                .collect(),
+            endpoint_groups,
+            ArchitectureCoverage {
+                analyzed_groups,
+                unchecked_boundaries: self
+                    .coverage
+                    .unchecked
+                    .iter()
+                    .map(|boundary| {
+                        serde_json::json!({
+                            "id": boundary.identity, "reason": boundary.reason
+                        })
+                    })
+                    .collect(),
+                complete_for_policy,
+            },
+            config.policy.clone(),
+        )
+    }
+
+    #[allow(clippy::too_many_lines)]
     fn build(
         workspace_id: &str,
         revision_id: &str,
@@ -687,6 +855,330 @@ impl StoredSourceSet {
             unit: merged.unit,
         })
     }
+}
+
+#[allow(clippy::too_many_lines)]
+fn validate_architecture_operations(
+    block: &Block,
+    receivers: &BTreeMap<String, String>,
+    config: &SourceArchitectureConfig,
+    endpoint_groups: &mut BTreeMap<String, String>,
+) -> Result<(), ArchitectureRevisionError> {
+    fn visit(
+        expression: &Expr,
+        receivers: &BTreeMap<String, String>,
+        config: &SourceArchitectureConfig,
+        endpoint_groups: &mut BTreeMap<String, String>,
+    ) -> Result<(), ArchitectureRevisionError> {
+        let children = |expressions: &[Expr], endpoint_groups: &mut BTreeMap<String, String>| {
+            for expression in expressions {
+                visit(expression, receivers, config, endpoint_groups)?;
+            }
+            Ok(())
+        };
+        match expression {
+            Expr::CapabilityCall {
+                receiver,
+                operation,
+                arguments,
+                ..
+            } => {
+                let Some(interface) = receivers.get(receiver) else {
+                    let endpoint = format!("{receiver}:{operation}");
+                    if !config.endpoint_groups.contains_key(&endpoint) {
+                        return Err(ArchitectureRevisionError(format!(
+                            "no endpoint group for built-in operation {endpoint}"
+                        )));
+                    }
+                    return children(arguments, endpoint_groups);
+                };
+                let namespace = config.capability_namespaces.get(interface).ok_or_else(|| {
+                    ArchitectureRevisionError(format!(
+                        "no architecture namespace for capability interface {interface}"
+                    ))
+                })?;
+                let namespace_endpoint = format!("capability:{namespace}");
+                let group = config
+                    .endpoint_groups
+                    .get(&namespace_endpoint)
+                    .ok_or_else(|| {
+                        ArchitectureRevisionError(format!(
+                            "no endpoint group for {namespace_endpoint}"
+                        ))
+                    })?;
+                let operation_key = format!("{interface}.{operation}");
+                let operation_architecture =
+                    config.operations.get(&operation_key).ok_or_else(|| {
+                        ArchitectureRevisionError(format!(
+                            "no architecture interpretation for capability operation {operation_key}"
+                        ))
+                    })?;
+                endpoint_groups.insert(format!("{namespace_endpoint}.{operation}"), group.clone());
+                if let SourceOperationArchitecture::State { domain, .. } = operation_architecture {
+                    let state_endpoint = format!("state:{domain}");
+                    if !config.endpoint_groups.contains_key(&state_endpoint) {
+                        return Err(ArchitectureRevisionError(format!(
+                            "no endpoint group for {state_endpoint}"
+                        )));
+                    }
+                }
+                children(arguments, endpoint_groups)
+            }
+            Expr::Call { arguments, .. } => children(arguments, endpoint_groups),
+            Expr::Record { fields, .. } => {
+                for field in fields {
+                    visit(&field.value, receivers, config, endpoint_groups)?;
+                }
+                Ok(())
+            }
+            Expr::Variant { payload, .. } => {
+                if let Some(payload) = payload {
+                    visit(payload, receivers, config, endpoint_groups)?;
+                }
+                Ok(())
+            }
+            Expr::FieldAccess { target, .. } => visit(target, receivers, config, endpoint_groups),
+            Expr::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => {
+                visit(condition, receivers, config, endpoint_groups)?;
+                validate_architecture_operations(then_branch, receivers, config, endpoint_groups)?;
+                validate_architecture_operations(else_branch, receivers, config, endpoint_groups)
+            }
+            Expr::Match {
+                scrutinee, arms, ..
+            } => {
+                visit(scrutinee, receivers, config, endpoint_groups)?;
+                for arm in arms {
+                    validate_architecture_operations(
+                        &arm.body,
+                        receivers,
+                        config,
+                        endpoint_groups,
+                    )?;
+                }
+                Ok(())
+            }
+            Expr::Map { source, body, .. } => {
+                visit(source, receivers, config, endpoint_groups)?;
+                validate_architecture_operations(body, receivers, config, endpoint_groups)
+            }
+            Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => Ok(()),
+        }
+    }
+
+    for binding in &block.bindings {
+        visit(&binding.value, receivers, config, endpoint_groups)?;
+    }
+    visit(&block.tail, receivers, config, endpoint_groups)
+}
+
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+fn derive_architecture_expr(
+    block: &Block,
+    source: &str,
+    receivers: &BTreeMap<String, String>,
+    config: &SourceArchitectureConfig,
+    edges: &mut BTreeSet<(String, String, String)>,
+    reads: &mut BTreeSet<String>,
+    writes: &mut BTreeSet<String>,
+    decisions: &mut usize,
+) {
+    #[allow(clippy::too_many_lines)]
+    fn visit(
+        expression: &Expr,
+        source: &str,
+        receivers: &BTreeMap<String, String>,
+        config: &SourceArchitectureConfig,
+        edges: &mut BTreeSet<(String, String, String)>,
+        reads: &mut BTreeSet<String>,
+        writes: &mut BTreeSet<String>,
+        decisions: &mut usize,
+    ) {
+        match expression {
+            Expr::Call {
+                function,
+                arguments,
+                ..
+            } => {
+                let (module, local) = function.rsplit_once('.').unwrap_or(("", function));
+                edges.insert((
+                    source.to_owned(),
+                    format!("{module}:{local}"),
+                    "calls".into(),
+                ));
+                for argument in arguments {
+                    visit(
+                        argument, source, receivers, config, edges, reads, writes, decisions,
+                    );
+                }
+            }
+            Expr::CapabilityCall {
+                receiver,
+                operation,
+                arguments,
+                ..
+            } => {
+                if let Some(interface) = receivers.get(receiver) {
+                    let namespace = config
+                        .capability_namespaces
+                        .get(interface)
+                        .expect("source architecture validation resolves interfaces");
+                    edges.insert((
+                        source.to_owned(),
+                        format!("capability:{namespace}.{operation}"),
+                        "capability-use".into(),
+                    ));
+                    if let SourceOperationArchitecture::State { domain, access } = config
+                        .operations
+                        .get(&format!("{interface}.{operation}"))
+                        .expect("source architecture validation resolves operations")
+                    {
+                        if matches!(
+                            access,
+                            SourceStateAccess::Read | SourceStateAccess::ReadWrite
+                        ) {
+                            reads.insert(domain.clone());
+                            edges.insert((
+                                source.to_owned(),
+                                format!("state:{domain}"),
+                                "state-read".into(),
+                            ));
+                        }
+                        if matches!(
+                            access,
+                            SourceStateAccess::Write | SourceStateAccess::ReadWrite
+                        ) {
+                            writes.insert(domain.clone());
+                            edges.insert((
+                                source.to_owned(),
+                                format!("state:{domain}"),
+                                "state-write".into(),
+                            ));
+                        }
+                    }
+                } else {
+                    edges.insert((
+                        source.to_owned(),
+                        format!("{receiver}:{operation}"),
+                        "calls".into(),
+                    ));
+                }
+                for argument in arguments {
+                    visit(
+                        argument, source, receivers, config, edges, reads, writes, decisions,
+                    );
+                }
+            }
+            Expr::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => {
+                *decisions += 1;
+                visit(
+                    condition, source, receivers, config, edges, reads, writes, decisions,
+                );
+                derive_architecture_expr(
+                    then_branch,
+                    source,
+                    receivers,
+                    config,
+                    edges,
+                    reads,
+                    writes,
+                    decisions,
+                );
+                derive_architecture_expr(
+                    else_branch,
+                    source,
+                    receivers,
+                    config,
+                    edges,
+                    reads,
+                    writes,
+                    decisions,
+                );
+            }
+            Expr::Match {
+                scrutinee, arms, ..
+            } => {
+                *decisions += arms.len().saturating_sub(1);
+                visit(
+                    scrutinee, source, receivers, config, edges, reads, writes, decisions,
+                );
+                for arm in arms {
+                    derive_architecture_expr(
+                        &arm.body, source, receivers, config, edges, reads, writes, decisions,
+                    );
+                }
+            }
+            Expr::Map {
+                source: mapped,
+                body,
+                ..
+            } => {
+                *decisions += 1;
+                visit(
+                    mapped, source, receivers, config, edges, reads, writes, decisions,
+                );
+                derive_architecture_expr(
+                    body, source, receivers, config, edges, reads, writes, decisions,
+                );
+            }
+            Expr::Record { fields, .. } => {
+                for field in fields {
+                    visit(
+                        &field.value,
+                        source,
+                        receivers,
+                        config,
+                        edges,
+                        reads,
+                        writes,
+                        decisions,
+                    );
+                }
+            }
+            Expr::Variant { payload, .. } => {
+                if let Some(payload) = payload {
+                    visit(
+                        payload, source, receivers, config, edges, reads, writes, decisions,
+                    );
+                }
+            }
+            Expr::FieldAccess { target, .. } => visit(
+                target, source, receivers, config, edges, reads, writes, decisions,
+            ),
+            Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => {}
+        }
+    }
+    for binding in &block.bindings {
+        visit(
+            &binding.value,
+            source,
+            receivers,
+            config,
+            edges,
+            reads,
+            writes,
+            decisions,
+        );
+    }
+    visit(
+        &block.tail,
+        source,
+        receivers,
+        config,
+        edges,
+        reads,
+        writes,
+        decisions,
+    );
 }
 
 #[allow(clippy::too_many_lines)]

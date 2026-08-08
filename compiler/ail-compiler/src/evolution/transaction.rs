@@ -2,7 +2,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::interpreter::interpret;
 use crate::{
-    CanonicalEdit, CapabilityProvider, CausalStep, Declaration, DiagnosticValue, ExecutionFailure,
+    ArchitectureChangeResult, ArchitectureEvaluationInput, ArchitectureRequestError,
+    ArchitectureRequestErrorKind, ArchitectureWorkspace, BehaviorValidation, CanonicalEdit,
+    CapabilityProvider, CausalStep, Declaration, DiagnosticValue, ExecutionFailure,
     ExecutionResponse, ExecutionSuccess, HandleKind, IdentityClassification, IdentityMap,
     IdentityMapEntry, ParameterType, RuntimeFault, RuntimeValue, SemanticHandle, Span,
     StructuredDiagnostic,
@@ -10,9 +12,16 @@ use crate::{
 
 use super::{
     EvolutionSource, EvolutionWorkspace, ImpactEntry, ImpactReport, ProposedSchemaChange,
-    SourceSetRevision, StoredSourceSet, UncheckedBoundary, entry_functions, handle, source_name,
-    source_path_for_function,
+    SourceArchitectureConfig, SourceSetRevision, StoredSourceSet, UncheckedBoundary,
+    entry_functions, handle, source_name, source_path_for_function,
 };
+
+/// Complete source candidate for source-backed architecture validation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArchitectureSourceChangeRequest {
+    pub base_revision_id: String,
+    pub candidate_sources: Vec<EvolutionSource>,
+}
 
 /// Complete source-set candidate associated with one already-computed impact report.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -213,6 +222,103 @@ impl CandidateRevision<'_> {
 }
 
 impl EvolutionWorkspace {
+    /// Build, check, evaluate, and atomically publish a source-backed architecture candidate.
+    ///
+    /// # Errors
+    /// Returns a request error for stale or mismatched revision identities, invalid source,
+    /// invalid derived architecture facts, or evaluator request failures. No error publishes.
+    pub fn validate_source_architecture_change<F>(
+        &mut self,
+        request: ArchitectureSourceChangeRequest,
+        config: &SourceArchitectureConfig,
+        input: &ArchitectureEvaluationInput,
+        validate_behavior: F,
+    ) -> Result<ArchitectureChangeResult, ArchitectureRequestError>
+    where
+        F: FnOnce(&CandidateRevision<'_>) -> Result<BehaviorValidation, ArchitectureRequestError>,
+    {
+        if request.base_revision_id != self.current_revision_id {
+            return Err(ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::StaleRevision,
+                message: "base source revision is not current".into(),
+            });
+        }
+        let base = self
+            .revisions
+            .get(&request.base_revision_id)
+            .ok_or_else(|| ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::StaleRevision,
+                message: "base source revision is not retained".into(),
+            })?;
+        let child_revision_id = self.next_revision_id(&request.base_revision_id);
+        if input.request.base_revision_id != request.base_revision_id
+            || input.request.candidate_revision_id != child_revision_id
+        {
+            return Err(ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::InvalidRevision,
+                message: "architecture request is not bound to generated source revisions".into(),
+            });
+        }
+        let coverage = base.coverage.clone();
+        let base_architecture = base
+            .architecture_revision(&self.id, config)
+            .map_err(|error| ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::InvalidRevision,
+                message: error.0,
+            })?;
+        let base_paths = base
+            .sources
+            .iter()
+            .map(|source| source.path.as_str())
+            .collect::<Vec<_>>();
+        let mut candidate_paths = request
+            .candidate_sources
+            .iter()
+            .map(|source| source.path.as_str())
+            .collect::<Vec<_>>();
+        candidate_paths.sort_unstable();
+        if candidate_paths != base_paths {
+            return Err(ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::InvalidRevision,
+                message: "architecture candidate is not the complete source set".into(),
+            });
+        }
+        let candidate = StoredSourceSet::build(
+            &self.id,
+            &child_revision_id,
+            Some(request.base_revision_id.clone()),
+            request.candidate_sources,
+            &self.capabilities,
+            coverage,
+        )
+        .map_err(|failure| ArchitectureRequestError {
+            kind: ArchitectureRequestErrorKind::InvalidRevision,
+            message: failure.causes.join(","),
+        })?;
+        let candidate_architecture =
+            candidate
+                .architecture_revision(&self.id, config)
+                .map_err(|error| ArchitectureRequestError {
+                    kind: ArchitectureRequestErrorKind::InvalidRevision,
+                    message: error.0,
+                })?;
+        let candidate_view = CandidateRevision {
+            stored: &candidate,
+            capabilities: &self.capabilities,
+        };
+        let mut architecture_workspace = ArchitectureWorkspace::new(base_architecture);
+        let result = architecture_workspace.validate_architecture_change(
+            candidate_architecture,
+            input,
+            |_| validate_behavior(&candidate_view),
+        )?;
+        if matches!(result, ArchitectureChangeResult::Success(_)) {
+            self.revisions.insert(child_revision_id.clone(), candidate);
+            self.current_revision_id = child_revision_id;
+        }
+        Ok(result)
+    }
+
     /// Canonicalize and validate a complete candidate before publishing one child revision.
     ///
     /// The supplied behavior oracle receives read-only execution access to the exact candidate.
