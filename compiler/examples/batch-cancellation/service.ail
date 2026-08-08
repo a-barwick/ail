@@ -1,0 +1,9 @@
+module cancellation.service;
+import cancellation.domain as domain;
+import cancellation.single as single;
+
+fn cancel_batch(items: List<domain.JobId, 32>, store: capability JobsStore) -> List<domain.CancelOutcome, 32> effects { store.cancel } {
+  map item in items {
+    single.cancel_one(item)
+  }
+}

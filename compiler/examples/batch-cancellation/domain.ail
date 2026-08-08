@@ -1,0 +1,12 @@
+module cancellation.domain;
+
+record JobId identity "cancellation.job-id.v1" {
+  value identity "value": Text;
+}
+
+variant CancelOutcome identity "cancellation.outcome.v1" {
+  Cancelled identity "cancelled";
+  AlreadyFinished identity "already-finished";
+  NotFound identity "not-found";
+  Unavailable identity "unavailable";
+}

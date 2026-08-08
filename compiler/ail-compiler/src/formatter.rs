@@ -115,7 +115,7 @@ fn format_function(
 
 fn format_parameter(output: &mut String, parameter: &Parameter) {
     match &parameter.ty {
-        ParameterType::Named(ty) => {
+        ParameterType::Value(ty) => {
             write!(output, "{}: {ty}", parameter.name).expect("writing to String cannot fail");
         }
         ParameterType::Capability(ty) => {
@@ -147,6 +147,7 @@ fn format_block_body(
     output.push('\n');
 }
 
+#[allow(clippy::too_many_lines)]
 fn format_expression(
     output: &mut String,
     expression: &Expr,
@@ -250,7 +251,29 @@ fn format_expression(
             write_indent(output, indent);
             output.push('}');
         }
+        Expr::Map {
+            binding,
+            source,
+            body,
+            ..
+        } => format_map_expression(output, binding, source, body, records, indent),
     }
+}
+
+fn format_map_expression(
+    output: &mut String,
+    binding: &str,
+    source: &Expr,
+    body: &Block,
+    records: &BTreeMap<&str, Vec<&str>>,
+    indent: usize,
+) {
+    write!(output, "map {binding} in ").expect("writing to String cannot fail");
+    format_expression(output, source, records, indent);
+    output.push_str(" {\n");
+    format_block_body(output, body, records, indent + 1);
+    write_indent(output, indent);
+    output.push('}');
 }
 
 fn format_record_field(

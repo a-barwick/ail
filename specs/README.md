@@ -35,10 +35,17 @@ M20 implements the identity, source-set, semantic-graph, inspection, coverage,
 and impact-query portion of that contract. M21 owns candidate publication,
 canonical edits, semantic diff, and completion evidence.
 
+M29 adds the accepted [bounded ordered list contract](bounded-lists.md), its
+[protocol facts](bounded-list-protocol.json),
+[machine-readable rules](bounded-list-contract.json), and the canonical
+three-module program under `compiler/examples/batch-cancellation/`. This is a
+standalone extension; it does not change the locked M11, M17, or M19 contracts.
+
 Run the dependency-free contract check with:
 
 ```bash
 python3 specs/tools/core_contract.py check
+python3 specs/tools/bounded_list_contract.py check
 ```
 
 [ADR 0004](../docs/decisions/0004-rust-compiler-stack.md) now authorizes the
@@ -46,3 +53,5 @@ production Rust compiler tree. M11 still does not authorize fixture-specific
 extensions. M17 authorizes only the additional numbered behavior in
 `runtime.md`; M19 authorizes only the schema-evolution behavior in
 `evolution.md`.
+M29 authorizes only immutable `List<T, N>` values and sequential binder-style
+`map`; broader collection and iteration semantics remain outside the contract.

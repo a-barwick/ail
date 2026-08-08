@@ -529,6 +529,12 @@ new behavior that applies:
 M27 records one operator using the M24 output to repair a seeded regression.
 A cross-language cost comparison has not been run.
 
+M29 sequential map does not add an eighth architecture metric. A call or
+capability operation in a map body remains one static source site; the runtime
+bound does not multiply architecture facts. The current architecture API still
+consumes explicit caller-supplied units, control-flow graphs, and edges rather
+than deriving a map control-flow graph from AIL source.
+
 ## Non-goals
 
 This feature does not:

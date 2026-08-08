@@ -18,7 +18,12 @@ This directory contains the Rust compiler and deterministic interpreter.
 - architecture snapshots, compatible deltas, policy evaluation, bounded
   incomplete results, and atomic publication; and
 - explicit modules, import aliases, qualified references, and checked local and
-  imported function calls.
+  imported function calls;
+- immutable structural `List<T, N>` values and contextual sequential `map`;
+- whole-list cardinality and element validation before capability checks or
+  calls; and
+- linked source-set function inspection for module, list element identity,
+  bound, effects, capabilities, and dependencies.
 
 ## Calls and modules
 
@@ -39,6 +44,19 @@ unqualified name works when unique; `module.function` selects among repeated
 function names. See `examples/composed-service/` for a working three-file
 program.
 
+## Bounded lists and map
+
+`List<T, N>` stores zero through `N` immutable values in order. The compiler
+represents the element and bound structurally, resolves aliased and qualified
+element types during linking, and uses exact bound equality. `map item in items
+{ ... }` evaluates its source once and its body sequentially for every stored
+index, producing one aligned result with the same declared bound.
+
+External list arguments are completely validated before capability availability
+checks or calls. The feature has no literals, indexing, mutation, filter, fold,
+general loops, nested lists, or parallel evaluation. See
+`examples/batch-cancellation/` for the executable three-module service.
+
 ## APIs
 
 - `check_source` checks one source revision and returns canonical source,
@@ -48,6 +66,8 @@ program.
 - `EvolutionWorkspace` stores ordered source sets, reports impact, validates a
   complete candidate, exposes it to a behavior oracle, and publishes only after
   all checks pass.
+- `EvolutionWorkspace::inspect_function` exposes revision-bound linked function,
+  module, list, effect, capability, and dependency facts.
 - `architecture_snapshot` derives the implemented four-scope, seven-metric
   architecture result or an explicit incomplete result.
 - `ArchitectureWorkspace::validate_architecture_change` compares a candidate
@@ -58,10 +78,11 @@ The exact protocol and language contracts are under [`../specs`](../specs/README
 
 ## Unsupported
 
-There is no iteration, general collection library, concurrency, networking,
-package registry, foreign-function interface, production runtime, native
-backend, JIT, LLVM lowering, or deployment system. The interpreter is for
-semantic execution and tests. Recursive calls are rejected.
+There is no general iteration or collection library, mutation, concurrency,
+networking, package registry, foreign-function interface, production runtime,
+native backend, JIT, LLVM lowering, or deployment system. Sequential map over
+bounded lists is the only repeated-work form. The interpreter is for semantic
+execution and tests. Recursive calls are rejected.
 
 ## Verify
 
@@ -72,5 +93,7 @@ cargo +1.87.0 fmt --all --check
 cargo +1.87.0 test --workspace
 cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
 cargo +1.87.0 test --workspace --test m28_composition
+cargo +1.87.0 test --workspace --test m29_bounded_lists
+python3 specs/tools/bounded_list_contract.py check
 PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public
 ```

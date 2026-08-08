@@ -23,7 +23,9 @@ rules. [Decisions](decisions/) record expensive technical choices. The
 Only numbered specification rules and their conformance fixtures define AIL
 language or compiler-interface behavior. The Rust compiler must match those
 rules where they apply. M28 call and module behavior is locked by its executable
-tests while that material is incorporated into the broader specification.
+tests while that material is incorporated into the broader specification. M29
+bounded list and sequential map behavior is accepted in
+[`specs/bounded-lists.md`](../specs/bounded-lists.md).
 
 The other documents have narrower jobs:
 
@@ -51,12 +53,14 @@ The current Rust compiler implements:
 
 M28 added direct and imported calls, explicit modules, import aliases, qualified
 references, transitive effect checking, left-to-right argument evaluation, and
-nested execution. The compiler rejects recursion and import cycles.
+nested execution. M29 added structural bounded lists, sequential map, pre-effect
+external list validation, and linked list/function inspection. The compiler
+rejects recursion and import cycles.
 
-It does not implement iteration, general collections, concurrency, networking,
-packages, foreign code, a production runtime, native lowering, or deployment.
-The full architectural-health catalog is also not implemented; only the M24 set
-is.
+It does not implement general iteration or a collection library, mutation,
+concurrency, networking, packages, foreign code, a production runtime, native
+lowering, or deployment. The full architectural-health catalog is also not
+implemented; only the M24 set is.
 
 ## Precise terms
 

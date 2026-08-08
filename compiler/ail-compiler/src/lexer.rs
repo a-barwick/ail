@@ -54,6 +54,8 @@ pub enum TokenKind {
     Arrow,
     FatArrow,
     ColonColon,
+    LeftAngle,
+    RightAngle,
     Invalid,
     Eof,
 }
@@ -99,6 +101,8 @@ impl TokenKind {
             Self::Arrow => "->",
             Self::FatArrow => "=>",
             Self::ColonColon => "::",
+            Self::LeftAngle => "<",
+            Self::RightAngle => ">",
             Self::Invalid => "invalid token",
             Self::Eof => "EOF",
         }
@@ -221,6 +225,8 @@ fn scan_token(source: &str, start: usize) -> (TokenKind, usize) {
             ',' => TokenKind::Comma,
             '.' => TokenKind::Dot,
             '=' => TokenKind::Equal,
+            '<' => TokenKind::LeftAngle,
+            '>' => TokenKind::RightAngle,
             _ => TokenKind::Invalid,
         }
     };

@@ -1,0 +1,60 @@
+{
+  "contract_version": "m29-v1",
+  "status": "accepted",
+  "milestone": "M29",
+  "use_case": "UC-009",
+  "requirements": [
+    "APP-007",
+    "LANG-007",
+    "PROTO-008",
+    "NFR-008"
+  ],
+  "language_max_list_length": 4294967295,
+  "application_max_list_length": 32,
+  "rules": [
+    "M29-LANG-001",
+    "M29-LANG-002",
+    "M29-LANG-003",
+    "M29-LANG-004",
+    "M29-RUNTIME-001",
+    "M29-RUNTIME-002",
+    "M29-RUNTIME-003",
+    "M29-PROTO-001",
+    "M29-PROTO-002",
+    "M29-PROTO-003"
+  ],
+  "diagnostics": [
+    "AIL.TYPE.LIST_BOUND",
+    "AIL.TYPE.LIST_ELEMENT",
+    "AIL.TYPE.MAP_SOURCE",
+    "AIL.RUNTIME.LIST_CARDINALITY",
+    "AIL.RUNTIME.LIST_ELEMENT"
+  ],
+  "canonical_sources": [
+    {
+      "path": "compiler/examples/batch-cancellation/domain.ail",
+      "sha256": "521fba7a7c8f0759bcbe47d0fa29713a9552a9842132360f728ec43ac1c7da90"
+    },
+    {
+      "path": "compiler/examples/batch-cancellation/service.ail",
+      "sha256": "e7014e109634d3798721f5fe0d0f5bfd8966eae8d353a99c5d46f68e7b39d8e8"
+    },
+    {
+      "path": "compiler/examples/batch-cancellation/single.ail",
+      "sha256": "464e9f17675223a48ec84e91c53e701a514ad37719da439a98a494b2d03011c1"
+    }
+  ],
+  "rust_test": "compiler/ail-compiler/tests/m29_bounded_lists.rs",
+  "executable_cases": [
+    "canonical-contextual-static",
+    "invalid-bounds-element-source",
+    "empty-mixed-duplicates-order",
+    "oversized-late-malformed-zero-calls",
+    "exact-bound-provider-fail-stop",
+    "imported-transitive-effects",
+    "alias-effect-source-order-revisions-inspection",
+    "source-unit-map-binder-bound-inspection",
+    "map-binding-rename",
+    "atomic-candidate-map-validation"
+  ]
+}

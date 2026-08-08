@@ -9,8 +9,9 @@ block normal application development and independent compatible implementations.
    text encoding, and equality.
 2. **Memory:** allocation, ownership or tracing, aliasing, mutation, lifetimes,
    and observable resource failure.
-3. **Iteration and collections:** ordering, hashing, bounds, allocation, and
-   deterministic traversal.
+3. **Iteration and collections:** M29 fixes immutable ordered `List<T, N>` and
+   sequential map only. Hashing, allocation failure, literals, indexing,
+   mutation, general iteration, and parallel traversal remain unresolved.
 4. **Errors and faults:** the boundary between typed domain errors and language
    faults, and whether faults can be caught.
 5. **Concurrency:** child failure, cancellation, simultaneous readiness, scope
@@ -43,7 +44,8 @@ to test the latter.
 
 ## Next executable move
 
-Select one representative service behavior that the current compiler cannot
-express, define its exact source, static, runtime, diagnostic, and protocol
-results, then implement the smallest missing semantics and run the full existing
-suite. Do not design all eight areas at once.
+M29 selected and shipped bounded ordered cancellation. The next move must again
+select one representative behavior the current compiler cannot express, define
+its exact source, static, runtime, diagnostic, and protocol results, then add the
+smallest missing semantics. Do not turn the M29 list slice into an assumed path
+to general collections or design all unresolved areas at once.

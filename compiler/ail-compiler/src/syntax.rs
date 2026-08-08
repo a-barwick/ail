@@ -1,5 +1,7 @@
 use crate::{Span, Token};
 
+pub const MAX_LIST_LENGTH: u32 = u32::MAX;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceUnit {
     pub module: Option<ModuleDecl>,
@@ -30,6 +32,7 @@ impl ImportDecl {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(clippy::large_enum_variant)]
 pub enum Declaration {
     Record(RecordDecl),
     Variant(VariantDecl),
@@ -48,7 +51,7 @@ pub struct RecordDecl {
 pub struct Field {
     pub name: String,
     pub identity: Option<String>,
-    pub ty: String,
+    pub ty: TypeRef,
     pub span: Span,
 }
 
@@ -64,7 +67,7 @@ pub struct VariantDecl {
 pub struct VariantCase {
     pub name: String,
     pub identity: Option<String>,
-    pub payload: Option<String>,
+    pub payload: Option<TypeRef>,
     pub span: Span,
 }
 
@@ -72,7 +75,7 @@ pub struct VariantCase {
 pub struct FunctionDecl {
     pub name: String,
     pub parameters: Vec<Parameter>,
-    pub result_type: String,
+    pub result_type: TypeRef,
     pub effects: Vec<Effect>,
     pub body: Block,
     pub span: Span,
@@ -87,8 +90,138 @@ pub struct Parameter {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParameterType {
-    Named(String),
+    Value(TypeRef),
     Capability(String),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TypeRef {
+    pub value: ValueType,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ValueType {
+    Named(String),
+    List {
+        element: Box<TypeRef>,
+        max_length: u128,
+        max_length_spelling: String,
+        max_length_span: Span,
+    },
+}
+
+impl std::fmt::Display for TypeRef {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.value {
+            ValueType::Named(name) => formatter.write_str(name),
+            ValueType::List {
+                element,
+                max_length_spelling,
+                ..
+            } => write!(formatter, "List<{element}, {max_length_spelling}>"),
+        }
+    }
+}
+
+impl TypeRef {
+    #[must_use]
+    pub fn named(name: impl Into<String>, span: Span) -> Self {
+        Self {
+            value: ValueType::Named(name.into()),
+            span,
+        }
+    }
+
+    #[must_use]
+    pub fn list(element: Self, max_length: u128, span: Span) -> Self {
+        Self::list_with_bound_span(element, &max_length.to_string(), span, span)
+    }
+
+    #[must_use]
+    pub(crate) fn list_with_bound_span(
+        element: Self,
+        max_length_spelling: &str,
+        span: Span,
+        max_length_span: Span,
+    ) -> Self {
+        let max_length_spelling = canonical_unsigned_decimal(max_length_spelling);
+        let max_length = max_length_spelling.parse().unwrap_or(u128::MAX);
+        Self {
+            value: ValueType::List {
+                element: Box::new(element),
+                max_length,
+                max_length_spelling,
+                max_length_span,
+            },
+            span,
+        }
+    }
+
+    #[must_use]
+    pub fn as_named(&self) -> Option<&str> {
+        let ValueType::Named(name) = &self.value else {
+            return None;
+        };
+        Some(name)
+    }
+
+    #[must_use]
+    pub fn as_list(&self) -> Option<(&Self, u128)> {
+        let ValueType::List {
+            element,
+            max_length,
+            ..
+        } = &self.value
+        else {
+            return None;
+        };
+        Some((element, *max_length))
+    }
+
+    #[must_use]
+    pub fn same_type(&self, other: &Self) -> bool {
+        match (&self.value, &other.value) {
+            (ValueType::Named(left), ValueType::Named(right)) => left == right,
+            (
+                ValueType::List {
+                    element: left,
+                    max_length: left_max,
+                    ..
+                },
+                ValueType::List {
+                    element: right,
+                    max_length: right_max,
+                    ..
+                },
+            ) => left_max == right_max && left.same_type(right),
+            (ValueType::Named(_), ValueType::List { .. })
+            | (ValueType::List { .. }, ValueType::Named(_)) => false,
+        }
+    }
+
+    pub(crate) fn qualify(&mut self, resolve: &impl Fn(&str) -> String) {
+        match &mut self.value {
+            ValueType::Named(name) => *name = resolve(name),
+            ValueType::List { element, .. } => element.qualify(resolve),
+        }
+    }
+
+    pub(crate) fn named_references(&self) -> Vec<(&str, Span)> {
+        match &self.value {
+            ValueType::Named(name) => vec![(name, self.span)],
+            ValueType::List { element, .. } => element.named_references(),
+        }
+    }
+}
+
+fn canonical_unsigned_decimal(spelling: &str) -> String {
+    let canonical = spelling.trim_start_matches('0');
+    if canonical.is_empty() {
+        "0".to_owned()
+    } else {
+        canonical.to_owned()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -173,6 +306,12 @@ pub enum Expr {
         arms: Vec<MatchArm>,
         span: Span,
     },
+    Map {
+        binding: String,
+        source: Box<Expr>,
+        body: Box<Block>,
+        span: Span,
+    },
 }
 
 impl Expr {
@@ -188,7 +327,8 @@ impl Expr {
             | Self::CapabilityCall { span, .. }
             | Self::FieldAccess { span, .. }
             | Self::If { span, .. }
-            | Self::Match { span, .. } => *span,
+            | Self::Match { span, .. }
+            | Self::Map { span, .. } => *span,
         }
     }
 }

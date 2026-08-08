@@ -1,6 +1,6 @@
 # Delivery history
 
-The compiler has shipped through M28. No milestone is active.
+The compiler has shipped through M29. No milestone is active.
 
 This file records what each milestone produced. Exact behavior lives in the
 specifications, tests, and compiler—not in milestone prose.
@@ -38,6 +38,7 @@ specifications, tests, and compiler—not in milestone prose.
 | M26 | Cross-revision policy enforcement and atomic publication | Complete | M25 |
 | M27 | One recorded repair using architecture diagnostics | Complete | M26 |
 | M28 | AIL calls, modules, imports, transitive effects, and nested execution | Complete | M27 |
+| M29 | Immutable bounded lists, sequential map, pre-effect validation, and ordered batch cancellation | Complete | M28 |
 
 ## Shipped compiler path
 
@@ -76,17 +77,28 @@ nested interpretation. The compiler rejects recursive calls, inaccessible or
 ambiguous names, and import cycles. A working three-file program is under
 `compiler/examples/composed-service/`.
 
+### Bounded ordered work: M29
+
+M29 added structural `List<T, N>` types with exact bounds, contextual sequential
+`map`, complete external list validation before capability checks or calls,
+ordered fail-stop execution, map/binder/bound inspection, and linked source-set
+function inspection. The three-module cancellation program under
+`compiler/examples/batch-cancellation/` returns one ordered closed outcome per
+input position and rejects oversized or malformed external input with zero
+calls.
+
 ## Deferred work
 
 M8g–M10 remain deferred. A superseded plan assigned M29–M36 to UC-008 workload,
-language, and comparison work. Those milestones were never started and are not
-the next build plan.
+language, and comparison work. That sequence was never started. The M29 number
+now identifies the bounded-list delivery described above; it does not reactivate
+the old UC-008 plan.
 
 ## Next delivery
 
 No next milestone has been selected. The next owner should start from a concrete
 service behavior blocked by the current language, define deterministic source,
 static, runtime, diagnostic, and protocol tests, and implement the smallest
-missing semantics. Current high-value gaps are iteration and collections,
-resource-safe concurrency, production execution, and package boundaries, but
-none is selected merely by appearing on this list.
+missing semantics. Current high-value gaps are general iteration and collection
+operations beyond M29, resource-safe concurrency, production execution, and
+package boundaries, but none is selected merely by appearing on this list.

@@ -955,7 +955,12 @@ fn operation_changes(
         };
         (!base_functions.contains(&function.name)
             && source_name(&function.name).starts_with("project_"))
-        .then(|| identity_for_display(candidate, &function.result_type))
+        .then(|| {
+            function
+                .result_type
+                .as_named()
+                .and_then(|name| identity_for_display(candidate, name))
+        })
         .flatten()
     });
     if let Some(identity) = projection_identity {
@@ -1004,14 +1009,18 @@ fn schema_description(stored: &StoredSourceSet, identity: &str) -> Option<String
                 .cases
                 .iter()
                 .map(|case| {
-                    case.payload.as_deref().map_or_else(
+                    case.payload.as_ref().map_or_else(
                         || case.name.clone(),
                         |payload| {
-                            format!(
-                                "{}({})",
-                                case.name,
-                                types.get(payload).map_or(payload, String::as_str)
-                            )
+                            let rendered = payload.as_named().map_or_else(
+                                || payload.to_string(),
+                                |name| {
+                                    types
+                                        .get(name)
+                                        .map_or_else(|| name.to_owned(), Clone::clone)
+                                },
+                            );
+                            format!("{}({})", case.name, rendered)
                         },
                     )
                 })
@@ -1033,11 +1042,14 @@ fn option_identity<'a>(
         };
         let identity = variant.identity.as_deref()?;
         let has_payload = variant.cases.iter().any(|case| {
-            case.payload.as_deref().is_some_and(|payload| {
-                types
-                    .get(payload)
-                    .is_some_and(|identity| identity == payload_identity)
-            })
+            case.payload
+                .as_ref()
+                .and_then(crate::TypeRef::as_named)
+                .is_some_and(|payload| {
+                    types
+                        .get(payload)
+                        .is_some_and(|identity| identity == payload_identity)
+                })
         });
         (added.contains(identity)
             && has_payload

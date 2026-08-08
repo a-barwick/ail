@@ -2,7 +2,10 @@
 
 use std::collections::BTreeMap;
 
-use crate::{Block, CapabilityEnvironment, Declaration, Expr, ParameterType, SourceUnit, Span};
+use crate::{
+    Block, CapabilityEnvironment, Declaration, Expr, ParameterType, SourceUnit, Span, TypeRef,
+    ValueType,
+};
 
 /// One immutable value accepted or produced by the M17 interpreter.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,6 +15,7 @@ pub enum RuntimeValue {
     Int(u128),
     Bool(bool),
     Bytes(Vec<u8>),
+    List(Vec<RuntimeValue>),
     Record {
         type_name: String,
         fields: BTreeMap<String, RuntimeValue>,
@@ -53,6 +57,11 @@ impl RuntimeValue {
         }
     }
 
+    #[must_use]
+    pub fn list(values: impl IntoIterator<Item = RuntimeValue>) -> Self {
+        Self::List(values.into_iter().collect())
+    }
+
     /// Return one record field when this is a record value.
     #[must_use]
     pub fn field(&self, name: &str) -> Option<&Self> {
@@ -71,6 +80,7 @@ impl RuntimeValue {
             Self::Int(_) => "Int",
             Self::Bool(_) => "Bool",
             Self::Bytes(_) => "Bytes",
+            Self::List(_) => "List",
             Self::Record { type_name, .. } | Self::Variant { type_name, .. } => type_name,
         }
     }
@@ -183,7 +193,7 @@ pub(crate) fn interpret(
     let value_parameter_count = function
         .parameters
         .iter()
-        .filter(|parameter| matches!(parameter.ty, ParameterType::Named(_)))
+        .filter(|parameter| matches!(parameter.ty, ParameterType::Value(_)))
         .count();
     if arguments.len() != value_parameter_count {
         return Err(failure(RuntimeFault::new(
@@ -194,20 +204,30 @@ pub(crate) fn interpret(
         )));
     }
 
+    let value_parameters = function
+        .parameters
+        .iter()
+        .filter_map(|parameter| match &parameter.ty {
+            ParameterType::Value(ty) => Some((parameter, ty)),
+            ParameterType::Capability(_) => None,
+        })
+        .collect::<Vec<_>>();
+    for (index, ((parameter, expected), value)) in
+        value_parameters.iter().zip(&arguments).enumerate()
+    {
+        if let Err(mismatch) =
+            validate_runtime_value(unit, value, expected, &format!("argument[{index}]"))
+        {
+            return Err(failure(mismatch.into_fault(parameter.span)));
+        }
+    }
+
     let mut values = arguments.into_iter();
     let mut locals = BTreeMap::new();
     for parameter in &function.parameters {
         match &parameter.ty {
-            ParameterType::Named(expected) => {
+            ParameterType::Value(_) => {
                 let value = values.next().expect("value argument count was checked");
-                if !value_matches_type(unit, &value, expected) {
-                    return Err(failure(RuntimeFault::new(
-                        "AIL.RUNTIME.ARGUMENT_TYPE",
-                        parameter.span,
-                        [("type", expected.as_str())],
-                        [("type", value.type_name())],
-                    )));
-                }
                 locals.insert(parameter.name.clone(), RuntimeBinding::Value(value));
             }
             ParameterType::Capability(interface) => {
@@ -350,6 +370,36 @@ impl Evaluator<'_> {
             Expr::Match {
                 scrutinee, arms, ..
             } => self.eval_match(scrutinee, arms, expression.span(), locals),
+            Expr::Map {
+                binding,
+                source,
+                body,
+                ..
+            } => {
+                let RuntimeValue::List(values) = self.eval_expr(source, locals)? else {
+                    return Err(RuntimeFault::new(
+                        "AIL.RUNTIME.MAP_SOURCE",
+                        source.span(),
+                        [("kind", "list")],
+                        std::iter::empty::<(&str, &str)>(),
+                    ));
+                };
+                let mut output = Vec::with_capacity(values.len());
+                for (index, value) in values.into_iter().enumerate() {
+                    let mut nested = locals.clone();
+                    nested.insert(binding.clone(), RuntimeBinding::Value(value));
+                    match self.eval_block(body, &nested) {
+                        Ok(value) => output.push(value),
+                        Err(mut fault) => {
+                            fault
+                                .actual
+                                .insert("map_index".to_owned(), index.to_string());
+                            return Err(fault);
+                        }
+                    }
+                }
+                Ok(RuntimeValue::List(output))
+            }
         }
     }
 
@@ -387,7 +437,7 @@ impl Evaluator<'_> {
         let mut callee_locals = BTreeMap::new();
         for parameter in &function.parameters {
             match &parameter.ty {
-                ParameterType::Named(expected) => {
+                ParameterType::Value(expected) => {
                     let value = values.next().ok_or_else(|| {
                         RuntimeFault::new(
                             "AIL.RUNTIME.ARGUMENT_COUNT",
@@ -396,14 +446,13 @@ impl Evaluator<'_> {
                             [("count", arguments.len().to_string())],
                         )
                     })?;
-                    if !value_matches_type(self.unit, &value, expected) {
-                        return Err(RuntimeFault::new(
-                            "AIL.RUNTIME.ARGUMENT_TYPE",
-                            span,
-                            [("type", expected.as_str())],
-                            [("type", value.type_name())],
-                        ));
-                    }
+                    validate_runtime_value(
+                        self.unit,
+                        &value,
+                        expected,
+                        &format!("call {function_name} argument"),
+                    )
+                    .map_err(|mismatch| mismatch.into_fault(span))?;
                     callee_locals.insert(parameter.name.clone(), RuntimeBinding::Value(value));
                 }
                 ParameterType::Capability(expected) => {
@@ -508,14 +557,16 @@ impl Evaluator<'_> {
             .capabilities
             .call(receiver, interface, operation, &arguments)?;
         let expected = self.capability_result_type(interface, operation, span)?;
-        if !value_matches_type(self.unit, &result, expected) {
-            return Err(RuntimeFault::new(
-                "AIL.RUNTIME.CAPABILITY_RESULT",
-                span,
-                [("type", expected)],
-                [("type", result.type_name())],
-            ));
-        }
+        let expected_type = TypeRef::named(expected, span);
+        validate_runtime_value(self.unit, &result, &expected_type, "capability result").map_err(
+            |mismatch| {
+                let mut fault = mismatch.into_fault(span);
+                if fault.code == "AIL.RUNTIME.ARGUMENT_TYPE" {
+                    fault.code = "AIL.RUNTIME.CAPABILITY_RESULT";
+                }
+                fault
+            },
+        )?;
         self.calls
             .last_mut()
             .expect("call was recorded before invocation")
@@ -656,48 +707,165 @@ impl Evaluator<'_> {
     }
 }
 
-fn value_matches_type(unit: &SourceUnit, value: &RuntimeValue, expected: &str) -> bool {
-    match expected {
+struct RuntimeValueMismatch {
+    code: &'static str,
+    expected: BTreeMap<String, String>,
+    actual: BTreeMap<String, String>,
+}
+
+impl RuntimeValueMismatch {
+    fn type_mismatch(expected: &TypeRef, value: &RuntimeValue, path: &str) -> Self {
+        Self {
+            code: "AIL.RUNTIME.ARGUMENT_TYPE",
+            expected: BTreeMap::from([
+                ("type".to_owned(), expected.to_string()),
+                ("value_path".to_owned(), path.to_owned()),
+            ]),
+            actual: BTreeMap::from([
+                ("type".to_owned(), value.type_name().to_owned()),
+                ("value_path".to_owned(), path.to_owned()),
+            ]),
+        }
+    }
+
+    fn into_fault(self, span: Span) -> RuntimeFault {
+        RuntimeFault {
+            code: self.code,
+            span,
+            expected: self.expected,
+            actual: self.actual,
+        }
+    }
+}
+
+fn validate_runtime_value(
+    unit: &SourceUnit,
+    value: &RuntimeValue,
+    expected: &TypeRef,
+    path: &str,
+) -> Result<(), RuntimeValueMismatch> {
+    match &expected.value {
+        ValueType::List {
+            element,
+            max_length,
+            ..
+        } => {
+            let RuntimeValue::List(values) = value else {
+                return Err(RuntimeValueMismatch::type_mismatch(expected, value, path));
+            };
+            if values.len() as u128 > *max_length {
+                return Err(RuntimeValueMismatch {
+                    code: "AIL.RUNTIME.LIST_CARDINALITY",
+                    expected: BTreeMap::from([
+                        ("element_type".to_owned(), element.to_string()),
+                        ("maximum".to_owned(), max_length.to_string()),
+                    ]),
+                    actual: BTreeMap::from([
+                        ("count".to_owned(), values.len().to_string()),
+                        ("value_path".to_owned(), path.to_owned()),
+                    ]),
+                });
+            }
+            for (index, item) in values.iter().enumerate() {
+                if let Err(mut mismatch) =
+                    validate_runtime_value(unit, item, element, &format!("{path}[{index}]"))
+                {
+                    if mismatch.code == "AIL.RUNTIME.ARGUMENT_TYPE" {
+                        let actual_type = mismatch
+                            .actual
+                            .get("type")
+                            .cloned()
+                            .unwrap_or_else(|| item.type_name().to_owned());
+                        mismatch.code = "AIL.RUNTIME.LIST_ELEMENT";
+                        mismatch
+                            .expected
+                            .insert("element_type".to_owned(), element.to_string());
+                        mismatch
+                            .actual
+                            .insert("actual_type".to_owned(), actual_type);
+                        mismatch
+                            .actual
+                            .insert("index".to_owned(), index.to_string());
+                    }
+                    return Err(mismatch);
+                }
+            }
+            Ok(())
+        }
+        ValueType::Named(name) => validate_named_runtime_value(unit, value, name, expected, path),
+    }
+}
+
+fn validate_named_runtime_value(
+    unit: &SourceUnit,
+    value: &RuntimeValue,
+    expected_name: &str,
+    expected: &TypeRef,
+    path: &str,
+) -> Result<(), RuntimeValueMismatch> {
+    let builtin_matches = match expected_name {
         "Unit" => matches!(value, RuntimeValue::Unit),
         "Text" => matches!(value, RuntimeValue::Text(_)),
         "Int" => matches!(value, RuntimeValue::Int(_)),
         "Bool" => matches!(value, RuntimeValue::Bool(_)),
         "Bytes" => matches!(value, RuntimeValue::Bytes(_)),
-        _ => unit
-            .declarations
-            .iter()
-            .any(|declaration| match (declaration, value) {
-                (Declaration::Record(record), RuntimeValue::Record { type_name, fields })
-                    if record.name == expected && type_name == expected =>
-                {
-                    fields.len() == record.fields.len()
-                        && record.fields.iter().all(|field| {
-                            fields
-                                .get(&field.name)
-                                .is_some_and(|value| value_matches_type(unit, value, &field.ty))
-                        })
+        _ => false,
+    };
+    if builtin_matches {
+        return Ok(());
+    }
+
+    for declaration in &unit.declarations {
+        match (declaration, value) {
+            (Declaration::Record(record), RuntimeValue::Record { type_name, fields })
+                if record.name == expected_name && type_name == expected_name =>
+            {
+                if fields.len() != record.fields.len() {
+                    return Err(RuntimeValueMismatch::type_mismatch(expected, value, path));
                 }
-                (
-                    Declaration::Variant(variant),
-                    RuntimeValue::Variant {
-                        type_name,
-                        case,
-                        payload,
-                    },
-                ) if variant.name == expected && type_name == expected => variant
+                for field in &record.fields {
+                    let Some(field_value) = fields.get(&field.name) else {
+                        return Err(RuntimeValueMismatch::type_mismatch(expected, value, path));
+                    };
+                    validate_runtime_value(
+                        unit,
+                        field_value,
+                        &field.ty,
+                        &format!("{path}.{}", field.name),
+                    )?;
+                }
+                return Ok(());
+            }
+            (
+                Declaration::Variant(variant),
+                RuntimeValue::Variant {
+                    type_name,
+                    case,
+                    payload,
+                },
+            ) if variant.name == expected_name && type_name == expected_name => {
+                let Some(candidate) = variant
                     .cases
                     .iter()
                     .find(|candidate| candidate.name == *case)
-                    .is_some_and(|candidate| match (&candidate.payload, payload) {
-                        (None, None) => true,
-                        (Some(expected), Some(actual)) => {
-                            value_matches_type(unit, actual, expected)
-                        }
-                        _ => false,
-                    }),
-                _ => false,
-            }),
+                else {
+                    return Err(RuntimeValueMismatch::type_mismatch(expected, value, path));
+                };
+                return match (&candidate.payload, payload) {
+                    (None, None) => Ok(()),
+                    (Some(payload_type), Some(actual)) => validate_runtime_value(
+                        unit,
+                        actual,
+                        payload_type,
+                        &format!("{path}::{case}"),
+                    ),
+                    _ => Err(RuntimeValueMismatch::type_mismatch(expected, value, path)),
+                };
+            }
+            _ => {}
+        }
     }
+    Err(RuntimeValueMismatch::type_mismatch(expected, value, path))
 }
 
 fn eval_intrinsic(

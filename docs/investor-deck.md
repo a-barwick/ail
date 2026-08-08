@@ -17,7 +17,9 @@ The compiler ships:
 - atomic multi-file candidate validation and rollback;
 - architecture snapshots, deltas, policy enforcement, and bounded failure; and
 - explicit modules, import aliases, qualified references, and cross-module
-  calls.
+  calls;
+- immutable bounded lists and deterministic sequential map; and
+- complete external list validation before capability checks or calls.
 
 M28 added calls and language composition. Arguments are checked exactly and
 evaluated left to right. Effects propagate through the call graph. The compiler
@@ -27,6 +29,10 @@ and ambiguous bare imports.
 The three-file example in `compiler/examples/composed-service/` runs through the
 real checker and interpreter. The AIL job-service implementation passes all 37
 public behavior cases.
+
+M29 added a three-module bounded cancellation service. It accepts zero to 32
+job positions, preserves order and duplicates, returns one closed outcome per
+position, and rejects oversized or malformed input before effects.
 
 ## Two concrete change loops
 
@@ -63,11 +69,12 @@ revision without trusting hidden model reasoning.
 
 ## Hard limits
 
-AIL cannot yet build a production service. It has no iteration, general
-collections, concurrency, networking, package registry, foreign-code boundary,
-production runtime, native backend, or deployment system. Recursion is rejected.
-The architecture API implements the M24 metric and policy set, not the larger
-design catalog.
+AIL cannot yet build a production service. Sequential map over immutable bounded
+lists is its only repeated-work form. It has no general loops, collection
+library, mutation, concurrency, networking, package registry, foreign-code
+boundary, production runtime, native backend, or deployment system. Recursion
+is rejected. The architecture API implements the M24 metric and policy set, not
+the larger design catalog.
 
 No AIL-versus-Rust/Go/Python/TypeScript agent comparison has run. The current
 fixtures prove compiler behavior on specified cases; they do not prove lower
@@ -89,6 +96,6 @@ do not report only successful runs.
 
 ## Current status
 
-M28 is complete. No successor is active. The next investment in language breadth,
+M29 is complete. No successor is active. The next investment in language breadth,
 runtime, or measurement should produce a named executable capability, not more
 planning artifacts.

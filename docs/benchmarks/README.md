@@ -13,7 +13,8 @@ searching and rework. It is not a contest to produce the shortest source file.
 The repository contains the fixtures, four baseline implementations, parity
 checks, and measurement infrastructure. M27 also records one repair using the
 architecture output. No AIL-versus-baseline agent comparison has run. M28 shipped
-language composition instead of more benchmark work. See
+language composition and M29 shipped bounded ordered list processing instead of
+more benchmark work. See
 [the status file](../STATUS.md).
 
 ## Decisions

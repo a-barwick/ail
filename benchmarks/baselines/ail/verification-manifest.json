@@ -183,43 +183,43 @@
     },
     {
       "path": "compiler/ail-compiler/src/evolution.rs",
-      "sha256": "0b6e88e1fbde8c11ee0bc97d70db804bcef99937533edfce3c67a0da92b893e9"
+      "sha256": "e62d2bfd7f6fa3ff1a21a527dc62409a1aa38ba630f0490e4c844d5d97924f2b"
     },
     {
       "path": "compiler/ail-compiler/src/evolution/transaction.rs",
-      "sha256": "17ee0378b3013a3c5ef3838666da74ad9f8daac7fb2b599cfa68780c8a4e276f"
+      "sha256": "2fb8b3f7dff1fa9a78386dc8f212e5ee27f03963d0d04dd7f5cf3ab9055e4a7b"
     },
     {
       "path": "compiler/ail-compiler/src/formatter.rs",
-      "sha256": "1202b48be2c9aa6ec9b2bdf149daebfae629fc09441035dada58245c0dbc1cff"
+      "sha256": "df5700ca2d4d936f6834e4a12fdf3907996894d84c7a7191b87ce131fbdb5f8b"
     },
     {
       "path": "compiler/ail-compiler/src/interpreter.rs",
-      "sha256": "d76d76fae0487a7312b8b73aaafe24d9540f65a853c3bfd797bc6017f40192ab"
+      "sha256": "4b1eb35ea0feb14cbd4ba58b1241543c4aed0c6a90382f1c52203988ab3651ea"
     },
     {
       "path": "compiler/ail-compiler/src/lexer.rs",
-      "sha256": "60b4091edb8aededbd77c5fe1cb5fc3b1464bf1c63db791fedaf471cbd5a69eb"
+      "sha256": "7e38c2e2ce4f4c310e53e0043ee07521fb51de44679dc2727e587c804f9a477e"
     },
     {
       "path": "compiler/ail-compiler/src/lib.rs",
-      "sha256": "2027e25960a0c632edad452bcdc57d13e58ff2fc0eb7a35760b18f791fc677a5"
+      "sha256": "8951990fa51e01fa59e46b288afe69976ed1f50db11658454f43a244ddd06ac6"
     },
     {
       "path": "compiler/ail-compiler/src/parser.rs",
-      "sha256": "0cb1756921189828c6bcabdeca8c8aa74b70e5014fe59385ceb6b2c1e23b654f"
+      "sha256": "17cc5cfdd084c95d9a1815a935d7d09ce3ea1072394468a77d0dae5aaa4ca20e"
     },
     {
       "path": "compiler/ail-compiler/src/protocol.rs",
-      "sha256": "e427a8e47edaba811932bd5ba48f75d43e68198428c19d435d1500f9177afc36"
+      "sha256": "48aaaa94a27d5af92d4f747108da6627cfc1b99684ebf575495b0b79fa99d75a"
     },
     {
       "path": "compiler/ail-compiler/src/semantics.rs",
-      "sha256": "4dfecee1fc486acfcfa74db73366eca6bd17c17c091107e32f574f0edde86fab"
+      "sha256": "eaaba029d60fa0868abb63dd1ad2fde360ec94331036f792bbab2f7bf66778b1"
     },
     {
       "path": "compiler/ail-compiler/src/syntax.rs",
-      "sha256": "98f72fc18a930b31da4cbe9f52e23e875fdd0b011f52c4eff409598c412b876f"
+      "sha256": "231c8125fde250e62ee11ee1960199379bcf12c99aff66a8e935d4b5054e7930"
     },
     {
       "path": "compiler/ail-compiler/tests/m17_runtime.rs",
@@ -246,6 +246,22 @@
       "sha256": "3fddfd66117ee6ce2bf904401859a72a5f8c01c5cd38e97142e9f9722070937c"
     },
     {
+      "path": "compiler/ail-compiler/tests/m29_bounded_lists.rs",
+      "sha256": "d0b1415ab51846acf2f4e37d85394d1b320264798c8e742310688c64d91429d8"
+    },
+    {
+      "path": "compiler/examples/batch-cancellation/domain.ail",
+      "sha256": "521fba7a7c8f0759bcbe47d0fa29713a9552a9842132360f728ec43ac1c7da90"
+    },
+    {
+      "path": "compiler/examples/batch-cancellation/service.ail",
+      "sha256": "e7014e109634d3798721f5fe0d0f5bfd8966eae8d353a99c5d46f68e7b39d8e8"
+    },
+    {
+      "path": "compiler/examples/batch-cancellation/single.ail",
+      "sha256": "464e9f17675223a48ec84e91c53e701a514ad37719da439a98a494b2d03011c1"
+    },
+    {
       "path": "compiler/examples/composed-service/domain.ail",
       "sha256": "d10bf3223bfe801d004808d1078154bbe07196c85638796ba259132b3812de0a"
     },
@@ -259,7 +275,19 @@
     },
     {
       "path": "specs/README.md",
-      "sha256": "34f5edaf7fd0c6bdd729562293ba5d027fbf856f7eaa8e20651b065549881377"
+      "sha256": "8d87e7ee5896a01a0ba475dd36ade2e6a6d7ca5bd42188012499accc6223e8a3"
+    },
+    {
+      "path": "specs/bounded-list-contract.json",
+      "sha256": "310c852497df7703083b8e3669cb12d691ad59c4725b4e4f8fc536b37291e231"
+    },
+    {
+      "path": "specs/bounded-list-protocol.json",
+      "sha256": "702aedbd455d66ddfb61c66433ada65af2f0e105908c584aee94e0986c8a5a0c"
+    },
+    {
+      "path": "specs/bounded-lists.md",
+      "sha256": "61e7a16a1f6eb16c87dc84bada132bf92ad2eefa9d9bd39f9eec3b414218e4f0"
     },
     {
       "path": "specs/evolution-contract.json",
@@ -348,6 +376,10 @@
     {
       "path": "specs/runtime.md",
       "sha256": "eab75b3fe437b2f09a7e583f7861a07a4261223fcd47cac6aeaf14c17c9e56fe"
+    },
+    {
+      "path": "specs/tools/bounded_list_contract.py",
+      "sha256": "cc756431c170c785f50f8cefe11756315176da0d4738b4fba591d68f97ec67a1"
     },
     {
       "path": "specs/tools/core_contract.py",

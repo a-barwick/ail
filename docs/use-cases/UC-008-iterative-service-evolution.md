@@ -55,9 +55,11 @@ authority constraints.
 ## Current blocker
 
 The workload, ordered changes, baseline tools, and expected results are not
-defined. AIL also lacks iteration, collections, several capabilities, and
-production runtime behavior that such a service may require.
+defined. M29's immutable bounded list and sequential map do not provide general
+iteration or collections. AIL also lacks several capabilities and production
+runtime behavior that such a service may require.
 
-M28 independently shipped calls and modules. That does not activate the rest of
-UC-008 or select collections, concurrency, native execution, or benchmark work.
-No requirement has been accepted from UC-008.
+M28 independently shipped calls and modules, and M29 independently shipped
+bounded ordered cancellation. Neither activates the rest of UC-008 or selects
+general collections, concurrency, native execution, or benchmark work. No
+requirement has been accepted from UC-008.

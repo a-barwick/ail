@@ -11,7 +11,7 @@ use crate::semantics::check_parsed_source;
 use crate::{
     CapabilityEnvironment, CapabilityProvider, Declaration, Diagnostic, DiagnosticValue, Expr,
     FunctionDecl, HandleKind, ObservedCapabilityCall, ParameterType, RecordDecl, RuntimeFault,
-    RuntimeValue, SemanticHandle, SourceUnit, Span, StructuredDiagnostic, TypeCheckStatus,
+    RuntimeValue, SemanticHandle, SourceUnit, Span, StructuredDiagnostic, TypeCheckStatus, TypeRef,
     VariantDecl, parse,
 };
 
@@ -914,11 +914,11 @@ impl<'a> IndexBuilder<'a> {
                 format!("symbol:field:{declaration_index}:{field_index}"),
                 format!("field:{declaration_index}"),
                 field.name.clone(),
-                Some(field.ty.clone()),
+                Some(field.ty.to_string()),
                 None,
                 Vec::new(),
                 Vec::new(),
-                vec![field.ty.clone()],
+                type_dependencies(&field.ty),
             );
             self.field_symbols
                 .insert((record.name.clone(), field.name.clone()), field_handle);
@@ -927,13 +927,10 @@ impl<'a> IndexBuilder<'a> {
                 "record-field-name",
                 format!("syntax:field-name:{declaration_index}:{field_index}"),
             );
-            let type_span = identifier_after(&self.unit.tokens, field.span.start, 1);
-            self.add_syntax(
-                type_span,
-                "type-reference",
-                format!("syntax:field-type:{declaration_index}:{field_index}"),
+            self.index_type_references(
+                &field.ty,
+                &format!("syntax:field-type:{declaration_index}:{field_index}"),
             );
-            self.add_top_reference(&field.ty, type_span);
         }
     }
 
@@ -956,11 +953,13 @@ impl<'a> IndexBuilder<'a> {
                 format!("symbol:variant-case:{declaration_index}:{case_index}"),
                 format!("variant-case:{declaration_index}"),
                 case.name.clone(),
-                case.payload.clone(),
+                case.payload.as_ref().map(ToString::to_string),
                 None,
                 Vec::new(),
                 Vec::new(),
-                case.payload.clone().into_iter().collect(),
+                case.payload
+                    .as_ref()
+                    .map_or_else(Vec::new, type_dependencies),
             );
             self.case_symbols
                 .insert((variant.name.clone(), case.name.clone()), handle);
@@ -970,13 +969,36 @@ impl<'a> IndexBuilder<'a> {
                 format!("syntax:variant-case-name:{declaration_index}:{case_index}"),
             );
             if case.payload.is_some() {
-                let payload_span = identifier_after(&self.unit.tokens, case.span.start, 1);
-                self.add_syntax(
-                    payload_span,
-                    "type-reference",
-                    format!("syntax:variant-payload:{declaration_index}:{case_index}"),
+                self.index_type_references(
+                    case.payload.as_ref().expect("payload is present"),
+                    &format!("syntax:variant-payload:{declaration_index}:{case_index}"),
                 );
-                self.add_top_reference(case.payload.as_deref().unwrap_or_default(), payload_span);
+            }
+        }
+    }
+
+    fn index_type_references(&mut self, ty: &TypeRef, identity_key: &str) {
+        match &ty.value {
+            crate::ValueType::Named(name) => {
+                let reference_span = identifier_at(&self.unit.tokens, ty.span.start);
+                self.add_syntax(
+                    reference_span,
+                    "type-reference",
+                    format!("{identity_key}:named"),
+                );
+                self.add_top_reference(name, reference_span);
+            }
+            crate::ValueType::List {
+                element,
+                max_length_span,
+                ..
+            } => {
+                self.add_syntax(
+                    *max_length_span,
+                    "list-bound",
+                    format!("{identity_key}:bound"),
+                );
+                self.index_type_references(element, &format!("{identity_key}:element"));
             }
         }
     }
@@ -994,7 +1016,7 @@ impl<'a> IndexBuilder<'a> {
         for (parameter_index, parameter) in function.parameters.iter().enumerate() {
             let name_span = identifier_at(&self.unit.tokens, parameter.span.start);
             let (explicit_type, capability) = match &parameter.ty {
-                ParameterType::Named(ty) => (Some(ty.clone()), None),
+                ParameterType::Value(ty) => (Some(ty.to_string()), None),
                 ParameterType::Capability(interface) => (
                     Some(format!("capability {interface}")),
                     Some(interface.clone()),
@@ -1024,14 +1046,11 @@ impl<'a> IndexBuilder<'a> {
                 "parameter-name",
                 format!("syntax:parameter-name:{declaration_index}:{parameter_index}"),
             );
-            let type_span = identifier_after(&self.unit.tokens, parameter.span.start, 1);
-            self.add_syntax(
-                type_span,
-                "type-reference",
-                format!("syntax:parameter-type:{declaration_index}:{parameter_index}"),
-            );
             match &parameter.ty {
-                ParameterType::Named(ty) => self.add_top_reference(ty, type_span),
+                ParameterType::Value(ty) => self.index_type_references(
+                    ty,
+                    &format!("syntax:parameter-type:{declaration_index}:{parameter_index}"),
+                ),
                 ParameterType::Capability(_) => {}
             }
             locals.insert(
@@ -1039,7 +1058,7 @@ impl<'a> IndexBuilder<'a> {
                 LocalBindingIndex {
                     handle,
                     value_type: match &parameter.ty {
-                        ParameterType::Named(ty) => Some(ty.clone()),
+                        ParameterType::Value(ty) => Some(ty.clone()),
                         ParameterType::Capability(_) => None,
                     },
                     capability,
@@ -1047,13 +1066,10 @@ impl<'a> IndexBuilder<'a> {
             );
         }
 
-        let result_span = result_type_span(&self.unit.tokens, function);
-        self.add_syntax(
-            result_span,
-            "type-reference",
-            format!("syntax:function-result:{declaration_index}"),
+        self.index_type_references(
+            &function.result_type,
+            &format!("syntax:function-result:{declaration_index}"),
         );
-        self.add_top_reference(&function.result_type, result_span);
         for (effect_index, effect) in function.effects.iter().enumerate() {
             let receiver = identifier_at(&self.unit.tokens, effect.span.start);
             self.add_syntax(
@@ -1084,7 +1100,7 @@ impl<'a> IndexBuilder<'a> {
                 format!("function:{declaration_index}"),
                 binding.name.clone(),
                 None,
-                value_type.clone(),
+                value_type.as_ref().map(ToString::to_string),
                 Vec::new(),
                 Vec::new(),
                 dependencies,
@@ -1135,14 +1151,62 @@ impl<'a> IndexBuilder<'a> {
             span,
             expression_kind(expression),
             identity_key.to_owned(),
-            self.expression_type(expression, locals),
+            self.expression_type(expression, locals)
+                .map(|ty| ty.to_string()),
             self.expression_dependencies(expression, locals),
         );
         match expression {
+            Expr::Map {
+                binding,
+                source,
+                body,
+                ..
+            } => {
+                self.index_expression(source, &format!("{identity_key}:source"), locals);
+                let Some((element, _)) = self.expression_type(source, locals).and_then(|ty| {
+                    ty.as_list()
+                        .map(|(element, maximum)| (element.clone(), maximum))
+                }) else {
+                    self.index_nested_block(body, &format!("{identity_key}:body"), locals);
+                    return;
+                };
+                // `map` is contextual and is therefore the first identifier token.
+                let binding_span = identifier_after(&self.unit.tokens, span.start, 1);
+                let handle = self.symbol_handle(&format!("symbol:map-binding:{identity_key}"));
+                self.add_symbol(
+                    handle.clone(),
+                    binding_span,
+                    "map-binding",
+                    format!("{identity_key}:binding"),
+                    format!("map:{identity_key}"),
+                    binding.clone(),
+                    None,
+                    Some(element.to_string()),
+                    Vec::new(),
+                    Vec::new(),
+                    type_dependencies(&element),
+                );
+                self.add_syntax(
+                    binding_span,
+                    "map-binding-name",
+                    format!("{identity_key}:binding-name"),
+                );
+                let mut body_locals = locals.clone();
+                body_locals.insert(
+                    binding.clone(),
+                    LocalBindingIndex {
+                        handle,
+                        value_type: Some(element),
+                        capability: None,
+                    },
+                );
+                self.index_nested_block(body, &format!("{identity_key}:body"), &body_locals);
+            }
             Expr::Text { .. } | Expr::Integer { .. } => {}
             Expr::Name { name, span } => {
-                self.add_syntax(*span, "name-reference", format!("{identity_key}:name"));
-                self.add_local_reference(locals, name, *span);
+                let name_span = identifier_at(&self.unit.tokens, span.start);
+                self.add_syntax(name_span, "name-reference", format!("{identity_key}:name"));
+                self.add_local_reference(locals, name, name_span);
             }
             Expr::Call {
                 function,
@@ -1276,7 +1340,10 @@ impl<'a> IndexBuilder<'a> {
         let scrutinee_type = self.expression_type(scrutinee, locals);
         for (arm_index, arm) in arms.iter().enumerate() {
             let mut arm_locals = locals.clone();
-            if let (Some(binding), Some(variant_name)) = (&arm.binding, scrutinee_type.as_deref()) {
+            if let (Some(binding), Some(variant_name)) = (
+                &arm.binding,
+                scrutinee_type.as_ref().and_then(TypeRef::as_named),
+            ) {
                 let payload_type = self
                     .variants
                     .get(variant_name)
@@ -1305,7 +1372,7 @@ impl<'a> IndexBuilder<'a> {
         &mut self,
         arm: &crate::MatchArm,
         binding: &str,
-        payload_type: &str,
+        payload_type: &TypeRef,
         identity_key: &str,
         arm_index: usize,
         locals: &mut BTreeMap<String, LocalBindingIndex>,
@@ -1321,10 +1388,10 @@ impl<'a> IndexBuilder<'a> {
             format!("match:{identity_key}:{arm_index}"),
             binding.to_owned(),
             None,
-            Some(payload_type.to_owned()),
+            Some(payload_type.to_string()),
             Vec::new(),
             Vec::new(),
-            vec![payload_type.to_owned()],
+            type_dependencies(payload_type),
         );
         self.add_syntax(
             binding_span,
@@ -1335,7 +1402,7 @@ impl<'a> IndexBuilder<'a> {
             binding.to_owned(),
             LocalBindingIndex {
                 handle,
-                value_type: Some(payload_type.to_owned()),
+                value_type: Some(payload_type.clone()),
                 capability: None,
             },
         );
@@ -1362,7 +1429,7 @@ impl<'a> IndexBuilder<'a> {
                 format!("block:{identity_key}"),
                 binding.name.clone(),
                 None,
-                value_type.clone(),
+                value_type.as_ref().map(ToString::to_string),
                 Vec::new(),
                 Vec::new(),
                 dependencies,
@@ -1393,10 +1460,29 @@ impl<'a> IndexBuilder<'a> {
         &self,
         expression: &Expr,
         locals: &BTreeMap<String, LocalBindingIndex>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         match expression {
-            Expr::Text { .. } => Some("Text".to_owned()),
-            Expr::Integer { .. } => Some("Int".to_owned()),
+            Expr::Map {
+                source, body, span, ..
+            } => {
+                let source_type = self.expression_type(source, locals)?;
+                let (element, maximum) = source_type.as_list()?;
+                let mut body_locals = locals.clone();
+                if let Expr::Map { binding, .. } = expression {
+                    body_locals.insert(
+                        binding.clone(),
+                        LocalBindingIndex {
+                            handle: self.symbol_handle("expression-type:map-binding"),
+                            value_type: Some(element.clone()),
+                            capability: None,
+                        },
+                    );
+                }
+                let result = self.block_type(body, &body_locals)?;
+                Some(TypeRef::list(result, maximum, *span))
+            }
+            Expr::Text { span, .. } => Some(TypeRef::named("Text", *span)),
+            Expr::Integer { span, .. } => Some(TypeRef::named("Int", *span)),
             Expr::Name { name, .. } => locals
                 .get(name)
                 .and_then(|binding| binding.value_type.clone()),
@@ -1406,26 +1492,30 @@ impl<'a> IndexBuilder<'a> {
                 };
                 (candidate.name == *function).then(|| candidate.result_type.clone())
             }),
-            Expr::Record { name, .. } => Some(name.clone()),
-            Expr::Variant { type_name, .. } => Some(type_name.clone()),
+            Expr::Record { name, span, .. } => Some(TypeRef::named(name, *span)),
+            Expr::Variant {
+                type_name, span, ..
+            } => Some(TypeRef::named(type_name, *span)),
             Expr::CapabilityCall {
                 receiver,
                 operation,
+                span,
                 ..
             } => crate::semantics::intrinsic_signature(receiver, operation)
-                .map(|(_, result)| result.to_owned())
+                .map(|(_, result)| TypeRef::named(result, *span))
                 .or_else(|| {
                     locals
                         .get(receiver)
                         .and_then(|binding| binding.capability.as_deref())
                         .and_then(|interface| self.capabilities.interface(interface))
                         .and_then(|interface| interface.operation(operation))
-                        .map(|operation| operation.result.clone())
+                        .map(|operation| TypeRef::named(&operation.result, *span))
                 }),
             Expr::FieldAccess { target, field, .. } => {
                 let target_type = self.expression_type(target, locals)?;
+                let target_type = target_type.as_named()?;
                 self.records
-                    .get(target_type.as_str())
+                    .get(target_type)
                     .and_then(|(record, _)| record.fields.iter().find(|item| item.name == *field))
                     .map(|field| field.ty.clone())
             }
@@ -1434,7 +1524,7 @@ impl<'a> IndexBuilder<'a> {
                 scrutinee, arms, ..
             } => {
                 let scrutinee_type = self.expression_type(scrutinee, locals)?;
-                let variant = self.variants.get(scrutinee_type.as_str())?;
+                let variant = self.variants.get(scrutinee_type.as_named()?)?;
                 let arm = arms.first()?;
                 let mut arm_locals = locals.clone();
                 if let Some(binding) = &arm.binding {
@@ -1462,7 +1552,7 @@ impl<'a> IndexBuilder<'a> {
         &self,
         block: &crate::Block,
         outer: &BTreeMap<String, LocalBindingIndex>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         let mut locals = outer.clone();
         for binding in &block.bindings {
             let value_type = self.expression_type(&binding.value, &locals);
@@ -1496,10 +1586,34 @@ impl<'a> IndexBuilder<'a> {
         dependencies: &mut BTreeSet<String>,
     ) {
         match expression {
+            Expr::Map {
+                binding,
+                source,
+                body,
+                ..
+            } => {
+                self.collect_expression_dependencies(source, locals, dependencies);
+                let mut body_locals = locals.clone();
+                if let Some((element, _)) = self.expression_type(source, locals).and_then(|ty| {
+                    ty.as_list()
+                        .map(|(element, maximum)| (element.clone(), maximum))
+                }) {
+                    dependencies.extend(type_dependencies(&element));
+                    body_locals.insert(
+                        binding.clone(),
+                        LocalBindingIndex {
+                            handle: self.symbol_handle("dependency:map-binding"),
+                            value_type: Some(element),
+                            capability: None,
+                        },
+                    );
+                }
+                self.collect_block_dependencies(body, &body_locals, dependencies);
+            }
             Expr::Text { .. } | Expr::Integer { .. } => {}
             Expr::Name { name, .. } => {
                 if let Some(Some(ty)) = locals.get(name).map(|binding| &binding.value_type) {
-                    dependencies.insert(ty.clone());
+                    dependencies.extend(type_dependencies(ty));
                 }
             }
             Expr::Call {
@@ -1516,7 +1630,7 @@ impl<'a> IndexBuilder<'a> {
                 dependencies.insert(name.clone());
                 if let Some((record, _)) = self.records.get(name.as_str()) {
                     for field in &record.fields {
-                        dependencies.insert(field.ty.clone());
+                        dependencies.extend(type_dependencies(&field.ty));
                     }
                 }
                 for field in fields {
@@ -1556,6 +1670,9 @@ impl<'a> IndexBuilder<'a> {
             }
             Expr::FieldAccess { target, .. } => {
                 self.collect_expression_dependencies(target, locals, dependencies);
+                if let Some(ty) = self.expression_type(expression, locals) {
+                    dependencies.extend(type_dependencies(&ty));
+                }
             }
             Expr::If {
                 condition,
@@ -1575,9 +1692,10 @@ impl<'a> IndexBuilder<'a> {
                 for arm in arms {
                     dependencies.insert(arm.type_name.clone());
                     let mut arm_locals = locals.clone();
-                    if let (Some(binding), Some(variant_name)) =
-                        (&arm.binding, scrutinee_type.as_deref())
-                    {
+                    if let (Some(binding), Some(variant_name)) = (
+                        &arm.binding,
+                        scrutinee_type.as_ref().and_then(TypeRef::as_named),
+                    ) {
                         if let Some(payload_type) = self
                             .variants
                             .get(variant_name)
@@ -1632,12 +1750,15 @@ impl<'a> IndexBuilder<'a> {
         let mut dependencies = BTreeSet::new();
         for parameter in &function.parameters {
             match &parameter.ty {
-                ParameterType::Named(ty) | ParameterType::Capability(ty) => {
+                ParameterType::Value(ty) => {
+                    dependencies.extend(type_dependencies(ty));
+                }
+                ParameterType::Capability(ty) => {
                     dependencies.insert(ty.clone());
                 }
             }
         }
-        dependencies.insert(function.result_type.clone());
+        dependencies.extend(type_dependencies(&function.result_type));
         self.collect_block_dependencies(&function.body, locals, &mut dependencies);
         dependencies.into_iter().collect()
     }
@@ -1795,12 +1916,13 @@ impl HandleIndex {
 #[derive(Debug, Clone)]
 struct LocalBindingIndex {
     handle: SemanticHandle,
-    value_type: Option<String>,
+    value_type: Option<TypeRef>,
     capability: Option<String>,
 }
 
 fn expression_kind(expression: &Expr) -> &'static str {
     match expression {
+        Expr::Map { .. } => "map",
         Expr::Text { .. } => "text-literal",
         Expr::Integer { .. } => "integer-literal",
         Expr::Name { .. } => "name-reference",
@@ -1816,8 +1938,16 @@ fn expression_kind(expression: &Expr) -> &'static str {
 
 fn parameter_dependencies(parameter: &crate::Parameter) -> Vec<String> {
     match &parameter.ty {
-        ParameterType::Named(ty) | ParameterType::Capability(ty) => vec![ty.clone()],
+        ParameterType::Value(ty) => type_dependencies(ty),
+        ParameterType::Capability(ty) => vec![ty.clone()],
     }
+}
+
+fn type_dependencies(ty: &TypeRef) -> Vec<String> {
+    ty.named_references()
+        .into_iter()
+        .map(|(name, _)| name.to_owned())
+        .collect()
 }
 
 fn effect_names(function: &FunctionDecl) -> Vec<String> {
@@ -1833,7 +1963,7 @@ fn function_type(function: &FunctionDecl) -> String {
         .parameters
         .iter()
         .map(|parameter| match &parameter.ty {
-            ParameterType::Named(ty) => ty.clone(),
+            ParameterType::Value(ty) => ty.to_string(),
             ParameterType::Capability(ty) => format!("capability {ty}"),
         })
         .collect::<Vec<_>>()
@@ -1864,18 +1994,6 @@ fn identifier_after(tokens: &[crate::Token], start: usize, ordinal: usize) -> Sp
         })
         .nth(ordinal)
         .map_or(Span::empty(start), |token| token.span)
-}
-
-fn result_type_span(tokens: &[crate::Token], function: &FunctionDecl) -> Span {
-    let arrow = tokens
-        .iter()
-        .find(|token| {
-            token.span.start >= function.span.start
-                && token.span.end <= function.body.span.start
-                && matches!(token.kind, crate::TokenKind::Arrow)
-        })
-        .map_or(function.span.start, |token| token.span.end);
-    identifier_after(tokens, arrow, 0)
 }
 
 fn identity_map(

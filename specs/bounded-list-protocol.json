@@ -1,0 +1,77 @@
+{
+  "protocol_version": "m29-v1",
+  "shapes": [
+    {
+      "name": "TypeRef.List",
+      "fields": [
+        "element",
+        "max_length"
+      ]
+    },
+    {
+      "name": "RuntimeValue.List",
+      "fields": [
+        "items"
+      ]
+    },
+    {
+      "name": "BoundedListInspection",
+      "fields": [
+        "element_type",
+        "element_identity",
+        "max_length"
+      ]
+    },
+    {
+      "name": "ValueParameterInspection",
+      "fields": [
+        "name",
+        "value_type",
+        "bounded_list"
+      ]
+    },
+    {
+      "name": "SourceSetFunctionInspection",
+      "fields": [
+        "revision_id",
+        "function_handle",
+        "module_identity",
+        "function_identity",
+        "parameters",
+        "result_type",
+        "result_list",
+        "effects",
+        "capabilities",
+        "dependencies"
+      ]
+    },
+    {
+      "name": "ListCardinalityFault",
+      "fields": [
+        "code",
+        "maximum",
+        "count",
+        "element_type",
+        "value_path",
+        "calls"
+      ]
+    },
+    {
+      "name": "ListElementFault",
+      "fields": [
+        "code",
+        "element_type",
+        "index",
+        "actual_type",
+        "value_path",
+        "calls"
+      ]
+    }
+  ],
+  "ordering": {
+    "list_items": "stored index order",
+    "map_evaluation": "complete index before successor",
+    "dependencies": "UTF-8 byte order after deduplication",
+    "capability_calls": "dynamic invocation order"
+  }
+}

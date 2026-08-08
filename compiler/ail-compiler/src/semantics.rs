@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
     Declaration, Effect, Expr, FunctionDecl, LetBinding, ParameterType, RecordDecl, SourceUnit,
-    Span, VariantDecl, parse,
+    Span, TypeRef, ValueType, VariantDecl, parse,
 };
 
 const BUILTIN_TYPES: [&str; 5] = ["Text", "Int", "Unit", "Bool", "Bytes"];
@@ -255,7 +255,7 @@ struct Problem {
 
 #[derive(Debug, Clone)]
 enum LocalBinding {
-    Value(String),
+    Value(TypeRef),
     Capability(String),
 }
 
@@ -399,20 +399,20 @@ impl<'a> Checker<'a> {
             match declaration {
                 Declaration::Record(record) => {
                     for field in &record.fields {
-                        self.require_value_type(&field.ty, field.span);
+                        self.require_value_type(&field.ty);
                     }
                 }
                 Declaration::Variant(variant) => {
                     for case in &variant.cases {
                         if let Some(payload) = &case.payload {
-                            self.require_value_type(payload, case.span);
+                            self.require_value_type(payload);
                         }
                     }
                 }
                 Declaration::Function(function) => {
                     for parameter in &function.parameters {
                         match &parameter.ty {
-                            ParameterType::Named(ty) => self.require_value_type(ty, parameter.span),
+                            ParameterType::Value(ty) => self.require_value_type(ty),
                             ParameterType::Capability(interface) => {
                                 if self.capabilities.interface(interface).is_none() {
                                     self.capability_problem(
@@ -427,7 +427,7 @@ impl<'a> Checker<'a> {
                             }
                         }
                     }
-                    self.require_value_type(&function.result_type, function.span);
+                    self.require_value_type(&function.result_type);
                 }
             }
         }
@@ -485,14 +485,51 @@ impl<'a> Checker<'a> {
         stack.pop();
     }
 
-    fn require_value_type(&mut self, name: &str, span: Span) {
-        if BUILTIN_TYPES.contains(&name)
-            || self.records.contains_key(name)
-            || self.variants.contains_key(name)
+    fn require_value_type(&mut self, ty: &TypeRef) {
+        let ValueType::Named(name) = &ty.value else {
+            let ValueType::List {
+                element,
+                max_length,
+                max_length_spelling,
+                max_length_span,
+            } = &ty.value
+            else {
+                unreachable!("value types are named or bounded lists")
+            };
+            if !(1..=u128::from(crate::syntax::MAX_LIST_LENGTH)).contains(max_length) {
+                self.type_problem(
+                    "AIL.TYPE.LIST_BOUND",
+                    *max_length_span,
+                    fields([
+                        ("minimum", text("1")),
+                        ("maximum", text(crate::syntax::MAX_LIST_LENGTH.to_string())),
+                    ]),
+                    fields([("bound", text(max_length_spelling))]),
+                    Vec::new(),
+                    "check-list-bound",
+                );
+            }
+            if element.as_list().is_some() {
+                self.type_problem(
+                    "AIL.TYPE.LIST_ELEMENT",
+                    element.span,
+                    fields([("type_kind", text("named value type"))]),
+                    fields([("type", text(element.to_string()))]),
+                    Vec::new(),
+                    "check-list-element",
+                );
+            } else {
+                self.require_value_type(element);
+            }
+            return;
+        };
+        if BUILTIN_TYPES.contains(&name.as_str())
+            || self.records.contains_key(name.as_str())
+            || self.variants.contains_key(name.as_str())
         {
             return;
         }
-        self.unresolved_name(span, name, "type");
+        self.unresolved_name(ty.span, name, "type");
     }
 
     fn check_function(&mut self, function: &FunctionDecl) {
@@ -503,7 +540,7 @@ impl<'a> Checker<'a> {
                 continue;
             }
             let binding = match &parameter.ty {
-                ParameterType::Named(ty) => LocalBinding::Value(ty.clone()),
+                ParameterType::Value(ty) => LocalBinding::Value(ty.clone()),
                 ParameterType::Capability(interface) => LocalBinding::Capability(interface.clone()),
             };
             locals.insert(parameter.name.clone(), binding);
@@ -512,12 +549,12 @@ impl<'a> Checker<'a> {
         self.check_effect_clause(function, &locals);
         let tail_type = self.check_block(&function.body, function, &locals);
         if let Some(actual) = tail_type {
-            if actual != function.result_type {
+            if !actual.same_type(&function.result_type) {
                 self.type_problem(
                     "AIL.TYPE.RESULT_MISMATCH",
                     function.body.tail.span(),
-                    fields([("type", text(&function.result_type))]),
-                    fields([("type", text(&actual))]),
+                    fields([("type", text(function.result_type.to_string()))]),
+                    fields([("type", text(actual.to_string()))]),
                     vec![self.symbol_handle("function", function.span, &function.name)],
                     "check-function-result",
                 );
@@ -582,7 +619,7 @@ impl<'a> Checker<'a> {
         block: &crate::Block,
         function: &FunctionDecl,
         outer: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         let mut locals = outer.clone();
         for binding in &block.bindings {
             let inferred = self.check_binding(binding, function, &locals);
@@ -602,7 +639,7 @@ impl<'a> Checker<'a> {
                         ),
                     ),
                     explicit_type: None,
-                    inferred_type: Some(inferred),
+                    inferred_type: Some(inferred.to_string()),
                 });
             }
         }
@@ -614,7 +651,7 @@ impl<'a> Checker<'a> {
         binding: &LetBinding,
         function: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         self.check_expr(&binding.value, function, locals)
     }
 
@@ -623,10 +660,10 @@ impl<'a> Checker<'a> {
         expression: &Expr,
         function: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         match expression {
-            Expr::Text { .. } => Some("Text".to_owned()),
-            Expr::Integer { .. } => Some("Int".to_owned()),
+            Expr::Text { span, .. } => Some(TypeRef::named("Text", *span)),
+            Expr::Integer { span, .. } => Some(TypeRef::named("Int", *span)),
             Expr::Name { name, span } => match locals.get(name.as_str()) {
                 Some(LocalBinding::Value(ty)) => Some(ty.clone()),
                 Some(LocalBinding::Capability(_)) => {
@@ -693,7 +730,55 @@ impl<'a> Checker<'a> {
             Expr::Match {
                 scrutinee, arms, ..
             } => self.check_match_expression(scrutinee, arms, function, locals),
+            Expr::Map {
+                binding,
+                source,
+                body,
+                span,
+            } => self.check_map_expression(binding, source, body, *span, function, locals),
         }
+    }
+
+    fn check_map_expression(
+        &mut self,
+        binding: &str,
+        source: &Expr,
+        body: &crate::Block,
+        span: Span,
+        function: &FunctionDecl,
+        locals: &BTreeMap<String, LocalBinding>,
+    ) -> Option<TypeRef> {
+        let source_type = self.check_expr(source, function, locals)?;
+        let Some((element, max)) = source_type.as_list() else {
+            self.type_problem(
+                "AIL.TYPE.MAP_SOURCE",
+                span,
+                fields([("type_kind", text("bounded list"))]),
+                fields([("type", text(source_type.to_string()))]),
+                Vec::new(),
+                "check-map-source",
+            );
+            return None;
+        };
+        if locals.contains_key(binding) {
+            self.duplicate_declaration(span, "map-binding", binding);
+            return None;
+        }
+        let mut nested = locals.clone();
+        nested.insert(binding.to_owned(), LocalBinding::Value(element.clone()));
+        let result = self.check_block(body, function, &nested)?;
+        if result.as_list().is_some() {
+            self.type_problem(
+                "AIL.TYPE.LIST_ELEMENT",
+                body.tail.span(),
+                fields([("type_kind", text("named value type"))]),
+                fields([("type", text(result.to_string()))]),
+                Vec::new(),
+                "check-map-result-element",
+            );
+            return None;
+        }
+        Some(TypeRef::list(result, max, span))
     }
 
     #[allow(clippy::too_many_lines)]
@@ -704,7 +789,7 @@ impl<'a> Checker<'a> {
         span: Span,
         caller: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         let Some(target_function) = self.functions.get(callee_name).copied() else {
             self.push_problem(
                 ProblemClass::UnresolvedName,
@@ -726,7 +811,7 @@ impl<'a> Checker<'a> {
             .parameters
             .iter()
             .filter_map(|parameter| match &parameter.ty {
-                ParameterType::Named(ty) => Some((parameter, ty)),
+                ParameterType::Value(ty) => Some((parameter, ty)),
                 ParameterType::Capability(_) => None,
             })
             .collect::<Vec<_>>();
@@ -748,12 +833,12 @@ impl<'a> Checker<'a> {
             arguments.iter().zip(argument_types).zip(&value_parameters)
         {
             if let Some(actual) = actual {
-                if actual != **expected {
+                if !actual.same_type(expected) {
                     self.type_problem(
                         "AIL.TYPE.FUNCTION_ARGUMENT",
                         argument.span(),
-                        fields([("type", text(*expected))]),
-                        fields([("type", text(actual))]),
+                        fields([("type", text(expected.to_string()))]),
+                        fields([("type", text(actual.to_string()))]),
                         vec![self.symbol_handle(
                             "function",
                             target_function.span,
@@ -853,14 +938,25 @@ impl<'a> Checker<'a> {
         field_name: &str,
         function: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         let target_type = self.check_expr(target, function, locals)?;
-        let Some(record) = self.records.get(target_type.as_str()).copied() else {
+        let Some(record_name) = target_type.as_named() else {
             self.type_problem(
                 "AIL.TYPE.FIELD_TARGET",
                 target.span(),
                 fields([("type_kind", text("record"))]),
-                fields([("type", text(target_type))]),
+                fields([("type", text(target_type.to_string()))]),
+                Vec::new(),
+                "check-field-access",
+            );
+            return None;
+        };
+        let Some(record) = self.records.get(record_name).copied() else {
+            self.type_problem(
+                "AIL.TYPE.FIELD_TARGET",
+                target.span(),
+                fields([("type_kind", text("record"))]),
+                fields([("type", text(target_type.to_string()))]),
                 Vec::new(),
                 "check-field-access",
             );
@@ -896,14 +992,14 @@ impl<'a> Checker<'a> {
         else_branch: &crate::Block,
         function: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         if let Some(condition_type) = self.check_expr(condition, function, locals) {
-            if condition_type != "Bool" {
+            if condition_type.as_named() != Some("Bool") {
                 self.type_problem(
                     "AIL.TYPE.IF_CONDITION",
                     condition.span(),
                     fields([("type", text("Bool"))]),
-                    fields([("type", text(condition_type))]),
+                    fields([("type", text(condition_type.to_string()))]),
                     Vec::new(),
                     "check-if-condition",
                 );
@@ -912,13 +1008,13 @@ impl<'a> Checker<'a> {
         let then_type = self.check_block(then_branch, function, locals);
         let else_type = self.check_block(else_branch, function, locals);
         match (then_type, else_type) {
-            (Some(left), Some(right)) if left == right => Some(left),
+            (Some(left), Some(right)) if left.same_type(&right) => Some(left),
             (Some(left), Some(right)) => {
                 self.type_problem(
                     "AIL.TYPE.IF_BRANCH_MISMATCH",
                     else_branch.tail.span(),
-                    fields([("type", text(left))]),
-                    fields([("type", text(right))]),
+                    fields([("type", text(left.to_string()))]),
+                    fields([("type", text(right.to_string()))]),
                     Vec::new(),
                     "check-if-branches",
                 );
@@ -928,20 +1024,32 @@ impl<'a> Checker<'a> {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     fn check_match_expression(
         &mut self,
         scrutinee: &Expr,
         arms: &[crate::MatchArm],
         function: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         let scrutinee_type = self.check_expr(scrutinee, function, locals)?;
-        let Some(variant) = self.variants.get(scrutinee_type.as_str()).copied() else {
+        let Some(variant_name) = scrutinee_type.as_named() else {
             self.type_problem(
                 "AIL.TYPE.MATCH_TARGET",
                 scrutinee.span(),
                 fields([("type_kind", text("variant"))]),
-                fields([("type", text(scrutinee_type))]),
+                fields([("type", text(scrutinee_type.to_string()))]),
+                Vec::new(),
+                "check-match-target",
+            );
+            return None;
+        };
+        let Some(variant) = self.variants.get(variant_name).copied() else {
+            self.type_problem(
+                "AIL.TYPE.MATCH_TARGET",
+                scrutinee.span(),
+                fields([("type_kind", text("variant"))]),
+                fields([("type", text(scrutinee_type.to_string()))]),
                 Vec::new(),
                 "check-match-target",
             );
@@ -949,7 +1057,7 @@ impl<'a> Checker<'a> {
         };
 
         let mut seen = BTreeSet::new();
-        let mut result_type: Option<String> = None;
+        let mut result_type: Option<TypeRef> = None;
         for arm in arms {
             if arm.type_name != variant.name {
                 self.type_problem(
@@ -982,7 +1090,7 @@ impl<'a> Checker<'a> {
                 (Some(payload), None) => self.type_problem(
                     "AIL.TYPE.MATCH_BINDING",
                     arm.span,
-                    fields([("type", text(payload))]),
+                    fields([("type", text(payload.to_string()))]),
                     fields([("binding", text("missing"))]),
                     Vec::new(),
                     "check-match-pattern",
@@ -999,12 +1107,12 @@ impl<'a> Checker<'a> {
             }
             if let Some(arm_type) = self.check_block(&arm.body, function, &arm_locals) {
                 if let Some(expected) = &result_type {
-                    if *expected != arm_type {
+                    if !expected.same_type(&arm_type) {
                         self.type_problem(
                             "AIL.TYPE.MATCH_ARM_MISMATCH",
                             arm.body.tail.span(),
-                            fields([("type", text(expected))]),
-                            fields([("type", text(arm_type))]),
+                            fields([("type", text(expected.to_string()))]),
+                            fields([("type", text(arm_type.to_string()))]),
                             Vec::new(),
                             "check-match-arm-result",
                         );
@@ -1040,7 +1148,7 @@ impl<'a> Checker<'a> {
         expression_span: Span,
         function: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         let Some(record) = self.records.get(name).copied() else {
             self.unresolved_name(expression_span, name, "record");
             return None;
@@ -1069,14 +1177,14 @@ impl<'a> Checker<'a> {
                 continue;
             };
             if let Some(actual) = actual {
-                if actual != field.ty {
+                if !actual.same_type(&field.ty) {
                     self.push_problem_with_chain(
                         ProblemClass::Type,
                         "AIL.TYPE.FIELD_MISMATCH",
                         "type",
                         value.value.span(),
-                        fields([("type", text(&field.ty))]),
-                        fields([("type", text(&actual))]),
+                        fields([("type", text(field.ty.to_string()))]),
+                        fields([("type", text(actual.to_string()))]),
                         vec![
                             self.symbol_handle("record", record.span, &record.name),
                             self.symbol_handle(
@@ -1109,7 +1217,7 @@ impl<'a> Checker<'a> {
                 );
             }
         }
-        Some(name.to_owned())
+        Some(TypeRef::named(name, expression_span))
     }
 
     fn check_variant_expression(
@@ -1120,25 +1228,25 @@ impl<'a> Checker<'a> {
         expression_span: Span,
         function: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         let Some(variant) = self.variants.get(type_name).copied() else {
             self.unresolved_name(expression_span, type_name, "variant");
             return None;
         };
         let Some(case) = variant.cases.iter().find(|case| case.name == case_name) else {
             self.unresolved_name(expression_span, case_name, "variant-case");
-            return Some(type_name.to_owned());
+            return Some(TypeRef::named(type_name, expression_span));
         };
         match (&case.payload, payload) {
             (None, None) => {}
             (Some(expected), Some(payload)) => {
                 if let Some(actual) = self.check_expr(payload, function, locals) {
-                    if actual != *expected {
+                    if !actual.same_type(expected) {
                         self.type_problem(
                             "AIL.TYPE.VARIANT_PAYLOAD_MISMATCH",
                             payload.span(),
-                            fields([("type", text(expected))]),
-                            fields([("type", text(&actual))]),
+                            fields([("type", text(expected.to_string()))]),
+                            fields([("type", text(actual.to_string()))]),
                             vec![self.symbol_handle("variant", variant.span, &variant.name)],
                             "check-variant-construction",
                         );
@@ -1148,7 +1256,7 @@ impl<'a> Checker<'a> {
             (Some(expected), None) => self.type_problem(
                 "AIL.TYPE.VARIANT_PAYLOAD_MISMATCH",
                 expression_span,
-                fields([("type", text(expected))]),
+                fields([("type", text(expected.to_string()))]),
                 fields([("type", text("missing"))]),
                 vec![self.symbol_handle("variant", variant.span, &variant.name)],
                 "check-variant-construction",
@@ -1165,7 +1273,7 @@ impl<'a> Checker<'a> {
                 );
             }
         }
-        Some(type_name.to_owned())
+        Some(TypeRef::named(type_name, expression_span))
     }
 
     fn check_capability_call(
@@ -1176,7 +1284,7 @@ impl<'a> Checker<'a> {
         expression_span: Span,
         function: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
-    ) -> Option<String> {
+    ) -> Option<TypeRef> {
         if let Some(signature) = intrinsic_signature(receiver, operation) {
             return Some(self.check_intrinsic_call(
                 arguments,
@@ -1236,13 +1344,13 @@ impl<'a> Checker<'a> {
             .zip(&signature.parameters)
         {
             if let Some(actual) = actual {
-                if actual != *expected {
+                if actual.as_named() != Some(expected.as_str()) {
                     ordinary_types_ok = false;
                     self.type_problem(
                         "AIL.TYPE.CAPABILITY_ARGUMENT",
                         argument.span(),
                         fields([("type", text(expected))]),
-                        fields([("type", text(&actual))]),
+                        fields([("type", text(actual.to_string()))]),
                         Vec::new(),
                         "check-capability-arguments",
                     );
@@ -1254,7 +1362,7 @@ impl<'a> Checker<'a> {
         if ordinary_types_ok {
             self.check_call_effect(receiver, operation, expression_span, function);
         }
-        Some(signature.result.clone())
+        Some(TypeRef::named(&signature.result, expression_span))
     }
 
     fn check_call_effect(
@@ -1307,7 +1415,7 @@ impl<'a> Checker<'a> {
         function: &FunctionDecl,
         locals: &BTreeMap<String, LocalBinding>,
         (parameters, result): (&'static [&'static str], &'static str),
-    ) -> String {
+    ) -> TypeRef {
         let argument_types = arguments
             .iter()
             .map(|argument| self.check_expr(argument, function, locals))
@@ -1324,19 +1432,19 @@ impl<'a> Checker<'a> {
         }
         for ((argument, actual), expected) in arguments.iter().zip(argument_types).zip(parameters) {
             if let Some(actual) = actual {
-                if actual != *expected {
+                if actual.as_named() != Some(*expected) {
                     self.type_problem(
                         "AIL.TYPE.INTRINSIC_ARGUMENT",
                         argument.span(),
                         fields([("type", text(*expected))]),
-                        fields([("type", text(actual))]),
+                        fields([("type", text(actual.to_string()))]),
                         Vec::new(),
                         "check-intrinsic-arguments",
                     );
                 }
             }
         }
-        result.to_owned()
+        TypeRef::named(result, expression_span)
     }
 
     fn unresolved_name(&mut self, span: Span, name: &str, role: &str) {
@@ -1547,6 +1655,10 @@ fn collect_calls(expression: &Expr, calls: &mut Vec<(String, Span)>) {
                 calls.extend(calls_in_block(&arm.body));
             }
         }
+        Expr::Map { source, body, .. } => {
+            collect_calls(source, calls);
+            calls.extend(calls_in_block(body));
+        }
         Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => {}
     }
 }
@@ -1579,7 +1691,7 @@ fn format_function_type(function: &FunctionDecl) -> String {
         .parameters
         .iter()
         .map(|parameter| match &parameter.ty {
-            ParameterType::Named(ty) => ty.clone(),
+            ParameterType::Value(ty) => ty.to_string(),
             ParameterType::Capability(ty) => format!("capability {ty}"),
         })
         .collect::<Vec<_>>()

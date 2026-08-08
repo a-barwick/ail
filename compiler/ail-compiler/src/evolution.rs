@@ -7,7 +7,7 @@ use crate::{
     Block, CapabilityEnvironment, CapabilityProvider, Declaration, ExecutionFailure,
     ExecutionResponse, ExecutionSuccess, Expr, FunctionDecl, HandleKind, ParameterType,
     ParseResult, RuntimeFault, RuntimeValue, SemanticHandle, SourceUnit, Span, TypeCheckStatus,
-    parse, source_digest,
+    TypeRef, parse, source_digest,
 };
 
 mod transaction;
@@ -106,6 +106,45 @@ pub struct RelationshipEdge {
     pub kind: &'static str,
     pub target: String,
     pub site: SemanticLocation,
+}
+
+/// One compiler-visible bounded-list type in a linked function signature.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BoundedListInspection {
+    pub element_type: String,
+    pub element_identity: Option<String>,
+    pub max_length: u128,
+}
+
+/// One ordinary value parameter in linked source-set inspection.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ValueParameterInspection {
+    pub name: String,
+    pub value_type: String,
+    pub bounded_list: Option<BoundedListInspection>,
+}
+
+/// Revision-bound inspection of one linked function boundary and body dependencies.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceSetFunctionInspection {
+    pub revision_id: String,
+    pub function_handle: SemanticHandle,
+    pub module_identity: String,
+    pub function_identity: String,
+    pub parameters: Vec<ValueParameterInspection>,
+    pub result_type: String,
+    pub result_list: Option<BoundedListInspection>,
+    pub effects: Vec<String>,
+    pub capabilities: Vec<String>,
+    pub dependencies: Vec<String>,
+}
+
+/// Failure to inspect a function in one immutable source-set revision.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceSetInspectionFailure {
+    pub code: &'static str,
+    pub revision_id: String,
+    pub function: String,
 }
 
 /// Path-qualified revision-scoped source location.
@@ -306,6 +345,94 @@ impl EvolutionWorkspace {
         self.revisions
             .get(revision_id)
             .map(|stored| stored.graph.as_slice())
+    }
+
+    /// Inspect one linked function without reconstructing its types or dependencies from files.
+    ///
+    /// # Errors
+    ///
+    /// Returns a stable failure for an unknown revision or a selector that does not name exactly
+    /// one function in that revision.
+    pub fn inspect_function(
+        &self,
+        revision_id: &str,
+        function: &str,
+    ) -> Result<SourceSetFunctionInspection, SourceSetInspectionFailure> {
+        let stored = self
+            .revisions
+            .get(revision_id)
+            .ok_or_else(|| SourceSetInspectionFailure {
+                code: "AIL.PROTOCOL.STALE_REVISION",
+                revision_id: revision_id.to_owned(),
+                function: function.to_owned(),
+            })?;
+        let matches = entry_functions(&stored.unit, function);
+        if matches.len() != 1 {
+            return Err(SourceSetInspectionFailure {
+                code: if matches.is_empty() {
+                    "AIL.PROTOCOL.UNKNOWN_FUNCTION"
+                } else {
+                    "AIL.PROTOCOL.AMBIGUOUS_FUNCTION"
+                },
+                revision_id: revision_id.to_owned(),
+                function: function.to_owned(),
+            });
+        }
+        let declaration = matches[0];
+        let module_identity = declaration
+            .name
+            .rsplit_once('.')
+            .map_or_else(String::new, |(module, _)| module.to_owned());
+        let path = source_path_for_function(&stored.sources, &declaration.name);
+        let function_handle = handle(
+            revision_id,
+            path,
+            HandleKind::Symbol,
+            source_name(&declaration.name),
+            declaration.span,
+        );
+        let parameters = declaration
+            .parameters
+            .iter()
+            .filter_map(|parameter| {
+                let ParameterType::Value(value_type) = &parameter.ty else {
+                    return None;
+                };
+                Some(ValueParameterInspection {
+                    name: parameter.name.clone(),
+                    value_type: value_type.to_string(),
+                    bounded_list: inspect_bounded_list(value_type, &stored.unit),
+                })
+            })
+            .collect();
+        let effects = declaration
+            .effects
+            .iter()
+            .map(|effect| format!("{}.{}", effect.receiver, effect.operation))
+            .collect();
+        let capabilities = declaration
+            .parameters
+            .iter()
+            .filter_map(|parameter| {
+                let ParameterType::Capability(interface) = &parameter.ty else {
+                    return None;
+                };
+                Some(format!("{}:{interface}", parameter.name))
+            })
+            .collect();
+        let dependencies = function_dependencies(declaration);
+        Ok(SourceSetFunctionInspection {
+            revision_id: revision_id.to_owned(),
+            function_handle,
+            module_identity,
+            function_identity: declaration.name.clone(),
+            parameters,
+            result_type: declaration.result_type.to_string(),
+            result_list: inspect_bounded_list(&declaration.result_type, &stored.unit),
+            effects,
+            capabilities,
+            dependencies,
+        })
     }
 
     /// Execute a checked function from one retained ordered source-set revision.
@@ -849,25 +976,27 @@ fn qualify_declaration(
         Declaration::Record(record) => {
             record.name = qualified_name(module, &record.name);
             for field in &mut record.fields {
-                field.ty = resolve_linked_name(scope, &field.ty);
+                field.ty.qualify(&|name| resolve_linked_name(scope, name));
             }
         }
         Declaration::Variant(variant) => {
             variant.name = qualified_name(module, &variant.name);
             for case in &mut variant.cases {
                 if let Some(payload) = &mut case.payload {
-                    *payload = resolve_linked_name(scope, payload);
+                    payload.qualify(&|name| resolve_linked_name(scope, name));
                 }
             }
         }
         Declaration::Function(function) => {
             function.name = qualified_name(module, &function.name);
             for parameter in &mut function.parameters {
-                if let ParameterType::Named(ty) = &mut parameter.ty {
-                    *ty = resolve_linked_name(scope, ty);
+                if let ParameterType::Value(ty) = &mut parameter.ty {
+                    ty.qualify(&|name| resolve_linked_name(scope, name));
                 }
             }
-            function.result_type = resolve_linked_name(scope, &function.result_type);
+            function
+                .result_type
+                .qualify(&|name| resolve_linked_name(scope, name));
             qualify_block(&mut function.body, scope);
         }
     }
@@ -883,6 +1012,10 @@ fn qualify_block(block: &mut Block, scope: &BTreeMap<String, String>) {
 
 fn qualify_expression(expression: &mut Expr, scope: &BTreeMap<String, String>) {
     match expression {
+        Expr::Map { source, body, .. } => {
+            qualify_expression(source, scope);
+            qualify_block(body, scope);
+        }
         Expr::Call {
             function,
             arguments,
@@ -975,28 +1108,107 @@ fn source_references(unit: &SourceUnit) -> Vec<(String, Span, &'static str)> {
         match declaration {
             Declaration::Record(record) => {
                 for field in &record.fields {
-                    references.push((field.ty.clone(), field.span, "type"));
+                    references.extend(
+                        field
+                            .ty
+                            .named_references()
+                            .into_iter()
+                            .map(|(name, span)| (name.to_owned(), span, "type")),
+                    );
                 }
             }
             Declaration::Variant(variant) => {
                 for case in &variant.cases {
                     if let Some(payload) = &case.payload {
-                        references.push((payload.clone(), case.span, "type"));
+                        references.extend(
+                            payload
+                                .named_references()
+                                .into_iter()
+                                .map(|(name, span)| (name.to_owned(), span, "type")),
+                        );
                     }
                 }
             }
             Declaration::Function(function) => {
                 for parameter in &function.parameters {
-                    if let ParameterType::Named(ty) = &parameter.ty {
-                        references.push((ty.clone(), parameter.span, "type"));
+                    if let ParameterType::Value(ty) = &parameter.ty {
+                        references.extend(
+                            ty.named_references()
+                                .into_iter()
+                                .map(|(name, span)| (name.to_owned(), span, "type")),
+                        );
                     }
                 }
-                references.push((function.result_type.clone(), function.span, "type"));
+                references.extend(
+                    function
+                        .result_type
+                        .named_references()
+                        .into_iter()
+                        .map(|(name, span)| (name.to_owned(), span, "type")),
+                );
                 collect_source_references_block(&function.body, &mut references);
             }
         }
     }
     references
+}
+
+fn inspect_bounded_list(ty: &TypeRef, unit: &SourceUnit) -> Option<BoundedListInspection> {
+    let (element, max_length) = ty.as_list()?;
+    let element_type = element.to_string();
+    let element_identity = element.as_named().and_then(|name| {
+        unit.declarations
+            .iter()
+            .find_map(|declaration| match declaration {
+                Declaration::Record(record) if record.name == name => record.identity.clone(),
+                Declaration::Variant(variant) if variant.name == name => variant.identity.clone(),
+                Declaration::Record(_) | Declaration::Variant(_) | Declaration::Function(_) => None,
+            })
+    });
+    Some(BoundedListInspection {
+        element_type,
+        element_identity,
+        max_length,
+    })
+}
+
+fn function_dependencies(function: &FunctionDecl) -> Vec<String> {
+    let mut dependencies = BTreeSet::new();
+    for parameter in &function.parameters {
+        match &parameter.ty {
+            ParameterType::Value(ty) => {
+                dependencies.extend(
+                    ty.named_references()
+                        .into_iter()
+                        .map(|(name, _)| name.to_owned()),
+                );
+            }
+            ParameterType::Capability(interface) => {
+                dependencies.insert(interface.clone());
+            }
+        }
+    }
+    dependencies.extend(
+        function
+            .result_type
+            .named_references()
+            .into_iter()
+            .map(|(name, _)| name.to_owned()),
+    );
+    let mut references = Vec::new();
+    collect_source_references_block(&function.body, &mut references);
+    dependencies.extend(references.into_iter().map(|(name, _, _)| name));
+    for effect in &function.effects {
+        if let Some(ParameterType::Capability(interface)) = function
+            .parameters
+            .iter()
+            .find(|parameter| parameter.name == effect.receiver)
+            .map(|parameter| &parameter.ty)
+        {
+            dependencies.insert(format!("{interface}.{}", effect.operation));
+        }
+    }
+    dependencies.into_iter().collect()
 }
 
 fn collect_source_references_block(
@@ -1014,6 +1226,10 @@ fn collect_source_references(
     references: &mut Vec<(String, Span, &'static str)>,
 ) {
     match expression {
+        Expr::Map { source, body, .. } => {
+            collect_source_references(source, references);
+            collect_source_references_block(body, references);
+        }
         Expr::Call {
             function,
             arguments,
@@ -1384,8 +1600,11 @@ fn build_graph(
             );
             let source = format!("handle:{}", function_handle.local_id);
             for parameter in &function.parameters {
-                if let ParameterType::Named(ty) = &parameter.ty {
-                    if let Some(identity) = visible_identities.get(ty.as_str()) {
+                if let ParameterType::Value(ty) = &parameter.ty {
+                    for (name, _) in ty.named_references() {
+                        let Some(identity) = visible_identities.get(name) else {
+                            continue;
+                        };
                         graph.push(edge(
                             &source,
                             "signature-input",
@@ -1398,16 +1617,18 @@ fn build_graph(
                     }
                 }
             }
-            if let Some(identity) = visible_identities.get(function.result_type.as_str()) {
-                graph.push(edge(
-                    &source,
-                    "signature-output",
-                    identity,
-                    revision_id,
-                    path,
-                    "result",
-                    function.span,
-                ));
+            for (name, _) in function.result_type.named_references() {
+                if let Some(identity) = visible_identities.get(name) {
+                    graph.push(edge(
+                        &source,
+                        "signature-output",
+                        identity,
+                        revision_id,
+                        path,
+                        "result",
+                        function.span,
+                    ));
+                }
             }
             for effect in &function.effects {
                 graph.push(edge(
@@ -1429,10 +1650,13 @@ fn build_graph(
                 &mut graph,
             );
             if function.name.contains("adapt_") || function.name.contains("decode_") {
-                if let Some(ParameterType::Named(input)) =
+                if let Some(ParameterType::Value(input)) =
                     function.parameters.first().map(|parameter| &parameter.ty)
                 {
-                    if let Some(identity) = visible_identities.get(input.as_str()) {
+                    if let Some(identity) = input
+                        .as_named()
+                        .and_then(|name| visible_identities.get(name))
+                    {
                         graph.push(edge(
                             &source,
                             "adapts-from",
@@ -1446,7 +1670,11 @@ fn build_graph(
                 }
             }
             if function.name.starts_with("project_") {
-                if let Some(identity) = visible_identities.get(function.result_type.as_str()) {
+                if let Some(identity) = function
+                    .result_type
+                    .as_named()
+                    .and_then(|name| visible_identities.get(name))
+                {
                     graph.push(edge(
                         &source,
                         "projects-to",
@@ -1459,7 +1687,11 @@ fn build_graph(
                 }
             }
             if function.name.starts_with("fixture_") {
-                if let Some(identity) = visible_identities.get(function.result_type.as_str()) {
+                if let Some(identity) = function
+                    .result_type
+                    .as_named()
+                    .and_then(|name| visible_identities.get(name))
+                {
                     graph.push(edge(
                         &source,
                         "verifies",
@@ -1569,6 +1801,14 @@ fn walk_expr(
     graph: &mut Vec<RelationshipEdge>,
 ) {
     match expression {
+        Expr::Map {
+            source: input,
+            body,
+            ..
+        } => {
+            walk_expr(input, source, revision_id, path, identities, graph);
+            walk_block(body, source, revision_id, path, identities, graph);
+        }
         Expr::Call { arguments, .. } => {
             for argument in arguments {
                 walk_expr(argument, source, revision_id, path, identities, graph);
@@ -1696,7 +1936,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     let functions = functions_with_paths(&stored.sources, &stored.unit);
     let handler = functions.iter().find(|(_, function)| {
         function.parameters.iter().any(
-            |parameter| matches!(&parameter.ty, ParameterType::Named(ty) if ty == subject_type),
+            |parameter| matches!(&parameter.ty, ParameterType::Value(ty) if ty.as_named() == Some(subject_type)),
         ) && function
             .parameters
             .iter()
@@ -1742,7 +1982,8 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
         );
     }
     if let Some((path, function)) = functions.iter().find(|(_, function)| {
-        named_parameter(function, subject_type) && function.result_type == subject_type
+        named_parameter(function, subject_type)
+            && function.result_type.as_named() == Some(subject_type)
     }) {
         must_change.push(impact_entry(
             &format!("{path}#{}", function.name),
@@ -1753,7 +1994,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     }
     if let Some((path, function)) = functions.iter().find(|(_, function)| {
         named_parameter(function, &stored_name)
-            && function.result_type == stored_name
+            && function.result_type.as_named() == Some(stored_name.as_str())
             && !expression_constructs(&function.body, &stored_name)
     }) {
         must_change.push(impact_entry(
@@ -1786,7 +2027,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     }
     if let Some((path, function)) = functions.iter().find(|(_, function)| {
         named_parameter(function, &stored_name)
-            && function.result_type == stored_name
+            && function.result_type.as_named() == Some(stored_name.as_str())
             && expression_constructs(&function.body, &stored_name)
     }) {
         must_change.push(impact_entry(
@@ -1798,11 +2039,20 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     }
     let projection = functions.iter().find(|(_, function)| {
         named_parameter(function, &stored_name)
-            && function.result_type != stored_name
-            && expression_constructs(&function.body, &function.result_type)
+            && function.result_type.as_named() != Some(stored_name.as_str())
+            && function
+                .result_type
+                .as_named()
+                .is_some_and(|name| expression_constructs(&function.body, name))
     });
     if let Some((path, function)) = projection {
-        let output_identity = identity_for_type(stored, &function.result_type);
+        let output_identity = identity_for_type(
+            stored,
+            function
+                .result_type
+                .as_named()
+                .expect("projection result is a named type"),
+        );
         must_change.push(impact_entry(
             &format!("{path}#{}", function.name),
             "v1-response-projection",
@@ -1821,7 +2071,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
         ));
     }
     if let Some((path, function)) = functions.iter().find(|(_, function)| {
-        function.result_type == subject_type
+        function.result_type.as_named() == Some(subject_type)
             && !named_parameter(function, subject_type)
             && expression_constructs(&function.body, subject_type)
     }) {
@@ -1847,7 +2097,11 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     }
     let mut review = Vec::new();
     if let Some((path, function)) = handler {
-        if let Some(result_schema) = top_identity_for_type(stored, &function.result_type) {
+        if let Some(result_schema) = function
+            .result_type
+            .as_named()
+            .and_then(|name| top_identity_for_type(stored, name))
+        {
             review.push(impact_entry(
                 &format!(
                     "{}#{}",
@@ -1979,7 +2233,7 @@ fn named_parameter(function: &FunctionDecl, type_name: &str) -> bool {
     function
         .parameters
         .iter()
-        .any(|parameter| matches!(&parameter.ty, ParameterType::Named(ty) if ty == type_name))
+        .any(|parameter| matches!(&parameter.ty, ParameterType::Value(ty) if ty.as_named() == Some(type_name)))
 }
 
 fn expression_constructs(block: &Block, type_name: &str) -> bool {
@@ -1992,6 +2246,9 @@ fn expression_constructs(block: &Block, type_name: &str) -> bool {
 
 fn expr_constructs(expression: &Expr, type_name: &str) -> bool {
     match expression {
+        Expr::Map { source, body, .. } => {
+            expr_constructs(source, type_name) || expression_constructs(body, type_name)
+        }
         Expr::Call { arguments, .. } => arguments
             .iter()
             .any(|argument| expr_constructs(argument, type_name)),
@@ -2054,6 +2311,10 @@ fn collect_record_bindings(block: &Block, bindings: &mut BTreeMap<String, String
 
 fn collect_nested_bindings(expression: &Expr, bindings: &mut BTreeMap<String, String>) {
     match expression {
+        Expr::Map { source, body, .. } => {
+            collect_nested_bindings(source, bindings);
+            collect_record_bindings(body, bindings);
+        }
         Expr::If {
             then_branch,
             else_branch,
@@ -2083,7 +2344,7 @@ fn capability_site(function: &FunctionDecl) -> Option<(String, String)> {
     let interface = function.parameters.iter().find_map(|parameter| {
         (parameter.name == receiver).then(|| match &parameter.ty {
             ParameterType::Capability(interface) => Some(interface.clone()),
-            ParameterType::Named(_) => None,
+            ParameterType::Value(_) => None,
         })?
     })?;
     Some((interface, operation))
@@ -2117,6 +2378,8 @@ fn find_capability_expr(
     receivers: &BTreeSet<&str>,
 ) -> Option<(String, String, Vec<Expr>)> {
     match expression {
+        Expr::Map { source, body, .. } => find_capability_expr(source, receivers)
+            .or_else(|| find_capability_call(body, receivers)),
         Expr::Call { arguments, .. } => arguments
             .iter()
             .find_map(|argument| find_capability_expr(argument, receivers)),
@@ -2164,6 +2427,13 @@ fn last_match_type(block: &Block) -> Option<String> {
 
 fn collect_match_types(expression: &Expr, types: &mut Vec<String>) {
     match expression {
+        Expr::Map { source, body, .. } => {
+            collect_match_types(source, types);
+            for binding in &body.bindings {
+                collect_match_types(&binding.value, types);
+            }
+            collect_match_types(&body.tail, types);
+        }
         Expr::Match {
             scrutinee, arms, ..
         } => {

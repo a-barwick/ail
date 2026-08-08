@@ -53,11 +53,12 @@ it needs syntax.
 
 ## Current gap
 
-The compiler can run the job service and a three-module composed example. It
-cannot yet express a normal production service. Missing fundamentals include
-iteration, general collections, concurrency, networking, package management,
-foreign interfaces, production memory and resource semantics, native execution,
-and deployment.
+The compiler can run the job service, a three-module composed example, and
+bounded ordered cancellation over an immutable list. It has one sequential
+`map` form, not general iteration or a collection library. Missing fundamentals
+include mutable or general collections, concurrency, networking, package
+management, foreign interfaces, production memory and resource semantics,
+native execution, and deployment.
 
 These are technical gaps, not a checklist to implement blindly. The next change
 should close the smallest gap required by a real executable workload and prove

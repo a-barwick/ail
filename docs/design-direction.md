@@ -42,12 +42,26 @@ effects reachable through its callees.
 
 The interpreter evaluates arguments left to right and executes nested calls
 deterministically. The compiler rejects direct and mutual recursion. AIL does
-not yet provide bounded recursion or iteration.
+not provide bounded recursion or general iteration.
 
 Capabilities identify the accessible instance or namespace. Code cannot obtain
 store, clock, network, filesystem, environment, randomness, or telemetry access
 unless its contract receives that authority. Pure functions cannot call
 effectful functions.
+
+## Bounded ordered lists
+
+`List<T, N>` is an immutable ordered value with runtime length `0..=N`. The
+bound is part of exact type identity, and the compiler resolves imported,
+aliased, and qualified element types structurally. Initial list elements must be
+named value types; there is no implicit bound widening or nested list type.
+
+`map item in items { body }` evaluates the source once and the body sequentially
+by stored index. It preserves the source bound and actual length, and ordinary
+calls in the body retain their dependencies and transitive capability effects.
+External list cardinality and every element are validated before capability
+availability checks or calls. The syntax does not add literals, indexing,
+mutation, filtering, folding, arbitrary loops, or parallel evaluation.
 
 ## Revisions and changes
 
@@ -74,9 +88,9 @@ initial state + ordered input + supplied capability outcomes
 
 This requirement covers observable language behavior. It does not claim
 bit-identical native output, because no native backend exists. Future floating
-point, collections, concurrency, time-zone data, filesystem access, and resource
-exhaustion rules must define their observable inputs before they can preserve
-this property.
+point, broader collections, concurrency, time-zone data, filesystem access, and
+resource exhaustion rules must define their observable inputs before they can
+preserve this property.
 
 ## Diagnostics
 
@@ -118,7 +132,7 @@ of these problems by not implementing the corresponding feature.
 ## Unresolved design
 
 The project still needs exact rules for memory and aliasing, integer widths and
-additional numeric types, collections and iteration, concurrency and
+additional numeric types, general collections and iteration, concurrency and
 cancellation, replay, packages and dependency versions, foreign code, runtime
 resource limits, protocol versioning, and native builds. Those decisions must be
 made with executable fixtures, not examples alone.

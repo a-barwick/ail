@@ -9,12 +9,15 @@ state the language and compiler behavior that satisfies them.
   `LANG-001`–`LANG-005`, `PROTO-001`–`PROTO-005`, and `NFR-001`–`NFR-005`.
 - [Architecture requirements](architectural-health.md): `APP-006`, `LANG-006`,
   `PROTO-006`, `PROTO-007`, `NFR-006`, and `NFR-007`.
+- [Bounded ordered list requirements](bounded-ordered-lists.md): `APP-007`,
+  `LANG-007`, `PROTO-008`, and `NFR-008`.
 
 The first set drives request validation, one conditional store effect, closed
 outcomes, schema evolution, revision-safe semantic inspection, impact analysis,
 atomic changes, and benchmark measurement. The second drives revision-bound
 architecture snapshots, deltas, policy enforcement, honest coverage, and
-rollback.
+rollback. The third adds immutable bounded lists, deterministic sequential map,
+whole-input validation before effects, and linked list inspection.
 
 ## Identifier classes
 

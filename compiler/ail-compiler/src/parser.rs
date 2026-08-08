@@ -1,7 +1,7 @@
 use crate::{
     Block, Declaration, Diagnostic, Effect, Expr, Field, FunctionDecl, ImportDecl, Keyword,
     LetBinding, MatchArm, ModuleDecl, Parameter, ParameterType, RecordDecl, RecordFieldValue,
-    SourceUnit, Span, Token, TokenKind, VariantCase, VariantDecl, lex,
+    SourceUnit, Span, Token, TokenKind, TypeRef, VariantCase, VariantDecl, lex,
 };
 
 #[derive(Debug, Clone)]
@@ -149,13 +149,13 @@ impl Parser {
                 fields.push(Field {
                     name: field_name,
                     identity,
-                    ty: "<missing>".to_owned(),
+                    ty: TypeRef::named("<missing>", Span::empty(at)),
                     span: Span::new(field_start, end),
                 });
                 continue;
             }
 
-            let ty = self.parse_qualified_name()?;
+            let ty = self.parse_type_ref()?;
             self.expect(TokenKind::Semicolon, ";");
             fields.push(Field {
                 name: field_name,
@@ -184,7 +184,7 @@ impl Parser {
             let case_name = self.take_identifier()?;
             let identity = self.parse_identity()?;
             let payload = if self.consume_if(TokenKind::LeftParen) {
-                let payload = self.parse_qualified_name()?;
+                let payload = self.parse_type_ref()?;
                 self.expect(TokenKind::RightParen, ")");
                 Some(payload)
             } else {
@@ -229,7 +229,7 @@ impl Parser {
         let parameters = self.parse_parameters()?;
         self.expect(TokenKind::RightParen, ")");
         self.expect(TokenKind::Arrow, "->");
-        let result_type = self.parse_qualified_name()?;
+        let result_type = self.parse_type_ref()?;
         let effects = if self.consume_if(TokenKind::Keyword(Keyword::Effects)) {
             self.parse_effects()?
         } else {
@@ -267,7 +267,7 @@ impl Parser {
             let ty = if self.consume_if(TokenKind::Keyword(Keyword::Capability)) {
                 ParameterType::Capability(self.take_identifier()?)
             } else {
-                ParameterType::Named(self.parse_qualified_name()?)
+                ParameterType::Value(self.parse_type_ref()?)
             };
             parameters.push(Parameter {
                 name,
@@ -341,6 +341,9 @@ impl Parser {
         }
         if self.at(TokenKind::Keyword(Keyword::Match)) {
             return self.parse_match_expression();
+        }
+        if self.starts_map_expression() {
+            return self.parse_map_expression();
         }
         let token = self.current().clone();
         let expression = match token.kind {
@@ -547,6 +550,65 @@ impl Parser {
             arms,
             span: Span::new(start, self.previous().span.end),
         })
+    }
+
+    fn parse_map_expression(&mut self) -> Option<Expr> {
+        let start = self.advance().span.start;
+        let binding = self.take_identifier()?;
+        if !self.at_identifier("in") {
+            self.report_expected("in");
+            return None;
+        }
+        self.advance();
+        let source = Box::new(self.parse_expression_before_block()?);
+        let body = Box::new(self.parse_block()?);
+        Some(Expr::Map {
+            binding,
+            source,
+            span: Span::new(start, body.span.end),
+            body,
+        })
+    }
+
+    fn starts_map_expression(&self) -> bool {
+        self.at_identifier("map")
+            && self
+                .tokens
+                .get(self.cursor + 1)
+                .is_some_and(|token| matches!(token.kind, TokenKind::Identifier))
+            && self.tokens.get(self.cursor + 2).is_some_and(|token| {
+                matches!(token.kind, TokenKind::Identifier) && token.text == "in"
+            })
+    }
+
+    fn at_identifier(&self, spelling: &str) -> bool {
+        matches!(self.current().kind, TokenKind::Identifier) && self.current().text == spelling
+    }
+
+    fn parse_type_ref(&mut self) -> Option<TypeRef> {
+        let start = self.current().span.start;
+        let name = self.parse_qualified_name()?;
+        if name == "List" && self.consume_if(TokenKind::LeftAngle) {
+            let element = Box::new(self.parse_type_ref()?);
+            self.expect(TokenKind::Comma, ",");
+            if !self.at(TokenKind::Integer) {
+                self.report_expected("unsigned integer");
+                return None;
+            }
+            let token = self.advance();
+            self.expect(TokenKind::RightAngle, ">");
+            Some(TypeRef::list_with_bound_span(
+                *element,
+                &token.text,
+                Span::new(start, self.previous().span.end),
+                token.span,
+            ))
+        } else {
+            Some(TypeRef::named(
+                name,
+                Span::new(start, self.previous().span.end),
+            ))
+        }
     }
 
     fn parse_expression_before_block(&mut self) -> Option<Expr> {

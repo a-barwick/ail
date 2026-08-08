@@ -1,0 +1,6 @@
+module cancellation.single;
+import cancellation.domain as domain;
+
+fn cancel_one(item: domain.JobId, store: capability JobsStore) -> domain.CancelOutcome effects { store.cancel } {
+  store.cancel(item)
+}

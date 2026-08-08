@@ -10,9 +10,10 @@ define AIL syntax.
 | [UC-001](UC-001-request-validation-and-persistence.md) | Validate a create-job request, make at most one jobs-store call, and return a closed result | types, variants, effects, deterministic interpretation |
 | [UC-003](UC-003-public-schema-evolution.md) | Add priority to public and stored schemas and update every affected consumer | schema identity, impact query, atomic multi-file validation |
 | [UC-007](UC-007-architectural-regression-control.md) | Add `CancelJob` without growing dispatch or moving store authority into transport | architecture snapshots, deltas, policy, rollback |
+| [UC-009](UC-009-bounded-ordered-batch-cancellation.md) | Cancel zero to 32 job positions in order with one aligned outcome each | bounded list types, sequential map, pre-effect validation |
 
 UC-001 and UC-003 were accepted on 2026-07-18. UC-007 was accepted on
-2026-07-22. Their exact requirements are under
+2026-07-22, and UC-009 was accepted on 2026-08-08. Their exact requirements are under
 [`docs/requirements/`](../requirements/README.md).
 
 ## Proposed workload
@@ -30,7 +31,7 @@ current language cannot express:
 
 - an outbound call with explicit timeout, cancellation, authority, and typed
   failure;
-- bounded fan-out with fixed result order and child-failure behavior;
+- bounded parallel fan-out with fixed result order and child-failure behavior;
 - an event worker with idempotency and deterministic acknowledgement; or
 - replay of supplied time, randomness, configuration, filesystem, or network
   values.
