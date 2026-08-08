@@ -41,11 +41,18 @@ M29 adds the accepted [bounded ordered list contract](bounded-lists.md), its
 three-module program under `compiler/examples/batch-cancellation/`. This is a
 standalone extension; it does not change the locked M11, M17, or M19 contracts.
 
+M30 adds the accepted cooperative [outbound request contract](outbound-requests.md),
+its [protocol shapes](outbound-request-protocol.json),
+[machine-readable rules](outbound-request-contract.json), and canonical program
+under `compiler/examples/outbound-request/`. It retains ordinary call syntax
+and capability-effect authority and adds no general networking.
+
 Run the dependency-free contract check with:
 
 ```bash
 python3 specs/tools/core_contract.py check
 python3 specs/tools/bounded_list_contract.py check
+python3 specs/tools/outbound_request_contract.py check
 ```
 
 [ADR 0004](../docs/decisions/0004-rust-compiler-stack.md) now authorizes the
@@ -55,3 +62,6 @@ extensions. M17 authorizes only the additional numbered behavior in
 `evolution.md`.
 M29 authorizes only immutable `List<T, N>` values and sequential binder-style
 `map`; broader collection and iteration semantics remain outside the contract.
+M30 authorizes only synchronous cooperative outbound operation metadata,
+external cancellation values, closed timeout/cancel completion, and
+revision-bound capability environments.

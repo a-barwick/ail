@@ -1,0 +1,78 @@
+{
+  "contract_version": "m30-v1",
+  "status": "accepted",
+  "milestone": "M30",
+  "rules": [
+    "M30-LANG-001",
+    "M30-LANG-002",
+    "M30-LANG-003",
+    "M30-LANG-004",
+    "M30-RUNTIME-001",
+    "M30-RUNTIME-002",
+    "M30-RUNTIME-003",
+    "M30-RUNTIME-004",
+    "M30-PROTO-001",
+    "M30-PROTO-002",
+    "M30-PROTO-003"
+  ],
+  "diagnostics": [
+    "AIL.CAPABILITY.OUTBOUND_TIMEOUT_CONTRACT",
+    "AIL.CAPABILITY.OUTBOUND_CANCELLATION_CONTRACT",
+    "AIL.CAPABILITY.OUTBOUND_RESULT_CONTRACT",
+    "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+    "AIL.RUNTIME.OUTBOUND_UNSUPPORTED",
+    "AIL.RUNTIME.ARGUMENT_TYPE",
+    "AIL.RUNTIME.CAPABILITY_RESULT",
+    "AIL.RUNTIME.CAPABILITY_CONTRACT"
+  ],
+  "maximum_timeout": 18446744073709551615,
+  "canonical_sources": [
+    {
+      "path": "compiler/examples/outbound-request/service.ail",
+      "sha256": "7dd0b58c534dd7156d2e580d0877fffc1dabb1146f0d60c1a318461cd5fc38f3"
+    },
+    {
+      "path": "compiler/examples/outbound-request/types.ail",
+      "sha256": "e24fb9f98b6b456065862d62413e753f94b97eb07482bd05534a1d407d85ccc4"
+    }
+  ],
+  "required_source_snippets": [
+    "dependency: capability DependencyClient",
+    "effects { dependency.fetch }",
+    "dependency.fetch(key, timeout, cancellation)",
+    "cancellation: Cancellation"
+  ],
+  "rejection_cases": [
+    "invalid-timeout-index",
+    "invalid-cancellation-index",
+    "overlapping-indices",
+    "wrong-timeout-type",
+    "wrong-cancellation-type",
+    "invalid-timeout-maximum",
+    "non-variant-result",
+    "missing-timeout-case",
+    "missing-cancelled-case",
+    "same-completion-case",
+    "payload-bearing-timeout-case",
+    "payload-bearing-cancelled-case",
+    "missing-capability-permission",
+    "missing-effect-permission",
+    "timeout-zero",
+    "timeout-over-maximum",
+    "malformed-cancellation-value",
+    "unsupported-outbound-provider",
+    "unknown-returned-case",
+    "malformed-returned-value",
+    "provider-contract-fault"
+  ],
+  "completion_cases": [
+    "returned-found",
+    "returned-not-found",
+    "returned-unavailable",
+    "timed-out-synthesized",
+    "cancelled-synthesized",
+    "ordinary-call-compatible",
+    "inspection-deterministic",
+    "retained-revision-binding"
+  ]
+}

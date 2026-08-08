@@ -137,7 +137,6 @@ pub struct PublicBehaviorFailure {
 /// Read-only access to the exact uncommitted candidate used by behavior validation.
 pub struct CandidateRevision<'a> {
     stored: &'a StoredSourceSet,
-    capabilities: &'a crate::CapabilityEnvironment,
 }
 
 impl CandidateRevision<'_> {
@@ -200,7 +199,7 @@ impl CandidateRevision<'_> {
             &self.stored.unit,
             linked_function,
             arguments,
-            self.capabilities,
+            &self.stored.capabilities,
             capabilities,
         ) {
             Ok(result) => ExecutionResponse::Completed(ExecutionSuccess {
@@ -301,7 +300,7 @@ impl EvolutionWorkspace {
             &child_revision_id,
             Some(request.base_revision_id.clone()),
             request.candidate_sources,
-            &self.capabilities,
+            &base.capabilities,
             coverage,
         )
         .map_err(|failure| ArchitectureRequestError {
@@ -319,10 +318,7 @@ impl EvolutionWorkspace {
                 kind: ArchitectureRequestErrorKind::InvalidRevision,
                 message: error.0,
             })?;
-        let candidate_view = CandidateRevision {
-            stored: &candidate,
-            capabilities: &self.capabilities,
-        };
+        let candidate_view = CandidateRevision { stored: &candidate };
         let mut architecture_workspace = ArchitectureWorkspace::new(base_architecture);
         let result = architecture_workspace.validate_architecture_change(
             candidate_architecture,
@@ -457,7 +453,7 @@ impl EvolutionWorkspace {
             &child_revision_id,
             Some(request.base_revision_id.clone()),
             request.candidate_sources.clone(),
-            &self.capabilities,
+            &base.capabilities,
             base.coverage.clone(),
         ) {
             Ok(candidate) => candidate,
@@ -511,10 +507,7 @@ impl EvolutionWorkspace {
             ));
         }
 
-        let behavior = match validate_public_behavior(&CandidateRevision {
-            stored: &candidate,
-            capabilities: &self.capabilities,
-        }) {
+        let behavior = match validate_public_behavior(&CandidateRevision { stored: &candidate }) {
             Ok(summary) => summary,
             Err(failure) => {
                 return ChangeResponse::Rejected(self.failure(

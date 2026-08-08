@@ -183,11 +183,11 @@
     },
     {
       "path": "compiler/ail-compiler/src/evolution.rs",
-      "sha256": "04438ca3e55951c94f50d03d07eb8101a9cbffebb9219b639b0f2cf07b7baee1"
+      "sha256": "ced431d8a8560b6a42dab85aa222017432c8f8cefa5d5a3611b5579ea12b045e"
     },
     {
       "path": "compiler/ail-compiler/src/evolution/transaction.rs",
-      "sha256": "cc5bdffb298f866555ff42e2b1b773cfa5dfe6f96e0c895869d0e48f0a4f2b4a"
+      "sha256": "21aa30b66a550f632ce55a8afb5a922222dc04c60797201dd9c7d729c256a381"
     },
     {
       "path": "compiler/ail-compiler/src/formatter.rs",
@@ -195,7 +195,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/interpreter.rs",
-      "sha256": "4b1eb35ea0feb14cbd4ba58b1241543c4aed0c6a90382f1c52203988ab3651ea"
+      "sha256": "e7cae7189d36754dc6046aa18b592b75349b4ab79e4c0157b8ccbb71fccf1f7b"
     },
     {
       "path": "compiler/ail-compiler/src/lexer.rs",
@@ -203,7 +203,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/lib.rs",
-      "sha256": "04c2207fc7ab8e6985a421b284110fda51fabc7207038e3c2c6b362d81063984"
+      "sha256": "34ff96dedce9919cda69c7093af022deaf3efa8521f7ebbef003a9dc93b99655"
     },
     {
       "path": "compiler/ail-compiler/src/parser.rs",
@@ -211,11 +211,11 @@
     },
     {
       "path": "compiler/ail-compiler/src/protocol.rs",
-      "sha256": "48aaaa94a27d5af92d4f747108da6627cfc1b99684ebf575495b0b79fa99d75a"
+      "sha256": "6623202be1322b2ef66de6dab72897360a359e7b98e13fb9f32a798dbd7c7258"
     },
     {
       "path": "compiler/ail-compiler/src/semantics.rs",
-      "sha256": "eaaba029d60fa0868abb63dd1ad2fde360ec94331036f792bbab2f7bf66778b1"
+      "sha256": "897ec9ae1428d30a7baf60718b384fab0dbf7e90ee1dd52646e1567258045e4e"
     },
     {
       "path": "compiler/ail-compiler/src/syntax.rs",
@@ -250,6 +250,10 @@
       "sha256": "d0b1415ab51846acf2f4e37d85394d1b320264798c8e742310688c64d91429d8"
     },
     {
+      "path": "compiler/ail-compiler/tests/m30_outbound_requests.rs",
+      "sha256": "d5ae86c8adf98bf7cfbdf020c2de66643705ea3892d2feabb8e2f413e6ca65f9"
+    },
+    {
       "path": "compiler/examples/batch-cancellation/domain.ail",
       "sha256": "521fba7a7c8f0759bcbe47d0fa29713a9552a9842132360f728ec43ac1c7da90"
     },
@@ -274,8 +278,16 @@
       "sha256": "22f3870a2f7c3e3dc1e9e0701af0fab5c7e3081c2c310d1ae68aae7710df2c5d"
     },
     {
+      "path": "compiler/examples/outbound-request/service.ail",
+      "sha256": "7dd0b58c534dd7156d2e580d0877fffc1dabb1146f0d60c1a318461cd5fc38f3"
+    },
+    {
+      "path": "compiler/examples/outbound-request/types.ail",
+      "sha256": "e24fb9f98b6b456065862d62413e753f94b97eb07482bd05534a1d407d85ccc4"
+    },
+    {
       "path": "specs/README.md",
-      "sha256": "8d87e7ee5896a01a0ba475dd36ade2e6a6d7ca5bd42188012499accc6223e8a3"
+      "sha256": "c85ba60d218a2d4cd0ecfc82dc2a42b4a1490763974881448ed1fc3a288a15cc"
     },
     {
       "path": "specs/bounded-list-contract.json",
@@ -354,6 +366,18 @@
       "sha256": "48fb9314988d2416f29bc1ae09ae64f984f8b6729846e0548464098bb97645ae"
     },
     {
+      "path": "specs/outbound-request-contract.json",
+      "sha256": "c1fb7e6e37dfeef6c15457ad270e08f3971f899df1511471d5f396f2ca6cc1b7"
+    },
+    {
+      "path": "specs/outbound-request-protocol.json",
+      "sha256": "74e5a2387dc9c6a2174575aab98918ebbaf9e79d810bed39dcf193d1aee64706"
+    },
+    {
+      "path": "specs/outbound-requests.md",
+      "sha256": "b5615bb19d4e9cbba14fb446e473b07f7447c88ce8aae64991c18e2910834737"
+    },
+    {
       "path": "specs/runtime-contract.json",
       "sha256": "b62c5f40912d4b3352c56f108e0122d02285f80f84b5f0e8d89f029f027a8816"
     },
@@ -384,6 +408,10 @@
     {
       "path": "specs/tools/core_contract.py",
       "sha256": "d5f3901c280e83824fbe78ada588ce2421068506585d7f944735fcc7531fd025"
+    },
+    {
+      "path": "specs/tools/outbound_request_contract.py",
+      "sha256": "3bd8206012f0c9793128b742d5dc58ec2e5f3a9725d32600bf88b16211e512e1"
     }
   ]
 }

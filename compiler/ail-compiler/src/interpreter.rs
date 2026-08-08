@@ -3,9 +3,22 @@
 use std::collections::BTreeMap;
 
 use crate::{
-    Block, CapabilityEnvironment, Declaration, Expr, ParameterType, SourceUnit, Span, TypeRef,
-    ValueType,
+    Block, CapabilityEnvironment, CapabilityOperationKind, Declaration, Expr, ParameterType,
+    SourceUnit, Span, TypeRef, ValueType,
 };
+
+/// Opaque source-level cancellation authority supplied by the host.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CancellationToken {
+    pub id: String,
+}
+
+impl CancellationToken {
+    #[must_use]
+    pub fn new(id: impl Into<String>) -> Self {
+        Self { id: id.into() }
+    }
+}
 
 /// One immutable value accepted or produced by the M17 interpreter.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,6 +29,7 @@ pub enum RuntimeValue {
     Bool(bool),
     Bytes(Vec<u8>),
     List(Vec<RuntimeValue>),
+    Cancellation(CancellationToken),
     Record {
         type_name: String,
         fields: BTreeMap<String, RuntimeValue>,
@@ -81,6 +95,7 @@ impl RuntimeValue {
             Self::Bool(_) => "Bool",
             Self::Bytes(_) => "Bytes",
             Self::List(_) => "List",
+            Self::Cancellation(_) => "Cancellation",
             Self::Record { type_name, .. } | Self::Variant { type_name, .. } => type_name,
         }
     }
@@ -104,6 +119,50 @@ pub trait CapabilityProvider {
         operation: &str,
         arguments: &[RuntimeValue],
     ) -> Result<RuntimeValue, RuntimeFault>;
+
+    /// Whether this provider implements the separate outbound path.
+    fn supports_outbound(&self, _receiver: &str, _interface: &str, _operation: &str) -> bool {
+        false
+    }
+
+    /// # Errors
+    /// Returns an unsupported fault unless the provider overrides this method.
+    fn call_outbound(
+        &mut self,
+        request: &OutboundCapabilityRequest,
+    ) -> Result<OutboundProviderOutcome, RuntimeFault> {
+        Err(RuntimeFault::new(
+            "AIL.RUNTIME.OUTBOUND_UNSUPPORTED",
+            Span::empty(0),
+            [("operation", request.operation.as_str())],
+            std::iter::empty::<(&str, &str)>(),
+        ))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutboundCapabilityRequest {
+    pub receiver: String,
+    pub interface: String,
+    pub operation: String,
+    pub arguments: Vec<RuntimeValue>,
+    pub timeout_ms: u64,
+    pub cancellation: CancellationToken,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OutboundProviderOutcome {
+    Returned(RuntimeValue),
+    TimedOut,
+    Cancelled,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ObservedOutboundCall {
+    pub effect: String,
+    pub timeout_ms: u64,
+    pub cancellation_token_identity: String,
+    pub outcome: Option<OutboundProviderOutcome>,
 }
 
 /// One capability invocation in observable execution order.
@@ -115,6 +174,7 @@ pub struct ObservedCapabilityCall {
     pub arguments: Vec<RuntimeValue>,
     /// `None` only when the supplied capability returned a fault.
     pub result: Option<RuntimeValue>,
+    pub outbound: Option<ObservedOutboundCall>,
 }
 
 /// One structured deterministic runtime failure.
@@ -523,6 +583,7 @@ impl Evaluator<'_> {
         })
     }
 
+    #[allow(clippy::too_many_lines)]
     fn eval_call(
         &mut self,
         receiver: &str,
@@ -546,12 +607,138 @@ impl Evaluator<'_> {
                 std::iter::empty::<(&str, &str)>(),
             ));
         };
+        let signature = self
+            .environment
+            .interface(interface)
+            .and_then(|candidate| candidate.operation(operation))
+            .ok_or_else(|| {
+                RuntimeFault::new(
+                    "AIL.RUNTIME.CAPABILITY_CONTRACT",
+                    span,
+                    [("operation", operation)],
+                    std::iter::empty::<(&str, &str)>(),
+                )
+            })?;
+        if let CapabilityOperationKind::Outbound(metadata) = &signature.kind {
+            let timeout = arguments
+                .get(metadata.timeout_argument_index)
+                .and_then(|value| {
+                    let RuntimeValue::Int(value) = value else {
+                        return None;
+                    };
+                    u64::try_from(value.to_owned()).ok()
+                });
+            let valid_timeout = timeout
+                .filter(|value| *value > 0 && u128::from(*value) <= metadata.maximum_timeout_ms);
+            let Some(timeout_ms) = valid_timeout else {
+                return Err(RuntimeFault::new(
+                    "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+                    span,
+                    [
+                        ("maximum", metadata.maximum_timeout_ms.to_string()),
+                        (
+                            "argument_index",
+                            metadata.timeout_argument_index.to_string(),
+                        ),
+                    ],
+                    [(
+                        "value",
+                        arguments
+                            .get(metadata.timeout_argument_index)
+                            .map_or_else(|| "missing".to_owned(), |value| format!("{value:?}")),
+                    )],
+                ));
+            };
+            let Some(RuntimeValue::Cancellation(cancellation)) =
+                arguments.get(metadata.cancellation_argument_index)
+            else {
+                return Err(RuntimeFault::new(
+                    "AIL.RUNTIME.ARGUMENT_TYPE",
+                    span,
+                    [("type", "Cancellation")],
+                    [(
+                        "type",
+                        arguments
+                            .get(metadata.cancellation_argument_index)
+                            .map_or("missing", RuntimeValue::type_name),
+                    )],
+                ));
+            };
+            if !self
+                .capabilities
+                .supports_outbound(receiver, interface, operation)
+            {
+                return Err(RuntimeFault::new(
+                    "AIL.RUNTIME.OUTBOUND_UNSUPPORTED",
+                    span,
+                    [("operation", operation)],
+                    std::iter::empty::<(&str, &str)>(),
+                ));
+            }
+            let request = OutboundCapabilityRequest {
+                receiver: receiver.to_owned(),
+                interface: interface.clone(),
+                operation: operation.to_owned(),
+                arguments: arguments.clone(),
+                timeout_ms,
+                cancellation: cancellation.clone(),
+            };
+            self.calls.push(ObservedCapabilityCall {
+                receiver: receiver.to_owned(),
+                interface: interface.clone(),
+                operation: operation.to_owned(),
+                arguments: arguments.clone(),
+                result: None,
+                outbound: Some(ObservedOutboundCall {
+                    effect: format!("{receiver}.{operation}"),
+                    timeout_ms,
+                    cancellation_token_identity: cancellation.id.clone(),
+                    outcome: None,
+                }),
+            });
+            let outcome = self.capabilities.call_outbound(&request)?;
+            self.calls
+                .last_mut()
+                .expect("outbound call recorded")
+                .outbound
+                .as_mut()
+                .expect("outbound facts")
+                .outcome = Some(outcome.clone());
+            let result = match &outcome {
+                OutboundProviderOutcome::Returned(value) => value.clone(),
+                OutboundProviderOutcome::TimedOut => RuntimeValue::variant(
+                    &signature.result,
+                    variant_case_name(
+                        self.unit,
+                        &signature.result,
+                        &metadata.timed_out_case_identity,
+                    )
+                    .expect("validated outbound timeout case identity"),
+                    None,
+                ),
+                OutboundProviderOutcome::Cancelled => RuntimeValue::variant(
+                    &signature.result,
+                    variant_case_name(
+                        self.unit,
+                        &signature.result,
+                        &metadata.cancelled_case_identity,
+                    )
+                    .expect("validated outbound cancellation case identity"),
+                    None,
+                ),
+            };
+            self.validate_capability_result(&result, &signature.result, span)?;
+            let call = self.calls.last_mut().expect("outbound call recorded");
+            call.result = Some(result.clone());
+            return Ok(result);
+        }
         self.calls.push(ObservedCapabilityCall {
             receiver: receiver.to_owned(),
             interface: interface.clone(),
             operation: operation.to_owned(),
             arguments: arguments.clone(),
             result: None,
+            outbound: None,
         });
         let result = self
             .capabilities
@@ -572,6 +759,27 @@ impl Evaluator<'_> {
             .expect("call was recorded before invocation")
             .result = Some(result.clone());
         Ok(result)
+    }
+
+    fn validate_capability_result(
+        &self,
+        result: &RuntimeValue,
+        expected: &str,
+        span: Span,
+    ) -> Result<(), RuntimeFault> {
+        validate_runtime_value(
+            self.unit,
+            result,
+            &TypeRef::named(expected, span),
+            "capability result",
+        )
+        .map_err(|mismatch| {
+            let mut fault = mismatch.into_fault(span);
+            if fault.code == "AIL.RUNTIME.ARGUMENT_TYPE" {
+                fault.code = "AIL.RUNTIME.CAPABILITY_RESULT";
+            }
+            fault
+        })
     }
 
     fn capability_result_type(
@@ -707,6 +915,25 @@ impl Evaluator<'_> {
     }
 }
 
+fn variant_case_name<'a>(
+    unit: &'a SourceUnit,
+    variant_name: &str,
+    identity: &str,
+) -> Option<&'a str> {
+    unit.declarations.iter().find_map(|declaration| {
+        let Declaration::Variant(variant) = declaration else {
+            return None;
+        };
+        (variant.name == variant_name)
+            .then_some(variant)?
+            .cases
+            .iter()
+            .find_map(|case| {
+                (case.identity.as_deref() == Some(identity)).then_some(case.name.as_str())
+            })
+    })
+}
+
 struct RuntimeValueMismatch {
     code: &'static str,
     expected: BTreeMap<String, String>,
@@ -809,6 +1036,7 @@ fn validate_named_runtime_value(
         "Int" => matches!(value, RuntimeValue::Int(_)),
         "Bool" => matches!(value, RuntimeValue::Bool(_)),
         "Bytes" => matches!(value, RuntimeValue::Bytes(_)),
+        "Cancellation" => matches!(value, RuntimeValue::Cancellation(_)),
         _ => false,
     };
     if builtin_matches {

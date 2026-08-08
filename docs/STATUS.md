@@ -4,7 +4,7 @@ Last updated: 2026-08-08
 
 ## Active milestone
 
-None — M29 is complete and no next build has been selected.
+None — M30 is complete and no next build has been selected.
 
 ## Shipped
 
@@ -25,26 +25,32 @@ The Rust compiler now supports:
 - contextual sequential `map` with one aligned result per input position; and
 - complete external list validation before capability availability checks or
   calls, plus linked module, element-identity, bound, effect, and dependency
-  inspection.
+  inspection; and
+- one cooperative outbound dependency request with explicit capability
+  permission, bounded timeout, opaque cancellation, closed timeout/cancel
+  results, revision-bound provider contracts, and deterministic inspection.
 
 The compiler rejects direct and mutual recursion, import cycles, inaccessible
 declarations, ambiguous imports, stale handles, incomplete impact claims, and
 invalid partial revisions.
 
-The composed-service example under `compiler/examples/composed-service/` and the
-bounded cancellation example under `compiler/examples/batch-cancellation/` run
-three AIL modules through the real checker and interpreter. The cancellation
-example accepts zero to 32 job positions, preserves order and duplicates,
-returns one closed outcome per position, and rejects oversized or malformed
-input before effects. The AIL job-service runner passes all 37 public cases.
+The examples under `compiler/examples/` run through the real checker and
+interpreter. Bounded cancellation accepts zero to 32 job positions, preserves
+order and duplicates, returns one closed outcome per position, and rejects
+oversized or malformed input before effects. The outbound example makes one
+dependency request through a host-supplied capability and returns closed remote,
+timeout, and cancellation outcomes. The AIL job-service runner passes all 37
+public cases.
 
 ## Hard limit
 
 AIL cannot yet implement a normal production service. Its only repeated-work
 form is sequential map over immutable bounded lists. It has no general loops,
-collection library, mutation, concurrency, networking, package registry,
-foreign-code boundary, production runtime, native backend, or deployment
-system. Recursion is rejected rather than bounded.
+collection library, mutation, concurrency, general networking, package registry,
+foreign-code boundary, production runtime, native backend, or deployment system.
+The outbound provider is synchronous and cooperative: the interpreter cannot
+preempt stuck host code, enforce a hard deadline itself, or roll back remote
+effects. Recursion is rejected rather than bounded.
 
 The architecture API implements the exact M24 metrics and policy behavior.
 
@@ -53,8 +59,8 @@ The architecture API implements the exact M24 metrics and policy behavior.
 Choose one real service behavior still blocked by the current language. Write
 the canonical source, static result, runtime result, diagnostic failures, and
 compiler-interface output first. Then implement the smallest missing semantics
-and run the full existing suite. Do not infer general collection or concurrency
-semantics from the narrow M29 list and map contract.
+and run the full existing suite. Do not infer general collection, networking,
+or concurrency semantics from the narrow M29 and M30 contracts.
 
 Do not restart the old UC-008 M29–M36 plan or the M8 measurement work by default.
 Do not start native lowering, general concurrency, or broad standard-library
@@ -70,6 +76,7 @@ python3 specs/tools/architecture_acceptance.py check
 python3 specs/tools/architecture_contract.py check
 python3 specs/tools/core_contract.py check
 python3 specs/tools/bounded_list_contract.py check
+python3 specs/tools/outbound_request_contract.py check
 PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public
 python3 benchmarks/tools/fixtures.py check
 python3 tools/check_docs.py

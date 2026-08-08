@@ -68,6 +68,8 @@ pub struct InspectionResult {
     pub capabilities: Vec<String>,
     /// Referenced named semantic dependencies in deterministic order.
     pub dependencies: Vec<String>,
+    /// Direct outbound operations for a function handle, in source evaluation order.
+    pub outbound_requests: Vec<crate::OutboundOperationInspection>,
 }
 
 /// One validated rename request.
@@ -355,7 +357,45 @@ impl Workspace {
                 "resolve-inspection-handle",
             )));
         };
-        Ok(node.inspection())
+        if node.semantic_kind == "function" {
+            if let Some(diagnostic) = revision
+                .check
+                .diagnostics
+                .iter()
+                .find(|diagnostic| diagnostic.code.starts_with("AIL.CAPABILITY.OUTBOUND_"))
+            {
+                return Err(Box::new(diagnostic.clone()));
+            }
+        }
+        let outbound_requests =
+            if node.semantic_kind == "function" {
+                revision
+                    .index
+                    .symbols
+                    .get(&request.handle)
+                    .and_then(|symbol| {
+                        revision.unit.declarations.iter().find_map(
+                            |declaration| match declaration {
+                                Declaration::Function(function)
+                                    if function.name == symbol.declared_name =>
+                                {
+                                    Some(crate::EvolutionWorkspace::inspect_outbound_operations(
+                                        &revision.unit,
+                                        function,
+                                        &revision.capabilities,
+                                        &request.revision_id,
+                                        &revision.capabilities.stable_digest(),
+                                    ))
+                                }
+                                _ => None,
+                            },
+                        )
+                    })
+                    .unwrap_or_default()
+            } else {
+                Vec::new()
+            };
+        Ok(node.inspection(outbound_requests))
     }
 
     /// Execute a statically valid function from one retained immutable revision.
@@ -664,6 +704,7 @@ struct StoredRevision {
     check: crate::CheckResult,
     unit: SourceUnit,
     index: HandleIndex,
+    capabilities: CapabilityEnvironment,
 }
 
 impl StoredRevision {
@@ -711,6 +752,7 @@ impl StoredRevision {
             check,
             unit: parsed.unit,
             index,
+            capabilities: capabilities.clone(),
         })
     }
 }
@@ -729,7 +771,10 @@ struct IndexedNode {
 }
 
 impl IndexedNode {
-    fn inspection(&self) -> InspectionResult {
+    fn inspection(
+        &self,
+        outbound_requests: Vec<crate::OutboundOperationInspection>,
+    ) -> InspectionResult {
         InspectionResult {
             revision_id: self.handle.revision_id.clone(),
             handle: self.handle.clone(),
@@ -739,6 +784,7 @@ impl IndexedNode {
             effects: self.effects.clone(),
             capabilities: self.capabilities.clone(),
             dependencies: self.dependencies.clone(),
+            outbound_requests,
         }
     }
 }

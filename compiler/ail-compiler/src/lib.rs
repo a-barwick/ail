@@ -33,13 +33,17 @@ pub use evolution::{
     CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary, ChangeFailure, ChangeResponse,
     ChangeSuccess, CompletionEvidence, EffectSummary, EvolutionBuildFailure, EvolutionCoverage,
     EvolutionSource, EvolutionWorkspace, ImpactEntry, ImpactFailure, ImpactReport, ImpactRequest,
-    PersistentIdentity, PersistentIdentityChanges, ProposedSchemaChange, PublicBehaviorFailure,
-    RelationshipEdge, SemanticChange, SemanticDiff, SemanticLocation, SourceArchitectureConfig,
-    SourceArtifact, SourceFileMetadata, SourceOperationArchitecture, SourceSetDiagnostic,
-    SourceSetFunctionInspection, SourceSetInspectionFailure, SourceSetRevision, SourceStateAccess,
-    UncheckedBoundary, ValidationSummary, ValueParameterInspection, relationship_kinds,
+    OutboundOperationInspection, PersistentIdentity, PersistentIdentityChanges,
+    ProposedSchemaChange, PublicBehaviorFailure, RelationshipEdge, SemanticChange, SemanticDiff,
+    SemanticLocation, SourceArchitectureConfig, SourceArtifact, SourceFileMetadata,
+    SourceOperationArchitecture, SourceSetDiagnostic, SourceSetFunctionInspection,
+    SourceSetInspectionFailure, SourceSetRevision, SourceStateAccess, UncheckedBoundary,
+    ValidationSummary, ValueParameterInspection, relationship_kinds,
 };
-pub use interpreter::{CapabilityProvider, ObservedCapabilityCall, RuntimeFault, RuntimeValue};
+pub use interpreter::{
+    CancellationToken, CapabilityProvider, ObservedCapabilityCall, ObservedOutboundCall,
+    OutboundCapabilityRequest, OutboundProviderOutcome, RuntimeFault, RuntimeValue,
+};
 pub use lexer::{Keyword, Span, Token, TokenKind, lex, reconstruct};
 pub use parser::{ParseResult, parse};
 pub use protocol::{
@@ -49,9 +53,9 @@ pub use protocol::{
     RevisionBuildFailure, Workspace, source_digest,
 };
 pub use semantics::{
-    CapabilityEnvironment, CapabilityInterface, CapabilityOperation, CausalStep, CheckResult,
-    DiagnosticValue, HandleKind, SemanticHandle, StructuredDiagnostic, TypeCheckResult,
-    TypeCheckStatus, TypeFact, check_source,
+    CapabilityEnvironment, CapabilityInterface, CapabilityOperation, CapabilityOperationKind,
+    CausalStep, CheckResult, DiagnosticValue, HandleKind, OutboundCapabilityMetadata,
+    SemanticHandle, StructuredDiagnostic, TypeCheckResult, TypeCheckStatus, TypeFact, check_source,
 };
 pub use syntax::{
     Block, Declaration, Effect, Expr, Field, FunctionDecl, ImportDecl, LetBinding, MAX_LIST_LENGTH,

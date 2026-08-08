@@ -1,0 +1,17 @@
+module outbound.types;
+
+record LookupKey identity "outbound.lookup-key.v1" {
+  value identity "value": Text;
+}
+
+record LookupValue identity "outbound.lookup-value.v1" {
+  value identity "value": Text;
+}
+
+variant LookupOutcome identity "outbound.lookup-outcome.v1" {
+  Found identity "found"(LookupValue);
+  NotFound identity "not-found";
+  Unavailable identity "unavailable";
+  TimedOut identity "timed-out";
+  Cancelled identity "cancelled";
+}

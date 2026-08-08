@@ -1,0 +1,68 @@
+{
+  "protocol_version": "m30-v1",
+  "shapes": [
+    {
+      "name": "OperationMetadata.Outbound",
+      "fields": [
+        "timeout_argument_index",
+        "cancellation_argument_index",
+        "maximum_timeout_ms",
+        "timed_out_case_identity",
+        "cancelled_case_identity"
+      ]
+    },
+    {
+      "name": "CapabilityEnvironment",
+      "fields": [
+        "interfaces",
+        "stable_digest"
+      ]
+    },
+    {
+      "name": "OutboundOperationInspection",
+      "fields": [
+        "revision_id",
+        "capability_environment_digest",
+        "receiver",
+        "operation",
+        "effect",
+        "operation_kind",
+        "timeout_argument_index",
+        "timeout_parameter_type",
+        "maximum_timeout_ms",
+        "cancellation_argument_index",
+        "cancellation_parameter_type",
+        "result_variant_identity",
+        "timed_out_case_identity",
+        "cancelled_case_identity"
+      ]
+    },
+    {
+      "name": "OutboundProviderOutcome",
+      "cases": [
+        "Returned(value)",
+        "TimedOut",
+        "Cancelled"
+      ]
+    },
+    {
+      "name": "ObservedOutboundCall",
+      "fields": [
+        "receiver",
+        "operation",
+        "effect",
+        "arguments",
+        "timeout_ms",
+        "cancellation_token_identity",
+        "outcome",
+        "result"
+      ]
+    }
+  ],
+  "ordering": {
+    "external_validation": "value parameter declaration order before capability checks",
+    "environment_digest": "canonical interface and operation identity byte order",
+    "observed_calls": "dynamic invocation order",
+    "retained_revision": "requested immutable source-set revision"
+  }
+}

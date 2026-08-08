@@ -1,11 +1,27 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use crate::{
     Declaration, Effect, Expr, FunctionDecl, LetBinding, ParameterType, RecordDecl, SourceUnit,
     Span, TypeRef, ValueType, VariantDecl, parse,
 };
+use std::collections::{BTreeMap, BTreeSet};
 
-const BUILTIN_TYPES: [&str; 5] = ["Text", "Int", "Unit", "Bool", "Bytes"];
+const BUILTIN_TYPES: [&str; 6] = ["Text", "Int", "Unit", "Bool", "Bytes", "Cancellation"];
+
+/// Host classification of a capability operation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CapabilityOperationKind {
+    Ordinary,
+    Outbound(OutboundCapabilityMetadata),
+}
+
+/// Static cooperative outbound request contract.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutboundCapabilityMetadata {
+    pub timeout_argument_index: usize,
+    pub cancellation_argument_index: usize,
+    pub maximum_timeout_ms: u128,
+    pub timed_out_case_identity: String,
+    pub cancelled_case_identity: String,
+}
 
 /// Capability operation signatures supplied by the embedding compiler client.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,6 +30,7 @@ pub struct CapabilityOperation {
     pub parameters: Vec<String>,
     /// The exact named result type.
     pub result: String,
+    pub kind: CapabilityOperationKind,
 }
 
 impl CapabilityOperation {
@@ -26,6 +43,20 @@ impl CapabilityOperation {
         Self {
             parameters: parameters.into_iter().map(Into::into).collect(),
             result: result.into(),
+            kind: CapabilityOperationKind::Ordinary,
+        }
+    }
+
+    #[must_use]
+    pub fn outbound(
+        parameters: impl IntoIterator<Item = impl Into<String>>,
+        result: impl Into<String>,
+        metadata: OutboundCapabilityMetadata,
+    ) -> Self {
+        Self {
+            parameters: parameters.into_iter().map(Into::into).collect(),
+            result: result.into(),
+            kind: CapabilityOperationKind::Outbound(metadata),
         }
     }
 }
@@ -52,8 +83,15 @@ impl CapabilityInterface {
         self.operations.insert(name.into(), operation)
     }
 
-    pub(crate) fn operation(&self, name: &str) -> Option<&CapabilityOperation> {
+    #[must_use]
+    pub fn operation(&self, name: &str) -> Option<&CapabilityOperation> {
         self.operations.get(name)
+    }
+
+    pub fn operations(&self) -> impl Iterator<Item = (&str, &CapabilityOperation)> {
+        self.operations
+            .iter()
+            .map(|(name, operation)| (name.as_str(), operation))
     }
 }
 
@@ -79,8 +117,60 @@ impl CapabilityEnvironment {
         self.interfaces.insert(name.into(), interface)
     }
 
-    pub(crate) fn interface(&self, name: &str) -> Option<&CapabilityInterface> {
+    #[must_use]
+    pub fn interface(&self, name: &str) -> Option<&CapabilityInterface> {
         self.interfaces.get(name)
+    }
+
+    pub fn interfaces(&self) -> impl Iterator<Item = (&str, &CapabilityInterface)> {
+        self.interfaces
+            .iter()
+            .map(|(name, interface)| (name.as_str(), interface))
+    }
+
+    /// Deterministic digest independent of insertion order.
+    #[must_use]
+    pub fn stable_digest(&self) -> String {
+        fn field(encoded: &mut String, value: &str) {
+            encoded.push_str(&value.len().to_string());
+            encoded.push(':');
+            encoded.push_str(value);
+        }
+
+        let mut canonical = String::from("ail-capability-environment-v1;");
+        for (interface_name, interface) in &self.interfaces {
+            field(&mut canonical, interface_name);
+            canonical.push(';');
+            for (operation_name, operation) in &interface.operations {
+                field(&mut canonical, operation_name);
+                canonical.push(';');
+                canonical.push_str(&operation.parameters.len().to_string());
+                canonical.push(';');
+                for parameter in &operation.parameters {
+                    field(&mut canonical, parameter);
+                    canonical.push(';');
+                }
+                field(&mut canonical, &operation.result);
+                canonical.push(';');
+                match &operation.kind {
+                    CapabilityOperationKind::Ordinary => canonical.push_str("ordinary;"),
+                    CapabilityOperationKind::Outbound(metadata) => {
+                        canonical.push_str("outbound;");
+                        canonical.push_str(&metadata.timeout_argument_index.to_string());
+                        canonical.push(';');
+                        canonical.push_str(&metadata.cancellation_argument_index.to_string());
+                        canonical.push(';');
+                        canonical.push_str(&metadata.maximum_timeout_ms.to_string());
+                        canonical.push(';');
+                        field(&mut canonical, &metadata.timed_out_case_identity);
+                        canonical.push(';');
+                        field(&mut canonical, &metadata.cancelled_case_identity);
+                        canonical.push(';');
+                    }
+                }
+            }
+        }
+        crate::protocol::source_digest(&canonical)
     }
 }
 
@@ -294,9 +384,67 @@ impl<'a> Checker<'a> {
         self.collect_top_level_names();
         self.check_type_references();
         self.check_recursion();
+        self.check_outbound_operations();
         for declaration in &self.unit.declarations {
             if let Declaration::Function(function) = declaration {
                 self.check_function(function);
+            }
+        }
+    }
+
+    fn check_outbound_operations(&mut self) {
+        for (interface_name, interface) in self.capabilities.interfaces() {
+            for (operation_name, operation) in interface.operations() {
+                let CapabilityOperationKind::Outbound(metadata) = &operation.kind else {
+                    continue;
+                };
+                let operation_label = format!("{interface_name}.{operation_name}");
+                let timeout_valid = metadata.timeout_argument_index < operation.parameters.len()
+                    && operation.parameters[metadata.timeout_argument_index] == "Int"
+                    && (1..=u128::from(u64::MAX)).contains(&metadata.maximum_timeout_ms);
+                let code = if !timeout_valid {
+                    Some((
+                        "AIL.CAPABILITY.OUTBOUND_TIMEOUT_CONTRACT",
+                        "check-outbound-timeout-contract",
+                    ))
+                } else if metadata.cancellation_argument_index >= operation.parameters.len()
+                    || metadata.cancellation_argument_index == metadata.timeout_argument_index
+                    || operation.parameters[metadata.cancellation_argument_index] != "Cancellation"
+                {
+                    Some((
+                        "AIL.CAPABILITY.OUTBOUND_CANCELLATION_CONTRACT",
+                        "check-outbound-cancellation-contract",
+                    ))
+                } else {
+                    let variant = self.variants.get(operation.result.as_str()).copied();
+                    let valid_case = |identity: &str| {
+                        variant.is_some_and(|variant| {
+                            variant.cases.iter().any(|case| {
+                                case.identity.as_deref() == Some(identity) && case.payload.is_none()
+                            })
+                        })
+                    };
+                    (variant
+                        .and_then(|variant| variant.identity.as_deref())
+                        .is_none()
+                        || metadata.timed_out_case_identity == metadata.cancelled_case_identity
+                        || !valid_case(&metadata.timed_out_case_identity)
+                        || !valid_case(&metadata.cancelled_case_identity))
+                    .then_some((
+                        "AIL.CAPABILITY.OUTBOUND_RESULT_CONTRACT",
+                        "check-outbound-result-contract",
+                    ))
+                };
+                if let Some((code, step)) = code {
+                    self.capability_problem(
+                        code,
+                        Span::empty(0),
+                        fields([("operation", text(operation_label))]),
+                        BTreeMap::new(),
+                        Vec::new(),
+                        step,
+                    );
+                }
             }
         }
     }
@@ -1276,6 +1424,7 @@ impl<'a> Checker<'a> {
         Some(TypeRef::named(type_name, expression_span))
     }
 
+    #[allow(clippy::too_many_lines)]
     fn check_capability_call(
         &mut self,
         receiver: &str,

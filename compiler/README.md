@@ -23,7 +23,9 @@ This directory contains the Rust compiler and deterministic interpreter.
 - whole-list cardinality and element validation before capability checks or
   calls; and
 - linked source-set function inspection for module, list element identity,
-  bound, effects, capabilities, and dependencies.
+  bound, effects, capabilities, and dependencies; and
+- revision-bound outbound operation contracts with explicit timeout and
+  cancellation controls, closed completion results, and observed request facts.
 
 ## Calls and modules
 
@@ -57,6 +59,16 @@ checks or calls. The feature has no literals, indexing, mutation, filter, fold,
 general loops, nested lists, or parallel evaluation. See
 `examples/batch-cancellation/` for the executable three-module service.
 
+## Cooperative outbound requests
+
+An outbound operation remains an ordinary capability call in source. Its
+host-supplied contract identifies the timeout and opaque `Cancellation`
+arguments, maximum milliseconds, result variant, and persistent timeout/cancel
+case identities. The interpreter uses a separate outbound provider path and
+turns cooperative timeout or cancellation into closed AIL values. It does not
+provide URLs, retries, asynchronous execution, hard preemption, or remote
+rollback. See `examples/outbound-request/`.
+
 ## APIs
 
 - `check_source` checks one source revision and returns canonical source,
@@ -83,10 +95,11 @@ The exact protocol and language contracts are under [`../specs`](../specs/README
 ## Unsupported
 
 There is no general iteration or collection library, mutation, concurrency,
-networking, package registry, foreign-function interface, production runtime,
+general networking, package registry, foreign-function interface, production runtime,
 native backend, JIT, LLVM lowering, or deployment system. Sequential map over
 bounded lists is the only repeated-work form. The interpreter is for semantic
-execution and tests. Recursive calls are rejected.
+execution and tests. Its outbound provider is synchronous and cooperative.
+Recursive calls are rejected.
 
 ## Verify
 
@@ -98,6 +111,8 @@ cargo +1.87.0 test --workspace
 cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
 cargo +1.87.0 test --workspace --test m28_composition
 cargo +1.87.0 test --workspace --test m29_bounded_lists
+cargo +1.87.0 test --workspace --test m30_outbound_requests
 python3 specs/tools/bounded_list_contract.py check
+python3 specs/tools/outbound_request_contract.py check
 PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public
 ```

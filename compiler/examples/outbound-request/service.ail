@@ -1,0 +1,6 @@
+module outbound.service;
+import outbound.types as types;
+
+fn lookup(key: types.LookupKey, timeout: Int, cancellation: Cancellation, dependency: capability DependencyClient) -> types.LookupOutcome effects { dependency.fetch } {
+  dependency.fetch(key, timeout, cancellation)
+}

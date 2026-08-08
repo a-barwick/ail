@@ -19,7 +19,9 @@ The compiler ships:
 - explicit modules, import aliases, qualified references, and cross-module
   calls;
 - immutable bounded lists and deterministic sequential map; and
-- complete external list validation before capability checks or calls.
+- complete external list validation before capability checks or calls; and
+- one revision-bound cooperative outbound request with explicit timeout,
+  cancellation, and closed completion results.
 
 M28 added calls and language composition. Arguments are checked exactly and
 evaluated left to right. Effects propagate through the call graph. The compiler
@@ -33,6 +35,11 @@ public behavior cases.
 M29 added a three-module bounded cancellation service. It accepts zero to 32
 job positions, preserves order and duplicates, returns one closed outcome per
 position, and rejects oversized or malformed input before effects.
+
+M30 added one outbound dependency request through an explicit capability. The
+compiler validates and inspects its timeout, cancellation, permission, and
+closed result identities. The synchronous provider cooperates with timeout and
+cancellation; this is not a hard-preemptive production network runtime.
 
 ## Two concrete change loops
 
@@ -71,7 +78,7 @@ revision without trusting hidden model reasoning.
 
 AIL cannot yet build a production service. Sequential map over immutable bounded
 lists is its only repeated-work form. It has no general loops, collection
-library, mutation, concurrency, networking, package registry, foreign-code
+library, mutation, concurrency, general networking, package registry, foreign-code
 boundary, production runtime, native backend, or deployment system. Recursion
 is rejected. The architecture API implements the M24 metric and policy set, not
 the larger design catalog.
@@ -96,6 +103,6 @@ do not report only successful runs.
 
 ## Current status
 
-M29 is complete. No successor is active. The next investment in language breadth,
+M30 is complete. No successor is active. The next investment in language breadth,
 runtime, or measurement should produce a named executable capability, not more
 planning artifacts.

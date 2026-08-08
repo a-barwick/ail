@@ -1,6 +1,6 @@
 # Delivery history
 
-The compiler has shipped through M29. No milestone is active.
+The compiler has shipped through M30. No milestone is active.
 
 This file records what each milestone produced. Exact behavior lives in the
 specifications, tests, and compiler—not in milestone prose.
@@ -39,6 +39,7 @@ specifications, tests, and compiler—not in milestone prose.
 | M27 | One recorded repair using architecture diagnostics | Complete | M26 |
 | M28 | AIL calls, modules, imports, transitive effects, and nested execution | Complete | M27 |
 | M29 | Immutable bounded lists, sequential map, pre-effect validation, and ordered batch cancellation | Complete | M28 |
+| M30 | Cooperative outbound request metadata, timeout, cancellation, closed results, and revision binding | Complete | M29 |
 
 ## Shipped compiler path
 
@@ -86,6 +87,16 @@ function inspection. The three-module cancellation program under
 `compiler/examples/batch-cancellation/` returns one ordered closed outcome per
 input position and rejects oversized or malformed external input with zero
 calls.
+
+### Cooperative outbound dependency call: M30
+
+M30 added one host-bound outbound operation without adding networking syntax.
+Existing capability parameters and effects remain the exact permission. The
+compiler validates timeout and cancellation positions, a bounded millisecond
+timeout, and persistent identities for closed timeout/cancel results. Retained
+revisions own and digest their complete capability environments; inspection and
+execution use those saved contracts. The provider is synchronous and
+cooperative, not a hard-preemptive production network runtime.
 
 ## Deferred work
 

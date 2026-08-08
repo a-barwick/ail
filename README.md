@@ -11,7 +11,8 @@ structured diagnostics, executes the supported language in a deterministic
 interpreter, computes schema impact, validates atomic multi-file changes, and
 enforces a small architecture policy. M28 added ordinary function calls and
 explicit modules, import aliases, and qualified references. M29 added immutable
-bounded lists and deterministic sequential map.
+bounded lists and deterministic sequential map. M30 added one cooperative,
+revision-bound outbound dependency request.
 
 ## What works now
 
@@ -24,6 +25,8 @@ bounded lists and deterministic sequential map.
 - deterministic left-to-right argument evaluation and nested interpretation;
 - exact structural `List<T, N>` types and sequential binder-style `map`;
 - complete external list validation before capability checks or calls;
+- explicit outbound capability metadata, bounded millisecond timeout, opaque
+  cancellation, and closed timeout/cancel results;
 - rejection of recursive call cycles and import cycles;
 - canonical formatting and structured parse, type, import, and effect errors;
 - immutable revisions, revision-scoped handles, inspected semantic facts,
@@ -32,7 +35,7 @@ bounded lists and deterministic sequential map.
 - atomic candidate validation: a failed candidate publishes no revision;
 - revision-bound architecture snapshots and deltas for the implemented metrics
   and policy rules; and
-- three-file executable composed and bounded-cancellation services under
+- executable composed, bounded-cancellation, and outbound-request services under
   `compiler/examples/`.
 
 The AIL job-service runner passes all 37 public cases. The architecture checker
@@ -43,10 +46,12 @@ helper-split versions that move store authority into transport.
 
 AIL is not ready for production application development. Sequential map over an
 immutable bounded list is its only repeated-work form. It has no general loops,
-collection library, mutation, concurrency, networking, package registry,
+collection library, mutation, concurrency, general networking, package registry,
 foreign-function system, production runtime, native-code backend, or deployment
 toolchain. Recursion is rejected rather than bounded or executed. The
-interpreter is a semantic test engine, not a production runtime.
+interpreter is a semantic test engine, not a production runtime. Its outbound
+provider is synchronous and cooperative rather than a hard-preemptive network
+runtime.
 
 The broader designs for memory, concurrency, replay, resources, packages, and
 foreign code remain unresolved. The implemented architecture API covers the

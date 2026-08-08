@@ -185,6 +185,7 @@ pub struct SourceSetRevision {
     pub source_set_digest: String,
     /// Digest of the complete saved architecture settings, when architecture is enabled.
     pub architecture_settings_digest: Option<String>,
+    pub capability_environment_digest: String,
     pub sources: Vec<SourceFileMetadata>,
 }
 
@@ -243,6 +244,25 @@ pub struct SourceSetFunctionInspection {
     pub effects: Vec<String>,
     pub capabilities: Vec<String>,
     pub dependencies: Vec<String>,
+    pub outbound_requests: Vec<OutboundOperationInspection>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutboundOperationInspection {
+    pub revision_id: String,
+    pub capability_environment_digest: String,
+    pub receiver: String,
+    pub operation: String,
+    pub effect: String,
+    pub operation_kind: String,
+    pub timeout_argument_index: usize,
+    pub timeout_parameter_type: String,
+    pub cancellation_argument_index: usize,
+    pub cancellation_parameter_type: String,
+    pub maximum_timeout_ms: u128,
+    pub result_variant_identity: String,
+    pub timed_out_case_identity: String,
+    pub cancelled_case_identity: String,
 }
 
 /// Failure to inspect a function in one immutable source-set revision.
@@ -341,13 +361,13 @@ struct StoredSourceSet {
     coverage: EvolutionCoverage,
     unit: SourceUnit,
     architecture_config: Option<SourceArchitectureConfig>,
+    capabilities: CapabilityEnvironment,
 }
 
 /// Immutable source-set workspace for M20 inspection and impact queries.
 #[derive(Debug, Clone)]
 pub struct EvolutionWorkspace {
     id: String,
-    capabilities: CapabilityEnvironment,
     current_revision_id: String,
     revisions: BTreeMap<String, StoredSourceSet>,
 }
@@ -374,7 +394,6 @@ impl EvolutionWorkspace {
         revisions.insert(revision_id.clone(), stored);
         Ok(Self {
             id,
-            capabilities: capabilities.clone(),
             current_revision_id: revision_id,
             revisions,
         })
@@ -485,6 +504,7 @@ impl EvolutionWorkspace {
     ///
     /// Returns a stable failure for an unknown revision or a selector that does not name exactly
     /// one function in that revision.
+    #[allow(clippy::too_many_lines)]
     pub fn inspect_function(
         &self,
         revision_id: &str,
@@ -553,6 +573,13 @@ impl EvolutionWorkspace {
             })
             .collect();
         let dependencies = function_dependencies(declaration);
+        let outbound_requests = Self::inspect_outbound_operations(
+            &stored.unit,
+            declaration,
+            &stored.capabilities,
+            revision_id,
+            &stored.revision.capability_environment_digest,
+        );
         Ok(SourceSetFunctionInspection {
             revision_id: revision_id.to_owned(),
             function_handle,
@@ -564,7 +591,57 @@ impl EvolutionWorkspace {
             effects,
             capabilities,
             dependencies,
+            outbound_requests,
         })
+    }
+
+    pub(crate) fn inspect_outbound_operations(
+        unit: &SourceUnit,
+        declaration: &FunctionDecl,
+        capabilities: &CapabilityEnvironment,
+        revision_id: &str,
+        digest: &str,
+    ) -> Vec<OutboundOperationInspection> {
+        let receivers = declaration
+            .parameters
+            .iter()
+            .filter_map(|parameter| match &parameter.ty {
+                ParameterType::Capability(interface) => {
+                    Some((parameter.name.as_str(), interface.as_str()))
+                }
+                ParameterType::Value(_) => None,
+            })
+            .collect::<BTreeMap<_, _>>();
+        let receiver_names = receivers.keys().copied().collect();
+        find_capability_calls(&declaration.body, &receiver_names)
+            .into_iter()
+            .filter_map(|(receiver, operation, _)| {
+                let interface = receivers.get(receiver.as_str())?;
+                let signature = capabilities.interface(interface)?.operation(&operation)?;
+                let crate::CapabilityOperationKind::Outbound(metadata) = &signature.kind else {
+                    return None;
+                };
+                Some(OutboundOperationInspection {
+                    revision_id: revision_id.to_owned(),
+                    capability_environment_digest: digest.to_owned(),
+                    receiver: receiver.clone(),
+                    operation: operation.clone(),
+                    effect: format!("{receiver}.{operation}"),
+                    operation_kind: "outbound".to_owned(),
+                    timeout_argument_index: metadata.timeout_argument_index,
+                    timeout_parameter_type: signature.parameters[metadata.timeout_argument_index]
+                        .clone(),
+                    cancellation_argument_index: metadata.cancellation_argument_index,
+                    cancellation_parameter_type: signature.parameters
+                        [metadata.cancellation_argument_index]
+                        .clone(),
+                    maximum_timeout_ms: metadata.maximum_timeout_ms,
+                    result_variant_identity: variant_identity(unit, &signature.result)?.to_owned(),
+                    timed_out_case_identity: metadata.timed_out_case_identity.clone(),
+                    cancelled_case_identity: metadata.cancelled_case_identity.clone(),
+                })
+            })
+            .collect()
     }
 
     /// Execute a checked function from one retained ordered source-set revision.
@@ -631,7 +708,7 @@ impl EvolutionWorkspace {
             &stored.unit,
             linked_function,
             arguments,
-            &self.capabilities,
+            &stored.capabilities,
             capabilities,
         ) {
             Ok(result) => ExecutionResponse::Completed(ExecutionSuccess {
@@ -944,6 +1021,7 @@ impl StoredSourceSet {
                 parent_revision_id,
                 source_set_digest,
                 architecture_settings_digest: None,
+                capability_environment_digest: capabilities.stable_digest(),
                 sources: metadata,
             },
             sources,
@@ -952,6 +1030,7 @@ impl StoredSourceSet {
             coverage,
             unit: merged.unit,
             architecture_config: None,
+            capabilities: capabilities.clone(),
         })
     }
 }
@@ -2884,7 +2963,7 @@ fn expr_constructs(expression: &Expr, type_name: &str) -> bool {
 fn capability_argument_record(function: &FunctionDecl) -> Option<String> {
     let mut bindings = BTreeMap::new();
     collect_record_bindings(&function.body, &mut bindings);
-    let call = find_function_capability_call(function)?;
+    let call = find_function_capability_call(function).into_iter().next()?;
     let argument = call.2.first()?;
     match argument {
         Expr::Name { name, .. } => bindings.get(name).cloned(),
@@ -2934,7 +3013,7 @@ fn collect_nested_bindings(expression: &Expr, bindings: &mut BTreeMap<String, St
 }
 
 fn capability_site(function: &FunctionDecl) -> Option<(String, String)> {
-    let (receiver, operation, _) = find_function_capability_call(function)?;
+    let (receiver, operation, _) = find_function_capability_call(function).into_iter().next()?;
     let interface = function.parameters.iter().find_map(|parameter| {
         (parameter.name == receiver).then(|| match &parameter.ty {
             ParameterType::Capability(interface) => Some(interface.clone()),
@@ -2944,7 +3023,7 @@ fn capability_site(function: &FunctionDecl) -> Option<(String, String)> {
     Some((interface, operation))
 }
 
-fn find_function_capability_call(function: &FunctionDecl) -> Option<(String, String, Vec<Expr>)> {
+fn find_function_capability_call(function: &FunctionDecl) -> Vec<(String, String, Vec<Expr>)> {
     let receivers = function
         .parameters
         .iter()
@@ -2952,62 +3031,89 @@ fn find_function_capability_call(function: &FunctionDecl) -> Option<(String, Str
             matches!(parameter.ty, ParameterType::Capability(_)).then_some(parameter.name.as_str())
         })
         .collect::<BTreeSet<_>>();
-    find_capability_call(&function.body, &receivers)
+    find_capability_calls(&function.body, &receivers)
 }
 
-fn find_capability_call(
+fn find_capability_calls(
     block: &Block,
     receivers: &BTreeSet<&str>,
-) -> Option<(String, String, Vec<Expr>)> {
+) -> Vec<(String, String, Vec<Expr>)> {
+    let mut calls = Vec::new();
     for binding in &block.bindings {
-        if let Some(call) = find_capability_expr(&binding.value, receivers) {
-            return Some(call);
-        }
+        find_capability_expr(&binding.value, receivers, &mut calls);
     }
-    find_capability_expr(&block.tail, receivers)
+    find_capability_expr(&block.tail, receivers, &mut calls);
+    calls
 }
 
 fn find_capability_expr(
     expression: &Expr,
     receivers: &BTreeSet<&str>,
-) -> Option<(String, String, Vec<Expr>)> {
+    calls: &mut Vec<(String, String, Vec<Expr>)>,
+) {
     match expression {
-        Expr::Map { source, body, .. } => find_capability_expr(source, receivers)
-            .or_else(|| find_capability_call(body, receivers)),
-        Expr::Call { arguments, .. } => arguments
-            .iter()
-            .find_map(|argument| find_capability_expr(argument, receivers)),
+        Expr::Map { source, body, .. } => {
+            find_capability_expr(source, receivers, calls);
+            calls.extend(find_capability_calls(body, receivers));
+        }
+        Expr::Call { arguments, .. } => {
+            for argument in arguments {
+                find_capability_expr(argument, receivers, calls);
+            }
+        }
         Expr::CapabilityCall {
             receiver,
             operation,
             arguments,
             ..
-        } => receivers
-            .contains(receiver.as_str())
-            .then(|| (receiver.clone(), operation.clone(), arguments.clone())),
+        } => {
+            for argument in arguments {
+                find_capability_expr(argument, receivers, calls);
+            }
+            if receivers.contains(receiver.as_str()) {
+                calls.push((receiver.clone(), operation.clone(), arguments.clone()));
+            }
+        }
         Expr::If {
             condition,
             then_branch,
             else_branch,
             ..
-        } => find_capability_expr(condition, receivers)
-            .or_else(|| find_capability_call(then_branch, receivers))
-            .or_else(|| find_capability_call(else_branch, receivers)),
+        } => {
+            find_capability_expr(condition, receivers, calls);
+            calls.extend(find_capability_calls(then_branch, receivers));
+            calls.extend(find_capability_calls(else_branch, receivers));
+        }
         Expr::Match {
             scrutinee, arms, ..
-        } => find_capability_expr(scrutinee, receivers).or_else(|| {
-            arms.iter()
-                .find_map(|arm| find_capability_call(&arm.body, receivers))
-        }),
-        Expr::Record { fields, .. } => fields
-            .iter()
-            .find_map(|field| find_capability_expr(&field.value, receivers)),
-        Expr::Variant { payload, .. } => payload
-            .as_deref()
-            .and_then(|payload| find_capability_expr(payload, receivers)),
-        Expr::FieldAccess { target, .. } => find_capability_expr(target, receivers),
-        Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => None,
+        } => {
+            find_capability_expr(scrutinee, receivers, calls);
+            for arm in arms {
+                calls.extend(find_capability_calls(&arm.body, receivers));
+            }
+        }
+        Expr::Record { fields, .. } => {
+            for field in fields {
+                find_capability_expr(&field.value, receivers, calls);
+            }
+        }
+        Expr::Variant { payload, .. } => {
+            if let Some(payload) = payload {
+                find_capability_expr(payload, receivers, calls);
+            }
+        }
+        Expr::FieldAccess { target, .. } => find_capability_expr(target, receivers, calls),
+        Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => {}
     }
+}
+
+fn variant_identity<'a>(unit: &'a SourceUnit, name: &str) -> Option<&'a str> {
+    unit.declarations
+        .iter()
+        .find_map(|declaration| match declaration {
+            Declaration::Variant(variant) if variant.name == name => variant.identity.as_deref(),
+            _ => None,
+        })
 }
 
 fn last_match_type(block: &Block) -> Option<String> {
