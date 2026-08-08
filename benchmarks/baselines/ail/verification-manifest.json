@@ -287,7 +287,7 @@
     },
     {
       "path": "specs/bounded-lists.md",
-      "sha256": "61e7a16a1f6eb16c87dc84bada132bf92ad2eefa9d9bd39f9eec3b414218e4f0"
+      "sha256": "bfa804735d86ac8dbdc9f1692b4fcb2a5239b6bc5ef2872f1c04f051677efec5"
     },
     {
       "path": "specs/evolution-contract.json",
@@ -379,11 +379,11 @@
     },
     {
       "path": "specs/tools/bounded_list_contract.py",
-      "sha256": "cc756431c170c785f50f8cefe11756315176da0d4738b4fba591d68f97ec67a1"
+      "sha256": "5d03500aab25b37296f9f15ce1382f3f1e37ef28018ba9820bb9219592a96607"
     },
     {
       "path": "specs/tools/core_contract.py",
-      "sha256": "d1d059cd90aab2894667e40bc979c017ed8c26d9102f0845a42a351428cf29fb"
+      "sha256": "d5f3901c280e83824fbe78ada588ce2421068506585d7f944735fcc7531fd025"
     }
   ]
 }

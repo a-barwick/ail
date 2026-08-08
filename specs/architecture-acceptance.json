@@ -1,7 +1,7 @@
 {
   "package_version": 1,
   "status": "Accepted",
-  "documentation": "../docs/architecture-acceptance.md",
+  "documentation": "../docs/workloads/architecture-control.md",
   "use_case": "UC-007",
   "requirements": [
     "APP-006",
