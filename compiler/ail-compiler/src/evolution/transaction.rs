@@ -250,6 +250,19 @@ impl EvolutionWorkspace {
                 kind: ArchitectureRequestErrorKind::StaleRevision,
                 message: "base source revision is not retained".into(),
             })?;
+        let saved_config =
+            base.architecture_config
+                .clone()
+                .ok_or_else(|| ArchitectureRequestError {
+                    kind: ArchitectureRequestErrorKind::InvalidRevision,
+                    message: "base source revision has no saved architecture settings".into(),
+                })?;
+        if saved_config.stable_digest() != config.stable_digest() || saved_config != *config {
+            return Err(ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::InvalidRevision,
+                message: "supplied architecture settings differ from the base revision".into(),
+            });
+        }
         let child_revision_id = self.next_revision_id(&request.base_revision_id);
         if input.request.base_revision_id != request.base_revision_id
             || input.request.candidate_revision_id != child_revision_id
@@ -261,7 +274,7 @@ impl EvolutionWorkspace {
         }
         let coverage = base.coverage.clone();
         let base_architecture = base
-            .architecture_revision(&self.id, config)
+            .architecture_revision(&self.id, &saved_config)
             .map_err(|error| ArchitectureRequestError {
                 kind: ArchitectureRequestErrorKind::InvalidRevision,
                 message: error.0,
@@ -283,7 +296,7 @@ impl EvolutionWorkspace {
                 message: "architecture candidate is not the complete source set".into(),
             });
         }
-        let candidate = StoredSourceSet::build(
+        let mut candidate = StoredSourceSet::build(
             &self.id,
             &child_revision_id,
             Some(request.base_revision_id.clone()),
@@ -295,13 +308,17 @@ impl EvolutionWorkspace {
             kind: ArchitectureRequestErrorKind::InvalidRevision,
             message: failure.causes.join(","),
         })?;
-        let candidate_architecture =
-            candidate
-                .architecture_revision(&self.id, config)
-                .map_err(|error| ArchitectureRequestError {
-                    kind: ArchitectureRequestErrorKind::InvalidRevision,
-                    message: error.0,
-                })?;
+        candidate
+            .revision
+            .architecture_settings_digest
+            .clone_from(&base.revision.architecture_settings_digest);
+        candidate.architecture_config = Some(saved_config.clone());
+        let candidate_architecture = candidate
+            .architecture_revision(&self.id, &saved_config)
+            .map_err(|error| ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::InvalidRevision,
+                message: error.0,
+            })?;
         let candidate_view = CandidateRevision {
             stored: &candidate,
             capabilities: &self.capabilities,

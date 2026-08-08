@@ -107,6 +107,75 @@ pub struct SourceArchitectureConfig {
     pub semantic_model_version: String,
 }
 
+impl SourceArchitectureConfig {
+    /// Return the deterministic digest of every architecture interpretation and policy field.
+    #[must_use]
+    pub fn stable_digest(&self) -> String {
+        let operations = self
+            .operations
+            .iter()
+            .map(|(operation, interpretation)| {
+                let value = match interpretation {
+                    SourceOperationArchitecture::Stateless => serde_json::json!({
+                        "kind": "stateless"
+                    }),
+                    SourceOperationArchitecture::State { domain, access } => serde_json::json!({
+                        "kind": "state",
+                        "domain": domain,
+                        "access": match access {
+                            SourceStateAccess::Read => "read",
+                            SourceStateAccess::Write => "write",
+                            SourceStateAccess::ReadWrite => "read-write",
+                        }
+                    }),
+                };
+                (operation, value)
+            })
+            .collect::<BTreeMap<_, _>>();
+        let dependencies = &self.policy.allowed_group_dependencies;
+        let baseline = &self.policy.baseline_match;
+        let canonical = serde_json::json!({
+            "module_groups": self.module_groups,
+            "capability_namespaces": self.capability_namespaces,
+            "endpoint_groups": self.endpoint_groups,
+            "operations": operations,
+            "policy": {
+                "revision": self.policy.revision,
+                "allowed_group_dependencies": {
+                    "contract": dependencies.contract,
+                    "transport": dependencies.transport,
+                    "domain": dependencies.domain,
+                    "persistence_adapter": dependencies.persistence_adapter,
+                    "verification": dependencies.verification,
+                },
+                "transport_capabilities": self.policy.transport_capabilities,
+                "transport_state": self.policy.transport_state,
+                "dispatch_no_growth": {
+                    "control_flow_complexity": self.policy.dispatch_no_growth.control_flow_complexity,
+                    "minimal_context_node_count": self.policy.dispatch_no_growth.minimal_context_node_count,
+                },
+                "new_unit": {
+                    "control_flow_complexity_max": self.policy.new_unit.control_flow_complexity_max,
+                    "minimal_context_node_count_max": self.policy.new_unit.minimal_context_node_count_max,
+                },
+                "new_cycles": self.policy.new_cycles,
+                "coverage_required": self.policy.coverage_required,
+                "baseline_match": {
+                    "baseline_revision": baseline.baseline_revision,
+                    "scope": baseline.scope,
+                    "metrics": {
+                        "control_flow_complexity": baseline.metrics.control_flow_complexity,
+                        "minimal_context_node_count": baseline.metrics.minimal_context_node_count,
+                    },
+                    "accepted_debt": baseline.accepted_debt,
+                },
+            },
+            "semantic_model_version": self.semantic_model_version,
+        });
+        source_digest(&canonical.to_string())
+    }
+}
+
 /// Immutable ordered source-set metadata.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceSetRevision {
@@ -114,6 +183,8 @@ pub struct SourceSetRevision {
     pub revision_id: String,
     pub parent_revision_id: Option<String>,
     pub source_set_digest: String,
+    /// Digest of the complete saved architecture settings, when architecture is enabled.
+    pub architecture_settings_digest: Option<String>,
     pub sources: Vec<SourceFileMetadata>,
 }
 
@@ -269,6 +340,7 @@ struct StoredSourceSet {
     graph: Vec<RelationshipEdge>,
     coverage: EvolutionCoverage,
     unit: SourceUnit,
+    architecture_config: Option<SourceArchitectureConfig>,
 }
 
 /// Immutable source-set workspace for M20 inspection and impact queries.
@@ -306,6 +378,31 @@ impl EvolutionWorkspace {
             current_revision_id: revision_id,
             revisions,
         })
+    }
+
+    /// Build an architecture-enabled workspace whose base revision owns its settings.
+    ///
+    /// # Errors
+    /// Returns the same deterministic source-set failures as [`Self::new`].
+    pub fn new_with_architecture(
+        workspace_id: impl Into<String>,
+        revision_id: impl Into<String>,
+        sources: Vec<EvolutionSource>,
+        capabilities: &CapabilityEnvironment,
+        coverage: EvolutionCoverage,
+        config: SourceArchitectureConfig,
+    ) -> Result<Self, EvolutionBuildFailure> {
+        let mut workspace = Self::new(workspace_id, revision_id, sources, capabilities, coverage)?;
+        let stored = workspace
+            .revisions
+            .get_mut(&workspace.current_revision_id)
+            .ok_or_else(|| EvolutionBuildFailure {
+                causes: vec!["base revision was not retained".to_owned()],
+                diagnostics: Vec::new(),
+            })?;
+        stored.revision.architecture_settings_digest = Some(config.stable_digest());
+        stored.architecture_config = Some(config);
+        Ok(workspace)
     }
 
     /// Retain another already-existing immutable snapshot without making it current.
@@ -607,7 +704,7 @@ impl StoredSourceSet {
     ) -> Result<ArchitectureRevision, ArchitectureRevisionError> {
         let mut units = Vec::new();
         let mut edges = BTreeSet::new();
-        let mut endpoint_groups = config.endpoint_groups.clone();
+        let mut endpoint_groups = BTreeMap::new();
         for declaration in &self.unit.declarations {
             let Declaration::Function(function) = declaration else {
                 continue;
@@ -846,6 +943,7 @@ impl StoredSourceSet {
                 revision_id: revision_id.to_owned(),
                 parent_revision_id,
                 source_set_digest,
+                architecture_settings_digest: None,
                 sources: metadata,
             },
             sources,
@@ -853,6 +951,7 @@ impl StoredSourceSet {
             graph,
             coverage,
             unit: merged.unit,
+            architecture_config: None,
         })
     }
 }
@@ -885,11 +984,12 @@ fn validate_architecture_operations(
             } => {
                 let Some(interface) = receivers.get(receiver) else {
                     let endpoint = format!("{receiver}:{operation}");
-                    if !config.endpoint_groups.contains_key(&endpoint) {
-                        return Err(ArchitectureRevisionError(format!(
+                    let group = config.endpoint_groups.get(&endpoint).ok_or_else(|| {
+                        ArchitectureRevisionError(format!(
                             "no endpoint group for built-in operation {endpoint}"
-                        )));
-                    }
+                        ))
+                    })?;
+                    endpoint_groups.insert(endpoint, group.clone());
                     return children(arguments, endpoint_groups);
                 };
                 let namespace = config.capability_namespaces.get(interface).ok_or_else(|| {
@@ -916,11 +1016,13 @@ fn validate_architecture_operations(
                 endpoint_groups.insert(format!("{namespace_endpoint}.{operation}"), group.clone());
                 if let SourceOperationArchitecture::State { domain, .. } = operation_architecture {
                     let state_endpoint = format!("state:{domain}");
-                    if !config.endpoint_groups.contains_key(&state_endpoint) {
-                        return Err(ArchitectureRevisionError(format!(
-                            "no endpoint group for {state_endpoint}"
-                        )));
-                    }
+                    let state_group =
+                        config.endpoint_groups.get(&state_endpoint).ok_or_else(|| {
+                            ArchitectureRevisionError(format!(
+                                "no endpoint group for {state_endpoint}"
+                            ))
+                        })?;
+                    endpoint_groups.insert(state_endpoint, state_group.clone());
                 }
                 children(arguments, endpoint_groups)
             }

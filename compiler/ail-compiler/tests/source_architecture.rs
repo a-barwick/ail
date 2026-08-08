@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use std::collections::BTreeMap;
 
 use ail_compiler::{
@@ -158,7 +159,7 @@ fn sources(transport: &str, domain: &str) -> Vec<EvolutionSource> {
 }
 
 fn workspace() -> EvolutionWorkspace {
-    EvolutionWorkspace::new(
+    EvolutionWorkspace::new_with_architecture(
         "source-cancel-job",
         "r1",
         sources(BASE_TRANSPORT, BASE_DOMAIN),
@@ -167,6 +168,7 @@ fn workspace() -> EvolutionWorkspace {
             declared_complete: true,
             ..EvolutionCoverage::default()
         },
+        architecture_config(),
     )
     .expect("base source compiles")
 }
@@ -429,6 +431,147 @@ fn missing_capability_architecture_configuration_fails_closed_without_publicatio
             error.kind,
             ail_compiler::ArchitectureRequestErrorKind::InvalidRevision
         );
+        assert_eq!(workspace.current_revision_id(), "r1");
+        assert!(workspace.revision("r2").is_none());
+    }
+}
+
+#[test]
+fn saved_architecture_settings_are_revision_bound_before_behavior_or_publication() {
+    let original = architecture_config();
+    let mut changes = Vec::new();
+    let mut ownership = original.clone();
+    ownership
+        .module_groups
+        .insert("domain".into(), "transport".into());
+    changes.push(ownership);
+    let mut state = original.clone();
+    state.operations.insert(
+        "JobsStore.cancel_if_active".into(),
+        SourceOperationArchitecture::Stateless,
+    );
+    changes.push(state);
+    let mut policy = original.clone();
+    policy.policy.coverage_required = false;
+    changes.push(policy);
+
+    for changed in changes {
+        assert_ne!(original.stable_digest(), changed.stable_digest());
+        let behavior_called = Cell::new(false);
+        let mut workspace = workspace();
+        let error = workspace
+            .validate_source_architecture_change(
+                request(BASE_TRANSPORT, DOMAIN_OWNED),
+                &changed,
+                &evaluation_input("domain:cancel_job"),
+                |_| {
+                    behavior_called.set(true);
+                    Ok(BehaviorValidation {
+                        status: "passed".into(),
+                        cases_passed: 6,
+                        cases_total: 6,
+                    })
+                },
+            )
+            .expect_err("ordinary source changes cannot replace saved settings");
+        assert_eq!(
+            error.kind,
+            ail_compiler::ArchitectureRequestErrorKind::InvalidRevision
+        );
+        assert!(!behavior_called.get());
+        assert_eq!(workspace.current_revision_id(), "r1");
+        assert!(workspace.revision("r2").is_none());
+    }
+}
+
+#[test]
+fn architecture_settings_digest_is_stable_and_inherited() {
+    let first = architecture_config();
+    let mut second = architecture_config();
+    second.module_groups = second.module_groups.into_iter().rev().collect();
+    second.endpoint_groups = second.endpoint_groups.into_iter().rev().collect();
+    assert_eq!(first.stable_digest(), second.stable_digest());
+
+    let mut workspace = workspace();
+    let base_digest = workspace
+        .revision("r1")
+        .unwrap()
+        .architecture_settings_digest
+        .clone();
+    assert_eq!(base_digest.as_deref(), Some(first.stable_digest().as_str()));
+    let result = workspace
+        .validate_source_architecture_change(
+            request(BASE_TRANSPORT, DOMAIN_OWNED),
+            &second,
+            &evaluation_input("domain:cancel_job"),
+            behavior("domain.cancel_job"),
+        )
+        .unwrap();
+    assert!(matches!(result, ArchitectureChangeResult::Success(_)));
+    assert_eq!(
+        workspace
+            .revision("r2")
+            .unwrap()
+            .architecture_settings_digest,
+        base_digest
+    );
+}
+
+#[test]
+fn unused_endpoint_settings_and_declared_coverage_cannot_forge_completeness() {
+    for declared_complete in [true, false] {
+        let mut config = architecture_config();
+        config.module_groups = BTreeMap::from([
+            ("contracts".into(), "contract".into()),
+            ("transport".into(), "transport".into()),
+        ]);
+        config.capability_namespaces.clear();
+        config.operations.clear();
+        config.endpoint_groups = BTreeMap::from([
+            ("unused-contract".into(), "contract".into()),
+            ("unused-transport".into(), "transport".into()),
+            ("unused-domain".into(), "domain".into()),
+            ("unused-adapter".into(), "persistence-adapter".into()),
+            ("unused-tests".into(), "verification".into()),
+        ]);
+        let incomplete_sources = vec![
+            EvolutionSource::new("contracts.ail", CONTRACTS),
+            EvolutionSource::new("transport.ail", BASE_TRANSPORT),
+        ];
+        let mut workspace = EvolutionWorkspace::new_with_architecture(
+            "incomplete-source",
+            "r1",
+            incomplete_sources.clone(),
+            &CapabilityEnvironment::new(),
+            EvolutionCoverage {
+                declared_complete,
+                ..EvolutionCoverage::default()
+            },
+            config.clone(),
+        )
+        .unwrap();
+        let error = workspace
+            .validate_source_architecture_change(
+                ArchitectureSourceChangeRequest {
+                    base_revision_id: "r1".into(),
+                    candidate_sources: incomplete_sources,
+                },
+                &config,
+                &evaluation_input("transport:dispatch"),
+                |_| {
+                    Ok(BehaviorValidation {
+                        status: "passed".into(),
+                        cases_passed: 6,
+                        cases_total: 6,
+                    })
+                },
+            )
+            .expect_err("an incomplete base source set must fail closed");
+        assert_eq!(
+            error.kind,
+            ail_compiler::ArchitectureRequestErrorKind::InvalidRevision
+        );
+        assert_eq!(error.message, "base architecture is incomplete");
         assert_eq!(workspace.current_revision_id(), "r1");
         assert!(workspace.revision("r2").is_none());
     }
