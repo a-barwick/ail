@@ -23,7 +23,7 @@ compiler spikes are complete.
 
 Keep the repository root stack-neutral. Evaluate candidates with identical,
 bounded prototypes described in
-[../stack-evaluation.md](../stack-evaluation.md). Prototype dependencies remain
+the completed stack evaluation. Prototype dependencies remain
 inside their own directories.
 
 ## Consequences

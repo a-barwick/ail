@@ -3,8 +3,7 @@
 Status: **Accepted 2026-07-22**
 
 This contract accepts only the architecture facts needed by the M23 package.
-It adds no AIL source grammar. In particular, the broader proposed catalog in
-`docs/architecture-health.md` and its `ARCH` names are not inherited. The only
+It adds no AIL source grammar. The only
 accepted metrics are control-flow complexity, direct dependency set, direct
 declared capability set, state read set, state write set, dependency-component
 size, and minimal-context node count.

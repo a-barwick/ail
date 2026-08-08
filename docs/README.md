@@ -1,89 +1,16 @@
 # AIL documentation
 
-Start with the running system, then follow the link to the exact contract.
+Use the smallest document that owns the fact you need:
 
-## Current reader path
+1. [Current status](STATUS.md) — shipped boundary, hard limits, next move, and
+   required checks.
+2. [Specifications](../specs/README.md) — numbered language and compiler rules.
+3. [Compiler guide](../compiler/README.md) — Rust APIs and focused commands.
+4. [Workloads](workloads/) — the application behavior motivating a contract.
+5. [Product](product.md) and [design](design.md) — short orientation only.
 
-1. [Project intent](project-intent.md) — what AIL optimizes and why.
-2. [Application vision](application-vision.md) — the software AIL is meant to
-   build and the first workloads used to test it.
-3. [Design direction](design-direction.md) — implemented design and unresolved
-   technical choices.
-4. [Compiler README](../compiler/README.md) — current APIs and commands.
-5. [Current status](STATUS.md) — shipped capability, hard limits, and next move.
+Numbered rules and conformance fixtures define behavior. If prose differs from a
+fixture, the fixture wins. Historical decisions, proposals, milestones, and
+external material live in [history/](history/) and are not routine reading.
 
-Use [use cases](use-cases/README.md) for application behavior,
-[requirements](requirements/README.md) for exact constraints, and
-[`specs/`](../specs/README.md) for numbered language and compiler-interface
-rules. [Decisions](decisions/) record expensive technical choices. The
-[roadmap](roadmap.md) is a compact delivery history, not a second specification.
-
-## What defines behavior
-
-Only numbered specification rules and their conformance fixtures define AIL
-language or compiler-interface behavior. The Rust compiler must match those
-rules where they apply. M28 call and module behavior is locked by its executable
-tests while that material is incorporated into the broader specification. M29
-bounded list and sequential map behavior is accepted in
-[`specs/bounded-lists.md`](../specs/bounded-lists.md).
-
-The other documents have narrower jobs:
-
-- use cases state application inputs, outputs, effects, and changes;
-- requirements state observable constraints;
-- design documents explain intended system properties and unresolved choices;
-- examples illustrate behavior but do not invent syntax;
-- benchmark fixtures define application results, not AIL semantics; and
-- decision records explain why a technical choice was made.
-
-If an example conflicts with a specification fixture, the fixture wins. If
-implementation behavior conflicts with a numbered rule, fix the implementation
-or change the rule explicitly; do not bless the accident in prose.
-
-## Compiler state
-
-The current Rust compiler implements:
-
-- lossless parsing and canonical formatting;
-- type, name, capability-effect, call, module, and import checking;
-- immutable source revisions and revision-scoped semantic handles;
-- deterministic interpretation of the supported language;
-- schema-impact analysis and atomic multi-file candidate validation; and
-- the M24 architecture snapshot, delta, policy, and publication rules.
-
-M28 added direct and imported calls, explicit modules, import aliases, qualified
-references, transitive effect checking, left-to-right argument evaluation, and
-nested execution. M29 added structural bounded lists, sequential map, pre-effect
-external list validation, and linked list/function inspection. The compiler
-rejects recursion and import cycles.
-
-It does not implement general iteration or a collection library, mutation,
-concurrency, networking, packages, foreign code, a production runtime, native
-lowering, or deployment. The full architectural-health catalog is also not
-implemented; only the M24 set is.
-
-## Precise terms
-
-- **Canonical source** is the one formatted textual representation stored in
-  version control.
-- **Normative** means a numbered rule or fixture requires the behavior.
-- **Conformance** means an implementation matches those required results.
-- **Deterministic** means identical declared inputs produce identical ordered
-  logical results. It does not imply bit-identical native binaries.
-- **Revision-bound** means a result names the exact immutable source revision it
-  describes and cannot be reused silently after an edit.
-- **Coverage** names what the compiler analyzed and every boundary it could not
-  inspect.
-
-Use these words only with those concrete meanings.
-
-## Documentation checks
-
-Run:
-
-```bash
-python3 tools/check_docs.py
-```
-
-The command checks local links, decision-record structure, and agreement between
-`roadmap.md` and `STATUS.md`.
+Run `python3 tools/check_docs.py` after documentation changes.

@@ -39,37 +39,17 @@ facts, diagnostics, authority, behavior, and every proposed change.
 
 ## Read before changing the system
 
-Read these files in order:
-
-1. `docs/README.md`
-2. `docs/project-intent.md`
-3. `docs/application-vision.md`
-4. `docs/use-cases/README.md`
-5. `docs/requirements/README.md`
-6. `docs/design-direction.md`
-7. `docs/architecture-health.md`
-8. `docs/spec-review.md`
-9. `docs/roadmap.md`
-10. `docs/STATUS.md`
-
-Then read the numbered specification, use case, requirement, and decision that
-owns the behavior you will change.
+Start with `docs/STATUS.md`, then read the owning numbered specification and
+its executable tests or fixtures. Read a workload record when it explains the
+application behavior behind that specification. Use historical documents only
+when a past decision still constrains the change.
 
 ## Current system
 
-The Rust compiler implements canonical syntax, static checking, structured
-diagnostics, immutable revisions, semantic inspection, validated rename,
-schema-impact queries, atomic multi-file validation, deterministic
-interpretation, the M24 architecture checks, ordinary calls, and explicit
-modules, imports, aliases, and qualified cross-module references.
-
-The compiler rejects recursive calls and import cycles. It has no iteration,
-general collections, concurrency, networking, production runtime, native
-backend, package registry, or deployment system. Do not write about proposed
-features as if they work.
-
-`docs/STATUS.md` states the current executable move. If no work is active, do
-not infer a new project from old plans.
+`docs/STATUS.md` is the only current capability and next-work source. Do not
+repeat its inventory elsewhere or infer work from deferred history. The compiler
+has bounded sequential `map`, not general iteration; do not describe proposed
+features as shipped.
 
 ## Engineering rules
 

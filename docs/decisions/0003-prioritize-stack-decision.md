@@ -34,7 +34,7 @@ The stack decision needs a much smaller evidence boundary:
 
 Those are the prerequisites already stated by
 [ADR 0001](0001-implementation-stack.md) and
-[the stack evaluation](../stack-evaluation.md). The full baseline calibration,
+the stack evaluation. The full baseline calibration,
 numeric AIL success targets, and illustrative syntax variants are not
 dependencies of the stack spikes.
 

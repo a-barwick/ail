@@ -16,8 +16,6 @@ ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_PATH = ROOT / "specs" / "bounded-list-contract.json"
 PROTOCOL_PATH = ROOT / "specs" / "bounded-list-protocol.json"
 SPEC_PATH = ROOT / "specs" / "bounded-lists.md"
-REQUIREMENTS_PATH = ROOT / "docs" / "requirements" / "bounded-ordered-lists.md"
-USE_CASE_PATH = ROOT / "docs" / "use-cases" / "UC-009-bounded-ordered-batch-cancellation.md"
 
 EXPECTED_REQUIREMENTS = ["APP-007", "LANG-007", "PROTO-008", "NFR-008"]
 EXPECTED_RULES = [
@@ -123,8 +121,6 @@ def check() -> None:
     contract = load_canonical_json(CONTRACT_PATH)
     protocol = load_canonical_json(PROTOCOL_PATH)
     specification = SPEC_PATH.read_text(encoding="utf-8")
-    requirements = REQUIREMENTS_PATH.read_text(encoding="utf-8")
-    use_case = USE_CASE_PATH.read_text(encoding="utf-8")
 
     require(contract.get("contract_version") == "m29-v1", "wrong contract version")
     require(contract.get("status") == "accepted", "contract is not accepted")
@@ -144,13 +140,7 @@ def check() -> None:
     for diagnostic in EXPECTED_DIAGNOSTICS:
         require(diagnostic in specification, f"specification omits {diagnostic}")
     for requirement in EXPECTED_REQUIREMENTS:
-        pattern = rf"^## {re.escape(requirement)} — .+?^Status: \*\*Accepted\*\*"
-        require(
-            re.search(pattern, requirements, re.MULTILINE | re.DOTALL) is not None,
-            f"{requirement} is not accepted",
-        )
         require(requirement in specification, f"specification omits {requirement}")
-    require("Status: **Accepted 2026-08-08**" in use_case, "UC-009 is not accepted")
 
     sources = contract.get("canonical_sources")
     require(isinstance(sources, list) and len(sources) == 3, "canonical source list drift")
