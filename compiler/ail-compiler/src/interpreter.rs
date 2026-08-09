@@ -102,6 +102,7 @@ impl RuntimeValue {
 }
 
 /// A capability implementation supplied by the embedding host.
+#[allow(clippy::missing_errors_doc)]
 pub trait CapabilityProvider {
     /// Whether the named instance and interface are available for this execution.
     fn supports(&self, receiver: &str, interface: &str) -> bool;
@@ -138,6 +139,55 @@ pub trait CapabilityProvider {
             std::iter::empty::<(&str, &str)>(),
         ))
     }
+
+    fn supports_outbound_batch(&self, _receiver: &str, _interface: &str, _operation: &str) -> bool {
+        false
+    }
+    fn start_outbound(
+        &mut self,
+        request: &OutboundCapabilityRequest,
+    ) -> Result<OutboundRequestHandle, RuntimeFault> {
+        Err(RuntimeFault::new(
+            "AIL.RUNTIME.OUTBOUND_BATCH_UNSUPPORTED",
+            Span::empty(0),
+            [("operation", request.operation.as_str())],
+            std::iter::empty::<(&str, &str)>(),
+        ))
+    }
+    fn check_outbound(
+        &mut self,
+        _handles: &[OutboundRequestHandle],
+    ) -> Result<OutboundBatchCheck, RuntimeFault> {
+        Err(RuntimeFault::new(
+            "AIL.RUNTIME.OUTBOUND_BATCH_UNSUPPORTED",
+            Span::empty(0),
+            std::iter::empty::<(&str, &str)>(),
+            std::iter::empty::<(&str, &str)>(),
+        ))
+    }
+    fn cancel_outbound(&mut self, _handle: &OutboundRequestHandle) -> Result<(), RuntimeFault> {
+        Ok(())
+    }
+    fn collect_outbound(
+        &mut self,
+        _handle: &OutboundRequestHandle,
+    ) -> Result<OutboundProviderOutcome, RuntimeFault> {
+        Err(RuntimeFault::new(
+            "AIL.RUNTIME.OUTBOUND_BATCH_UNSUPPORTED",
+            Span::empty(0),
+            std::iter::empty::<(&str, &str)>(),
+            std::iter::empty::<(&str, &str)>(),
+        ))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct OutboundRequestHandle(pub String);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutboundBatchCheck {
+    pub completed: Vec<OutboundRequestHandle>,
+    pub cancelled: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -163,6 +213,9 @@ pub struct ObservedOutboundCall {
     pub timeout_ms: u64,
     pub cancellation_token_identity: String,
     pub outcome: Option<OutboundProviderOutcome>,
+    pub batch_index: Option<usize>,
+    pub start_order: Option<usize>,
+    pub completion_order: Option<usize>,
 }
 
 /// One capability invocation in observable execution order.
@@ -356,6 +409,7 @@ impl Evaluator<'_> {
         self.eval_expr(&block.tail, &locals)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn eval_expr(
         &mut self,
         expression: &Expr,
@@ -460,6 +514,278 @@ impl Evaluator<'_> {
                 }
                 Ok(RuntimeValue::List(output))
             }
+            Expr::ParallelMap {
+                binding,
+                source,
+                limit,
+                body,
+                span,
+                ..
+            } => self.eval_parallel_map(
+                binding,
+                source,
+                usize::try_from(*limit).unwrap_or(usize::MAX),
+                body,
+                *span,
+                locals,
+            ),
+        }
+    }
+
+    #[allow(clippy::too_many_lines)]
+    fn eval_parallel_map(
+        &mut self,
+        binding: &str,
+        source: &Expr,
+        limit: usize,
+        body: &Block,
+        span: Span,
+        locals: &BTreeMap<String, RuntimeBinding>,
+    ) -> Result<RuntimeValue, RuntimeFault> {
+        let RuntimeValue::List(values) = self.eval_expr(source, locals)? else {
+            return Err(RuntimeFault::new(
+                "AIL.RUNTIME.PARALLEL_MAP_SOURCE",
+                span,
+                [("kind", "list")],
+                std::iter::empty::<(&str, &str)>(),
+            ));
+        };
+        if limit == 0 || limit > values.len().max(1) {
+            return Err(RuntimeFault::new(
+                "AIL.RUNTIME.PARALLEL_MAP_LIMIT",
+                span,
+                [("minimum", "1")],
+                [("limit", limit.to_string())],
+            ));
+        }
+        let Expr::CapabilityCall {
+            receiver,
+            operation,
+            arguments,
+            ..
+        } = &body.tail
+        else {
+            return Err(RuntimeFault::new(
+                "AIL.RUNTIME.PARALLEL_MAP_BODY",
+                span,
+                [("body", "direct outbound call")],
+                std::iter::empty::<(&str, &str)>(),
+            ));
+        };
+        let Some(RuntimeBinding::Capability(interface)) = locals.get(receiver) else {
+            return Err(RuntimeFault::new(
+                "AIL.RUNTIME.INVALID_CAPABILITY",
+                span,
+                [("receiver", receiver)],
+                std::iter::empty::<(&str, &str)>(),
+            ));
+        };
+        let signature = self
+            .environment
+            .interface(interface)
+            .and_then(|i| i.operation(operation))
+            .ok_or_else(|| {
+                RuntimeFault::new(
+                    "AIL.RUNTIME.CAPABILITY_CONTRACT",
+                    span,
+                    [("operation", operation)],
+                    std::iter::empty::<(&str, &str)>(),
+                )
+            })?;
+        let CapabilityOperationKind::Outbound(metadata) = &signature.kind else {
+            return Err(RuntimeFault::new(
+                "AIL.RUNTIME.OUTBOUND_BATCH_UNSUPPORTED",
+                span,
+                [("operation", operation)],
+                std::iter::empty::<(&str, &str)>(),
+            ));
+        };
+        let mut requests = Vec::with_capacity(values.len());
+        for value in values {
+            let mut nested = locals.clone();
+            nested.insert(binding.to_owned(), RuntimeBinding::Value(value));
+            let evaluated = arguments
+                .iter()
+                .map(|arg| self.eval_expr(arg, &nested))
+                .collect::<Result<Vec<_>, _>>()?;
+            let timeout_ms = evaluated
+                .get(metadata.timeout_argument_index)
+                .and_then(|v| {
+                    if let RuntimeValue::Int(v) = v {
+                        u64::try_from(*v).ok()
+                    } else {
+                        None
+                    }
+                })
+                .filter(|v| *v > 0 && u128::from(*v) <= metadata.maximum_timeout_ms)
+                .ok_or_else(|| {
+                    RuntimeFault::new(
+                        "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+                        span,
+                        [("maximum", metadata.maximum_timeout_ms.to_string())],
+                        [(
+                            "argument_index",
+                            metadata.timeout_argument_index.to_string(),
+                        )],
+                    )
+                })?;
+            let cancellation = match evaluated.get(metadata.cancellation_argument_index) {
+                Some(RuntimeValue::Cancellation(value)) => value.clone(),
+                _ => {
+                    return Err(RuntimeFault::new(
+                        "AIL.RUNTIME.ARGUMENT_TYPE",
+                        span,
+                        [("type", "Cancellation")],
+                        std::iter::empty::<(&str, &str)>(),
+                    ));
+                }
+            };
+            requests.push(OutboundCapabilityRequest {
+                receiver: receiver.clone(),
+                interface: interface.clone(),
+                operation: operation.clone(),
+                arguments: evaluated,
+                timeout_ms,
+                cancellation,
+            });
+        }
+        if !self
+            .capabilities
+            .supports_outbound_batch(receiver, interface, operation)
+        {
+            return Err(RuntimeFault::new(
+                "AIL.RUNTIME.OUTBOUND_BATCH_UNSUPPORTED",
+                span,
+                [("operation", operation)],
+                std::iter::empty::<(&str, &str)>(),
+            ));
+        }
+        let mut results = vec![None; requests.len()];
+        let mut active = BTreeMap::new();
+        let mut next = 0;
+        let mut completion = 0;
+        while next < requests.len() || !active.is_empty() {
+            while next < requests.len() && active.len() < limit {
+                let handle = self.capabilities.start_outbound(&requests[next])?;
+                if active.contains_key(&handle) {
+                    return Err(RuntimeFault::new(
+                        "AIL.RUNTIME.OUTBOUND_HOST_CONTRACT",
+                        span,
+                        [("handle", "unique")],
+                        [("handle", handle.0)],
+                    ));
+                }
+                self.calls.push(ObservedCapabilityCall {
+                    receiver: receiver.clone(),
+                    interface: interface.clone(),
+                    operation: operation.clone(),
+                    arguments: requests[next].arguments.clone(),
+                    result: None,
+                    outbound: Some(ObservedOutboundCall {
+                        effect: format!("{receiver}.{operation}"),
+                        timeout_ms: requests[next].timeout_ms,
+                        cancellation_token_identity: requests[next].cancellation.id.clone(),
+                        outcome: None,
+                        batch_index: Some(next),
+                        start_order: Some(next),
+                        completion_order: None,
+                    }),
+                });
+                active.insert(handle, next);
+                next += 1;
+            }
+            if active.is_empty() {
+                break;
+            }
+            let handles = active.keys().cloned().collect::<Vec<_>>();
+            let checked = self.capabilities.check_outbound(&handles)?;
+            if checked.cancelled {
+                for (handle, index) in &active {
+                    let _ = self.capabilities.cancel_outbound(handle);
+                    results[*index] = Some(self.closed_outcome(
+                        signature,
+                        metadata,
+                        &OutboundProviderOutcome::Cancelled,
+                    ));
+                }
+                for result in results.iter_mut().skip(next) {
+                    *result = Some(self.closed_outcome(
+                        signature,
+                        metadata,
+                        &OutboundProviderOutcome::Cancelled,
+                    ));
+                }
+                break;
+            }
+            if checked.completed.is_empty() {
+                return Err(RuntimeFault::new(
+                    "AIL.RUNTIME.OUTBOUND_HOST_CONTRACT",
+                    span,
+                    [("completed", "non-empty while active")],
+                    std::iter::empty::<(&str, &str)>(),
+                ));
+            }
+            for handle in checked.completed {
+                let Some(index) = active.remove(&handle) else {
+                    return Err(RuntimeFault::new(
+                        "AIL.RUNTIME.OUTBOUND_HOST_CONTRACT",
+                        span,
+                        [("handle", "known active")],
+                        [("handle", handle.0)],
+                    ));
+                };
+                let outcome = self.capabilities.collect_outbound(&handle)?;
+                let value = self.closed_outcome(signature, metadata, &outcome);
+                self.validate_capability_result(&value, &signature.result, span)?;
+                let call = self
+                    .calls
+                    .iter_mut()
+                    .find(|c| c.outbound.as_ref().and_then(|o| o.batch_index) == Some(index))
+                    .unwrap();
+                call.result = Some(value.clone());
+                let outbound = call.outbound.as_mut().unwrap();
+                outbound.outcome = Some(outcome);
+                outbound.completion_order = Some(completion);
+                completion += 1;
+                results[index] = Some(value);
+            }
+        }
+        Ok(RuntimeValue::List(
+            results
+                .into_iter()
+                .map(|v| v.expect("all batch slots closed"))
+                .collect(),
+        ))
+    }
+
+    fn closed_outcome(
+        &self,
+        signature: &crate::CapabilityOperation,
+        metadata: &crate::OutboundCapabilityMetadata,
+        outcome: &OutboundProviderOutcome,
+    ) -> RuntimeValue {
+        match outcome {
+            OutboundProviderOutcome::Returned(value) => value.clone(),
+            OutboundProviderOutcome::TimedOut => RuntimeValue::variant(
+                &signature.result,
+                variant_case_name(
+                    self.unit,
+                    &signature.result,
+                    &metadata.timed_out_case_identity,
+                )
+                .unwrap(),
+                None,
+            ),
+            OutboundProviderOutcome::Cancelled => RuntimeValue::variant(
+                &signature.result,
+                variant_case_name(
+                    self.unit,
+                    &signature.result,
+                    &metadata.cancelled_case_identity,
+                )
+                .unwrap(),
+                None,
+            ),
         }
     }
 
@@ -592,12 +918,12 @@ impl Evaluator<'_> {
         span: Span,
         locals: &BTreeMap<String, RuntimeBinding>,
     ) -> Result<RuntimeValue, RuntimeFault> {
-        let arguments = arguments
-            .iter()
-            .map(|argument| self.eval_expr(argument, locals))
-            .collect::<Result<Vec<_>, _>>()?;
         if crate::semantics::intrinsic_signature(receiver, operation).is_some() {
-            return eval_intrinsic(receiver, operation, &arguments, span);
+            let values = arguments
+                .iter()
+                .map(|argument| self.eval_expr(argument, locals))
+                .collect::<Result<Vec<_>, _>>()?;
+            return eval_intrinsic(receiver, operation, &values, span);
         }
         let Some(RuntimeBinding::Capability(interface)) = locals.get(receiver) else {
             return Err(RuntimeFault::new(
@@ -620,6 +946,71 @@ impl Evaluator<'_> {
                 )
             })?;
         if let CapabilityOperationKind::Outbound(metadata) = &signature.kind {
+            // Controls are evaluated and validated before any non-control argument can
+            // perform outside work. Remaining arguments retain source order.
+            let timeout_value = self.eval_expr(
+                arguments
+                    .get(metadata.timeout_argument_index)
+                    .ok_or_else(|| {
+                        RuntimeFault::new(
+                            "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+                            span,
+                            [("argument", "timeout")],
+                            [("value", "missing")],
+                        )
+                    })?,
+                locals,
+            )?;
+            let cancellation_value = self.eval_expr(
+                arguments
+                    .get(metadata.cancellation_argument_index)
+                    .ok_or_else(|| {
+                        RuntimeFault::new(
+                            "AIL.RUNTIME.ARGUMENT_TYPE",
+                            span,
+                            [("type", "Cancellation")],
+                            [("value", "missing")],
+                        )
+                    })?,
+                locals,
+            )?;
+            let valid_timeout = matches!(&timeout_value, RuntimeValue::Int(value) if *value > 0 && *value <= metadata.maximum_timeout_ms && u64::try_from(*value).is_ok());
+            if !valid_timeout {
+                return Err(RuntimeFault::new(
+                    "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+                    span,
+                    [("maximum", metadata.maximum_timeout_ms.to_string())],
+                    [(
+                        "argument_index",
+                        metadata.timeout_argument_index.to_string(),
+                    )],
+                ));
+            }
+            if !matches!(cancellation_value, RuntimeValue::Cancellation(_)) {
+                return Err(RuntimeFault::new(
+                    "AIL.RUNTIME.ARGUMENT_TYPE",
+                    span,
+                    [("type", "Cancellation")],
+                    [(
+                        "argument_index",
+                        metadata.cancellation_argument_index.to_string(),
+                    )],
+                ));
+            }
+            let mut evaluated = vec![None; arguments.len()];
+            evaluated[metadata.timeout_argument_index] = Some(timeout_value);
+            evaluated[metadata.cancellation_argument_index] = Some(cancellation_value);
+            let arguments = arguments
+                .iter()
+                .enumerate()
+                .map(|(index, expression)| {
+                    if let Some(value) = evaluated[index].take() {
+                        Ok(value)
+                    } else {
+                        self.eval_expr(expression, locals)
+                    }
+                })
+                .collect::<Result<Vec<_>, RuntimeFault>>()?;
             let timeout = arguments
                 .get(metadata.timeout_argument_index)
                 .and_then(|value| {
@@ -694,6 +1085,9 @@ impl Evaluator<'_> {
                     timeout_ms,
                     cancellation_token_identity: cancellation.id.clone(),
                     outcome: None,
+                    batch_index: None,
+                    start_order: None,
+                    completion_order: None,
                 }),
             });
             let outcome = self.capabilities.call_outbound(&request)?;
@@ -732,6 +1126,10 @@ impl Evaluator<'_> {
             call.result = Some(result.clone());
             return Ok(result);
         }
+        let arguments = arguments
+            .iter()
+            .map(|argument| self.eval_expr(argument, locals))
+            .collect::<Result<Vec<_>, _>>()?;
         self.calls.push(ObservedCapabilityCall {
             receiver: receiver.to_owned(),
             interface: interface.clone(),

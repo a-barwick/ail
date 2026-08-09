@@ -1,0 +1,12 @@
+module batch_lookup.types;
+
+record LookupRequest identity "batch-lookup.request.v1" {
+  key identity "key": Text;
+}
+
+variant LookupOutcome identity "batch-lookup.outcome.v1" {
+  Found identity "found"(Text);
+  NotFound identity "not-found";
+  TimedOut identity "timed-out";
+  Cancelled identity "cancelled";
+}

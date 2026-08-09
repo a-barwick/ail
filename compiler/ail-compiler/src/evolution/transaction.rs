@@ -448,7 +448,7 @@ impl EvolutionWorkspace {
         }
 
         let child_revision_id = self.next_revision_id(&request.base_revision_id);
-        let candidate = match StoredSourceSet::build(
+        let mut candidate = match StoredSourceSet::build(
             &self.id,
             &child_revision_id,
             Some(request.base_revision_id.clone()),
@@ -470,6 +470,13 @@ impl EvolutionWorkspace {
                 ));
             }
         };
+        candidate
+            .revision
+            .architecture_settings_digest
+            .clone_from(&base.revision.architecture_settings_digest);
+        candidate
+            .architecture_config
+            .clone_from(&base.architecture_config);
 
         if let Some((identity, location)) = incompatible_identity(base, &candidate) {
             return ChangeResponse::Rejected(self.failure(

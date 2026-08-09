@@ -1359,6 +1359,10 @@ impl<'a> IndexBuilder<'a> {
             Expr::Match {
                 scrutinee, arms, ..
             } => self.index_match(scrutinee, arms, identity_key, locals),
+            Expr::ParallelMap { source, body, .. } => {
+                self.index_expression(source, &format!("{identity_key}:source"), locals);
+                self.index_nested_block(body, &format!("{identity_key}:body"), locals);
+            }
         }
     }
 
@@ -1591,6 +1595,19 @@ impl<'a> IndexBuilder<'a> {
                 }
                 self.block_type(&arm.body, &arm_locals)
             }
+            Expr::ParallelMap {
+                source, body, span, ..
+            } => {
+                let (_, maximum) = self
+                    .expression_type(source, locals)?
+                    .as_list()
+                    .map(|(e, m)| (e.clone(), m))?;
+                Some(TypeRef::list(
+                    self.block_type(body, locals)?,
+                    maximum,
+                    *span,
+                ))
+            }
         }
     }
 
@@ -1762,6 +1779,10 @@ impl<'a> IndexBuilder<'a> {
                     }
                     self.collect_block_dependencies(&arm.body, &arm_locals, dependencies);
                 }
+            }
+            Expr::ParallelMap { source, body, .. } => {
+                self.collect_expression_dependencies(source, locals, dependencies);
+                self.collect_block_dependencies(body, locals, dependencies);
             }
         }
     }
@@ -1969,6 +1990,7 @@ struct LocalBindingIndex {
 fn expression_kind(expression: &Expr) -> &'static str {
     match expression {
         Expr::Map { .. } => "map",
+        Expr::ParallelMap { .. } => "parallel-map",
         Expr::Text { .. } => "text-literal",
         Expr::Integer { .. } => "integer-literal",
         Expr::Name { .. } => "name-reference",

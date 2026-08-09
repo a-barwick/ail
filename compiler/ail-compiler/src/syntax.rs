@@ -312,6 +312,14 @@ pub enum Expr {
         body: Box<Block>,
         span: Span,
     },
+    ParallelMap {
+        binding: String,
+        source: Box<Expr>,
+        limit: u128,
+        limit_spelling: String,
+        body: Box<Block>,
+        span: Span,
+    },
 }
 
 impl Expr {
@@ -328,7 +336,8 @@ impl Expr {
             | Self::FieldAccess { span, .. }
             | Self::If { span, .. }
             | Self::Match { span, .. }
-            | Self::Map { span, .. } => *span,
+            | Self::Map { span, .. }
+            | Self::ParallelMap { span, .. } => *span,
         }
     }
 }

@@ -345,6 +345,9 @@ impl Parser {
         if self.starts_map_expression() {
             return self.parse_map_expression();
         }
+        if self.starts_parallel_map_expression() {
+            return self.parse_parallel_map_expression();
+        }
         let token = self.current().clone();
         let expression = match token.kind {
             TokenKind::Text => {
@@ -579,6 +582,45 @@ impl Parser {
             && self.tokens.get(self.cursor + 2).is_some_and(|token| {
                 matches!(token.kind, TokenKind::Identifier) && token.text == "in"
             })
+    }
+
+    fn starts_parallel_map_expression(&self) -> bool {
+        self.at_identifier("parallel")
+            && self.tokens.get(self.cursor + 1).is_some_and(|token| {
+                matches!(token.kind, TokenKind::Identifier) && token.text == "map"
+            })
+    }
+
+    fn parse_parallel_map_expression(&mut self) -> Option<Expr> {
+        let start = self.advance().span.start;
+        self.advance(); // contextual `map`
+        let binding = self.take_identifier()?;
+        if !self.at_identifier("in") {
+            self.report_expected("in");
+            return None;
+        }
+        self.advance();
+        let source = Box::new(self.parse_expression_before_block()?);
+        if !self.at_identifier("limit") {
+            self.report_expected("limit");
+            return None;
+        }
+        self.advance();
+        if !self.at(TokenKind::Integer) {
+            self.report_expected("unsigned integer");
+            return None;
+        }
+        let limit_spelling = self.advance().text.clone();
+        let limit = limit_spelling.parse().unwrap_or(u128::MAX);
+        let body = Box::new(self.parse_block()?);
+        Some(Expr::ParallelMap {
+            binding,
+            source,
+            limit,
+            limit_spelling,
+            span: Span::new(start, body.span.end),
+            body,
+        })
     }
 
     fn at_identifier(&self, spelling: &str) -> bool {

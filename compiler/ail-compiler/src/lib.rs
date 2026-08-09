@@ -42,7 +42,8 @@ pub use evolution::{
 };
 pub use interpreter::{
     CancellationToken, CapabilityProvider, ObservedCapabilityCall, ObservedOutboundCall,
-    OutboundCapabilityRequest, OutboundProviderOutcome, RuntimeFault, RuntimeValue,
+    OutboundBatchCheck, OutboundCapabilityRequest, OutboundProviderOutcome, OutboundRequestHandle,
+    RuntimeFault, RuntimeValue,
 };
 pub use lexer::{Keyword, Span, Token, TokenKind, lex, reconstruct};
 pub use parser::{ParseResult, parse};

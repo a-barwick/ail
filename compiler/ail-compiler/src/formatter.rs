@@ -257,6 +257,20 @@ fn format_expression(
             body,
             ..
         } => format_map_expression(output, binding, source, body, records, indent),
+        Expr::ParallelMap {
+            binding,
+            source,
+            limit_spelling,
+            body,
+            ..
+        } => {
+            write!(output, "parallel map {binding} in ").expect("writing to String cannot fail");
+            format_expression(output, source, records, indent);
+            writeln!(output, " limit {limit_spelling} {{").expect("writing to String cannot fail");
+            format_block_body(output, body, records, indent + 1);
+            write_indent(output, indent);
+            output.push('}');
+        }
     }
 }
 

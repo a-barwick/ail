@@ -1,0 +1,8 @@
+module batch_lookup.service;
+import batch_lookup.types as types;
+
+fn lookup_batch(requests: List<types.LookupRequest, 8>, timeout: Int, cancellation: Cancellation, dependency: capability DependencyClient) -> List<types.LookupOutcome, 8> effects { dependency.fetch } {
+  parallel map item in requests limit 3 {
+    dependency.fetch(item, timeout, cancellation)
+  }
+}

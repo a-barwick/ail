@@ -803,6 +803,7 @@ impl<'a> Checker<'a> {
         self.check_expr(&binding.value, function, locals)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn check_expr(
         &mut self,
         expression: &Expr,
@@ -884,6 +885,91 @@ impl<'a> Checker<'a> {
                 body,
                 span,
             } => self.check_map_expression(binding, source, body, *span, function, locals),
+            Expr::ParallelMap {
+                binding,
+                source,
+                limit,
+                body,
+                span,
+                ..
+            } => {
+                let source_type = self.check_expr(source, function, locals)?;
+                let Some((element, max)) = source_type.as_list() else {
+                    self.type_problem(
+                        "AIL.TYPE.PARALLEL_MAP_SOURCE",
+                        *span,
+                        fields([("type_kind", text("bounded list"))]),
+                        fields([("type", text(source_type.to_string()))]),
+                        Vec::new(),
+                        "check-parallel-map-source",
+                    );
+                    return None;
+                };
+                if *limit == 0 || *limit > max {
+                    self.type_problem(
+                        "AIL.TYPE.PARALLEL_MAP_LIMIT",
+                        *span,
+                        fields([("range", text(format!("1..={max}")))]),
+                        fields([("limit", text(limit.to_string()))]),
+                        Vec::new(),
+                        "check-parallel-map-limit",
+                    );
+                }
+                if !body.bindings.is_empty() {
+                    self.type_problem(
+                        "AIL.TYPE.PARALLEL_MAP_BODY",
+                        body.span,
+                        fields([("body", text("one direct outbound capability call"))]),
+                        fields([("let_bindings", text(body.bindings.len().to_string()))]),
+                        Vec::new(),
+                        "check-parallel-map-body",
+                    );
+                }
+                let Expr::CapabilityCall {
+                    receiver,
+                    operation,
+                    ..
+                } = &body.tail
+                else {
+                    self.type_problem(
+                        "AIL.TYPE.PARALLEL_MAP_BODY",
+                        body.tail.span(),
+                        fields([("body", text("one direct outbound capability call"))]),
+                        fields([("body", text("other expression"))]),
+                        Vec::new(),
+                        "check-parallel-map-body",
+                    );
+                    return None;
+                };
+                let outbound = locals
+                    .get(receiver)
+                    .and_then(|binding| {
+                        if let LocalBinding::Capability(interface) = binding {
+                            self.capabilities
+                                .interface(interface)
+                                .and_then(|i| i.operation(operation))
+                        } else {
+                            None
+                        }
+                    })
+                    .is_some_and(|operation| {
+                        matches!(operation.kind, CapabilityOperationKind::Outbound(_))
+                    });
+                if !outbound {
+                    self.capability_problem(
+                        "AIL.CAPABILITY.PARALLEL_MAP_OUTBOUND",
+                        body.tail.span(),
+                        fields([("operation_kind", text("outbound"))]),
+                        BTreeMap::new(),
+                        Vec::new(),
+                        "check-parallel-map-operation",
+                    );
+                }
+                let mut nested = locals.clone();
+                nested.insert(binding.clone(), LocalBinding::Value(element.clone()));
+                let result = self.check_expr(&body.tail, function, &nested)?;
+                Some(TypeRef::list(result, max, *span))
+            }
         }
     }
 
@@ -1804,7 +1890,7 @@ fn collect_calls(expression: &Expr, calls: &mut Vec<(String, Span)>) {
                 calls.extend(calls_in_block(&arm.body));
             }
         }
-        Expr::Map { source, body, .. } => {
+        Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
             collect_calls(source, calls);
             calls.extend(calls_in_block(body));
         }

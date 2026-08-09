@@ -1143,7 +1143,7 @@ fn validate_architecture_operations(
                 }
                 Ok(())
             }
-            Expr::Map { source, body, .. } => {
+            Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
                 visit(source, receivers, config, endpoint_groups)?;
                 validate_architecture_operations(body, receivers, config, endpoint_groups)
             }
@@ -1335,6 +1335,30 @@ fn derive_architecture_expr(
             Expr::FieldAccess { target, .. } => visit(
                 target, source, receivers, config, edges, reads, writes, decisions,
             ),
+            Expr::ParallelMap {
+                source: input,
+                body,
+                ..
+            } => {
+                visit(
+                    input, source, receivers, config, edges, reads, writes, decisions,
+                );
+                for binding in &body.bindings {
+                    visit(
+                        &binding.value,
+                        source,
+                        receivers,
+                        config,
+                        edges,
+                        reads,
+                        writes,
+                        decisions,
+                    );
+                }
+                visit(
+                    &body.tail, source, receivers, config, edges, reads, writes, decisions,
+                );
+            }
             Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => {}
         }
     }
@@ -1685,7 +1709,7 @@ fn qualify_block(block: &mut Block, scope: &BTreeMap<String, String>) {
 
 fn qualify_expression(expression: &mut Expr, scope: &BTreeMap<String, String>) {
     match expression {
-        Expr::Map { source, body, .. } => {
+        Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
             qualify_expression(source, scope);
             qualify_block(body, scope);
         }
@@ -1899,7 +1923,7 @@ fn collect_source_references(
     references: &mut Vec<(String, Span, &'static str)>,
 ) {
     match expression {
-        Expr::Map { source, body, .. } => {
+        Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
             collect_source_references(source, references);
             collect_source_references_block(body, references);
         }
@@ -2478,6 +2502,11 @@ fn walk_expr(
             source: input,
             body,
             ..
+        }
+        | Expr::ParallelMap {
+            source: input,
+            body,
+            ..
         } => {
             walk_expr(input, source, revision_id, path, identities, graph);
             walk_block(body, source, revision_id, path, identities, graph);
@@ -2919,7 +2948,7 @@ fn expression_constructs(block: &Block, type_name: &str) -> bool {
 
 fn expr_constructs(expression: &Expr, type_name: &str) -> bool {
     match expression {
-        Expr::Map { source, body, .. } => {
+        Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
             expr_constructs(source, type_name) || expression_constructs(body, type_name)
         }
         Expr::Call { arguments, .. } => arguments
@@ -2984,7 +3013,7 @@ fn collect_record_bindings(block: &Block, bindings: &mut BTreeMap<String, String
 
 fn collect_nested_bindings(expression: &Expr, bindings: &mut BTreeMap<String, String>) {
     match expression {
-        Expr::Map { source, body, .. } => {
+        Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
             collect_nested_bindings(source, bindings);
             collect_record_bindings(body, bindings);
         }
@@ -3052,7 +3081,7 @@ fn find_capability_expr(
     calls: &mut Vec<(String, String, Vec<Expr>)>,
 ) {
     match expression {
-        Expr::Map { source, body, .. } => {
+        Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
             find_capability_expr(source, receivers, calls);
             calls.extend(find_capability_calls(body, receivers));
         }
@@ -3127,7 +3156,7 @@ fn last_match_type(block: &Block) -> Option<String> {
 
 fn collect_match_types(expression: &Expr, types: &mut Vec<String>) {
     match expression {
-        Expr::Map { source, body, .. } => {
+        Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
             collect_match_types(source, types);
             for binding in &body.bindings {
                 collect_match_types(&binding.value, types);
