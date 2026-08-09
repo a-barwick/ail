@@ -4,7 +4,7 @@ Last updated: 2026-08-09
 
 ## Active milestone
 
-None — M31 is complete and no next build has been selected.
+None — M32 is complete and no next build has been selected.
 
 ## Shipped
 
@@ -31,7 +31,16 @@ The Rust compiler now supports:
   results, revision-bound provider contracts, and deterministic inspection; and
 - one bounded outbound workflow over `List<T, N>` with a fixed concurrency
   limit, input-ordered results, cooperative whole-batch cancellation, separate
-  start/completion traces, and host-supplied start/check/cancel/collect.
+  start/completion traces, effect-free argument preparation, and host-supplied
+  start/check/cancel/collect.
+
+The separate Rust service host now exposes only `POST /v1/lookups:batch`. It
+starts only when revision `r1`, source and capability-setting digests, entry
+function, types, bound eight, limit three, timeout maximum, and
+`dependency.fetch` permission match compiler inspection. Strict JSON rejection
+does zero dependency work; complete execution returns ordered outcomes with the
+pinned revision and digest; unexpected provider/runtime failure returns 502;
+and server-side records retain accurate call lifecycle facts.
 
 The compiler rejects direct and mutual recursion, import cycles, inaccessible
 declarations, ambiguous imports, stale handles, incomplete impact claims, and
@@ -47,11 +56,12 @@ public cases.
 
 ## Hard limit
 
-AIL cannot yet implement a normal production service. Its only repeated-work
-forms are sequential map and one direct bounded outbound map over immutable
-bounded lists. It has no general loops, collection library, mutation, general
-concurrency, general networking, package registry,
-foreign-code boundary, production runtime, native backend, or deployment system.
+AIL now runs one pinned batch lookup behind one fixed HTTP adapter; it cannot
+implement a general production service. Its only repeated-work forms are
+sequential map and one direct bounded outbound map over immutable bounded lists.
+It has no general loops, collection library, mutation, general concurrency,
+general networking or routing, package registry, foreign-code boundary,
+production runtime, native backend, TLS/authentication, or deployment system.
 The outbound provider is synchronous and cooperative: the interpreter cannot
 preempt stuck host code, enforce a hard deadline itself, or roll back remote
 effects. Recursion is rejected rather than bounded.
@@ -64,7 +74,7 @@ Choose one real service behavior still blocked by the current language. Write
 the canonical source, static result, runtime result, diagnostic failures, and
 compiler-interface output first. Then implement the smallest missing semantics
 and run the full existing suite. Do not infer general collection, networking,
-or concurrency semantics from the narrow M29 and M30 contracts.
+routing, or concurrency semantics from the narrow M29–M32 contracts.
 
 Do not restart the old UC-008 M29–M36 plan or the M8 measurement work by default.
 Do not start native lowering, general concurrency, or broad standard-library
@@ -76,6 +86,7 @@ work without an executable workload.
 cargo +1.87.0 fmt --all --check
 cargo +1.87.0 test --workspace
 cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
+cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
 python3 specs/tools/architecture_acceptance.py check
 python3 specs/tools/architecture_contract.py check
 python3 specs/tools/core_contract.py check

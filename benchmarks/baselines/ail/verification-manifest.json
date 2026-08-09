@@ -131,11 +131,11 @@
   "artifact_locks": [
     {
       "path": "Cargo.lock",
-      "sha256": "9e1ac17ead0517103c875a4aed2f5ae86d7f9f6827b8d6736f39ca585cf6f4da"
+      "sha256": "f29e21db37bb203de01fa184664ace86ff4cf02d9494de010c22fcf5e61ff6f1"
     },
     {
       "path": "Cargo.toml",
-      "sha256": "4d81b0edb0b60aa1b4fa49ea5b0d21fbf28017031a94f3b9041c0e71dd76d0de"
+      "sha256": "8ce7a96428364e940e5be9fab9086908726eeb63b71fb2da88a85d0c9ad7a51b"
     },
     {
       "path": "benchmarks/baselines/ail/runner.json",
@@ -195,7 +195,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/interpreter.rs",
-      "sha256": "fc7b8be38e307e9447ca4a8be1fa9107fb76c33352420f10b037b956c18ffbf2"
+      "sha256": "b337f78135116983b36ce7ed07df0f1cf8370482e06d0fa8188d2a04afc4f12d"
     },
     {
       "path": "compiler/ail-compiler/src/lexer.rs",
@@ -215,7 +215,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/semantics.rs",
-      "sha256": "b0b1c457036c12841ba20d00c331b32c0f7571ebd685efc333ccaaeb316fec51"
+      "sha256": "e1d2382113a11a9b93e526ead4251c4e09601ee81e2a0e83723df50d3fa9ade9"
     },
     {
       "path": "compiler/ail-compiler/src/syntax.rs",
@@ -287,7 +287,7 @@
     },
     {
       "path": "specs/README.md",
-      "sha256": "63f917b40f17063753578ae2b67b9303bbb47227189ee6967059a2791b2c286d"
+      "sha256": "a0b97f71c469a10355c751f4cca8f8b243fd6d109c52315fafef6d04a4cd1f83"
     },
     {
       "path": "specs/bounded-list-contract.json",

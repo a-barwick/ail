@@ -53,6 +53,10 @@ its [protocol facts](bounded-outbound-workflow-protocol.json),
 batch lookup under `compiler/examples/batch-lookup/`. It adds no general async,
 threads, retries, or networking.
 
+M32 adds the accepted [pinned HTTP batch-lookup host contract](pinned-http-batch-lookup.md)
+and the separate Rust program under `service-host/`. It adds one fixed endpoint
+around the M31 entry function, not HTTP syntax or ambient authority inside AIL.
+
 Run the dependency-free contract check with:
 
 ```bash
@@ -74,3 +78,6 @@ external cancellation values, closed timeout/cancel completion, and
 revision-bound capability environments.
 M31 authorizes only one fixed-limit direct outbound map and its cooperative host
 lifecycle; general concurrency remains outside the contract.
+M32 authorizes only the pinned batch-lookup HTTP adapter; general routing,
+client-selected revisions, authentication, TLS, retries, and hot reload remain
+outside the contract.

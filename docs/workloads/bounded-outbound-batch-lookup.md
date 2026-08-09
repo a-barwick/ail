@@ -18,3 +18,10 @@ List<LookupOutcome, 8> in input order
 The source is under `compiler/examples/batch-lookup/`. Exact behavior is fixed
 by the [M31 contract](../../specs/bounded-outbound-workflows.md) and checked by
 `compiler/ail-compiler/tests/m31_bounded_outbound_workflows.rs`.
+
+M32 exposes only this entry point at `POST /v1/lookups:batch`. The separate Rust
+host under `service-host/` pins revision `r1`, its source and capability-setting
+digests, the exact function boundary, bound eight, limit three, and
+`dependency.fetch` permission before accepting requests. The
+[M32 host contract](../../specs/pinned-http-batch-lookup.md) fixes the HTTP,
+JSON, version, failure, and audit behavior.

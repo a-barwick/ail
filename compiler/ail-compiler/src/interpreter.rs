@@ -767,6 +767,15 @@ impl Evaluator<'_> {
                     ));
                 }
             }
+            for (offset, handle) in checked.completed.iter().enumerate() {
+                let (_, call_index) = active[handle];
+                self.calls[call_index]
+                    .outbound
+                    .as_mut()
+                    .unwrap()
+                    .completion_order = Some(completion + offset);
+            }
+            completion += checked.completed.len();
             for handle in checked.completed {
                 let (index, call_index) = active[&handle];
                 let outcome = match self.capabilities.collect_outbound(&handle) {
@@ -781,9 +790,7 @@ impl Evaluator<'_> {
                 {
                     let outbound = self.calls[call_index].outbound.as_mut().unwrap();
                     outbound.outcome = Some(outcome);
-                    outbound.completion_order = Some(completion);
                 }
-                completion += 1;
                 if let Err(fault) = self.validate_capability_result(&value, &signature.result, span)
                 {
                     request_batch_cancellation(self.capabilities, &active);

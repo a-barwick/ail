@@ -13,9 +13,14 @@ size, and minimal-context node count.
 A typed edge is a source identity, target identity, and one of `calls`,
 `type-use`, `verifies`, `capability-use`, `state-read`, `state-write`, or
 `delegates`. Calls and all kinds except `verifies` are direct dependency edges.
-Capability and state edges name the declaration or access site directly; no
-transitive authority is inferred. Coverage lists every analyzed architecture
-group and every unavailable boundary with a reason.
+In the original M24 fixture graph, capability and state edges name the direct
+declaration or access site and no caller facts are inferred through `calls`.
+M31 source-backed analysis has a different input contract: when the compiler
+derives units from checked AIL source, each caller unit receives every outside
+operation and state read/write requirement reachable through its local or
+linked-module calls. Those compiler-derived caller requirements do not change
+the meaning of direct M24 fixture edges. Coverage lists every analyzed
+architecture group and every unavailable boundary with a reason.
 
 `ArchitectureRequest.analysis_scope` names one executable-unit identity. A
 snapshot reports, in order, that unit, its module, its dependency component,
@@ -43,7 +48,10 @@ contributors. Direct dependencies are unique targets of M23
 `DEPENDENCY_KINDS`, excluding same-aggregate targets. Declared capabilities are
 direct namespace IDs such as `jobs_store`; operation/access sites remain
 contributors and are not capability values. Values are never transitive;
-state read and write sets are unique direct targets of their respective edges;
+for original M24 fixture input, state read and write sets are unique direct
+targets of their respective edges. Source-backed caller units instead contain
+the reachable state requirements described above before these metrics are
+aggregated;
 unit component size is its containing SCC size, component size is member count,
 and module/group component size is the maximum containing SCC size. Minimal
 context is the deduplicated one-hop closure after selecting all aggregate member

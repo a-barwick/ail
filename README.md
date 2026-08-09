@@ -12,7 +12,9 @@ interpreter, computes schema impact, validates atomic multi-file changes, and
 enforces a small architecture policy. M28 added ordinary function calls and
 explicit modules, import aliases, and qualified references. M29 added immutable
 bounded lists and deterministic sequential map. M30 added one cooperative,
-revision-bound outbound dependency request.
+revision-bound outbound dependency request. M31 added one fixed-limit outbound
+map. M32 added a separate revision-pinned HTTP host for the canonical batch
+lookup.
 
 ## What works now
 
@@ -27,6 +29,10 @@ revision-bound outbound dependency request.
 - complete external list validation before capability checks or calls;
 - explicit outbound capability metadata, bounded millisecond timeout, opaque
   cancellation, and closed timeout/cancel results;
+- one direct fixed-limit outbound map with input-aligned results and accurate
+  start/completion traces;
+- one strict `POST /v1/lookups:batch` Rust host pinned to compiler revision,
+  source, settings, function, type, bound, concurrency, and permission facts;
 - rejection of recursive call cycles and import cycles;
 - canonical formatting and structured parse, type, import, and effect errors;
 - immutable revisions, revision-scoped handles, inspected semantic facts,
@@ -44,14 +50,15 @@ helper-split versions that move store authority into transport.
 
 ## Hard limits
 
-AIL is not ready for production application development. Sequential map over an
-immutable bounded list is its only repeated-work form. It has no general loops,
-collection library, mutation, concurrency, general networking, package registry,
+AIL is not ready for general production application development. Repeated work
+is limited to sequential map and one fixed-limit outbound map over immutable
+bounded lists. It has no general loops, collection library, mutation,
+unrestricted concurrency, general networking or routing, package registry,
 foreign-function system, production runtime, native-code backend, or deployment
-toolchain. Recursion is rejected rather than bounded or executed. The
-interpreter is a semantic test engine, not a production runtime. Its outbound
-provider is synchronous and cooperative rather than a hard-preemptive network
-runtime.
+toolchain. The M32 host is one fixed adapter without TLS or authentication.
+Recursion is rejected rather than bounded or executed. The interpreter is a
+semantic test engine, not a production runtime. Its outbound provider is
+synchronous and cooperative rather than a hard-preemptive network runtime.
 
 The broader designs for memory, concurrency, replay, resources, packages, and
 foreign code remain unresolved. The implemented architecture API covers the
@@ -100,6 +107,7 @@ implementations, specification checkers, and architecture-policy tests. See
 
 ```text
 compiler/      Rust compiler, semantic APIs, interpreter, and examples
+service-host/  Revision-pinned M32 batch-lookup HTTP host
 specs/         Numbered rules, protocol shapes, fixtures, and contract checkers
 benchmarks/    Job-service cases, baseline implementations, and harnesses
 docs/          Product intent, requirements, design, decisions, and status

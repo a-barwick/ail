@@ -13,8 +13,12 @@ adds one bounded scheduler, not threads or general asynchronous programming.
 `parallel map item in requests limit 3 { operation(...) }` accepts a direct
 bounded-list function parameter with type
 `List<T, N>` and a canonical integer limit in `1..=N`. The body is exactly one
-direct outbound capability call with no bindings. Its result is `List<U, N>`.
-The contextual words remain ordinary identifiers outside this form.
+direct outbound capability call with no bindings. Call arguments may evaluate
+values, fields, records, variants, built-in operations, and effect-free helper
+calls. A direct capability call in an argument, or a helper that reaches any
+capability operation, is rejected so argument preparation cannot perform hidden
+outside work. Its result is `List<U, N>`. The contextual words remain ordinary
+identifiers outside this form.
 
 ### M31-LANG-002 — Exact authority and complete effects
 
@@ -43,14 +47,20 @@ including returned, timed-out, cancelled, and expected remote outcomes.
 When check reports cancellation, the interpreter collects simultaneously
 reported completions, starts no more work, requests cancellation of active
 handles, preserves completed values, and marks every other position Cancelled.
-The host must cooperate; AIL cannot forcibly interrupt stuck host code.
+Every successfully started active call records that synthesized cancellation
+outcome and result without a host completion order. The host must cooperate;
+AIL cannot forcibly interrupt stuck host code.
 
 ### M31-RUNTIME-003 — Unexpected failure is fail-stop
 
 An unexpected start, check, collect, or result-contract failure stops new
 starts, requests cancellation of active handles, preserves the started trace,
-and returns the original fault. Cleanup faults do not replace it. No retry or
-remote rollback is implied.
+and returns the original fault. A failed start is not a started call and receives
+no start order. When a failed start cancels already-active calls, those calls
+record synthesized Cancelled results but no completion order. Cleanup faults do
+not replace the original fault. A handle reported complete receives host
+completion order even if collection then fails; its outcome and result remain
+absent. No retry or remote rollback is implied.
 
 ### M31-RUNTIME-004 — Narrow host lifecycle
 
@@ -85,7 +95,8 @@ host settings, and behavior before publication. Failure publishes no child.
 `compiler/examples/batch-lookup/` maps at most eight requests with limit three.
 `m31_bounded_outbound_workflows.rs` proves bounded activity, out-of-order
 completion with aligned results, zero-start rejection, stable timeout/cancel
-positions, whole-batch cancellation, fail-stop cleanup, and inspection.
+positions, effect-free argument preparation, whole-batch cancellation, failed
+start trace accuracy, fail-stop cleanup, and inspection.
 `source_architecture.rs` proves inherited settings and transitive state facts.
 
 ## Non-goals

@@ -14,11 +14,14 @@
     {"path": "compiler/examples/batch-lookup/types.ail", "sha256": "6624472958848614af7ce081be573b25958b93a511d0ef09ee2b86892dfc7188"}
   ],
   "proof_tests": [
+    "parallel_map_arguments_reject_outside_operations_but_allow_effect_free_helpers",
     "eight_requests_never_exceed_three_and_results_remain_in_input_order",
     "invalid_inputs_start_zero_requests_and_empty_input_is_empty",
     "whole_batch_cancellation_marks_every_uncompleted_position_without_new_starts",
+    "failed_third_start_records_and_cancels_only_successfully_started_requests",
     "unexpected_host_failure_stops_starts_cancels_active_and_preserves_original_fault",
     "malformed_host_completions_fail_before_collection_and_trace_collected_faults",
+    "collect_failure_preserves_reported_completion_order_and_original_fault",
     "repeated_workflows_update_their_own_observed_calls",
     "inspection_reports_the_complete_revision_bound_workflow",
     "source_inspection_indexes_the_parallel_map_binding"

@@ -25,7 +25,10 @@ This directory contains the Rust compiler and deterministic interpreter.
 - linked source-set function inspection for module, list element identity,
   bound, effects, capabilities, and dependencies; and
 - revision-bound outbound operation contracts with explicit timeout and
-  cancellation controls, closed completion results, and observed request facts.
+  cancellation controls, closed completion results, and observed request facts;
+  and
+- one fixed-limit outbound `parallel map` with input-aligned results,
+  cooperative batch cancellation, and separate start/completion traces.
 
 ## Calls and modules
 
@@ -56,7 +59,7 @@ index, producing one aligned result with the same declared bound.
 
 External list arguments are completely validated before capability availability
 checks or calls. The feature has no literals, indexing, mutation, filter, fold,
-general loops, nested lists, or parallel evaluation. See
+general loops, or nested lists. See
 `examples/batch-cancellation/` for the executable three-module service.
 
 ## Cooperative outbound requests
@@ -68,6 +71,18 @@ case identities. The interpreter uses a separate outbound provider path and
 turns cooperative timeout or cancellation into closed AIL values. It does not
 provide URLs, retries, asynchronous execution, hard preemption, or remote
 rollback. See `examples/outbound-request/`.
+
+## Bounded outbound workflow
+
+M31 accepts `parallel map item in requests limit 3 { dependency.fetch(...) }`
+for exactly one outbound operation over a bounded-list parameter. Arguments may
+use values, construction, built-ins, and effect-free helpers; direct or
+helper-mediated capability operations in arguments are rejected. The
+interpreter prepares and validates the whole batch before work, starts in input
+order with at most the fixed limit active, and stores host completions at input
+positions. It records only successful starts and gives synthesized cancellation
+results to started active calls without inventing host completion order. See
+`examples/batch-lookup/`.
 
 ## APIs
 
@@ -96,10 +111,11 @@ The exact protocol and language contracts are under [`../specs`](../specs/README
 
 There is no general iteration or collection library, mutation, concurrency,
 general networking, package registry, foreign-function interface, production runtime,
-native backend, JIT, LLVM lowering, or deployment system. Sequential map over
-bounded lists is the only repeated-work form. The interpreter is for semantic
-execution and tests. Its outbound provider is synchronous and cooperative.
-Recursive calls are rejected.
+native backend, JIT, LLVM lowering, or deployment system. Repeated work is
+limited to sequential map and one direct fixed-limit outbound map over bounded
+lists; unrestricted concurrency remains unsupported. The interpreter is for
+semantic execution and tests. Its outbound provider is synchronous and
+cooperative. Recursive calls are rejected.
 
 ## Verify
 
@@ -112,6 +128,8 @@ cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
 cargo +1.87.0 test --workspace --test m28_composition
 cargo +1.87.0 test --workspace --test m29_bounded_lists
 cargo +1.87.0 test --workspace --test m30_outbound_requests
+cargo +1.87.0 test --workspace --test m31_bounded_outbound_workflows
+cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
 python3 specs/tools/bounded_list_contract.py check
 python3 specs/tools/outbound_request_contract.py check
 PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public

@@ -29,7 +29,7 @@ def check() -> None:
     for proof in contract["proof_tests"]:
         require(f"fn {proof}()" in tests, f"missing proof test {proof}")
     require(protocol["host_interface"] == ["start_outbound", "check_outbound", "cancel_outbound", "collect_outbound"], "host lifecycle drift")
-    print("M31 bounded outbound workflow contract check passed: 10 rules, 8 executable proofs.")
+    print("M31 bounded outbound workflow contract check passed: 10 rules, 11 executable proofs.")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 //! Pinned HTTP host for the canonical M32 batch-lookup service.
 
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 
 use ail_compiler::{
     CancellationToken, CapabilityEnvironment, CapabilityInterface, CapabilityOperation,
@@ -26,6 +26,10 @@ pub const LIST_BOUND: u128 = 8;
 pub const CONCURRENCY_LIMIT: u128 = 3;
 pub const MAXIMUM_TIMEOUT_MS: u128 = 1_000;
 pub const BODY_LIMIT_BYTES: usize = 16 * 1024;
+pub const PINNED_SOURCE_SET_DIGEST: &str =
+    "sha256:2b9ad64d61250d178d5e2217bee078ab46a668c7105db594cc2442d50ea3bc75";
+pub const PINNED_CAPABILITY_ENVIRONMENT_DIGEST: &str =
+    "sha256:4a81ab035f4674c115900a414e217c19e3e71eeb6c98f6fc995136adce1ebc59";
 
 const TYPES: &str = include_str!("../../compiler/examples/batch-lookup/types.ail");
 const SERVICE: &str = include_str!("../../compiler/examples/batch-lookup/service.ail");
@@ -81,7 +85,7 @@ pub struct CallRecord {
 }
 
 struct Inner {
-    workspace: Arc<RwLock<EvolutionWorkspace>>,
+    workspace: EvolutionWorkspace,
     provider: Mutex<Box<dyn CapabilityProvider + Send>>,
     config: PinnedServiceConfig,
     records: Mutex<Vec<ExecutionRecord>>,
@@ -98,7 +102,7 @@ impl ServiceHost {
     /// Returns the first configured or compiler-inspected field that differs from the M32 pins.
     #[allow(clippy::too_many_lines)]
     pub fn new(
-        workspace: Arc<RwLock<EvolutionWorkspace>>,
+        workspace: &EvolutionWorkspace,
         provider: Box<dyn CapabilityProvider + Send>,
         config: PinnedServiceConfig,
     ) -> Result<Self, StartupError> {
@@ -118,11 +122,8 @@ impl ServiceHost {
             MAXIMUM_TIMEOUT_MS,
             config.maximum_timeout_ms,
         )?;
-        {
-            let ws = workspace
-                .read()
-                .map_err(|_| startup("workspace", "readable", "poisoned"))?;
-            let revision = ws
+        let pinned_workspace = {
+            let revision = workspace
                 .revision(&config.revision_id)
                 .ok_or_else(|| startup("revision_id", &config.revision_id, "not retained"))?;
             exact(
@@ -135,7 +136,7 @@ impl ServiceHost {
                 &revision.capability_environment_digest,
                 &config.capability_environment_digest,
             )?;
-            let inspection = ws
+            let inspection = workspace
                 .inspect_function(&config.revision_id, &config.entry_function)
                 .map_err(|error| startup("entry_function", ENTRY_FUNCTION, error.code))?;
             let request = inspection
@@ -196,9 +197,10 @@ impl ServiceHost {
                 MAXIMUM_TIMEOUT_MS,
                 outbound.maximum_timeout_ms,
             )?;
-        }
+            workspace.clone()
+        };
         Ok(Self(Arc::new(Inner {
-            workspace,
+            workspace: pinned_workspace,
             provider: Mutex::new(provider),
             config,
             records: Mutex::new(Vec::new()),
@@ -211,10 +213,6 @@ impl ServiceHost {
             .route("/v1/lookups:batch", post(handle))
             .layer(DefaultBodyLimit::max(BODY_LIMIT_BYTES))
             .with_state(self.clone())
-    }
-    #[must_use]
-    pub fn workspace(&self) -> Arc<RwLock<EvolutionWorkspace>> {
-        Arc::clone(&self.0.workspace)
     }
     #[must_use]
     pub fn execution_records(&self) -> Vec<ExecutionRecord> {
@@ -309,14 +307,14 @@ async fn handle(
         RuntimeValue::Int(input.timeout_ms),
         RuntimeValue::Cancellation(CancellationToken::new(format!("m32-{token}"))),
     ];
-    let response = match (host.0.workspace.read(), host.0.provider.lock()) {
-        (Ok(workspace), Ok(mut provider)) => workspace.execute(
+    let response = match host.0.provider.lock() {
+        Ok(mut provider) => host.0.workspace.execute(
             &host.0.config.revision_id,
             &host.0.config.entry_function,
             arguments,
             provider.as_mut(),
         ),
-        _ => return gateway_error("host_lock_failure"),
+        Err(_) => return gateway_error("host_lock_failure"),
     };
     let (calls, failure_code) = match &response {
         ExecutionResponse::Completed(value) => (&value.calls, None),
@@ -464,20 +462,20 @@ pub fn canonical_workspace() -> Result<EvolutionWorkspace, ail_compiler::Evoluti
     )
 }
 
-/// Reads the compiler-owned digests and constructs the exact M32 pin set.
+/// Constructs the exact M32 pin set and confirms that its revision is retained.
 ///
 /// # Errors
 /// Returns an error when r1 is not retained in the supplied workspace.
 pub fn canonical_config(
     workspace: &EvolutionWorkspace,
 ) -> Result<PinnedServiceConfig, StartupError> {
-    let revision = workspace
+    workspace
         .revision("r1")
         .ok_or_else(|| startup("revision_id", "r1", "not retained"))?;
     Ok(PinnedServiceConfig {
         revision_id: "r1".into(),
-        source_set_digest: revision.source_set_digest.clone(),
-        capability_environment_digest: revision.capability_environment_digest.clone(),
+        source_set_digest: PINNED_SOURCE_SET_DIGEST.into(),
+        capability_environment_digest: PINNED_CAPABILITY_ENVIRONMENT_DIGEST.into(),
         entry_function: ENTRY_FUNCTION.into(),
         request_type: REQUEST_TYPE.into(),
         result_type: RESULT_TYPE.into(),

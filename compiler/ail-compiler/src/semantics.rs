@@ -1227,17 +1227,8 @@ impl<'a> Checker<'a> {
                     .functions
                     .get(function.as_str())
                     .is_some_and(|function| {
-                        function.effects.iter().next().is_some()
-                            || function.body.bindings.iter().any(|binding| {
-                                self.expression_reaches_capability_operation(
-                                    &binding.value,
-                                    visiting,
-                                )
-                            })
-                            || self.expression_reaches_capability_operation(
-                                &function.body.tail,
-                                visiting,
-                            )
+                        !function.effects.is_empty()
+                            || self.block_reaches_capability_operation(&function.body, visiting)
                     });
                 visiting.remove(function);
                 result
@@ -1258,38 +1249,35 @@ impl<'a> Checker<'a> {
                 ..
             } => {
                 self.expression_reaches_capability_operation(condition, visiting)
-                    || calls_in_block(then_branch).into_iter().any(|(callee, _)| {
-                        self.expression_reaches_capability_operation(
-                            &Expr::Call {
-                                function: callee,
-                                arguments: Vec::new(),
-                                span: then_branch.span,
-                            },
-                            visiting,
-                        )
-                    })
-                    || self.expression_reaches_capability_operation(&then_branch.tail, visiting)
-                    || self.expression_reaches_capability_operation(&else_branch.tail, visiting)
+                    || self.block_reaches_capability_operation(then_branch, visiting)
+                    || self.block_reaches_capability_operation(else_branch, visiting)
             }
             Expr::Match {
                 scrutinee, arms, ..
             } => {
                 self.expression_reaches_capability_operation(scrutinee, visiting)
-                    || arms.iter().any(|arm| {
-                        arm.body.bindings.iter().any(|binding| {
-                            self.expression_reaches_capability_operation(&binding.value, visiting)
-                        }) || self.expression_reaches_capability_operation(&arm.body.tail, visiting)
-                    })
+                    || arms
+                        .iter()
+                        .any(|arm| self.block_reaches_capability_operation(&arm.body, visiting))
             }
             Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
                 self.expression_reaches_capability_operation(source, visiting)
-                    || body.bindings.iter().any(|binding| {
-                        self.expression_reaches_capability_operation(&binding.value, visiting)
-                    })
-                    || self.expression_reaches_capability_operation(&body.tail, visiting)
+                    || self.block_reaches_capability_operation(body, visiting)
             }
             Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => false,
         }
+    }
+
+    fn block_reaches_capability_operation(
+        &self,
+        block: &crate::Block,
+        visiting: &mut BTreeSet<String>,
+    ) -> bool {
+        block
+            .bindings
+            .iter()
+            .any(|binding| self.expression_reaches_capability_operation(&binding.value, visiting))
+            || self.expression_reaches_capability_operation(&block.tail, visiting)
     }
 
     fn check_field_access(

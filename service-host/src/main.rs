@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::sync::{Arc, RwLock};
 
 use ail_compiler::{
     CapabilityProvider, OutboundBatchCheck, OutboundCapabilityRequest, OutboundProviderOutcome,
@@ -77,12 +76,8 @@ impl CapabilityProvider for NotFoundProvider {
 async fn main() {
     let workspace = canonical_workspace().expect("canonical M32 source must compile");
     let config = canonical_config(&workspace).expect("r1 metadata must exist");
-    let host = ServiceHost::new(
-        Arc::new(RwLock::new(workspace)),
-        Box::<NotFoundProvider>::default(),
-        config,
-    )
-    .expect("M32 pins must match compiler metadata");
+    let host = ServiceHost::new(&workspace, Box::<NotFoundProvider>::default(), config)
+        .expect("M32 pins must match compiler metadata");
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .expect("bind service host");

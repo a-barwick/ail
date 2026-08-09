@@ -21,7 +21,10 @@ The compiler ships:
 - immutable bounded lists and deterministic sequential map; and
 - complete external list validation before capability checks or calls; and
 - one revision-bound cooperative outbound request with explicit timeout,
-  cancellation, and closed completion results.
+  cancellation, and closed completion results;
+- one fixed-limit outbound batch with input-aligned results and auditable
+  request lifecycle traces; and
+- one strict revision-pinned HTTP adapter for the canonical batch lookup.
 
 M28 added calls and language composition. Arguments are checked exactly and
 evaluated left to right. Effects propagate through the call graph. The compiler
@@ -40,6 +43,10 @@ M30 added one outbound dependency request through an explicit capability. The
 compiler validates and inspects its timeout, cancellation, permission, and
 closed result identities. The synchronous provider cooperates with timeout and
 cancellation; this is not a hard-preemptive production network runtime.
+
+M31 added one direct outbound map with a fixed active-request limit. M32 added a
+separate Rust host for only `POST /v1/lookups:batch`; startup binds exact source,
+settings, function, type, bound, limit, and permission facts to revision `r1`.
 
 ## Two concrete change loops
 
@@ -76,12 +83,13 @@ revision without trusting hidden model reasoning.
 
 ## Hard limits
 
-AIL cannot yet build a production service. Sequential map over immutable bounded
-lists is its only repeated-work form. It has no general loops, collection
-library, mutation, concurrency, general networking, package registry, foreign-code
-boundary, production runtime, native backend, or deployment system. Recursion
-is rejected. The architecture API implements the M24 metric and policy set, not
-the larger design catalog.
+AIL can run one pinned batch lookup behind one fixed HTTP adapter, not build a
+general production service. Repeated work is limited to sequential map and one
+fixed-limit outbound map over immutable bounded lists. It has no general loops,
+collection library, mutation, unrestricted concurrency, general networking or
+routing, package registry, foreign-code boundary, production runtime, native
+backend, or deployment system. Recursion is rejected. The architecture API
+implements the M24 metric and policy set, not the larger design catalog.
 
 No AIL-versus-Rust/Go/Python/TypeScript agent comparison has run. The current
 fixtures prove compiler behavior on specified cases; they do not prove lower
@@ -103,6 +111,6 @@ do not report only successful runs.
 
 ## Current status
 
-M30 is complete. No successor is active. The next investment in language breadth,
+M32 is complete. No successor is active. The next investment in language breadth,
 runtime, or measurement should produce a named executable capability, not more
 planning artifacts.

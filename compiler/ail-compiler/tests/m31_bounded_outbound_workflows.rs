@@ -94,6 +94,7 @@ struct BatchProvider {
     duplicate_completion: bool,
     malformed_result: bool,
     fail_start_at: Option<usize>,
+    fail_collect_at: Option<usize>,
 }
 
 impl BatchProvider {
@@ -219,6 +220,14 @@ impl CapabilityProvider for BatchProvider {
         handle: &OutboundRequestHandle,
     ) -> Result<OutboundProviderOutcome, RuntimeFault> {
         let index = Self::handle_index(handle);
+        if self.fail_collect_at == Some(index) {
+            return Err(RuntimeFault::new(
+                "TEST.HOST.COLLECT_FAILURE",
+                Span::empty(0),
+                [("collect", "successful")],
+                [("collect", "failed")],
+            ));
+        }
         self.completed.push(index);
         self.active.remove(handle);
         if self.malformed_result {
@@ -436,6 +445,26 @@ fn parallel_map_arguments_reject_outside_operations_but_allow_effect_free_helper
             .any(|diagnostic| { diagnostic.code == "AIL.CAPABILITY.PARALLEL_MAP_ARGUMENT_EFFECT" })
     );
 
+    let branch_helper = SERVICE.replace(
+        "fn lookup_batch",
+        "fn hidden_branch(item: types.LookupRequest, timeout: Int, cancellation: Cancellation, dependency: capability DependencyClient) -> types.LookupRequest effects { dependency.fetch } {\n  if text.is_empty(item.key) {\n    item\n  } else {\n    let ignored = dependency.fetch(item, timeout, cancellation);\n    item\n  }\n}\n\nfn lookup_batch",
+    );
+    let branch_helper = branch_helper.replace(
+        "dependency.fetch(item, timeout, cancellation)\n  }\n}",
+        "dependency.fetch(hidden_branch(item, timeout, cancellation, dependency), timeout, cancellation)\n  }\n}",
+    );
+    let checked = check_source(
+        &branch_helper,
+        "branch-helper-hidden-effect",
+        &environment(1000),
+    );
+    assert!(
+        checked
+            .diagnostics
+            .iter()
+            .any(|diagnostic| { diagnostic.code == "AIL.CAPABILITY.PARALLEL_MAP_ARGUMENT_EFFECT" })
+    );
+
     let pure = SERVICE.replace(
         "fn lookup_batch",
         "fn identity(item: types.LookupRequest) -> types.LookupRequest {\n  item\n}\n\nfn lookup_batch",
@@ -514,6 +543,37 @@ fn malformed_host_completions_fail_before_collection_and_trace_collected_faults(
     assert_eq!(outbound.completion_order, Some(0));
     assert!(outbound.outcome.is_some());
     assert!(failure.calls[0].result.is_none());
+}
+
+#[test]
+fn collect_failure_preserves_reported_completion_order_and_original_fault() {
+    let workspace = workspace(1000);
+    let mut provider = BatchProvider {
+        completion_order: [0].into(),
+        fail_collect_at: Some(0),
+        ..BatchProvider::default()
+    };
+    let failure = failed(workspace.execute(
+        "r1",
+        "batch_lookup.service.lookup_batch",
+        arguments(8, 100),
+        &mut provider,
+    ));
+    assert_eq!(failure.fault.code, "TEST.HOST.COLLECT_FAILURE");
+    assert_eq!(provider.started, [0, 1, 2]);
+    assert!(provider.completed.is_empty());
+    let reported = failure.calls[0].outbound.as_ref().unwrap();
+    assert_eq!(reported.completion_order, Some(0));
+    assert!(reported.outcome.is_none());
+    assert!(failure.calls[0].result.is_none());
+    assert!(
+        failure.calls[1..].iter().all(|call| call
+            .outbound
+            .as_ref()
+            .unwrap()
+            .completion_order
+            .is_none())
+    );
 }
 
 #[test]

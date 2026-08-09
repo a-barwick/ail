@@ -1,6 +1,7 @@
 # Delivery history
 
-The compiler has shipped through M31. No milestone is active.
+The compiler and pinned service host have shipped through M32. No milestone is
+active.
 
 This file records what each milestone produced. Exact behavior lives in the
 specifications, tests, and compiler—not in milestone prose.
@@ -41,6 +42,7 @@ specifications, tests, and compiler—not in milestone prose.
 | M29 | Immutable bounded lists, sequential map, pre-effect validation, and ordered batch cancellation | Complete | M28 |
 | M30 | Cooperative outbound request metadata, timeout, cancellation, closed results, and revision binding | Complete | M29 |
 | M31 | Bounded outbound workflows, ordered results, cooperative batch cancellation, and complete inspection | Complete | M30 |
+| M32 | One revision-pinned HTTP batch-lookup host with strict JSON and auditable execution | Complete | M31 |
 
 ## Shipped compiler path
 
@@ -107,6 +109,16 @@ before starts, keeps at most `C` opaque host handles active, stores completions
 at input positions, cooperatively cancels active work, and preserves unexpected
 host faults. Architecture settings survive ordinary child revisions and
 outside-operation/state facts propagate through callers across modules.
+
+### Pinned batch-lookup HTTP host: M32
+
+M32 added a separate Rust host for only `POST /v1/lookups:batch`. Startup binds
+the exact retained revision, source and capability-setting digests, function,
+types, effect, list bound, concurrency limit, and timeout maximum to compiler
+inspection. Strict JSON and bounds rejection starts no dependency work. Complete
+results report the pinned revision and digest; unexpected execution failure
+returns 502 without partial outcomes. Retaining a newer revision does not move a
+running host's selector.
 
 ## Deferred work
 

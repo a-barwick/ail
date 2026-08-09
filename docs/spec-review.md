@@ -10,8 +10,9 @@ block normal application development and independent compatible implementations.
 2. **Memory:** allocation, ownership or tracing, aliasing, mutation, lifetimes,
    and observable resource failure.
 3. **Iteration and collections:** M29 fixes immutable ordered `List<T, N>` and
-   sequential map only. Hashing, allocation failure, literals, indexing,
-   mutation, general iteration, and parallel traversal remain unresolved.
+   sequential map. M31 additionally fixes one direct outbound parallel map with
+   a static limit. Hashing, allocation failure, literals, indexing, mutation,
+   general iteration, and general parallel traversal remain unresolved.
 4. **Errors and faults:** the boundary between typed domain errors and language
    faults, and whether faults can be caught.
 5. **Concurrency:** child failure, cancellation, simultaneous readiness, scope

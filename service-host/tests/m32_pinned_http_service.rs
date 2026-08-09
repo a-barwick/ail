@@ -1,5 +1,5 @@
 use std::collections::{BTreeMap, VecDeque};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex};
 
 use ail_compiler::{
     CapabilityProvider, EvolutionCoverage, EvolutionSource, OutboundBatchCheck,
@@ -19,14 +19,21 @@ use tower::ServiceExt;
 
 type ConfigMutation = Box<dyn Fn(&mut ail_service_host::PinnedServiceConfig)>;
 
+#[derive(Debug, Default)]
+struct ProviderTrace {
+    starts: Vec<usize>,
+    cancelled: Vec<usize>,
+    max_active: usize,
+}
+
 #[derive(Default)]
 struct Provider {
     active: BTreeMap<OutboundRequestHandle, usize>,
     outcomes: BTreeMap<OutboundRequestHandle, OutboundProviderOutcome>,
     order: VecDeque<usize>,
-    starts: Vec<usize>,
-    max_active: usize,
     fail_at: Option<usize>,
+    fail_collect_at: Option<usize>,
+    trace: Arc<Mutex<ProviderTrace>>,
 }
 impl Provider {
     fn ordered(order: impl IntoIterator<Item = usize>) -> Self {
@@ -69,9 +76,12 @@ impl CapabilityProvider for Provider {
             ));
         }
         let handle = OutboundRequestHandle(format!("h{index}"));
-        self.starts.push(index);
         self.active.insert(handle.clone(), index);
-        self.max_active = self.max_active.max(self.active.len());
+        {
+            let mut trace = self.trace.lock().unwrap();
+            trace.starts.push(index);
+            trace.max_active = trace.max_active.max(self.active.len());
+        }
         let result = if index == 1 {
             RuntimeValue::variant("batch_lookup.types.LookupOutcome", "NotFound", None)
         } else {
@@ -105,13 +115,24 @@ impl CapabilityProvider for Provider {
         })
     }
     fn cancel_outbound(&mut self, handle: &OutboundRequestHandle) -> Result<(), RuntimeFault> {
-        self.active.remove(handle);
+        if let Some(index) = self.active.remove(handle) {
+            self.trace.lock().unwrap().cancelled.push(index);
+        }
         Ok(())
     }
     fn collect_outbound(
         &mut self,
         handle: &OutboundRequestHandle,
     ) -> Result<OutboundProviderOutcome, RuntimeFault> {
+        let index = self.active[handle];
+        if self.fail_collect_at == Some(index) {
+            return Err(RuntimeFault::new(
+                "TEST.COLLECT.FAILED",
+                Span::empty(0),
+                [("collect", "ok")],
+                [("collect", "failed")],
+            ));
+        }
         self.active.remove(handle);
         Ok(self.outcomes.remove(handle).unwrap())
     }
@@ -120,7 +141,7 @@ impl CapabilityProvider for Provider {
 fn host(provider: Provider) -> ServiceHost {
     let workspace = canonical_workspace().unwrap();
     let config = canonical_config(&workspace).unwrap();
-    ServiceHost::new(Arc::new(RwLock::new(workspace)), Box::new(provider), config).unwrap()
+    ServiceHost::new(&workspace, Box::new(provider), config).unwrap()
 }
 fn request(
     method: Method,
@@ -170,24 +191,26 @@ fn startup_rejects_every_mutated_pin() {
         ),
         ("list_bound", Box::new(|c| c.list_bound = 7)),
         ("concurrency_limit", Box::new(|c| c.concurrency_limit = 2)),
+        (
+            "maximum_timeout_ms",
+            Box::new(|c| c.maximum_timeout_ms = 999),
+        ),
     ];
     for (field, mutate) in mutations {
         let mut config = base.clone();
         mutate(&mut config);
-        let error = ServiceHost::new(
-            Arc::new(RwLock::new(workspace.clone())),
-            Box::new(Provider::default()),
-            config,
-        )
-        .err()
-        .unwrap();
+        let error = ServiceHost::new(&workspace, Box::new(Provider::default()), config)
+            .err()
+            .unwrap();
         assert_eq!(error.field, field);
     }
 }
 
 #[tokio::test]
 async fn eight_results_are_aligned_and_pinned() {
-    let host = host(Provider::ordered([2, 0, 1, 4, 3, 7, 5, 6]));
+    let provider = Provider::ordered([2, 0, 1, 4, 3, 7, 5, 6]);
+    let trace = Arc::clone(&provider.trace);
+    let host = host(provider);
     let digest = host.pinned_config().source_set_digest.clone();
     let response = host
         .router()
@@ -209,6 +232,22 @@ async fn eight_results_are_aligned_and_pinned() {
     let record = &host.execution_records()[0];
     assert_eq!(record.calls.len(), 8);
     assert!(record.calls.iter().all(|c| c.start_order < 8));
+    let mut completion_order = record
+        .calls
+        .iter()
+        .map(|call| (call.completion_order.unwrap(), call.batch_index))
+        .collect::<Vec<_>>();
+    completion_order.sort_unstable();
+    assert_eq!(
+        completion_order
+            .into_iter()
+            .map(|(_, batch_index)| batch_index)
+            .collect::<Vec<_>>(),
+        [2, 0, 1, 4, 3, 7, 5, 6]
+    );
+    let trace = trace.lock().unwrap();
+    assert_eq!(trace.starts, (0..8).collect::<Vec<_>>());
+    assert_eq!(trace.max_active, 3);
 }
 
 #[tokio::test]
@@ -241,7 +280,27 @@ async fn invalid_http_inputs_do_zero_work() {
             StatusCode::BAD_REQUEST,
         ),
         (
+            "{\"requests\":[{\"key\":1}],\"timeout_ms\":1}".into(),
+            Some("application/json"),
+            StatusCode::BAD_REQUEST,
+        ),
+        (
+            "{\"requests\":\"not-a-list\",\"timeout_ms\":1}".into(),
+            Some("application/json"),
+            StatusCode::BAD_REQUEST,
+        ),
+        (
+            "{\"requests\":[],\"timeout_ms\":1,\"revision_id\":\"r2\"}".into(),
+            Some("application/json"),
+            StatusCode::BAD_REQUEST,
+        ),
+        (
             "{\"requests\":[],\"timeout_ms\":1,\"capability\":\"x\"}".into(),
+            Some("application/json"),
+            StatusCode::BAD_REQUEST,
+        ),
+        (
+            "{\"requests\":[],\"timeout_ms\":1,\"cancellation_token\":\"x\"}".into(),
             Some("application/json"),
             StatusCode::BAD_REQUEST,
         ),
@@ -277,10 +336,12 @@ async fn invalid_http_inputs_do_zero_work() {
 
 #[tokio::test]
 async fn failure_is_fail_stop_and_routes_are_exact() {
-    let host = host(Provider {
+    let provider = Provider {
         fail_at: Some(2),
         ..Provider::ordered([0, 1])
-    });
+    };
+    let trace = Arc::clone(&provider.trace);
+    let host = host(provider);
     let response = host
         .router()
         .oneshot(request(
@@ -301,6 +362,13 @@ async fn failure_is_fail_stop_and_routes_are_exact() {
     assert!(records[0].calls.iter().all(|c| c.completion_order.is_none()
         && c.outcome.as_deref() == Some("Cancelled")
         && c.result.as_deref() == Some("Cancelled")));
+    {
+        let trace = trace.lock().unwrap();
+        assert_eq!(trace.starts, [0, 1]);
+        let mut cancelled = trace.cancelled.clone();
+        cancelled.sort_unstable();
+        assert_eq!(cancelled, [0, 1]);
+    }
     assert_eq!(
         host.router()
             .oneshot(request(
@@ -326,11 +394,10 @@ async fn failure_is_fail_stop_and_routes_are_exact() {
 
 #[tokio::test]
 async fn retaining_r2_does_not_move_the_pin() {
-    let host = host(Provider::default());
-    let workspace = host.workspace();
+    let mut workspace = canonical_workspace().unwrap();
+    let config = canonical_config(&workspace).unwrap();
+    let host = ServiceHost::new(&workspace, Box::new(Provider::default()), config).unwrap();
     workspace
-        .write()
-        .unwrap()
         .retain_revision(
             "r2",
             Some("r1".into()),
@@ -362,4 +429,41 @@ async fn retaining_r2_does_not_move_the_pin() {
         serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes()).unwrap();
     assert_eq!(value["revision_id"], "r1");
     assert_eq!(host.execution_records()[0].revision_id, "r1");
+}
+
+#[tokio::test]
+async fn collect_failure_records_reported_completion_without_partial_success() {
+    let provider = Provider {
+        fail_collect_at: Some(0),
+        ..Provider::ordered([0])
+    };
+    let trace = Arc::clone(&provider.trace);
+    let host = host(provider);
+    let response = host
+        .router()
+        .oneshot(request(
+            Method::POST,
+            "/v1/lookups:batch",
+            json(8, 10),
+            Some("application/json"),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+    let records = host.execution_records();
+    assert_eq!(
+        records[0].failure_code.as_deref(),
+        Some("TEST.COLLECT.FAILED")
+    );
+    assert_eq!(records[0].calls.len(), 3);
+    assert_eq!(records[0].calls[0].completion_order, Some(0));
+    assert!(records[0].calls[0].outcome.is_none());
+    assert!(records[0].calls[0].result.is_none());
+    assert!(
+        records[0].calls[1..]
+            .iter()
+            .all(|call| call.completion_order.is_none())
+    );
+    let trace = trace.lock().unwrap();
+    assert_eq!(trace.starts, [0, 1, 2]);
 }
