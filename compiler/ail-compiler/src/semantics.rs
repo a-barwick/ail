@@ -943,6 +943,7 @@ impl<'a> Checker<'a> {
                 let Expr::CapabilityCall {
                     receiver,
                     operation,
+                    arguments,
                     ..
                 } = &body.tail
                 else {
@@ -982,6 +983,19 @@ impl<'a> Checker<'a> {
                 }
                 let mut nested = locals.clone();
                 nested.insert(binding.clone(), LocalBinding::Value(element.clone()));
+                for argument in arguments {
+                    if self.expression_reaches_capability_operation(argument, &mut BTreeSet::new())
+                    {
+                        self.capability_problem(
+                            "AIL.CAPABILITY.PARALLEL_MAP_ARGUMENT_EFFECT",
+                            argument.span(),
+                            fields([("argument", text("effect-free expression"))]),
+                            fields([("argument", text("outside operation"))]),
+                            Vec::new(),
+                            "check-parallel-map-argument-effects",
+                        );
+                    }
+                }
                 let result = self.check_expr(&body.tail, function, &nested)?;
                 Some(TypeRef::list(result, max, *span))
             }
@@ -1179,6 +1193,103 @@ impl<'a> Checker<'a> {
         }
         visiting.remove(function_name);
         effects
+    }
+
+    fn expression_reaches_capability_operation(
+        &self,
+        expression: &Expr,
+        visiting: &mut BTreeSet<String>,
+    ) -> bool {
+        match expression {
+            Expr::CapabilityCall {
+                receiver,
+                operation,
+                arguments,
+                ..
+            } => {
+                intrinsic_signature(receiver, operation).is_none()
+                    || arguments.iter().any(|argument| {
+                        self.expression_reaches_capability_operation(argument, visiting)
+                    })
+            }
+            Expr::Call {
+                function,
+                arguments,
+                ..
+            } => {
+                let arguments_have_operations = arguments.iter().any(|argument| {
+                    self.expression_reaches_capability_operation(argument, visiting)
+                });
+                if arguments_have_operations || !visiting.insert(function.clone()) {
+                    return arguments_have_operations;
+                }
+                let result = self
+                    .functions
+                    .get(function.as_str())
+                    .is_some_and(|function| {
+                        function.effects.iter().next().is_some()
+                            || function.body.bindings.iter().any(|binding| {
+                                self.expression_reaches_capability_operation(
+                                    &binding.value,
+                                    visiting,
+                                )
+                            })
+                            || self.expression_reaches_capability_operation(
+                                &function.body.tail,
+                                visiting,
+                            )
+                    });
+                visiting.remove(function);
+                result
+            }
+            Expr::Record { fields, .. } => fields
+                .iter()
+                .any(|field| self.expression_reaches_capability_operation(&field.value, visiting)),
+            Expr::Variant { payload, .. } => payload.as_deref().is_some_and(|payload| {
+                self.expression_reaches_capability_operation(payload, visiting)
+            }),
+            Expr::FieldAccess { target, .. } => {
+                self.expression_reaches_capability_operation(target, visiting)
+            }
+            Expr::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => {
+                self.expression_reaches_capability_operation(condition, visiting)
+                    || calls_in_block(then_branch).into_iter().any(|(callee, _)| {
+                        self.expression_reaches_capability_operation(
+                            &Expr::Call {
+                                function: callee,
+                                arguments: Vec::new(),
+                                span: then_branch.span,
+                            },
+                            visiting,
+                        )
+                    })
+                    || self.expression_reaches_capability_operation(&then_branch.tail, visiting)
+                    || self.expression_reaches_capability_operation(&else_branch.tail, visiting)
+            }
+            Expr::Match {
+                scrutinee, arms, ..
+            } => {
+                self.expression_reaches_capability_operation(scrutinee, visiting)
+                    || arms.iter().any(|arm| {
+                        arm.body.bindings.iter().any(|binding| {
+                            self.expression_reaches_capability_operation(&binding.value, visiting)
+                        }) || self.expression_reaches_capability_operation(&arm.body.tail, visiting)
+                    })
+            }
+            Expr::Map { source, body, .. } | Expr::ParallelMap { source, body, .. } => {
+                self.expression_reaches_capability_operation(source, visiting)
+                    || body.bindings.iter().any(|binding| {
+                        self.expression_reaches_capability_operation(&binding.value, visiting)
+                    })
+                    || self.expression_reaches_capability_operation(&body.tail, visiting)
+            }
+            Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => false,
+        }
     }
 
     fn check_field_access(

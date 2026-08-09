@@ -698,6 +698,14 @@ impl Evaluator<'_> {
         let mut completion = 0;
         while next < requests.len() || !active.is_empty() {
             while next < requests.len() && active.len() < limit {
+                let handle = match self.capabilities.start_outbound(&requests[next]) {
+                    Ok(handle) => handle,
+                    Err(fault) => {
+                        request_batch_cancellation(self.capabilities, &active);
+                        self.synthesize_active_cancellations(&active, signature, metadata);
+                        return Err(fault);
+                    }
+                };
                 self.calls.push(ObservedCapabilityCall {
                     receiver: receiver.clone(),
                     interface: interface.clone(),
@@ -715,13 +723,6 @@ impl Evaluator<'_> {
                     }),
                 });
                 let call_index = self.calls.len() - 1;
-                let handle = match self.capabilities.start_outbound(&requests[next]) {
-                    Ok(handle) => handle,
-                    Err(fault) => {
-                        request_batch_cancellation(self.capabilities, &active);
-                        return Err(fault);
-                    }
-                };
                 if active.contains_key(&handle) {
                     request_batch_cancellation(self.capabilities, &active);
                     return Err(RuntimeFault::new(
@@ -793,6 +794,7 @@ impl Evaluator<'_> {
             }
             if checked.cancelled {
                 request_batch_cancellation(self.capabilities, &active);
+                self.synthesize_active_cancellations(&active, signature, metadata);
                 for (index, _) in active.values().copied() {
                     results[index] = Some(self.closed_outcome(
                         signature,
@@ -816,6 +818,20 @@ impl Evaluator<'_> {
                 .map(|v| v.expect("all batch slots closed"))
                 .collect(),
         ))
+    }
+
+    fn synthesize_active_cancellations(
+        &mut self,
+        active: &BTreeMap<OutboundRequestHandle, (usize, usize)>,
+        signature: &crate::CapabilityOperation,
+        metadata: &crate::OutboundCapabilityMetadata,
+    ) {
+        for (_, call_index) in active.values().copied() {
+            let outcome = OutboundProviderOutcome::Cancelled;
+            let result = self.closed_outcome(signature, metadata, &outcome);
+            self.calls[call_index].result = Some(result);
+            self.calls[call_index].outbound.as_mut().unwrap().outcome = Some(outcome);
+        }
     }
 
     fn closed_outcome(

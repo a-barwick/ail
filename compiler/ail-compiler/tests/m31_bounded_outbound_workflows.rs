@@ -93,6 +93,7 @@ struct BatchProvider {
     fail_check: bool,
     duplicate_completion: bool,
     malformed_result: bool,
+    fail_start_at: Option<usize>,
 }
 
 impl BatchProvider {
@@ -146,6 +147,14 @@ impl CapabilityProvider for BatchProvider {
         request: &OutboundCapabilityRequest,
     ) -> Result<OutboundRequestHandle, RuntimeFault> {
         let index = Self::index(request);
+        if self.fail_start_at == Some(index) {
+            return Err(RuntimeFault::new(
+                "TEST.HOST.START_FAILURE",
+                Span::empty(0),
+                [("start", "successful")],
+                [("start", "failed")],
+            ));
+        }
         let handle = Self::handle(index);
         self.started.push(index);
         self.active.insert(handle.clone());
@@ -359,6 +368,93 @@ fn whole_batch_cancellation_marks_every_uncompleted_position_without_new_starts(
             |value| matches!(value, RuntimeValue::Variant { case, .. } if case == "Cancelled")
         )
     );
+    assert_eq!(success.calls.len(), 3);
+    assert!(success.calls.iter().all(|call| {
+        call.result.as_ref().is_some_and(
+            |value| matches!(value, RuntimeValue::Variant { case, .. } if case == "Cancelled"),
+        ) && call.outbound.as_ref().is_some_and(|outbound| {
+            outbound.outcome == Some(OutboundProviderOutcome::Cancelled)
+                && outbound.completion_order.is_none()
+        })
+    }));
+}
+
+#[test]
+fn failed_third_start_records_and_cancels_only_successfully_started_requests() {
+    let workspace = workspace(1000);
+    let mut provider = BatchProvider {
+        fail_start_at: Some(2),
+        ..BatchProvider::default()
+    };
+    let failure = failed(workspace.execute(
+        "r1",
+        "batch_lookup.service.lookup_batch",
+        arguments(8, 100),
+        &mut provider,
+    ));
+    assert_eq!(failure.fault.code, "TEST.HOST.START_FAILURE");
+    assert_eq!(provider.started, [0, 1]);
+    provider.cancelled.sort_unstable();
+    assert_eq!(provider.cancelled, [0, 1]);
+    assert_eq!(failure.calls.len(), 2);
+    assert!(failure.calls.iter().all(|call| {
+        call.result.is_some()
+            && call.outbound.as_ref().is_some_and(|outbound| {
+                outbound.outcome == Some(OutboundProviderOutcome::Cancelled)
+                    && outbound.completion_order.is_none()
+            })
+    }));
+}
+
+#[test]
+fn parallel_map_arguments_reject_outside_operations_but_allow_effect_free_helpers() {
+    let direct = SERVICE.replace(
+        "dependency.fetch(item, timeout, cancellation)",
+        "dependency.fetch(dependency.fetch(item, timeout, cancellation), timeout, cancellation)",
+    );
+    let checked = check_source(&direct, "direct-hidden-effect", &environment(1000));
+    assert!(
+        checked
+            .diagnostics
+            .iter()
+            .any(|diagnostic| { diagnostic.code == "AIL.CAPABILITY.PARALLEL_MAP_ARGUMENT_EFFECT" })
+    );
+
+    let helper = SERVICE.replace(
+        "fn lookup_batch",
+        "fn hidden(item: types.LookupRequest, timeout: Int, cancellation: Cancellation, dependency: capability DependencyClient) -> types.LookupOutcome effects { dependency.fetch } {\n  dependency.fetch(item, timeout, cancellation)\n}\n\nfn lookup_batch",
+    );
+    let helper = helper.replace(
+        "dependency.fetch(item, timeout, cancellation)\n  }\n}",
+        "dependency.fetch(hidden(item, timeout, cancellation), timeout, cancellation)\n  }\n}",
+    );
+    let checked = check_source(&helper, "helper-hidden-effect", &environment(1000));
+    assert!(
+        checked
+            .diagnostics
+            .iter()
+            .any(|diagnostic| { diagnostic.code == "AIL.CAPABILITY.PARALLEL_MAP_ARGUMENT_EFFECT" })
+    );
+
+    let pure = SERVICE.replace(
+        "fn lookup_batch",
+        "fn identity(item: types.LookupRequest) -> types.LookupRequest {\n  item\n}\n\nfn lookup_batch",
+    );
+    let pure = pure.replace(
+        "dependency.fetch(item, timeout, cancellation)",
+        "dependency.fetch(identity(item), timeout, cancellation)",
+    );
+    EvolutionWorkspace::new(
+        "effect-free-helper",
+        "r1",
+        vec![
+            EvolutionSource::new("types.ail", TYPES),
+            EvolutionSource::new("service.ail", pure),
+        ],
+        &environment(1000),
+        EvolutionCoverage::default(),
+    )
+    .expect("effect-free helper arguments remain accepted");
 }
 
 #[test]
