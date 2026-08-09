@@ -905,6 +905,21 @@ impl<'a> Checker<'a> {
                     );
                     return None;
                 };
+                let direct_parameter = matches!(source.as_ref(), Expr::Name { name, .. } if function.parameters.iter().any(|parameter| parameter.name == *name && matches!(parameter.ty, ParameterType::Value(_))));
+                if !direct_parameter {
+                    self.type_problem(
+                        "AIL.TYPE.PARALLEL_MAP_SOURCE",
+                        source.span(),
+                        fields([("source", text("direct bounded-list parameter"))]),
+                        fields([("source", text("computed expression"))]),
+                        Vec::new(),
+                        "check-parallel-map-inspectable-source",
+                    );
+                }
+                if locals.contains_key(binding) {
+                    self.duplicate_declaration(*span, "parallel-map-binding", binding);
+                    return None;
+                }
                 if *limit == 0 || *limit > max {
                     self.type_problem(
                         "AIL.TYPE.PARALLEL_MAP_LIMIT",
@@ -1556,6 +1571,32 @@ impl<'a> Checker<'a> {
             );
             return None;
         };
+
+        if let CapabilityOperationKind::Outbound(metadata) = &signature.kind {
+            if metadata.timeout_argument_index < arguments.len()
+                && metadata.cancellation_argument_index < arguments.len()
+                && metadata.timeout_argument_index != metadata.cancellation_argument_index
+            {
+                let timeout_is_control = arguments
+                    .get(metadata.timeout_argument_index)
+                    .is_some_and(|argument| {
+                        matches!(argument, Expr::Name { .. } | Expr::Integer { .. })
+                    });
+                let cancellation_is_control = arguments
+                    .get(metadata.cancellation_argument_index)
+                    .is_some_and(|argument| matches!(argument, Expr::Name { .. }));
+                if !timeout_is_control || !cancellation_is_control {
+                    self.capability_problem(
+                        "AIL.CAPABILITY.OUTBOUND_CONTROL_EFFECT",
+                        expression_span,
+                        fields([("controls", text("effect-free names or timeout literal"))]),
+                        fields([("controls", text("computed expression"))]),
+                        Vec::new(),
+                        "validate-outbound-controls-before-effects",
+                    );
+                }
+            }
+        }
 
         let mut ordinary_types_ok = true;
         let argument_types = arguments

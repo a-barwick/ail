@@ -1,10 +1,10 @@
 # Current status
 
-Last updated: 2026-08-08
+Last updated: 2026-08-09
 
 ## Active milestone
 
-None — M30 is complete and no next build has been selected.
+None — M31 is complete and no next build has been selected.
 
 ## Shipped
 
@@ -28,7 +28,10 @@ The Rust compiler now supports:
   inspection; and
 - one cooperative outbound dependency request with explicit capability
   permission, bounded timeout, opaque cancellation, closed timeout/cancel
-  results, revision-bound provider contracts, and deterministic inspection.
+  results, revision-bound provider contracts, and deterministic inspection; and
+- one bounded outbound workflow over `List<T, N>` with a fixed concurrency
+  limit, input-ordered results, cooperative whole-batch cancellation, separate
+  start/completion traces, and host-supplied start/check/cancel/collect.
 
 The compiler rejects direct and mutual recursion, import cycles, inaccessible
 declarations, ambiguous imports, stale handles, incomplete impact claims, and
@@ -45,8 +48,9 @@ public cases.
 ## Hard limit
 
 AIL cannot yet implement a normal production service. Its only repeated-work
-form is sequential map over immutable bounded lists. It has no general loops,
-collection library, mutation, concurrency, general networking, package registry,
+forms are sequential map and one direct bounded outbound map over immutable
+bounded lists. It has no general loops, collection library, mutation, general
+concurrency, general networking, package registry,
 foreign-code boundary, production runtime, native backend, or deployment system.
 The outbound provider is synchronous and cooperative: the interpreter cannot
 preempt stuck host code, enforce a hard deadline itself, or roll back remote
@@ -77,6 +81,7 @@ python3 specs/tools/architecture_contract.py check
 python3 specs/tools/core_contract.py check
 python3 specs/tools/bounded_list_contract.py check
 python3 specs/tools/outbound_request_contract.py check
+python3 specs/tools/bounded_outbound_workflow_contract.py check
 PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public
 python3 benchmarks/tools/fixtures.py check
 python3 tools/check_docs.py

@@ -29,16 +29,16 @@ pub use architecture::{
 };
 pub use diagnostic::Diagnostic;
 pub use evolution::{
-    ArchitectureSourceChangeRequest, BoundedListInspection, CandidateChangeRequest,
-    CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary, ChangeFailure, ChangeResponse,
-    ChangeSuccess, CompletionEvidence, EffectSummary, EvolutionBuildFailure, EvolutionCoverage,
-    EvolutionSource, EvolutionWorkspace, ImpactEntry, ImpactFailure, ImpactReport, ImpactRequest,
-    OutboundOperationInspection, PersistentIdentity, PersistentIdentityChanges,
-    ProposedSchemaChange, PublicBehaviorFailure, RelationshipEdge, SemanticChange, SemanticDiff,
-    SemanticLocation, SourceArchitectureConfig, SourceArtifact, SourceFileMetadata,
-    SourceOperationArchitecture, SourceSetDiagnostic, SourceSetFunctionInspection,
-    SourceSetInspectionFailure, SourceSetRevision, SourceStateAccess, UncheckedBoundary,
-    ValidationSummary, ValueParameterInspection, relationship_kinds,
+    ArchitectureSourceChangeRequest, BoundedListInspection, BoundedParallelMapInspection,
+    CandidateChangeRequest, CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary,
+    ChangeFailure, ChangeResponse, ChangeSuccess, CompletionEvidence, EffectSummary,
+    EvolutionBuildFailure, EvolutionCoverage, EvolutionSource, EvolutionWorkspace, ImpactEntry,
+    ImpactFailure, ImpactReport, ImpactRequest, OutboundOperationInspection, PersistentIdentity,
+    PersistentIdentityChanges, ProposedSchemaChange, PublicBehaviorFailure, RelationshipEdge,
+    SemanticChange, SemanticDiff, SemanticLocation, SourceArchitectureConfig, SourceArtifact,
+    SourceFileMetadata, SourceOperationArchitecture, SourceSetDiagnostic,
+    SourceSetFunctionInspection, SourceSetInspectionFailure, SourceSetRevision, SourceStateAccess,
+    UncheckedBoundary, ValidationSummary, ValueParameterInspection, relationship_kinds,
 };
 pub use interpreter::{
     CancellationToken, CapabilityProvider, ObservedCapabilityCall, ObservedOutboundCall,

@@ -183,19 +183,19 @@
     },
     {
       "path": "compiler/ail-compiler/src/evolution.rs",
-      "sha256": "ced431d8a8560b6a42dab85aa222017432c8f8cefa5d5a3611b5579ea12b045e"
+      "sha256": "6ef39a9209287c5061d281b6ffc6da07fe411f61cef8182cb6d9725fd6df442d"
     },
     {
       "path": "compiler/ail-compiler/src/evolution/transaction.rs",
-      "sha256": "21aa30b66a550f632ce55a8afb5a922222dc04c60797201dd9c7d729c256a381"
+      "sha256": "65921f54d59adc4e7119ab6c29c4964b9d83328cc60808c98101f3ab3e49396a"
     },
     {
       "path": "compiler/ail-compiler/src/formatter.rs",
-      "sha256": "df5700ca2d4d936f6834e4a12fdf3907996894d84c7a7191b87ce131fbdb5f8b"
+      "sha256": "f29e8f807ec9a6df0d1346f61cf15835c6270d4ee904221001a15e47e52bd349"
     },
     {
       "path": "compiler/ail-compiler/src/interpreter.rs",
-      "sha256": "e7cae7189d36754dc6046aa18b592b75349b4ab79e4c0157b8ccbb71fccf1f7b"
+      "sha256": "fc7b8be38e307e9447ca4a8be1fa9107fb76c33352420f10b037b956c18ffbf2"
     },
     {
       "path": "compiler/ail-compiler/src/lexer.rs",
@@ -203,23 +203,23 @@
     },
     {
       "path": "compiler/ail-compiler/src/lib.rs",
-      "sha256": "34ff96dedce9919cda69c7093af022deaf3efa8521f7ebbef003a9dc93b99655"
+      "sha256": "f59d46982f1bf6a0b588ecaa9979d7b78b704b7d846850af95514a435fd511e8"
     },
     {
       "path": "compiler/ail-compiler/src/parser.rs",
-      "sha256": "17cc5cfdd084c95d9a1815a935d7d09ce3ea1072394468a77d0dae5aaa4ca20e"
+      "sha256": "13b9a24ce3b3934b3710852ecb6a5f6131578ebccfdd2ec5ee161f5c8a9d5119"
     },
     {
       "path": "compiler/ail-compiler/src/protocol.rs",
-      "sha256": "6623202be1322b2ef66de6dab72897360a359e7b98e13fb9f32a798dbd7c7258"
+      "sha256": "af2d23626f84d07c40a67c256dbb876288f895c02611854caf9ce6ef2d3d4670"
     },
     {
       "path": "compiler/ail-compiler/src/semantics.rs",
-      "sha256": "897ec9ae1428d30a7baf60718b384fab0dbf7e90ee1dd52646e1567258045e4e"
+      "sha256": "b0b1c457036c12841ba20d00c331b32c0f7571ebd685efc333ccaaeb316fec51"
     },
     {
       "path": "compiler/ail-compiler/src/syntax.rs",
-      "sha256": "231c8125fde250e62ee11ee1960199379bcf12c99aff66a8e935d4b5054e7930"
+      "sha256": "2507b00b6267402d39491cc48812ad4b6acc3ab3ad690e097c0c7b2e4f074d9c"
     },
     {
       "path": "compiler/ail-compiler/tests/m17_runtime.rs",
@@ -251,7 +251,7 @@
     },
     {
       "path": "compiler/ail-compiler/tests/m30_outbound_requests.rs",
-      "sha256": "d5ae86c8adf98bf7cfbdf020c2de66643705ea3892d2feabb8e2f413e6ca65f9"
+      "sha256": "5e5a46e78d1a3aa0ee047e0eb27a929b81d9c0764400f3cd0ea5c8c9c0f5c687"
     },
     {
       "path": "compiler/examples/batch-cancellation/domain.ail",
@@ -287,7 +287,7 @@
     },
     {
       "path": "specs/README.md",
-      "sha256": "c85ba60d218a2d4cd0ecfc82dc2a42b4a1490763974881448ed1fc3a288a15cc"
+      "sha256": "63f917b40f17063753578ae2b67b9303bbb47227189ee6967059a2791b2c286d"
     },
     {
       "path": "specs/bounded-list-contract.json",

@@ -1,0 +1,12 @@
+{
+  "protocol_version": "m31-v1",
+  "host_interface": ["start_outbound", "check_outbound", "cancel_outbound", "collect_outbound"],
+  "inspection_fields": [
+    "revision_id", "capability_environment_digest", "receiver", "operation", "effect",
+    "input_list_bound", "concurrency_limit", "timeout_argument_index",
+    "timeout_parameter_type", "timeout_input", "cancellation_argument_index",
+    "cancellation_parameter_type", "cancellation_input", "result_ordering",
+    "completion_results"
+  ],
+  "observed_order_fields": ["batch_index", "start_order", "completion_order"]
+}

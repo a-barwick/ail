@@ -70,6 +70,8 @@ pub struct InspectionResult {
     pub dependencies: Vec<String>,
     /// Direct outbound operations for a function handle, in source evaluation order.
     pub outbound_requests: Vec<crate::OutboundOperationInspection>,
+    /// Bounded outbound workflows used by this function.
+    pub bounded_parallel_maps: Vec<crate::BoundedParallelMapInspection>,
 }
 
 /// One validated rename request.
@@ -317,6 +319,7 @@ impl Workspace {
     ///
     /// Returns a structured stale or invalid-handle diagnostic when the
     /// requested revision or handle is not available.
+    #[allow(clippy::too_many_lines)]
     pub fn inspect(
         &self,
         request: InspectionRequest,
@@ -395,7 +398,35 @@ impl Workspace {
             } else {
                 Vec::new()
             };
-        Ok(node.inspection(outbound_requests))
+        let bounded_parallel_maps =
+            if node.semantic_kind == "function" {
+                revision
+                    .index
+                    .symbols
+                    .get(&request.handle)
+                    .and_then(|symbol| {
+                        revision.unit.declarations.iter().find_map(
+                            |declaration| match declaration {
+                                Declaration::Function(function)
+                                    if function.name == symbol.declared_name =>
+                                {
+                                    Some(crate::EvolutionWorkspace::inspect_bounded_parallel_maps(
+                                        &revision.unit,
+                                        function,
+                                        &revision.capabilities,
+                                        &request.revision_id,
+                                        &revision.capabilities.stable_digest(),
+                                    ))
+                                }
+                                _ => None,
+                            },
+                        )
+                    })
+                    .unwrap_or_default()
+            } else {
+                Vec::new()
+            };
+        Ok(node.inspection(outbound_requests, bounded_parallel_maps))
     }
 
     /// Execute a statically valid function from one retained immutable revision.
@@ -774,6 +805,7 @@ impl IndexedNode {
     fn inspection(
         &self,
         outbound_requests: Vec<crate::OutboundOperationInspection>,
+        bounded_parallel_maps: Vec<crate::BoundedParallelMapInspection>,
     ) -> InspectionResult {
         InspectionResult {
             revision_id: self.handle.revision_id.clone(),
@@ -785,6 +817,7 @@ impl IndexedNode {
             capabilities: self.capabilities.clone(),
             dependencies: self.dependencies.clone(),
             outbound_requests,
+            bounded_parallel_maps,
         }
     }
 }
@@ -1359,9 +1392,51 @@ impl<'a> IndexBuilder<'a> {
             Expr::Match {
                 scrutinee, arms, ..
             } => self.index_match(scrutinee, arms, identity_key, locals),
-            Expr::ParallelMap { source, body, .. } => {
+            Expr::ParallelMap {
+                binding,
+                source,
+                body,
+                ..
+            } => {
                 self.index_expression(source, &format!("{identity_key}:source"), locals);
-                self.index_nested_block(body, &format!("{identity_key}:body"), locals);
+                let Some((element, _)) = self.expression_type(source, locals).and_then(|ty| {
+                    ty.as_list()
+                        .map(|(element, maximum)| (element.clone(), maximum))
+                }) else {
+                    self.index_nested_block(body, &format!("{identity_key}:body"), locals);
+                    return;
+                };
+                let binding_span = identifier_after(&self.unit.tokens, span.start, 2);
+                let handle =
+                    self.symbol_handle(&format!("symbol:parallel-map-binding:{identity_key}"));
+                self.add_symbol(
+                    handle.clone(),
+                    binding_span,
+                    "parallel-map-binding",
+                    format!("{identity_key}:binding"),
+                    format!("parallel-map:{identity_key}"),
+                    binding.clone(),
+                    None,
+                    Some(element.to_string()),
+                    Vec::new(),
+                    Vec::new(),
+                    type_dependencies(&element),
+                );
+                self.add_syntax(
+                    binding_span,
+                    "parallel-map-binding-name",
+                    format!("{identity_key}:binding-name"),
+                );
+                let mut body_locals = locals.clone();
+                body_locals.insert(
+                    binding.clone(),
+                    LocalBindingIndex {
+                        handle,
+                        value_type: Some(element),
+                        capability: None,
+                    },
+                );
+                self.index_nested_block(body, &format!("{identity_key}:body"), &body_locals);
             }
         }
     }
@@ -1506,6 +1581,7 @@ impl<'a> IndexBuilder<'a> {
         self.index_expression(&block.tail, &format!("{identity_key}:tail"), &locals);
     }
 
+    #[allow(clippy::too_many_lines)]
     fn expression_type(
         &self,
         expression: &Expr,
@@ -1596,14 +1672,27 @@ impl<'a> IndexBuilder<'a> {
                 self.block_type(&arm.body, &arm_locals)
             }
             Expr::ParallelMap {
-                source, body, span, ..
+                binding,
+                source,
+                body,
+                span,
+                ..
             } => {
-                let (_, maximum) = self
+                let (element, maximum) = self
                     .expression_type(source, locals)?
                     .as_list()
                     .map(|(e, m)| (e.clone(), m))?;
+                let mut body_locals = locals.clone();
+                body_locals.insert(
+                    binding.clone(),
+                    LocalBindingIndex {
+                        handle: self.symbol_handle("expression-type:parallel-map-binding"),
+                        value_type: Some(element),
+                        capability: None,
+                    },
+                );
                 Some(TypeRef::list(
-                    self.block_type(body, locals)?,
+                    self.block_type(body, &body_locals)?,
                     maximum,
                     *span,
                 ))
@@ -1780,9 +1869,28 @@ impl<'a> IndexBuilder<'a> {
                     self.collect_block_dependencies(&arm.body, &arm_locals, dependencies);
                 }
             }
-            Expr::ParallelMap { source, body, .. } => {
+            Expr::ParallelMap {
+                binding,
+                source,
+                body,
+                ..
+            } => {
                 self.collect_expression_dependencies(source, locals, dependencies);
-                self.collect_block_dependencies(body, locals, dependencies);
+                let mut body_locals = locals.clone();
+                if let Some((element, _)) = self.expression_type(source, locals).and_then(|ty| {
+                    ty.as_list()
+                        .map(|(element, maximum)| (element.clone(), maximum))
+                }) {
+                    body_locals.insert(
+                        binding.clone(),
+                        LocalBindingIndex {
+                            handle: self.symbol_handle("dependency:parallel-map-binding"),
+                            value_type: Some(element),
+                            capability: None,
+                        },
+                    );
+                }
+                self.collect_block_dependencies(body, &body_locals, dependencies);
             }
         }
     }

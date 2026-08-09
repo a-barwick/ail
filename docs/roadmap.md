@@ -1,6 +1,6 @@
 # Delivery history
 
-The compiler has shipped through M30. No milestone is active.
+The compiler has shipped through M31. No milestone is active.
 
 This file records what each milestone produced. Exact behavior lives in the
 specifications, tests, and compiler—not in milestone prose.
@@ -40,6 +40,7 @@ specifications, tests, and compiler—not in milestone prose.
 | M28 | AIL calls, modules, imports, transitive effects, and nested execution | Complete | M27 |
 | M29 | Immutable bounded lists, sequential map, pre-effect validation, and ordered batch cancellation | Complete | M28 |
 | M30 | Cooperative outbound request metadata, timeout, cancellation, closed results, and revision binding | Complete | M29 |
+| M31 | Bounded outbound workflows, ordered results, cooperative batch cancellation, and complete inspection | Complete | M30 |
 
 ## Shipped compiler path
 
@@ -97,6 +98,15 @@ timeout, and persistent identities for closed timeout/cancel results. Retained
 revisions own and digest their complete capability environments; inspection and
 execution use those saved contracts. The provider is synchronous and
 cooperative, not a hard-preemptive production network runtime.
+
+### Bounded outbound batch lookup: M31
+
+M31 added contextual `parallel map ... limit C` for exactly one outbound
+operation over a bounded list. The interpreter validates the complete batch
+before starts, keeps at most `C` opaque host handles active, stores completions
+at input positions, cooperatively cancels active work, and preserves unexpected
+host faults. Architecture settings survive ordinary child revisions and
+outside-operation/state facts propagate through callers across modules.
 
 ## Deferred work
 

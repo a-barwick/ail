@@ -1,0 +1,26 @@
+{
+  "contract_version": "m31-v1",
+  "status": "accepted",
+  "milestone": "M31",
+  "rules": [
+    "M31-LANG-001", "M31-LANG-002", "M31-LANG-003",
+    "M31-RUNTIME-001", "M31-RUNTIME-002", "M31-RUNTIME-003", "M31-RUNTIME-004",
+    "M31-PROTO-001", "M31-PROTO-002", "M31-PROTO-003"
+  ],
+  "input_bound": 8,
+  "concurrency_limit": 3,
+  "canonical_sources": [
+    {"path": "compiler/examples/batch-lookup/service.ail", "sha256": "37e1e24b037150ddd04a75233da774a85f3e253091ff568d7cad2ed4930e6083"},
+    {"path": "compiler/examples/batch-lookup/types.ail", "sha256": "6624472958848614af7ce081be573b25958b93a511d0ef09ee2b86892dfc7188"}
+  ],
+  "proof_tests": [
+    "eight_requests_never_exceed_three_and_results_remain_in_input_order",
+    "invalid_inputs_start_zero_requests_and_empty_input_is_empty",
+    "whole_batch_cancellation_marks_every_uncompleted_position_without_new_starts",
+    "unexpected_host_failure_stops_starts_cancels_active_and_preserves_original_fault",
+    "malformed_host_completions_fail_before_collection_and_trace_collected_faults",
+    "repeated_workflows_update_their_own_observed_calls",
+    "inspection_reports_the_complete_revision_bound_workflow",
+    "source_inspection_indexes_the_parallel_map_binding"
+  ]
+}

@@ -47,12 +47,19 @@ its [protocol shapes](outbound-request-protocol.json),
 under `compiler/examples/outbound-request/`. It retains ordinary call syntax
 and capability-effect authority and adds no general networking.
 
+M31 adds the accepted [bounded outbound workflow contract](bounded-outbound-workflows.md),
+its [protocol facts](bounded-outbound-workflow-protocol.json),
+[machine-readable rules](bounded-outbound-workflow-contract.json), and canonical
+batch lookup under `compiler/examples/batch-lookup/`. It adds no general async,
+threads, retries, or networking.
+
 Run the dependency-free contract check with:
 
 ```bash
 python3 specs/tools/core_contract.py check
 python3 specs/tools/bounded_list_contract.py check
 python3 specs/tools/outbound_request_contract.py check
+python3 specs/tools/bounded_outbound_workflow_contract.py check
 ```
 
 [ADR 0004](../docs/decisions/0004-rust-compiler-stack.md) now authorizes the
@@ -65,3 +72,5 @@ M29 authorizes only immutable `List<T, N>` values and sequential binder-style
 M30 authorizes only synchronous cooperative outbound operation metadata,
 external cancellation values, closed timeout/cancel completion, and
 revision-bound capability environments.
+M31 authorizes only one fixed-limit direct outbound map and its cooperative host
+lifecycle; general concurrency remains outside the contract.

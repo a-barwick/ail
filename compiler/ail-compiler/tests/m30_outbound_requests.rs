@@ -766,6 +766,43 @@ fn external_rejections_happen_before_capability_checks_or_calls() {
 }
 
 #[test]
+fn invalid_timeout_prevents_an_earlier_argument_from_calling_outside() {
+    let service = "module outbound.service;\nimport outbound.types as types;\n\nfn lookup(cancellation: Cancellation, dependency: capability DependencyClient) -> types.LookupOutcome effects { dependency.key, dependency.fetch } {\n  dependency.fetch(dependency.key(), 0, cancellation)\n}\n";
+    let mut interface = canonical_environment(10)
+        .interface("DependencyClient")
+        .unwrap()
+        .clone();
+    interface.insert_operation(
+        "key",
+        CapabilityOperation::new(std::iter::empty::<&str>(), "outbound.types.LookupKey"),
+    );
+    let mut environment = CapabilityEnvironment::new();
+    environment.insert_interface("DependencyClient", interface);
+    let workspace = EvolutionWorkspace::new(
+        "timeout-precedence",
+        "r1",
+        vec![
+            EvolutionSource::new("types.ail", TYPES),
+            EvolutionSource::new("service.ail", service),
+        ],
+        &environment,
+        EvolutionCoverage::default(),
+    )
+    .unwrap();
+    let mut provider = Provider::returning(OutboundProviderOutcome::TimedOut);
+    let failure = failed(workspace.execute(
+        "r1",
+        "outbound.service.lookup",
+        vec![RuntimeValue::Cancellation(CancellationToken::new("cancel"))],
+        &mut provider,
+    ));
+    assert_eq!(failure.fault.code, "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT");
+    assert_eq!(provider.ordinary_calls, 0);
+    assert_eq!(provider.outbound_calls, 0);
+    assert!(failure.calls.is_empty());
+}
+
+#[test]
 fn returned_and_synthesized_closed_completions_are_observable() {
     let workspace = workspace(&canonical_environment(5000));
     let found = outcome(

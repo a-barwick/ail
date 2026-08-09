@@ -245,6 +245,27 @@ pub struct SourceSetFunctionInspection {
     pub capabilities: Vec<String>,
     pub dependencies: Vec<String>,
     pub outbound_requests: Vec<OutboundOperationInspection>,
+    pub bounded_parallel_maps: Vec<BoundedParallelMapInspection>,
+}
+
+/// One compiler-visible bounded outbound workflow.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BoundedParallelMapInspection {
+    pub revision_id: String,
+    pub capability_environment_digest: String,
+    pub receiver: String,
+    pub operation: String,
+    pub effect: String,
+    pub input_list_bound: u128,
+    pub concurrency_limit: u128,
+    pub timeout_argument_index: usize,
+    pub timeout_parameter_type: String,
+    pub timeout_input: String,
+    pub cancellation_argument_index: usize,
+    pub cancellation_parameter_type: String,
+    pub cancellation_input: String,
+    pub result_ordering: String,
+    pub completion_results: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -453,7 +474,15 @@ impl EvolutionWorkspace {
                 });
             }
         }
-        let stored = StoredSourceSet::build(
+        let inherited_architecture = parent_revision_id.as_deref().and_then(|parent| {
+            self.revisions.get(parent).map(|stored| {
+                (
+                    stored.revision.architecture_settings_digest.clone(),
+                    stored.architecture_config.clone(),
+                )
+            })
+        });
+        let mut stored = StoredSourceSet::build(
             &self.id,
             &revision_id,
             parent_revision_id,
@@ -461,6 +490,10 @@ impl EvolutionWorkspace {
             capabilities,
             coverage,
         )?;
+        if let Some((digest, config)) = inherited_architecture {
+            stored.revision.architecture_settings_digest = digest;
+            stored.architecture_config = config;
+        }
         self.revisions.insert(revision_id, stored);
         Ok(())
     }
@@ -580,6 +613,13 @@ impl EvolutionWorkspace {
             revision_id,
             &stored.revision.capability_environment_digest,
         );
+        let bounded_parallel_maps = Self::inspect_bounded_parallel_maps(
+            &stored.unit,
+            declaration,
+            &stored.capabilities,
+            revision_id,
+            &stored.revision.capability_environment_digest,
+        );
         Ok(SourceSetFunctionInspection {
             revision_id: revision_id.to_owned(),
             function_handle,
@@ -592,7 +632,81 @@ impl EvolutionWorkspace {
             capabilities,
             dependencies,
             outbound_requests,
+            bounded_parallel_maps,
         })
+    }
+
+    pub(crate) fn inspect_bounded_parallel_maps(
+        unit: &SourceUnit,
+        declaration: &FunctionDecl,
+        capabilities: &CapabilityEnvironment,
+        revision_id: &str,
+        digest: &str,
+    ) -> Vec<BoundedParallelMapInspection> {
+        let receivers = declaration
+            .parameters
+            .iter()
+            .filter_map(|parameter| match &parameter.ty {
+                ParameterType::Capability(interface) => {
+                    Some((parameter.name.as_str(), interface.as_str()))
+                }
+                ParameterType::Value(_) => None,
+            })
+            .collect::<BTreeMap<_, _>>();
+        let mut maps = Vec::new();
+        collect_parallel_maps(&declaration.body, &mut maps);
+        maps.into_iter()
+            .filter_map(|(source, limit, body)| {
+                let Expr::CapabilityCall {
+                    receiver,
+                    operation,
+                    arguments,
+                    ..
+                } = &body.tail
+                else {
+                    return None;
+                };
+                let interface = receivers.get(receiver.as_str())?;
+                let signature = capabilities.interface(interface)?.operation(operation)?;
+                let crate::CapabilityOperationKind::Outbound(metadata) = &signature.kind else {
+                    return None;
+                };
+                let input_list_bound = source_list_bound(source, declaration)?;
+                let completion_results = unit.declarations.iter().find_map(|item| match item {
+                    Declaration::Variant(variant) if variant.name == signature.result => {
+                        Some(variant.cases.iter().map(|case| case.name.clone()).collect())
+                    }
+                    _ => None,
+                })?;
+                Some(BoundedParallelMapInspection {
+                    revision_id: revision_id.to_owned(),
+                    capability_environment_digest: digest.to_owned(),
+                    receiver: receiver.clone(),
+                    operation: operation.clone(),
+                    effect: format!("{receiver}.{operation}"),
+                    input_list_bound,
+                    concurrency_limit: limit,
+                    timeout_argument_index: metadata.timeout_argument_index,
+                    timeout_parameter_type: signature
+                        .parameters
+                        .get(metadata.timeout_argument_index)?
+                        .clone(),
+                    timeout_input: inspect_control_input(
+                        arguments.get(metadata.timeout_argument_index)?,
+                    ),
+                    cancellation_argument_index: metadata.cancellation_argument_index,
+                    cancellation_parameter_type: signature
+                        .parameters
+                        .get(metadata.cancellation_argument_index)?
+                        .clone(),
+                    cancellation_input: inspect_control_input(
+                        arguments.get(metadata.cancellation_argument_index)?,
+                    ),
+                    result_ordering: "input-order".to_owned(),
+                    completion_results,
+                })
+            })
+            .collect()
     }
 
     pub(crate) fn inspect_outbound_operations(
@@ -852,6 +966,7 @@ impl StoredSourceSet {
                 state_writes: writes.into_iter().collect(),
             });
         }
+        propagate_architecture_requirements(&mut units, &mut edges);
         units.sort_by(|a, b| a.id.cmp(&b.id));
         let mut analyzed_groups = units
             .iter()
@@ -1035,6 +1150,69 @@ impl StoredSourceSet {
     }
 }
 
+fn propagate_architecture_requirements(
+    units: &mut [ArchitectureUnit],
+    edges: &mut BTreeSet<(String, String, String)>,
+) {
+    loop {
+        let snapshot = edges.clone();
+        let mut added = false;
+        for (caller, callee, kind) in &snapshot {
+            if kind != "calls" {
+                continue;
+            }
+            for (source, target, requirement) in &snapshot {
+                if source == callee
+                    && matches!(
+                        requirement.as_str(),
+                        "capability-use" | "state-read" | "state-write"
+                    )
+                {
+                    added |= edges.insert((caller.clone(), target.clone(), requirement.clone()));
+                }
+            }
+        }
+        if !added {
+            break;
+        }
+    }
+    for unit in units {
+        let mut capabilities = unit.capabilities.iter().cloned().collect::<BTreeSet<_>>();
+        let mut reads = unit.state_reads.iter().cloned().collect::<BTreeSet<_>>();
+        let mut writes = unit.state_writes.iter().cloned().collect::<BTreeSet<_>>();
+        for (source, target, kind) in edges.iter().filter(|(source, _, _)| source == &unit.id) {
+            let _ = source;
+            match kind.as_str() {
+                "capability-use" => {
+                    if let Some(capability) = target.strip_prefix("capability:") {
+                        capabilities.insert(
+                            capability
+                                .split('.')
+                                .next()
+                                .unwrap_or(capability)
+                                .to_owned(),
+                        );
+                    }
+                }
+                "state-read" => {
+                    if let Some(state) = target.strip_prefix("state:") {
+                        reads.insert(state.to_owned());
+                    }
+                }
+                "state-write" => {
+                    if let Some(state) = target.strip_prefix("state:") {
+                        writes.insert(state.to_owned());
+                    }
+                }
+                _ => {}
+            }
+        }
+        unit.capabilities = capabilities.into_iter().collect();
+        unit.state_reads = reads.into_iter().collect();
+        unit.state_writes = writes.into_iter().collect();
+    }
+}
+
 #[allow(clippy::too_many_lines)]
 fn validate_architecture_operations(
     block: &Block,
@@ -1155,6 +1333,89 @@ fn validate_architecture_operations(
         visit(&binding.value, receivers, config, endpoint_groups)?;
     }
     visit(&block.tail, receivers, config, endpoint_groups)
+}
+
+fn collect_parallel_maps<'a>(block: &'a Block, maps: &mut Vec<(&'a Expr, u128, &'a Block)>) {
+    fn visit<'a>(expression: &'a Expr, maps: &mut Vec<(&'a Expr, u128, &'a Block)>) {
+        match expression {
+            Expr::ParallelMap {
+                source,
+                limit,
+                body,
+                ..
+            } => {
+                maps.push((source, *limit, body));
+                visit(source, maps);
+                collect_parallel_maps(body, maps);
+            }
+            Expr::Map { source, body, .. } => {
+                visit(source, maps);
+                collect_parallel_maps(body, maps);
+            }
+            Expr::Call { arguments, .. } | Expr::CapabilityCall { arguments, .. } => {
+                for argument in arguments {
+                    visit(argument, maps);
+                }
+            }
+            Expr::Record { fields, .. } => {
+                for field in fields {
+                    visit(&field.value, maps);
+                }
+            }
+            Expr::Variant { payload, .. } => {
+                if let Some(payload) = payload {
+                    visit(payload, maps);
+                }
+            }
+            Expr::FieldAccess { target, .. } => visit(target, maps),
+            Expr::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => {
+                visit(condition, maps);
+                collect_parallel_maps(then_branch, maps);
+                collect_parallel_maps(else_branch, maps);
+            }
+            Expr::Match {
+                scrutinee, arms, ..
+            } => {
+                visit(scrutinee, maps);
+                for arm in arms {
+                    collect_parallel_maps(&arm.body, maps);
+                }
+            }
+            Expr::Text { .. } | Expr::Integer { .. } | Expr::Name { .. } => {}
+        }
+    }
+    for binding in &block.bindings {
+        visit(&binding.value, maps);
+    }
+    visit(&block.tail, maps);
+}
+
+fn source_list_bound(source: &Expr, function: &FunctionDecl) -> Option<u128> {
+    let Expr::Name { name, .. } = source else {
+        return None;
+    };
+    function.parameters.iter().find_map(|parameter| {
+        if parameter.name != *name {
+            return None;
+        }
+        let ParameterType::Value(value_type) = &parameter.ty else {
+            return None;
+        };
+        value_type.as_list().map(|(_, bound)| bound)
+    })
+}
+
+fn inspect_control_input(expression: &Expr) -> String {
+    match expression {
+        Expr::Name { name, .. } => name.clone(),
+        Expr::Integer { spelling, .. } => spelling.clone(),
+        _ => "computed".to_owned(),
+    }
 }
 
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
@@ -1340,6 +1601,7 @@ fn derive_architecture_expr(
                 body,
                 ..
             } => {
+                *decisions += 1;
                 visit(
                     input, source, receivers, config, edges, reads, writes, decisions,
                 );

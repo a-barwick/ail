@@ -384,6 +384,11 @@ fn source_architecture_accepts_domain_ownership_and_rolls_back_transport_regress
             "transport:decide",
             "transport.dispatch",
         ),
+        (
+            HELPER_SPLIT_TRANSPORT,
+            "transport:dispatch",
+            "transport.dispatch",
+        ),
     ] {
         let mut rejected = workspace();
         let result = rejected
@@ -397,6 +402,21 @@ fn source_architecture_accepts_domain_ownership_and_rolls_back_transport_regress
         let ArchitectureChangeResult::Failure(failure) = result else {
             panic!("transport-owned candidate must be denied: {result:#?}");
         };
+        if transport == HELPER_SPLIT_TRANSPORT {
+            let reported = failure
+                .snapshot
+                .scopes
+                .iter()
+                .find(|item| item.identity == scope)
+                .unwrap();
+            assert_eq!(reported.state_read_set, ["jobs"]);
+            assert_eq!(reported.state_write_set, ["jobs"]);
+            assert!(
+                reported
+                    .direct_dependency_set
+                    .contains(&"capability:jobs_store.cancel_if_active".into())
+            );
+        }
         let diagnostics = serde_json::to_string(&failure.diagnostics).unwrap();
         assert!(diagnostics.contains("AIL.ARCH.AUTHORITY"));
         assert!(diagnostics.contains("AIL.ARCH.STATE"));
@@ -499,6 +519,25 @@ fn architecture_settings_digest_is_stable_and_inherited() {
         .architecture_settings_digest
         .clone();
     assert_eq!(base_digest.as_deref(), Some(first.stable_digest().as_str()));
+    workspace
+        .retain_revision(
+            "r1-edit",
+            Some("r1".into()),
+            sources(BASE_TRANSPORT, BASE_DOMAIN),
+            &environment(),
+            EvolutionCoverage {
+                declared_complete: true,
+                ..EvolutionCoverage::default()
+            },
+        )
+        .unwrap();
+    assert_eq!(
+        workspace
+            .revision("r1-edit")
+            .unwrap()
+            .architecture_settings_digest,
+        base_digest
+    );
     let result = workspace
         .validate_source_architecture_change(
             request(BASE_TRANSPORT, DOMAIN_OWNED),

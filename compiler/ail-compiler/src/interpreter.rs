@@ -1,6 +1,6 @@
 //! Deterministic tree-walking execution for the accepted M17 core slice.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
     Block, CapabilityEnvironment, CapabilityOperationKind, Declaration, Expr, ParameterType,
@@ -188,6 +188,15 @@ pub struct OutboundRequestHandle(pub String);
 pub struct OutboundBatchCheck {
     pub completed: Vec<OutboundRequestHandle>,
     pub cancelled: bool,
+}
+
+fn request_batch_cancellation(
+    provider: &mut dyn CapabilityProvider,
+    active: &BTreeMap<OutboundRequestHandle, (usize, usize)>,
+) {
+    for handle in active.keys() {
+        let _ = provider.cancel_outbound(handle);
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -550,7 +559,7 @@ impl Evaluator<'_> {
                 std::iter::empty::<(&str, &str)>(),
             ));
         };
-        if limit == 0 || limit > values.len().max(1) {
+        if limit == 0 {
             return Err(RuntimeFault::new(
                 "AIL.RUNTIME.PARALLEL_MAP_LIMIT",
                 span,
@@ -600,37 +609,32 @@ impl Evaluator<'_> {
                 std::iter::empty::<(&str, &str)>(),
             ));
         };
-        let mut requests = Vec::with_capacity(values.len());
+        let mut prepared_items = Vec::with_capacity(values.len());
         for value in values {
             let mut nested = locals.clone();
             nested.insert(binding.to_owned(), RuntimeBinding::Value(value));
-            let evaluated = arguments
-                .iter()
-                .map(|arg| self.eval_expr(arg, &nested))
-                .collect::<Result<Vec<_>, _>>()?;
-            let timeout_ms = evaluated
-                .get(metadata.timeout_argument_index)
-                .and_then(|v| {
-                    if let RuntimeValue::Int(v) = v {
-                        u64::try_from(*v).ok()
-                    } else {
-                        None
-                    }
-                })
-                .filter(|v| *v > 0 && u128::from(*v) <= metadata.maximum_timeout_ms)
-                .ok_or_else(|| {
-                    RuntimeFault::new(
-                        "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
-                        span,
-                        [("maximum", metadata.maximum_timeout_ms.to_string())],
-                        [(
-                            "argument_index",
-                            metadata.timeout_argument_index.to_string(),
-                        )],
-                    )
-                })?;
-            let cancellation = match evaluated.get(metadata.cancellation_argument_index) {
-                Some(RuntimeValue::Cancellation(value)) => value.clone(),
+            let timeout_expression = &arguments[metadata.timeout_argument_index];
+            let timeout_value = self.eval_expr(timeout_expression, &nested)?;
+            let cancellation_expression = &arguments[metadata.cancellation_argument_index];
+            let cancellation_value = self.eval_expr(cancellation_expression, &nested)?;
+            let timeout_ms = match &timeout_value {
+                RuntimeValue::Int(v) => u64::try_from(*v).ok(),
+                _ => None,
+            }
+            .filter(|v| *v > 0 && u128::from(*v) <= metadata.maximum_timeout_ms)
+            .ok_or_else(|| {
+                RuntimeFault::new(
+                    "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+                    span,
+                    [("maximum", metadata.maximum_timeout_ms.to_string())],
+                    [(
+                        "argument_index",
+                        metadata.timeout_argument_index.to_string(),
+                    )],
+                )
+            })?;
+            let cancellation = match &cancellation_value {
+                RuntimeValue::Cancellation(value) => value.clone(),
                 _ => {
                     return Err(RuntimeFault::new(
                         "AIL.RUNTIME.ARGUMENT_TYPE",
@@ -640,6 +644,31 @@ impl Evaluator<'_> {
                     ));
                 }
             };
+            prepared_items.push((
+                nested,
+                timeout_value,
+                cancellation_value,
+                timeout_ms,
+                cancellation,
+            ));
+        }
+        let mut requests = Vec::with_capacity(prepared_items.len());
+        for (nested, timeout_value, cancellation_value, timeout_ms, cancellation) in prepared_items
+        {
+            let mut prepared = vec![None; arguments.len()];
+            prepared[metadata.timeout_argument_index] = Some(timeout_value);
+            prepared[metadata.cancellation_argument_index] = Some(cancellation_value);
+            let evaluated = arguments
+                .iter()
+                .enumerate()
+                .map(|(index, argument)| {
+                    if let Some(value) = prepared[index].take() {
+                        Ok(value)
+                    } else {
+                        self.eval_expr(argument, &nested)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()?;
             requests.push(OutboundCapabilityRequest {
                 receiver: receiver.clone(),
                 interface: interface.clone(),
@@ -648,6 +677,9 @@ impl Evaluator<'_> {
                 timeout_ms,
                 cancellation,
             });
+        }
+        if requests.is_empty() {
+            return Ok(RuntimeValue::List(Vec::new()));
         }
         if !self
             .capabilities
@@ -666,15 +698,6 @@ impl Evaluator<'_> {
         let mut completion = 0;
         while next < requests.len() || !active.is_empty() {
             while next < requests.len() && active.len() < limit {
-                let handle = self.capabilities.start_outbound(&requests[next])?;
-                if active.contains_key(&handle) {
-                    return Err(RuntimeFault::new(
-                        "AIL.RUNTIME.OUTBOUND_HOST_CONTRACT",
-                        span,
-                        [("handle", "unique")],
-                        [("handle", handle.0)],
-                    ));
-                }
                 self.calls.push(ObservedCapabilityCall {
                     receiver: receiver.clone(),
                     interface: interface.clone(),
@@ -691,18 +714,87 @@ impl Evaluator<'_> {
                         completion_order: None,
                     }),
                 });
-                active.insert(handle, next);
+                let call_index = self.calls.len() - 1;
+                let handle = match self.capabilities.start_outbound(&requests[next]) {
+                    Ok(handle) => handle,
+                    Err(fault) => {
+                        request_batch_cancellation(self.capabilities, &active);
+                        return Err(fault);
+                    }
+                };
+                if active.contains_key(&handle) {
+                    request_batch_cancellation(self.capabilities, &active);
+                    return Err(RuntimeFault::new(
+                        "AIL.RUNTIME.OUTBOUND_HOST_CONTRACT",
+                        span,
+                        [("handle", "unique")],
+                        [("handle", handle.0)],
+                    ));
+                }
+                active.insert(handle, (next, call_index));
                 next += 1;
             }
             if active.is_empty() {
                 break;
             }
             let handles = active.keys().cloned().collect::<Vec<_>>();
-            let checked = self.capabilities.check_outbound(&handles)?;
+            let checked = match self.capabilities.check_outbound(&handles) {
+                Ok(checked) => checked,
+                Err(fault) => {
+                    request_batch_cancellation(self.capabilities, &active);
+                    return Err(fault);
+                }
+            };
+            let mut reported = BTreeSet::new();
+            for handle in &checked.completed {
+                if !reported.insert(handle.clone()) {
+                    request_batch_cancellation(self.capabilities, &active);
+                    return Err(RuntimeFault::new(
+                        "AIL.RUNTIME.OUTBOUND_HOST_CONTRACT",
+                        span,
+                        [("handle", "reported once")],
+                        [("handle", handle.0.as_str())],
+                    ));
+                }
+                if !active.contains_key(handle) {
+                    request_batch_cancellation(self.capabilities, &active);
+                    return Err(RuntimeFault::new(
+                        "AIL.RUNTIME.OUTBOUND_HOST_CONTRACT",
+                        span,
+                        [("handle", "known active")],
+                        [("handle", handle.0.as_str())],
+                    ));
+                }
+            }
+            for handle in checked.completed {
+                let (index, call_index) = active[&handle];
+                let outcome = match self.capabilities.collect_outbound(&handle) {
+                    Ok(outcome) => outcome,
+                    Err(fault) => {
+                        request_batch_cancellation(self.capabilities, &active);
+                        return Err(fault);
+                    }
+                };
+                let value = self.closed_outcome(signature, metadata, &outcome);
+                active.remove(&handle);
+                {
+                    let outbound = self.calls[call_index].outbound.as_mut().unwrap();
+                    outbound.outcome = Some(outcome);
+                    outbound.completion_order = Some(completion);
+                }
+                completion += 1;
+                if let Err(fault) = self.validate_capability_result(&value, &signature.result, span)
+                {
+                    request_batch_cancellation(self.capabilities, &active);
+                    return Err(fault);
+                }
+                self.calls[call_index].result = Some(value.clone());
+                results[index] = Some(value);
+            }
             if checked.cancelled {
-                for (handle, index) in &active {
-                    let _ = self.capabilities.cancel_outbound(handle);
-                    results[*index] = Some(self.closed_outcome(
+                request_batch_cancellation(self.capabilities, &active);
+                for (index, _) in active.values().copied() {
+                    results[index] = Some(self.closed_outcome(
                         signature,
                         metadata,
                         &OutboundProviderOutcome::Cancelled,
@@ -716,38 +808,6 @@ impl Evaluator<'_> {
                     ));
                 }
                 break;
-            }
-            if checked.completed.is_empty() {
-                return Err(RuntimeFault::new(
-                    "AIL.RUNTIME.OUTBOUND_HOST_CONTRACT",
-                    span,
-                    [("completed", "non-empty while active")],
-                    std::iter::empty::<(&str, &str)>(),
-                ));
-            }
-            for handle in checked.completed {
-                let Some(index) = active.remove(&handle) else {
-                    return Err(RuntimeFault::new(
-                        "AIL.RUNTIME.OUTBOUND_HOST_CONTRACT",
-                        span,
-                        [("handle", "known active")],
-                        [("handle", handle.0)],
-                    ));
-                };
-                let outcome = self.capabilities.collect_outbound(&handle)?;
-                let value = self.closed_outcome(signature, metadata, &outcome);
-                self.validate_capability_result(&value, &signature.result, span)?;
-                let call = self
-                    .calls
-                    .iter_mut()
-                    .find(|c| c.outbound.as_ref().and_then(|o| o.batch_index) == Some(index))
-                    .unwrap();
-                call.result = Some(value.clone());
-                let outbound = call.outbound.as_mut().unwrap();
-                outbound.outcome = Some(outcome);
-                outbound.completion_order = Some(completion);
-                completion += 1;
-                results[index] = Some(value);
             }
         }
         Ok(RuntimeValue::List(

@@ -7,6 +7,7 @@ record LookupRequest identity "batch-lookup.request.v1" {
 variant LookupOutcome identity "batch-lookup.outcome.v1" {
   Found identity "found"(Text);
   NotFound identity "not-found";
+  Unavailable identity "unavailable";
   TimedOut identity "timed-out";
   Cancelled identity "cancelled";
 }
