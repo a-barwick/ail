@@ -1,5 +1,5 @@
 [workspace]
-members = ["compiler/ail-compiler"]
+members = ["compiler/ail-compiler", "service-host"]
 resolver = "2"
 
 [workspace.package]
