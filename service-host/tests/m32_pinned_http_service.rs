@@ -7,8 +7,8 @@ use ail_compiler::{
     RuntimeValue, Span,
 };
 use ail_service_host::{
-    BODY_LIMIT_BYTES, CatalogProvider, MAXIMUM_TIMEOUT_MS, ServiceHost, canonical_config,
-    canonical_environment, canonical_workspace,
+    BODY_LIMIT_BYTES, CatalogBoundProvider, CatalogProvider, MAXIMUM_TIMEOUT_MS, ServiceHost,
+    canonical_config, canonical_environment, canonical_workspace,
 };
 use axum::{
     body::Body,
@@ -137,6 +137,11 @@ impl CapabilityProvider for Provider {
         Ok(self.outcomes.remove(handle).unwrap())
     }
 }
+impl CatalogBoundProvider for Provider {
+    fn catalog_digest(&self) -> &'static str {
+        "sha256:synthetic-m32-catalog"
+    }
+}
 
 fn host(provider: Provider) -> ServiceHost {
     let workspace = canonical_workspace().unwrap();
@@ -229,7 +234,8 @@ async fn eight_results_are_aligned_and_pinned() {
     assert_eq!(value["source_set_digest"], digest);
     assert_eq!(value["outcomes"][1]["case"], "NotFound");
     assert_eq!(value["outcomes"][7]["value"], "v7");
-    let record = &host.execution_records()[0];
+    let records = host.execution_records().unwrap();
+    let record = &records[0];
     assert_eq!(record.calls.len(), 8);
     assert_eq!(
         record.calls[7].result,
@@ -362,7 +368,7 @@ async fn invalid_http_inputs_do_zero_work() {
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-    assert!(host.execution_records().is_empty());
+    assert!(host.execution_records().unwrap().is_empty());
 }
 
 #[tokio::test]
@@ -384,7 +390,7 @@ async fn failure_is_fail_stop_and_routes_are_exact() {
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
-    let records = host.execution_records();
+    let records = host.execution_records().unwrap();
     assert_eq!(
         records[0].failure_code.as_deref(),
         Some("TEST.START.FAILED")
@@ -464,7 +470,7 @@ async fn retaining_r2_does_not_move_the_pin() {
     let value: serde_json::Value =
         serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes()).unwrap();
     assert_eq!(value["revision_id"], "r1");
-    assert_eq!(host.execution_records()[0].revision_id, "r1");
+    assert_eq!(host.execution_records().unwrap()[0].revision_id, "r1");
 }
 
 #[tokio::test]
@@ -486,7 +492,7 @@ async fn collect_failure_records_reported_completion_without_partial_success() {
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
-    let records = host.execution_records();
+    let records = host.execution_records().unwrap();
     assert_eq!(
         records[0].failure_code.as_deref(),
         Some("TEST.COLLECT.FAILED")

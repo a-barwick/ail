@@ -8,6 +8,7 @@ use ail_compiler::{
     CancellationToken, CapabilityEnvironment, CapabilityInterface, CapabilityOperation,
     CapabilityProvider, EvolutionCoverage, EvolutionSource, EvolutionWorkspace, ExecutionResponse,
     ObservedCapabilityCall, OutboundCapabilityMetadata, OutboundProviderOutcome, RuntimeValue,
+    source_digest,
 };
 use axum::{
     Router,
@@ -27,6 +28,7 @@ pub const LIST_BOUND: u128 = 8;
 pub const CONCURRENCY_LIMIT: u128 = 3;
 pub const MAXIMUM_TIMEOUT_MS: u128 = 1_000;
 pub const BODY_LIMIT_BYTES: usize = 16 * 1024;
+pub const AUDIT_CAPACITY: usize = 256;
 pub const PINNED_SOURCE_SET_DIGEST: &str =
     "sha256:2b9ad64d61250d178d5e2217bee078ab46a668c7105db594cc2442d50ea3bc75";
 pub const PINNED_CAPABILITY_ENVIRONMENT_DIGEST: &str =
@@ -71,9 +73,20 @@ impl std::error::Error for StartupError {}
 pub struct ExecutionRecord {
     pub revision_id: String,
     pub source_set_digest: String,
+    pub catalog_digest: String,
     pub calls: Vec<CallRecord>,
     pub failure_code: Option<String>,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AuditUnavailable;
+
+impl std::fmt::Display for AuditUnavailable {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("execution audit is unavailable")
+    }
+}
+impl std::error::Error for AuditUnavailable {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallRecord {
@@ -113,6 +126,7 @@ impl std::error::Error for CatalogError {}
 /// Immutable operator-supplied lookup catalog used by the executable M32 host.
 pub struct CatalogProvider {
     entries: BTreeMap<String, String>,
+    catalog_digest: String,
     ready: BTreeMap<ail_compiler::OutboundRequestHandle, OutboundProviderOutcome>,
     next_handle: u64,
 }
@@ -135,11 +149,34 @@ impl CatalogProvider {
                 });
             }
         }
+        let canonical_entries = serde_json::to_string(&entries).map_err(|error| CatalogError {
+            message: format!("cannot canonicalize catalog: {error}"),
+        })?;
         Ok(Self {
             entries,
+            catalog_digest: source_digest(&format!("ail.catalog.v1\0{canonical_entries}")),
             ready: BTreeMap::new(),
             next_handle: 0,
         })
+    }
+
+    /// Returns the digest of the parsed key/value semantics, independent of JSON formatting and
+    /// entry order.
+    #[must_use]
+    pub fn catalog_digest(&self) -> &str {
+        &self.catalog_digest
+    }
+}
+
+/// Dependency provider whose immutable data snapshot identifies itself for response and audit
+/// binding.
+pub trait CatalogBoundProvider: CapabilityProvider + Send {
+    fn catalog_digest(&self) -> &str;
+}
+
+impl CatalogBoundProvider for CatalogProvider {
+    fn catalog_digest(&self) -> &str {
+        self.catalog_digest()
     }
 }
 
@@ -232,10 +269,17 @@ fn catalog_fault(code: &'static str) -> ail_compiler::RuntimeFault {
 
 struct Inner {
     workspace: EvolutionWorkspace,
-    provider: Mutex<Box<dyn CapabilityProvider + Send>>,
+    provider: Mutex<Box<dyn CatalogBoundProvider>>,
     config: PinnedServiceConfig,
-    records: Mutex<Vec<ExecutionRecord>>,
+    catalog_digest: String,
+    audit: Mutex<AuditStore>,
     token_counter: AtomicU64,
+}
+
+#[derive(Default)]
+struct AuditStore {
+    next_reservation: u64,
+    entries: Vec<(u64, Option<ExecutionRecord>)>,
 }
 
 #[derive(Clone)]
@@ -249,7 +293,7 @@ impl ServiceHost {
     #[allow(clippy::too_many_lines)]
     pub fn new(
         workspace: &EvolutionWorkspace,
-        provider: Box<dyn CapabilityProvider + Send>,
+        provider: Box<dyn CatalogBoundProvider>,
         config: PinnedServiceConfig,
     ) -> Result<Self, StartupError> {
         exact("revision_id", "r1", &config.revision_id)?;
@@ -345,11 +389,13 @@ impl ServiceHost {
             )?;
             workspace.clone()
         };
+        let catalog_digest = provider.catalog_digest().to_owned();
         Ok(Self(Arc::new(Inner {
             workspace: pinned_workspace,
             provider: Mutex::new(provider),
             config,
-            records: Mutex::new(Vec::new()),
+            catalog_digest,
+            audit: Mutex::new(AuditStore::default()),
             token_counter: AtomicU64::new(1),
         })))
     }
@@ -360,12 +406,22 @@ impl ServiceHost {
             .layer(DefaultBodyLimit::max(BODY_LIMIT_BYTES))
             .with_state(self.clone())
     }
-    #[must_use]
-    pub fn execution_records(&self) -> Vec<ExecutionRecord> {
+    /// Returns completed execution records in admission order.
+    ///
+    /// # Errors
+    /// Returns `AuditUnavailable` when the process-local audit lock is poisoned.
+    pub fn execution_records(&self) -> Result<Vec<ExecutionRecord>, AuditUnavailable> {
         self.0
-            .records
+            .audit
             .lock()
-            .map_or_else(|_| Vec::new(), |v| v.clone())
+            .map(|audit| {
+                audit
+                    .entries
+                    .iter()
+                    .filter_map(|(_, record)| record.clone())
+                    .collect()
+            })
+            .map_err(|_| AuditUnavailable)
     }
     #[must_use]
     pub fn pinned_config(&self) -> &PinnedServiceConfig {
@@ -407,16 +463,17 @@ struct LookupRequest {
 struct BatchResponse {
     revision_id: String,
     source_set_digest: String,
+    catalog_digest: String,
     outcomes: Vec<JsonOutcome>,
 }
 #[derive(Serialize)]
 #[serde(tag = "case")]
 enum JsonOutcome {
-    Found { value: String },
-    NotFound,
-    Unavailable,
-    TimedOut,
-    Cancelled,
+    Found { key: String, value: String },
+    NotFound { key: String },
+    Unavailable { key: String },
+    TimedOut { key: String },
+    Cancelled { key: String },
 }
 #[derive(Serialize)]
 struct ErrorBody {
@@ -447,23 +504,41 @@ async fn handle(
         return unprocessable("timeout_bounds");
     }
 
-    let requests = RuntimeValue::list(input.requests.into_iter().map(|request| {
-        RuntimeValue::record(REQUEST_TYPE, [("key", RuntimeValue::Text(request.key))])
-    }));
+    let audit_slot = match reserve_audit(&host) {
+        Ok(slot) => slot,
+        Err(AuditReservationError::Full) => return service_unavailable("audit_capacity"),
+        Err(AuditReservationError::Unavailable) => {
+            return service_unavailable("audit_unavailable");
+        }
+    };
+    let keys = input
+        .requests
+        .into_iter()
+        .map(|request| request.key)
+        .collect::<Vec<_>>();
+    let requests = RuntimeValue::list(
+        keys.iter()
+            .cloned()
+            .map(|key| RuntimeValue::record(REQUEST_TYPE, [("key", RuntimeValue::Text(key))])),
+    );
     let token = host.0.token_counter.fetch_add(1, Ordering::Relaxed);
     let arguments = vec![
         requests,
         RuntimeValue::Int(timeout_ms),
         RuntimeValue::Cancellation(CancellationToken::new(format!("m32-{token}"))),
     ];
-    let response = match host.0.provider.lock() {
-        Ok(mut provider) => host.0.workspace.execute(
+    let response = if let Ok(mut provider) = host.0.provider.lock() {
+        host.0.workspace.execute(
             &host.0.config.revision_id,
             &host.0.config.entry_function,
             arguments,
             provider.as_mut(),
-        ),
-        Err(_) => return gateway_error("host_lock_failure"),
+        )
+    } else {
+        if !release_audit(&host, audit_slot) {
+            return service_unavailable("audit_unavailable");
+        }
+        return gateway_error("host_lock_failure");
     };
     let (calls, failure_code) = match &response {
         ExecutionResponse::Completed(value) => (&value.calls, None),
@@ -472,11 +547,12 @@ async fn handle(
     let record = ExecutionRecord {
         revision_id: host.0.config.revision_id.clone(),
         source_set_digest: host.0.config.source_set_digest.clone(),
+        catalog_digest: host.0.catalog_digest.clone(),
         calls: calls.iter().filter_map(call_record).collect(),
         failure_code,
     };
-    if let Ok(mut records) = host.0.records.lock() {
-        records.push(record);
+    if !complete_audit(&host, audit_slot, record) {
+        return service_unavailable("audit_unavailable");
     }
     let ExecutionResponse::Completed(success) = response else {
         return gateway_error("execution_failed");
@@ -484,7 +560,15 @@ async fn handle(
     let RuntimeValue::List(values) = success.value else {
         return gateway_error("invalid_result");
     };
-    let Some(outcomes) = values.iter().map(json_outcome).collect::<Option<Vec<_>>>() else {
+    if values.len() != keys.len() {
+        return gateway_error("invalid_result");
+    }
+    let Some(outcomes) = keys
+        .into_iter()
+        .zip(values.iter())
+        .map(|(key, value)| json_outcome(key, value))
+        .collect::<Option<Vec<_>>>()
+    else {
         return gateway_error("invalid_result");
     };
     (
@@ -492,6 +576,7 @@ async fn handle(
         axum::Json(BatchResponse {
             revision_id: host.0.config.revision_id.clone(),
             source_set_digest: host.0.config.source_set_digest.clone(),
+            catalog_digest: host.0.catalog_digest.clone(),
             outcomes,
         }),
     )
@@ -523,8 +608,69 @@ fn unprocessable(error: &'static str) -> Response {
 fn gateway_error(error: &'static str) -> Response {
     (StatusCode::BAD_GATEWAY, axum::Json(ErrorBody { error })).into_response()
 }
+fn service_unavailable(error: &'static str) -> Response {
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        axum::Json(ErrorBody { error }),
+    )
+        .into_response()
+}
 
-fn json_outcome(value: &RuntimeValue) -> Option<JsonOutcome> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AuditReservationError {
+    Full,
+    Unavailable,
+}
+
+fn reserve_audit(host: &ServiceHost) -> Result<u64, AuditReservationError> {
+    let mut audit = host
+        .0
+        .audit
+        .lock()
+        .map_err(|_| AuditReservationError::Unavailable)?;
+    if audit.entries.len() >= AUDIT_CAPACITY {
+        return Err(AuditReservationError::Full);
+    }
+    let reservation = audit.next_reservation;
+    audit.next_reservation = audit.next_reservation.wrapping_add(1);
+    audit.entries.push((reservation, None));
+    Ok(reservation)
+}
+
+fn complete_audit(host: &ServiceHost, reservation: u64, record: ExecutionRecord) -> bool {
+    let Ok(mut audit) = host.0.audit.lock() else {
+        return false;
+    };
+    let Some((_, reserved_record)) = audit
+        .entries
+        .iter_mut()
+        .find(|(reserved, _)| *reserved == reservation)
+    else {
+        return false;
+    };
+    if reserved_record.is_some() {
+        return false;
+    }
+    *reserved_record = Some(record);
+    true
+}
+
+fn release_audit(host: &ServiceHost, reservation: u64) -> bool {
+    let Ok(mut audit) = host.0.audit.lock() else {
+        return false;
+    };
+    let Some(index) = audit
+        .entries
+        .iter()
+        .position(|(reserved, record)| *reserved == reservation && record.is_none())
+    else {
+        return false;
+    };
+    audit.entries.remove(index);
+    true
+}
+
+fn json_outcome(key: String, value: &RuntimeValue) -> Option<JsonOutcome> {
     let RuntimeValue::Variant {
         type_name,
         case,
@@ -538,12 +684,13 @@ fn json_outcome(value: &RuntimeValue) -> Option<JsonOutcome> {
     }
     match (case.as_str(), payload.as_deref()) {
         ("Found", Some(RuntimeValue::Text(value))) => Some(JsonOutcome::Found {
+            key,
             value: value.clone(),
         }),
-        ("NotFound", None) => Some(JsonOutcome::NotFound),
-        ("Unavailable", None) => Some(JsonOutcome::Unavailable),
-        ("TimedOut", None) => Some(JsonOutcome::TimedOut),
-        ("Cancelled", None) => Some(JsonOutcome::Cancelled),
+        ("NotFound", None) => Some(JsonOutcome::NotFound { key }),
+        ("Unavailable", None) => Some(JsonOutcome::Unavailable { key }),
+        ("TimedOut", None) => Some(JsonOutcome::TimedOut { key }),
+        ("Cancelled", None) => Some(JsonOutcome::Cancelled { key }),
         _ => None,
     }
 }
@@ -620,4 +767,85 @@ pub fn canonical_config(
         required_effect: REQUIRED_EFFECT.into(),
         maximum_timeout_ms: MAXIMUM_TIMEOUT_MS,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use tower::ServiceExt;
+
+    use super::{CatalogProvider, ServiceHost, canonical_config, canonical_workspace};
+
+    #[tokio::test]
+    async fn poisoned_audit_lock_is_visible_and_fails_closed_before_execution() {
+        let provider = CatalogProvider::from_json(r#"{"entries":[]}"#).unwrap();
+        let workspace = canonical_workspace().unwrap();
+        let config = canonical_config(&workspace).unwrap();
+        let host = ServiceHost::new(&workspace, Box::new(provider), config).unwrap();
+        let poison_host = host.clone();
+        assert!(
+            catch_unwind(AssertUnwindSafe(move || {
+                let _guard = poison_host.0.audit.lock().unwrap();
+                panic!("synthetic audit lock poison");
+            }))
+            .is_err()
+        );
+
+        assert!(host.execution_records().is_err());
+        let response = host
+            .router()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/lookups:batch")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        r#"{"requests":[{"key":"must-not-run"}],"timeout_ms":1}"#,
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+    }
+
+    #[tokio::test]
+    async fn poisoned_provider_lock_releases_pre_execution_audit_reservation() {
+        let provider = CatalogProvider::from_json(r#"{"entries":[]}"#).unwrap();
+        let workspace = canonical_workspace().unwrap();
+        let config = canonical_config(&workspace).unwrap();
+        let host = ServiceHost::new(&workspace, Box::new(provider), config).unwrap();
+        let poison_host = host.clone();
+        assert!(
+            catch_unwind(AssertUnwindSafe(move || {
+                let _guard = poison_host.0.provider.lock().unwrap();
+                panic!("synthetic provider lock poison");
+            }))
+            .is_err()
+        );
+
+        for _ in 0..2 {
+            let response = host
+                .router()
+                .oneshot(
+                    Request::builder()
+                        .method("POST")
+                        .uri("/v1/lookups:batch")
+                        .header("content-type", "application/json")
+                        .body(Body::from(
+                            r#"{"requests":[{"key":"must-not-run"}],"timeout_ms":1}"#,
+                        ))
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+        }
+        assert!(host.execution_records().unwrap().is_empty());
+    }
 }

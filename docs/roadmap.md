@@ -1,6 +1,6 @@
 # Delivery history
 
-The compiler and pinned service host have shipped through M32. No milestone is
+The compiler and pinned service host have shipped through M33. No milestone is
 active.
 
 This file records what each milestone produced. Exact behavior lives in the
@@ -43,6 +43,7 @@ specifications, tests, and compiler—not in milestone prose.
 | M30 | Cooperative outbound request metadata, timeout, cancellation, closed results, and revision binding | Complete | M29 |
 | M31 | Bounded outbound workflows, ordered results, cooperative batch cancellation, and complete inspection | Complete | M30 |
 | M32 | One revision-pinned HTTP batch-lookup host with strict JSON and auditable execution | Complete | M31 |
+| M33 | Catalog-snapshot identity, bounded fail-closed audit, and keyed HTTP outcomes | Complete | M32 |
 
 ## Shipped compiler path
 
@@ -119,6 +120,14 @@ inspection. Strict JSON and bounds rejection starts no dependency work. Complete
 results report the pinned revision and digest; unexpected execution failure
 returns 502 without partial outcomes. Retaining a newer revision does not move a
 running host's selector.
+
+### Private catalog dogfood: M33
+
+M33 binds every successful answer and execution record to a deterministic
+digest of the parsed immutable catalog. Each HTTP outcome includes its original
+request key without changing input order or duplicate behavior. The host
+atomically admits at most 256 compiler executions and returns 503 before work
+when the process-local audit is full or unavailable.
 
 ## Deferred work
 

@@ -1,10 +1,10 @@
 # Current status
 
-Last updated: 2026-08-15
+Last updated: 2026-08-16
 
 ## Active milestone
 
-None — M32 is complete and no next build has been selected.
+None — M33 is complete and no next build has been selected.
 
 ## Shipped
 
@@ -44,6 +44,14 @@ and server-side records retain accurate call lifecycle facts and complete closed
 results. The executable loads an explicit immutable JSON catalog at startup and
 returns its real value for present keys rather than a canned outcome.
 
+The host identifies that parsed catalog snapshot with a deterministic digest in
+every successful response and execution record. Every outcome carries its
+original request key. Audit admission is atomic and bounded at 256 executions;
+full or reservation-unavailable auditing returns 503 before compiler or
+dependency work, completion failure returns 503 after work, and an execution
+cannot return 200 until its record is complete. The executable accepts an
+optional port while retaining its loopback-only bind.
+
 The compiler rejects direct and mutual recursion, import cycles, inaccessible
 declarations, ambiguous imports, stale handles, incomplete impact claims, and
 invalid partial revisions.
@@ -67,7 +75,9 @@ production runtime, native backend, TLS/authentication, or deployment system.
 The outbound provider is synchronous and cooperative: the interpreter cannot
 preempt stuck host code, enforce a hard deadline itself, or roll back remote
 effects. The executable provider is an immutable local catalog, not a general
-network dependency. Recursion is rejected rather than bounded.
+network dependency. The endpoint has no authentication, the audit is
+process-local, and capacity requires a restart after 256 admitted executions.
+Recursion is rejected rather than bounded.
 
 The architecture API implements the exact M24 metrics and policy behavior.
 
@@ -77,7 +87,7 @@ Choose one real service behavior still blocked by the current language. Write
 the canonical source, static result, runtime result, diagnostic failures, and
 compiler-interface output first. Then implement the smallest missing semantics
 and run the full existing suite. Do not infer general collection, networking,
-routing, or concurrency semantics from the narrow M29–M32 contracts.
+routing, or concurrency semantics from the narrow M29–M33 contracts.
 
 Do not restart the old UC-008 M29–M36 plan or the M8 measurement work by default.
 Do not start native lowering, general concurrency, or broad standard-library
@@ -90,6 +100,7 @@ cargo +1.87.0 fmt --all --check
 cargo +1.87.0 test --workspace
 cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
 cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
+cargo +1.87.0 test -p ail-service-host --test m33_private_catalog_dogfood
 python3 specs/tools/architecture_acceptance.py check
 python3 specs/tools/architecture_contract.py check
 python3 specs/tools/core_contract.py check

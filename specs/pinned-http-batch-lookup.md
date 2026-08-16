@@ -36,6 +36,10 @@ ordered `Found | NotFound | Unavailable | TimedOut | Cancelled` outcomes. Any
 unexpected provider, runtime, or result-contract failure returns 502 and never
 returns partial successful outcomes.
 
+M33 extends each complete response with its immutable catalog digest and each
+outcome with the corresponding request key. Exact rules live in
+`specs/private-catalog-dogfood.md`.
+
 ### M32-HOST-005 — Immutable running version
 
 The host stores its validated revision and function selector. Every request
@@ -52,6 +56,10 @@ outcome/result, and original unexpected fault code. Outcome and result remain
 absent when an unexpected check or collect fault prevents them. A failed start
 is absent. Synthesized cancellation of active work records Cancelled outcome and
 result but no host completion order.
+
+M33 bounds this process-local store at 256 compiler executions and requires
+fail-closed reservation and completion. It also binds records to the catalog
+digest.
 
 ### M32-HOST-007 — Host-injected outside authority
 
