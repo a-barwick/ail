@@ -7,8 +7,8 @@ use ail_compiler::{
     RuntimeValue, Span,
 };
 use ail_service_host::{
-    BODY_LIMIT_BYTES, MAXIMUM_TIMEOUT_MS, ServiceHost, canonical_config, canonical_environment,
-    canonical_workspace,
+    BODY_LIMIT_BYTES, CatalogProvider, MAXIMUM_TIMEOUT_MS, ServiceHost, canonical_config,
+    canonical_environment, canonical_workspace,
 };
 use axum::{
     body::Body,
@@ -231,6 +231,22 @@ async fn eight_results_are_aligned_and_pinned() {
     assert_eq!(value["outcomes"][7]["value"], "v7");
     let record = &host.execution_records()[0];
     assert_eq!(record.calls.len(), 8);
+    assert_eq!(
+        record.calls[7].result,
+        Some(RuntimeValue::variant(
+            "batch_lookup.types.LookupOutcome",
+            "Found",
+            Some(RuntimeValue::Text("v7".into())),
+        ))
+    );
+    assert_eq!(
+        record.calls[1].result,
+        Some(RuntimeValue::variant(
+            "batch_lookup.types.LookupOutcome",
+            "NotFound",
+            None,
+        ))
+    );
     assert!(record.calls.iter().all(|c| c.start_order < 8));
     let mut completion_order = record
         .calls
@@ -268,6 +284,21 @@ async fn invalid_http_inputs_do_zero_work() {
             json(1, MAXIMUM_TIMEOUT_MS + 1),
             Some("application/json"),
             StatusCode::UNPROCESSABLE_ENTITY,
+        ),
+        (
+            "{\"requests\":[],\"timeout_ms\":-1}".into(),
+            Some("application/json"),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ),
+        (
+            "{\"requests\":[],\"timeout_ms\":340282366920938463463374607431768211456}".into(),
+            Some("application/json"),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ),
+        (
+            "{\"requests\":[],\"timeout_ms\":\"1\"}".into(),
+            Some("application/json"),
+            StatusCode::BAD_REQUEST,
         ),
         (
             "{".into(),
@@ -360,8 +391,13 @@ async fn failure_is_fail_stop_and_routes_are_exact() {
     );
     assert_eq!(records[0].calls.len(), 2);
     assert!(records[0].calls.iter().all(|c| c.completion_order.is_none()
-        && c.outcome.as_deref() == Some("Cancelled")
-        && c.result.as_deref() == Some("Cancelled")));
+        && c.outcome == Some(OutboundProviderOutcome::Cancelled)
+        && c.result
+            == Some(RuntimeValue::variant(
+                "batch_lookup.types.LookupOutcome",
+                "Cancelled",
+                None,
+            ))));
     {
         let trace = trace.lock().unwrap();
         assert_eq!(trace.starts, [0, 1]);
@@ -466,4 +502,38 @@ async fn collect_failure_records_reported_completion_without_partial_success() {
     );
     let trace = trace.lock().unwrap();
     assert_eq!(trace.starts, [0, 1, 2]);
+}
+
+#[tokio::test]
+async fn operator_catalog_drives_real_found_and_not_found_results() {
+    let provider =
+        CatalogProvider::from_json(r#"{"entries":[{"key":"known","value":"catalog-value"}]}"#)
+            .unwrap();
+    let workspace = canonical_workspace().unwrap();
+    let config = canonical_config(&workspace).unwrap();
+    let host = ServiceHost::new(&workspace, Box::new(provider), config).unwrap();
+    let response = host
+        .router()
+        .oneshot(request(
+            Method::POST,
+            "/v1/lookups:batch",
+            r#"{"requests":[{"key":"known"},{"key":"missing"}],"timeout_ms":100}"#,
+            Some("application/json"),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let value: serde_json::Value =
+        serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    assert_eq!(value["outcomes"][0]["case"], "Found");
+    assert_eq!(value["outcomes"][0]["value"], "catalog-value");
+    assert_eq!(value["outcomes"][1]["case"], "NotFound");
+
+    assert!(CatalogProvider::from_json(r#"{"entries":[],"extra":true}"#).is_err());
+    assert!(
+        CatalogProvider::from_json(
+            r#"{"entries":[{"key":"duplicate","value":"a"},{"key":"duplicate","value":"b"}]}"#,
+        )
+        .is_err()
+    );
 }

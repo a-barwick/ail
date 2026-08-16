@@ -60,13 +60,19 @@ service. HTTP input supplies only lookup keys and timeout. It cannot create a
 capability, grant `dependency.fetch`, select a revision, or choose a
 cancellation-token identity.
 
+The executable host requires one operator-supplied JSON catalog path at process
+startup. It loads that catalog before constructing the service, rejects malformed
+or duplicate entries, and keeps the resulting key/value map immutable. A present
+key returns `Found` with its catalog value; an absent key returns `NotFound`.
+
 ## Canonical proof
 
 `service-host/tests/m32_pinned_http_service.rs` checks every startup pin,
 out-of-order eight-item completion with at most three active requests, strict
-zero-work rejection, fail-stop 502 behavior and trace accuracy, immutable `r1`
-execution after retaining `r2`, and exact route/method behavior. Existing M11
-through M31 suites remain the regression gate.
+zero-work rejection including negative and non-representable timeout numbers,
+complete audit values, operator-catalog lookup behavior, fail-stop 502 behavior
+and trace accuracy, immutable `r1` execution after retaining `r2`, and exact
+route/method behavior. Existing M11 through M31 suites remain the regression gate.
 
 ## Non-goals
 

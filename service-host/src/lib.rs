@@ -1,5 +1,6 @@
 //! Pinned HTTP host for the canonical M32 batch-lookup service.
 
+use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -80,8 +81,153 @@ pub struct CallRecord {
     pub start_order: usize,
     pub completion_order: Option<usize>,
     pub timeout_ms: u64,
-    pub outcome: Option<String>,
-    pub result: Option<String>,
+    pub outcome: Option<OutboundProviderOutcome>,
+    pub result: Option<RuntimeValue>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CatalogDocument {
+    entries: Vec<CatalogEntry>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CatalogEntry {
+    key: String,
+    value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CatalogError {
+    message: String,
+}
+
+impl std::fmt::Display for CatalogError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&self.message)
+    }
+}
+impl std::error::Error for CatalogError {}
+
+/// Immutable operator-supplied lookup catalog used by the executable M32 host.
+pub struct CatalogProvider {
+    entries: BTreeMap<String, String>,
+    ready: BTreeMap<ail_compiler::OutboundRequestHandle, OutboundProviderOutcome>,
+    next_handle: u64,
+}
+
+impl CatalogProvider {
+    /// Parses one strict catalog document and rejects duplicate keys.
+    ///
+    /// # Errors
+    /// Returns a catalog error for malformed JSON, unknown fields, or duplicate keys.
+    pub fn from_json(json: &str) -> Result<Self, CatalogError> {
+        let document =
+            serde_json::from_str::<CatalogDocument>(json).map_err(|error| CatalogError {
+                message: format!("invalid catalog: {error}"),
+            })?;
+        let mut entries = BTreeMap::new();
+        for entry in document.entries {
+            if entries.insert(entry.key.clone(), entry.value).is_some() {
+                return Err(CatalogError {
+                    message: format!("duplicate catalog key: {}", entry.key),
+                });
+            }
+        }
+        Ok(Self {
+            entries,
+            ready: BTreeMap::new(),
+            next_handle: 0,
+        })
+    }
+}
+
+impl CapabilityProvider for CatalogProvider {
+    fn supports(&self, receiver: &str, interface: &str) -> bool {
+        receiver == "dependency" && interface == "DependencyClient"
+    }
+
+    fn call(
+        &mut self,
+        _: &str,
+        _: &str,
+        _: &str,
+        _: &[RuntimeValue],
+    ) -> Result<RuntimeValue, ail_compiler::RuntimeFault> {
+        Err(catalog_fault("M32.CATALOG.ORDINARY_CALL"))
+    }
+
+    fn supports_outbound_batch(&self, receiver: &str, interface: &str, operation: &str) -> bool {
+        receiver == "dependency" && interface == "DependencyClient" && operation == "fetch"
+    }
+
+    fn start_outbound(
+        &mut self,
+        request: &ail_compiler::OutboundCapabilityRequest,
+    ) -> Result<ail_compiler::OutboundRequestHandle, ail_compiler::RuntimeFault> {
+        let Some(RuntimeValue::Text(key)) = request
+            .arguments
+            .first()
+            .and_then(|value| value.field("key"))
+        else {
+            return Err(catalog_fault("M32.CATALOG.INVALID_REQUEST"));
+        };
+        let outcome = self.entries.get(key).map_or_else(
+            || RuntimeValue::variant(RESULT_TYPE, "NotFound", None),
+            |value| {
+                RuntimeValue::variant(
+                    RESULT_TYPE,
+                    "Found",
+                    Some(RuntimeValue::Text(value.clone())),
+                )
+            },
+        );
+        let handle = ail_compiler::OutboundRequestHandle(format!("catalog-{}", self.next_handle));
+        self.next_handle = self
+            .next_handle
+            .checked_add(1)
+            .ok_or_else(|| catalog_fault("M32.CATALOG.HANDLE_EXHAUSTED"))?;
+        self.ready
+            .insert(handle.clone(), OutboundProviderOutcome::Returned(outcome));
+        Ok(handle)
+    }
+
+    fn check_outbound(
+        &mut self,
+        handles: &[ail_compiler::OutboundRequestHandle],
+    ) -> Result<ail_compiler::OutboundBatchCheck, ail_compiler::RuntimeFault> {
+        Ok(ail_compiler::OutboundBatchCheck {
+            completed: handles.first().cloned().into_iter().collect(),
+            cancelled: false,
+        })
+    }
+
+    fn cancel_outbound(
+        &mut self,
+        handle: &ail_compiler::OutboundRequestHandle,
+    ) -> Result<(), ail_compiler::RuntimeFault> {
+        self.ready.remove(handle);
+        Ok(())
+    }
+
+    fn collect_outbound(
+        &mut self,
+        handle: &ail_compiler::OutboundRequestHandle,
+    ) -> Result<OutboundProviderOutcome, ail_compiler::RuntimeFault> {
+        self.ready
+            .remove(handle)
+            .ok_or_else(|| catalog_fault("M32.CATALOG.UNKNOWN_HANDLE"))
+    }
+}
+
+fn catalog_fault(code: &'static str) -> ail_compiler::RuntimeFault {
+    ail_compiler::RuntimeFault::new(
+        code,
+        ail_compiler::Span::empty(0),
+        std::iter::empty::<(&str, &str)>(),
+        std::iter::empty::<(&str, &str)>(),
+    )
 }
 
 struct Inner {
@@ -249,7 +395,7 @@ fn equal(field: &'static str, expected: u128, actual: u128) -> Result<(), Startu
 #[serde(deny_unknown_fields)]
 struct BatchRequest {
     requests: Vec<LookupRequest>,
-    timeout_ms: u128,
+    timeout_ms: serde_json::Number,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -294,7 +440,10 @@ async fn handle(
     if input.requests.len() > usize::try_from(LIST_BOUND).unwrap_or(usize::MAX) {
         return unprocessable("request_limit");
     }
-    if input.timeout_ms == 0 || input.timeout_ms > host.0.config.maximum_timeout_ms {
+    let Some(timeout_ms) = input.timeout_ms.as_u64().map(u128::from) else {
+        return unprocessable("timeout_bounds");
+    };
+    if timeout_ms == 0 || timeout_ms > host.0.config.maximum_timeout_ms {
         return unprocessable("timeout_bounds");
     }
 
@@ -304,7 +453,7 @@ async fn handle(
     let token = host.0.token_counter.fetch_add(1, Ordering::Relaxed);
     let arguments = vec![
         requests,
-        RuntimeValue::Int(input.timeout_ms),
+        RuntimeValue::Int(timeout_ms),
         RuntimeValue::Cancellation(CancellationToken::new(format!("m32-{token}"))),
     ];
     let response = match host.0.provider.lock() {
@@ -405,22 +554,9 @@ fn call_record(call: &ObservedCapabilityCall) -> Option<CallRecord> {
         start_order: outbound.start_order?,
         completion_order: outbound.completion_order,
         timeout_ms: outbound.timeout_ms,
-        outcome: outbound.outcome.as_ref().map(outcome_name),
-        result: call.result.as_ref().map(value_name),
+        outcome: outbound.outcome.clone(),
+        result: call.result.clone(),
     })
-}
-fn outcome_name(value: &OutboundProviderOutcome) -> String {
-    match value {
-        OutboundProviderOutcome::Returned(v) => value_name(v),
-        OutboundProviderOutcome::TimedOut => "TimedOut".into(),
-        OutboundProviderOutcome::Cancelled => "Cancelled".into(),
-    }
-}
-fn value_name(value: &RuntimeValue) -> String {
-    match value {
-        RuntimeValue::Variant { case, .. } => case.clone(),
-        _ => value.type_name().into(),
-    }
 }
 
 #[must_use]

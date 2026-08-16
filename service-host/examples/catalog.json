@@ -1,0 +1,12 @@
+{
+  "entries": [
+    {
+      "key": "ail",
+      "value": "executable language for software agents"
+    },
+    {
+      "key": "compiler",
+      "value": "rust"
+    }
+  ]
+}

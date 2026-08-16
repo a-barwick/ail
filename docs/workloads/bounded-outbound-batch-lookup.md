@@ -25,3 +25,7 @@ digests, the exact function boundary, bound eight, limit three, and
 `dependency.fetch` permission before accepting requests. The
 [M32 host contract](../../specs/pinned-http-batch-lookup.md) fixes the HTTP,
 JSON, version, failure, and audit behavior.
+
+The executable host loads an explicit operator-supplied JSON catalog before it
+binds `127.0.0.1:3000`. Present keys return their catalog value as `Found`; absent
+keys return `NotFound`. The sample catalog is under `service-host/examples/`.

@@ -28,6 +28,12 @@ execution to 200, and unexpected provider or runtime failure to 502. It retains
 server-side compiler call traces and never turns an incomplete execution into a
 partial 200 response.
 
+The executable host receives an explicit JSON catalog path from its operator,
+loads and validates the catalog before binding the listener, and injects an
+immutable catalog-backed `DependencyClient`. This makes the fixed endpoint return
+real key-dependent `Found` and `NotFound` results without adding filesystem or
+environment authority to AIL source.
+
 ## Consequences
 
 AIL now runs behind one auditable HTTP endpoint without gaining ambient network
@@ -35,6 +41,10 @@ authority or general routing semantics. Updating canonical source or capability
 settings requires an explicit pin update and service restart. The host remains
 a narrow executable slice: it has no TLS, authentication, retries, hard
 deadlines, hot reload, or deployment system.
+
+Changing catalog data also requires an explicit service restart. Audit records
+retain the complete returned closed value, including a `Found` payload, rather
+than only its case name.
 
 Adding the host to the Rust workspace changes the root dependency lock. The AIL
 benchmark verification manifest and its external lock therefore bind the new

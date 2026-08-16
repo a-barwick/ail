@@ -32,7 +32,8 @@ lookup.
 - one direct fixed-limit outbound map with input-aligned results and accurate
   start/completion traces;
 - one strict `POST /v1/lookups:batch` Rust host pinned to compiler revision,
-  source, settings, function, type, bound, concurrency, and permission facts;
+  source, settings, function, type, bound, concurrency, and permission facts,
+  with an explicit immutable operator-supplied lookup catalog;
 - rejection of recursive call cycles and import cycles;
 - canonical formatting and structured parse, type, import, and effect errors;
 - immutable revisions, revision-scoped handles, inspected semantic facts,
@@ -102,6 +103,26 @@ python3 tools/check_docs.py
 The repository also contains locked language-independent fixtures, baseline
 implementations, specification checkers, and architecture-policy tests. See
 [compiler/README.md](compiler/README.md) for the Rust APIs and focused commands.
+
+## Run the pinned lookup host
+
+Start the fixed M32 endpoint with an explicit catalog:
+
+```bash
+cargo +1.87.0 run -p ail-service-host -- service-host/examples/catalog.json
+```
+
+Then exercise the real catalog lookup:
+
+```bash
+curl --fail-with-body \
+  --header 'content-type: application/json' \
+  --data '{"requests":[{"key":"ail"},{"key":"missing"}],"timeout_ms":100}' \
+  http://127.0.0.1:3000/v1/lookups:batch
+```
+
+The catalog format is a strict `{"entries":[{"key":"...","value":"..."}]}`
+document. Unknown fields and duplicate keys stop startup.
 
 ## Repository map
 

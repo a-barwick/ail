@@ -1,6 +1,6 @@
 # Current status
 
-Last updated: 2026-08-09
+Last updated: 2026-08-15
 
 ## Active milestone
 
@@ -40,7 +40,9 @@ function, types, bound eight, limit three, timeout maximum, and
 `dependency.fetch` permission match compiler inspection. Strict JSON rejection
 does zero dependency work; complete execution returns ordered outcomes with the
 pinned revision and digest; unexpected provider/runtime failure returns 502;
-and server-side records retain accurate call lifecycle facts.
+and server-side records retain accurate call lifecycle facts and complete closed
+results. The executable loads an explicit immutable JSON catalog at startup and
+returns its real value for present keys rather than a canned outcome.
 
 The compiler rejects direct and mutual recursion, import cycles, inaccessible
 declarations, ambiguous imports, stale handles, incomplete impact claims, and
@@ -64,7 +66,8 @@ general networking or routing, package registry, foreign-code boundary,
 production runtime, native backend, TLS/authentication, or deployment system.
 The outbound provider is synchronous and cooperative: the interpreter cannot
 preempt stuck host code, enforce a hard deadline itself, or roll back remote
-effects. Recursion is rejected rather than bounded.
+effects. The executable provider is an immutable local catalog, not a general
+network dependency. Recursion is rejected rather than bounded.
 
 The architecture API implements the exact M24 metrics and policy behavior.
 
