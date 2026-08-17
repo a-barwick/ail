@@ -724,6 +724,9 @@ fn external_rejections_happen_before_capability_checks_or_calls() {
             &mut provider,
         ));
         assert_eq!(failure.fault.code, "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT");
+        assert_eq!(failure.fault.expected["maximum"], "10");
+        assert_eq!(failure.fault.actual["value"], timeout.to_string());
+        assert_eq!(failure.fault.actual["argument_index"], "1");
         assert!(failure.calls.is_empty());
         // Function arguments are validated before capability availability.
         assert_eq!(provider.supports_checks.get(), 1);
@@ -797,6 +800,9 @@ fn invalid_timeout_prevents_an_earlier_argument_from_calling_outside() {
         &mut provider,
     ));
     assert_eq!(failure.fault.code, "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT");
+    assert_eq!(failure.fault.expected["maximum"], "10");
+    assert_eq!(failure.fault.actual["value"], "0");
+    assert_eq!(failure.fault.actual["argument_index"], "1");
     assert_eq!(provider.ordinary_calls, 0);
     assert_eq!(provider.outbound_calls, 0);
     assert!(failure.calls.is_empty());

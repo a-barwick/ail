@@ -296,18 +296,28 @@ fn eight_requests_never_exceed_three_and_results_remain_in_input_order() {
 #[test]
 fn invalid_inputs_start_zero_requests_and_empty_input_is_empty() {
     let workspace = workspace(1000);
-    for invalid in [arguments(9, 100), arguments(8, 0), arguments(8, 1001)] {
+    let mut oversized = BatchProvider::ordered(0..8);
+    let cardinality = failed(workspace.execute(
+        "r1",
+        "batch_lookup.service.lookup_batch",
+        arguments(9, 100),
+        &mut oversized,
+    ));
+    assert_eq!(cardinality.fault.code, "AIL.RUNTIME.LIST_CARDINALITY");
+    assert!(oversized.started.is_empty());
+    assert!(cardinality.calls.is_empty());
+    for timeout in [0_u128, 1001] {
         let mut provider = BatchProvider::ordered(0..8);
         let failure = failed(workspace.execute(
             "r1",
             "batch_lookup.service.lookup_batch",
-            invalid,
+            arguments(8, timeout),
             &mut provider,
         ));
-        assert!(matches!(
-            failure.fault.code,
-            "AIL.RUNTIME.LIST_CARDINALITY" | "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT"
-        ));
+        assert_eq!(failure.fault.code, "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT");
+        assert_eq!(failure.fault.expected["maximum"], "1000");
+        assert_eq!(failure.fault.actual["value"], timeout.to_string());
+        assert_eq!(failure.fault.actual["argument_index"], "1");
         assert!(provider.started.is_empty());
         assert!(failure.calls.is_empty());
     }

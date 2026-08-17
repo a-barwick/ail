@@ -271,6 +271,30 @@ impl RuntimeFault {
     }
 }
 
+fn outbound_timeout_argument_fault(
+    span: Span,
+    maximum_timeout_ms: u128,
+    argument_index: usize,
+    timeout_value: &RuntimeValue,
+) -> RuntimeFault {
+    RuntimeFault::new(
+        "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+        span,
+        [("maximum", maximum_timeout_ms.to_string())],
+        [
+            ("argument_index", argument_index.to_string()),
+            ("value", timeout_argument_actual(timeout_value)),
+        ],
+    )
+}
+
+fn timeout_argument_actual(value: &RuntimeValue) -> String {
+    match value {
+        RuntimeValue::Int(timeout) => timeout.to_string(),
+        other => other.type_name().to_owned(),
+    }
+}
+
 #[derive(Debug, Clone)]
 enum RuntimeBinding {
     Value(RuntimeValue),
@@ -623,14 +647,11 @@ impl Evaluator<'_> {
             }
             .filter(|v| *v > 0 && u128::from(*v) <= metadata.maximum_timeout_ms)
             .ok_or_else(|| {
-                RuntimeFault::new(
-                    "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+                outbound_timeout_argument_fault(
                     span,
-                    [("maximum", metadata.maximum_timeout_ms.to_string())],
-                    [(
-                        "argument_index",
-                        metadata.timeout_argument_index.to_string(),
-                    )],
+                    metadata.maximum_timeout_ms,
+                    metadata.timeout_argument_index,
+                    &timeout_value,
                 )
             })?;
             let cancellation = match &cancellation_value {
@@ -1059,14 +1080,11 @@ impl Evaluator<'_> {
             )?;
             let valid_timeout = matches!(&timeout_value, RuntimeValue::Int(value) if *value > 0 && *value <= metadata.maximum_timeout_ms && u64::try_from(*value).is_ok());
             if !valid_timeout {
-                return Err(RuntimeFault::new(
-                    "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+                return Err(outbound_timeout_argument_fault(
                     span,
-                    [("maximum", metadata.maximum_timeout_ms.to_string())],
-                    [(
-                        "argument_index",
-                        metadata.timeout_argument_index.to_string(),
-                    )],
+                    metadata.maximum_timeout_ms,
+                    metadata.timeout_argument_index,
+                    &timeout_value,
                 ));
             }
             if !matches!(cancellation_value, RuntimeValue::Cancellation(_)) {
@@ -1105,22 +1123,13 @@ impl Evaluator<'_> {
             let valid_timeout = timeout
                 .filter(|value| *value > 0 && u128::from(*value) <= metadata.maximum_timeout_ms);
             let Some(timeout_ms) = valid_timeout else {
-                return Err(RuntimeFault::new(
-                    "AIL.RUNTIME.OUTBOUND_TIMEOUT_ARGUMENT",
+                return Err(outbound_timeout_argument_fault(
                     span,
-                    [
-                        ("maximum", metadata.maximum_timeout_ms.to_string()),
-                        (
-                            "argument_index",
-                            metadata.timeout_argument_index.to_string(),
-                        ),
-                    ],
-                    [(
-                        "value",
-                        arguments
-                            .get(metadata.timeout_argument_index)
-                            .map_or_else(|| "missing".to_owned(), |value| format!("{value:?}")),
-                    )],
+                    metadata.maximum_timeout_ms,
+                    metadata.timeout_argument_index,
+                    arguments
+                        .get(metadata.timeout_argument_index)
+                        .unwrap_or(&RuntimeValue::Unit),
                 ));
             };
             let Some(RuntimeValue::Cancellation(cancellation)) =
