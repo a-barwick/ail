@@ -1,0 +1,10 @@
+{
+  "name": "AIL",
+  "install": "./.cursor/install.sh",
+  "terminals": [
+    {
+      "name": "lookup-host",
+      "command": "cargo +1.87.0 run -p ail-service-host -- service-host/examples/catalog.json 3000"
+    }
+  ]
+}
