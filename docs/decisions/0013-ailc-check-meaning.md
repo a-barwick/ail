@@ -1,6 +1,6 @@
 # ADR 0013: `ailc check` means an EvolutionWorkspace
 
-- Status: Accepted
+- Status: Proposed
 - Date: 2026-08-21
 
 ## Context
@@ -71,6 +71,8 @@ the existing workspace API.
 
 `cargo +1.87.0 test -p ail-compiler --test ailc_check` proves the composed-service
 directory succeeds, `service.ail` alone reports `AIL.MODULE.MISSING_IMPORT`, a
-type error reports `AIL.TYPE.FIELD_MISMATCH`, recursion reports
+type error reports `AIL.TYPE.FIELD_MISMATCH`, a name error reports
+`AIL.NAME.UNKNOWN_FUNCTION`, an effect error reports
+`AIL.CAPABILITY.INVALID_EFFECT`, recursion reports
 `AIL.CALL.RECURSIVE_CYCLE`, and `batch-lookup` reports
 `AIL.CAPABILITY.UNKNOWN_INTERFACE`.
