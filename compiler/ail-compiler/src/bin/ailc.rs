@@ -58,11 +58,11 @@ fn check(path: &str) -> Result<(), String> {
             Ok(())
         }
         Err(CliCheckError::Io(message)) => Err(message),
-        Err(CliCheckError::Build(failure)) => report_build_failure(failure),
+        Err(CliCheckError::Build(failure)) => report_build_failure(&failure),
     }
 }
 
-fn report_build_failure(failure: EvolutionBuildFailure) -> Result<(), String> {
+fn report_build_failure(failure: &EvolutionBuildFailure) -> Result<(), String> {
     for diagnostic in &failure.diagnostics {
         eprintln!("{}", format_source_set_diagnostic(diagnostic));
     }
