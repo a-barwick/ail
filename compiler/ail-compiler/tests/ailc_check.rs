@@ -4,7 +4,7 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn examples_dir() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples")
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../examples")
 }
 
 fn ailc() -> Command {
