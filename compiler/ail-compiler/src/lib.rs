@@ -5,6 +5,7 @@
 
 mod architecture;
 mod diagnostic;
+mod driver;
 mod evolution;
 mod formatter;
 mod interpreter;
@@ -28,6 +29,7 @@ pub use architecture::{
     architecture_snapshot, validate_architecture_change,
 };
 pub use diagnostic::Diagnostic;
+pub use driver::{CliCheckError, check_cli_path};
 pub use evolution::{
     ArchitectureSourceChangeRequest, BoundedListInspection, BoundedParallelMapInspection,
     CandidateChangeRequest, CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary,
@@ -39,6 +41,7 @@ pub use evolution::{
     SourceFileMetadata, SourceOperationArchitecture, SourceSetDiagnostic,
     SourceSetFunctionInspection, SourceSetInspectionFailure, SourceSetRevision, SourceStateAccess,
     UncheckedBoundary, ValidationSummary, ValueParameterInspection, relationship_kinds,
+    valid_source_path,
 };
 pub use interpreter::{
     CancellationToken, CapabilityProvider, ObservedCapabilityCall, ObservedOutboundCall,
