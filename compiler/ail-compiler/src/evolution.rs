@@ -2447,11 +2447,6 @@ fn source_set_digest(sources: &[EvolutionSource]) -> String {
     source_digest(&encoded)
 }
 
-/// Return whether a source-set path is accepted by [`EvolutionWorkspace`].
-///
-/// Paths must be relative, use `/` separators only, and contain no empty, `.`,
-/// or `..` components.
-#[must_use]
 fn string_field(value: &serde_json::Value, field: &str) -> Result<String, String> {
     value
         .get(field)
@@ -2577,6 +2572,11 @@ fn operations_map(
     Ok(operations)
 }
 
+/// Return whether a source-set path is accepted by [`EvolutionWorkspace`].
+///
+/// Paths must be relative, use `/` separators only, and contain no empty, `.`,
+/// or `..` components.
+#[must_use]
 pub fn valid_source_path(path: &str) -> bool {
     !path.is_empty()
         && !path.starts_with('/')
