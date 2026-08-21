@@ -3,8 +3,8 @@ use std::fs;
 use std::process::ExitCode;
 
 use ail_compiler::{
-    CliCheckError, EvolutionBuildFailure, SourceSetDiagnostic, check_cli_path, format_source,
-    parse, reconstruct,
+    CliCheckError, CliPublishError, EvolutionBuildFailure, SourceSetDiagnostic, check_cli_path,
+    format_source, parse, publish_cli_path, reconstruct,
 };
 
 fn main() -> ExitCode {
@@ -29,6 +29,7 @@ fn run() -> Result<(), String> {
 
     match command.as_str() {
         "check" => check(&path),
+        "publish" => publish(&path),
         "format" => {
             let source = read_source(&path)?;
             let formatted = format_source(&source).map_err(|diagnostics| {
@@ -57,8 +58,33 @@ fn check(path: &str) -> Result<(), String> {
             println!("ok");
             Ok(())
         }
-        Err(CliCheckError::Io(message)) => Err(message),
-        Err(CliCheckError::Build(failure)) => report_build_failure(&failure),
+        Err(error) => report_check_error(error),
+    }
+}
+
+fn publish(path: &str) -> Result<(), String> {
+    match publish_cli_path(path) {
+        Ok(revision) => {
+            println!("published");
+            println!("revision_id={}", revision.revision_id);
+            println!("source_set_digest={}", revision.source_set_digest);
+            Ok(())
+        }
+        Err(CliPublishError::Check(error)) => report_check_error(error),
+        Err(CliPublishError::Write(message)) => Err(message),
+    }
+}
+
+fn report_check_error(error: CliCheckError) -> Result<(), String> {
+    match error {
+        CliCheckError::Io(message) => Err(message),
+        CliCheckError::Build(failure) => report_build_failure(&failure),
+        CliCheckError::Architecture(failure) => {
+            for diagnostic in failure.diagnostics {
+                eprintln!("{diagnostic}");
+            }
+            Err("source contains architecture diagnostics".to_owned())
+        }
     }
 }
 
@@ -97,5 +123,5 @@ fn read_source(path: &str) -> Result<String, String> {
 }
 
 fn usage(reason: &str) -> String {
-    format!("{reason}\nusage: ailc <check|format|reconstruct> <source>")
+    format!("{reason}\nusage: ailc <check|publish|format|reconstruct> <source>")
 }

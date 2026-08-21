@@ -29,7 +29,10 @@ pub use architecture::{
     architecture_snapshot, validate_architecture_change,
 };
 pub use diagnostic::Diagnostic;
-pub use driver::{CliCheckError, check_cli_path};
+pub use driver::{
+    CliArchitectureFailure, CliCheckError, CliPublishError, PublishedRevision, check_cli_path,
+    publish_cli_path,
+};
 pub use evolution::{
     ArchitectureSourceChangeRequest, BoundedListInspection, BoundedParallelMapInspection,
     CandidateChangeRequest, CandidateRevision, ChangeCapabilitySummary, ChangeEffectSummary,

@@ -21,7 +21,10 @@ effects.
 
 `ailc check` uses an empty capability environment. Capability-using source
 sets fail until a library caller supplies the interfaces. The driver does not
-invent capability syntax or a project manifest.
+invent capability syntax or a project manifest. When `architecture.json` is
+present, check evaluates that project policy and fails with an architecture
+diagnostic. Check writes no revision. `ailc publish` writes one revision only
+after the same checks pass.
 
 The architecture checker implements the existing metric and policy contract. It
 does not make AIL a general application platform.

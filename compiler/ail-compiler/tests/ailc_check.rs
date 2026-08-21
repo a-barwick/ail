@@ -32,6 +32,10 @@ fn run_check(path: &Path) -> std::process::Output {
         .expect("ailc check runs")
 }
 
+fn revision_store(path: &Path) -> PathBuf {
+    path.join(".ail")
+}
+
 #[test]
 fn check_accepts_the_composed_service_workspace() {
     let path = examples_dir().join("composed-service");
@@ -43,6 +47,28 @@ fn check_accepts_the_composed_service_workspace() {
     );
     assert_eq!(output.stdout, b"ok\n");
     assert!(output.stderr.is_empty());
+    assert!(
+        !revision_store(&path).exists(),
+        "ailc check must remain read-only"
+    );
+}
+
+#[test]
+fn check_rejects_a_type_correct_architecture_policy_violation() {
+    let path = examples_dir().join("architecture-denied");
+    let output = run_check(&path);
+    assert!(!output.status.success());
+    assert_ne!(output.stdout, b"ok\n");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("AIL.ARCH.BOUNDARY"), "{stderr}");
+    assert!(
+        stderr.contains("source contains architecture diagnostics"),
+        "{stderr}"
+    );
+    assert!(
+        !revision_store(&path).exists(),
+        "ailc check must not write a revision"
+    );
 }
 
 #[test]

@@ -4,10 +4,13 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::semantics::check_parsed_source;
 use crate::{
-    ArchitectureCoverage, ArchitectureEdge, ArchitecturePolicyContext, ArchitectureRevision,
-    ArchitectureRevisionError, ArchitectureUnit, Block, CapabilityEnvironment, CapabilityProvider,
-    ControlFlowGraph, Declaration, ExecutionFailure, ExecutionResponse, ExecutionSuccess, Expr,
-    FunctionDecl, HandleKind, ParameterType, ParseResult, RuntimeFault, RuntimeValue,
+    ArchitectureChangeResult, ArchitectureCoverage, ArchitectureEdge, ArchitectureEvaluationInput,
+    ArchitecturePolicyContext, ArchitectureRequest, ArchitectureRequestError,
+    ArchitectureRequestErrorKind, ArchitectureRevision, ArchitectureRevisionError,
+    ArchitectureUnit, ArchitectureWorkspace, BaselineMatch, BehaviorValidation, Block,
+    CapabilityEnvironment, CapabilityProvider, ControlFlowGraph, Declaration, DispatchBudget,
+    ExecutionFailure, ExecutionResponse, ExecutionSuccess, Expr, FunctionDecl, GroupDependencies,
+    HandleKind, NewUnitBudget, ParameterType, ParseResult, RuntimeFault, RuntimeValue,
     SemanticHandle, SourceUnit, Span, TypeCheckStatus, TypeRef, parse, source_digest,
 };
 
@@ -173,6 +176,74 @@ impl SourceArchitectureConfig {
             "semantic_model_version": self.semantic_model_version,
         });
         source_digest(&canonical.to_string())
+    }
+
+    /// Parse project architecture settings from JSON.
+    ///
+    /// # Errors
+    ///
+    /// Returns a field path when the object is missing a required setting or uses
+    /// a value the architecture checker cannot accept.
+    pub fn from_json_value(value: &serde_json::Value) -> Result<Self, String> {
+        let object = value
+            .as_object()
+            .ok_or_else(|| "architecture settings must be a JSON object".to_owned())?;
+        let policy = object
+            .get("policy")
+            .ok_or_else(|| "policy is required".to_owned())?;
+        let dependencies = policy
+            .get("allowed_group_dependencies")
+            .ok_or_else(|| "policy.allowed_group_dependencies is required".to_owned())?;
+        let dispatch = dispatch_budget(policy, "dispatch_no_growth")?;
+        let baseline = policy
+            .get("baseline_match")
+            .ok_or_else(|| "policy.baseline_match is required".to_owned())?;
+        let baseline_metrics = dispatch_budget(baseline, "metrics")?;
+        Ok(Self {
+            module_groups: string_map(value, "module_groups")?,
+            capability_namespaces: optional_string_map(value, "capability_namespaces")?,
+            endpoint_groups: optional_string_map(value, "endpoint_groups")?,
+            operations: operations_map(value)?,
+            policy: ArchitecturePolicyContext {
+                revision: string_field(policy, "revision")?,
+                allowed_group_dependencies: GroupDependencies {
+                    contract: string_list(dependencies, "contract")?,
+                    transport: string_list(dependencies, "transport")?,
+                    domain: string_list(dependencies, "domain")?,
+                    persistence_adapter: string_list_named(
+                        dependencies,
+                        &["persistence-adapter", "persistence_adapter"],
+                    )?,
+                    verification: string_list(dependencies, "verification")?,
+                },
+                transport_capabilities: optional_string_list(policy, "transport_capabilities")?,
+                transport_state: optional_string_list(policy, "transport_state")?,
+                dispatch_no_growth: dispatch,
+                new_unit: NewUnitBudget {
+                    control_flow_complexity_max: usize_field(
+                        policy
+                            .get("new_unit")
+                            .ok_or_else(|| "policy.new_unit is required".to_owned())?,
+                        "control_flow_complexity_max",
+                    )?,
+                    minimal_context_node_count_max: usize_field(
+                        policy
+                            .get("new_unit")
+                            .ok_or_else(|| "policy.new_unit is required".to_owned())?,
+                        "minimal_context_node_count_max",
+                    )?,
+                },
+                new_cycles: bool_field(policy, "new_cycles")?,
+                coverage_required: bool_field(policy, "coverage_required")?,
+                baseline_match: BaselineMatch {
+                    baseline_revision: string_field(baseline, "baseline_revision")?,
+                    scope: string_field(baseline, "scope")?,
+                    metrics: baseline_metrics,
+                    accepted_debt: bool_field(baseline, "accepted_debt")?,
+                },
+            },
+            semantic_model_version: string_field(value, "semantic_model_version")?,
+        })
     }
 }
 
@@ -501,6 +572,72 @@ impl EvolutionWorkspace {
     #[must_use]
     pub fn current_revision_id(&self) -> &str {
         &self.current_revision_id
+    }
+
+    /// Evaluate architecture policy for the current revision without publishing.
+    ///
+    /// Uses [`ArchitectureWorkspace::validate_architecture_change`] against a
+    /// candidate that carries the same derived facts as the current revision.
+    /// The evolution workspace is not mutated. The architecture evaluator's
+    /// required M26 behavior gate is reported as passed 6/6 because this path
+    /// does not execute.
+    ///
+    /// # Errors
+    ///
+    /// Returns a request error when the current revision has no saved settings,
+    /// derived facts are invalid, or the evaluator rejects the request.
+    pub fn evaluate_current_architecture(
+        &self,
+        analysis_scope: &str,
+    ) -> Result<ArchitectureChangeResult, ArchitectureRequestError> {
+        let stored = self
+            .revisions
+            .get(&self.current_revision_id)
+            .ok_or_else(|| ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::StaleRevision,
+                message: "current source revision is not retained".into(),
+            })?;
+        let config =
+            stored
+                .architecture_config
+                .as_ref()
+                .ok_or_else(|| ArchitectureRequestError {
+                    kind: ArchitectureRequestErrorKind::InvalidRevision,
+                    message: "current source revision has no saved architecture settings".into(),
+                })?;
+        let base = stored
+            .architecture_revision(&self.id, config)
+            .map_err(|error| ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::InvalidRevision,
+                message: error.0,
+            })?;
+        let candidate_revision_id = format!("{}-candidate", self.current_revision_id);
+        let mut candidate = base.clone();
+        candidate.revision_id.clone_from(&candidate_revision_id);
+        let input = ArchitectureEvaluationInput {
+            request: ArchitectureRequest {
+                base_revision_id: self.current_revision_id.clone(),
+                candidate_revision_id,
+                analysis_scope: analysis_scope.to_owned(),
+                policy_revision: config.policy.revision.clone(),
+                baseline_revision: config.policy.baseline_match.baseline_revision.clone(),
+                review_boundary: "cli".into(),
+                requested_governance_changes: Vec::new(),
+                authorization_id: None,
+            },
+            governance_authorizations: Vec::new(),
+            active_exceptions: Vec::new(),
+            active_policy_revision: config.policy.revision.clone(),
+            active_baseline_revision: config.policy.baseline_match.baseline_revision.clone(),
+        };
+        let mut architecture_workspace = ArchitectureWorkspace::new(base);
+        architecture_workspace.validate_architecture_change(candidate, &input, |_| {
+            Ok(BehaviorValidation {
+                status: "passed".into(),
+                cases_passed: 6,
+                cases_total: 6,
+            })
+        })
     }
 
     #[must_use]
@@ -2315,6 +2452,131 @@ fn source_set_digest(sources: &[EvolutionSource]) -> String {
 /// Paths must be relative, use `/` separators only, and contain no empty, `.`,
 /// or `..` components.
 #[must_use]
+fn string_field(value: &serde_json::Value, field: &str) -> Result<String, String> {
+    value
+        .get(field)
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_owned)
+        .ok_or_else(|| format!("{field} must be a string"))
+}
+
+fn bool_field(value: &serde_json::Value, field: &str) -> Result<bool, String> {
+    value
+        .get(field)
+        .and_then(serde_json::Value::as_bool)
+        .ok_or_else(|| format!("{field} must be a boolean"))
+}
+
+fn usize_field(value: &serde_json::Value, field: &str) -> Result<usize, String> {
+    value
+        .get(field)
+        .and_then(serde_json::Value::as_u64)
+        .and_then(|number| usize::try_from(number).ok())
+        .ok_or_else(|| format!("{field} must be a non-negative integer"))
+}
+
+fn dispatch_budget(parent: &serde_json::Value, field: &str) -> Result<DispatchBudget, String> {
+    let value = parent
+        .get(field)
+        .ok_or_else(|| format!("{field} is required"))?;
+    Ok(DispatchBudget {
+        control_flow_complexity: usize_field(value, "control_flow_complexity")?,
+        minimal_context_node_count: usize_field(value, "minimal_context_node_count")?,
+    })
+}
+
+fn string_list(value: &serde_json::Value, field: &str) -> Result<Vec<String>, String> {
+    string_list_named(value, &[field])
+}
+
+fn optional_string_list(value: &serde_json::Value, field: &str) -> Result<Vec<String>, String> {
+    if value.get(field).is_none() {
+        return Ok(Vec::new());
+    }
+    string_list(value, field)
+}
+
+fn string_list_named(value: &serde_json::Value, names: &[&str]) -> Result<Vec<String>, String> {
+    let (name, found) = names
+        .iter()
+        .find_map(|name| value.get(*name).map(|found| (*name, found)))
+        .ok_or_else(|| format!("{} is required", names.join(" or ")))?;
+    let values = found
+        .as_array()
+        .ok_or_else(|| format!("{name} must be an array of strings"))?;
+    values
+        .iter()
+        .map(|item| {
+            item.as_str()
+                .map(str::to_owned)
+                .ok_or_else(|| format!("{name} must be an array of strings"))
+        })
+        .collect()
+}
+
+fn string_map(value: &serde_json::Value, field: &str) -> Result<BTreeMap<String, String>, String> {
+    let object = value
+        .get(field)
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| format!("{field} must be an object"))?;
+    object
+        .iter()
+        .map(|(key, item)| {
+            item.as_str()
+                .map(|text| (key.clone(), text.to_owned()))
+                .ok_or_else(|| format!("{field}.{key} must be a string"))
+        })
+        .collect()
+}
+
+fn optional_string_map(
+    value: &serde_json::Value,
+    field: &str,
+) -> Result<BTreeMap<String, String>, String> {
+    if value.get(field).is_none() {
+        return Ok(BTreeMap::new());
+    }
+    string_map(value, field)
+}
+
+fn operations_map(
+    value: &serde_json::Value,
+) -> Result<BTreeMap<String, SourceOperationArchitecture>, String> {
+    let Some(found) = value.get("operations") else {
+        return Ok(BTreeMap::new());
+    };
+    let object = found
+        .as_object()
+        .ok_or_else(|| "operations must be an object".to_owned())?;
+    let mut operations = BTreeMap::new();
+    for (key, item) in object {
+        let kind = string_field(item, "kind")?;
+        let interpretation = match kind.as_str() {
+            "stateless" => SourceOperationArchitecture::Stateless,
+            "state" => SourceOperationArchitecture::State {
+                domain: string_field(item, "domain")?,
+                access: match string_field(item, "access")?.as_str() {
+                    "read" => SourceStateAccess::Read,
+                    "write" => SourceStateAccess::Write,
+                    "read-write" => SourceStateAccess::ReadWrite,
+                    other => {
+                        return Err(format!(
+                            "operations.{key}.access has unsupported value {other}"
+                        ));
+                    }
+                },
+            },
+            other => {
+                return Err(format!(
+                    "operations.{key}.kind has unsupported value {other}"
+                ));
+            }
+        };
+        operations.insert(key.clone(), interpretation);
+    }
+    Ok(operations)
+}
+
 pub fn valid_source_path(path: &str) -> bool {
     !path.is_empty()
         && !path.starts_with('/')

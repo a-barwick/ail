@@ -71,10 +71,11 @@ This is not general networking, threads, retries, or async.
 
 The compiler formats source canonically, checks names, types, and effects, and
 stores immutable revisions with inspectable semantic facts. `ailc check` builds
-an `EvolutionWorkspace` from a directory of `.ail` files or one file. It can report
-schema impact, validate a multi-file change as one transaction, and reject a
-change against project architecture policy. A failed candidate publishes
-nothing.
+an `EvolutionWorkspace` from a directory of `.ail` files or one file. It can
+report schema impact, validate a multi-file change as one transaction, and
+reject a workspace against project architecture policy. Check writes no
+revision. `ailc publish` writes a revision only after check and architecture
+pass. A failed candidate publishes nothing.
 
 The interpreter executes a checked entry point with caller-supplied
 capabilities.

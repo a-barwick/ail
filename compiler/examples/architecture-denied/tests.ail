@@ -1,0 +1,5 @@
+module tests;
+
+fn marker(value: Text) -> Text {
+  value
+}
