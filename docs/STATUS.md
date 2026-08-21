@@ -19,6 +19,10 @@ and requires a restart after 256 admitted executions. The interpreter cannot
 preempt stuck host code, enforce a hard deadline itself, or roll back remote
 effects.
 
+`ailc check` uses an empty capability environment. Capability-using source
+sets fail until a library caller supplies the interfaces. The driver does not
+invent capability syntax or a project manifest.
+
 The architecture checker implements the existing metric and policy contract. It
 does not make AIL a general application platform.
 

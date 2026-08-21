@@ -2310,7 +2310,12 @@ fn source_set_digest(sources: &[EvolutionSource]) -> String {
     source_digest(&encoded)
 }
 
-fn valid_source_path(path: &str) -> bool {
+/// Return whether a source-set path is accepted by [`EvolutionWorkspace`].
+///
+/// Paths must be relative, use `/` separators only, and contain no empty, `.`,
+/// or `..` components.
+#[must_use]
+pub fn valid_source_path(path: &str) -> bool {
     !path.is_empty()
         && !path.starts_with('/')
         && !path.contains('\\')

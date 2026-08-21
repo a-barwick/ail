@@ -70,7 +70,8 @@ This is not general networking, threads, retries, or async.
 ## Compiler services
 
 The compiler formats source canonically, checks names, types, and effects, and
-stores immutable revisions with inspectable semantic facts. It can report
+stores immutable revisions with inspectable semantic facts. `ailc check` builds
+an `EvolutionWorkspace` from a directory of `.ail` files or one file. It can report
 schema impact, validate a multi-file change as one transaction, and reject a
 change against project architecture policy. A failed candidate publishes
 nothing.

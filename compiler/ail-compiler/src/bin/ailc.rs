@@ -2,7 +2,10 @@ use std::env;
 use std::fs;
 use std::process::ExitCode;
 
-use ail_compiler::{format_source, parse, reconstruct};
+use ail_compiler::{
+    CliCheckError, EvolutionBuildFailure, SourceSetDiagnostic, check_cli_path, format_source,
+    parse, reconstruct,
+};
 
 fn main() -> ExitCode {
     match run() {
@@ -23,29 +26,11 @@ fn run() -> Result<(), String> {
     if arguments.next().is_some() {
         return Err(usage("too many arguments"));
     }
-    let source = fs::read_to_string(&path).map_err(|error| format!("{path}: {error}"))?;
 
     match command.as_str() {
-        "check" => {
-            let parsed = parse(&source);
-            if parsed.diagnostics.is_empty() {
-                println!("ok");
-                Ok(())
-            } else {
-                for diagnostic in parsed.diagnostics {
-                    eprintln!(
-                        "{}:{}:{}: expected {}, found {}",
-                        diagnostic.code,
-                        diagnostic.span.start,
-                        diagnostic.span.end,
-                        diagnostic.expected,
-                        diagnostic.actual
-                    );
-                }
-                Err("source contains parse diagnostics".to_owned())
-            }
-        }
+        "check" => check(&path),
         "format" => {
+            let source = read_source(&path)?;
             let formatted = format_source(&source).map_err(|diagnostics| {
                 diagnostics
                     .iter()
@@ -57,6 +42,7 @@ fn run() -> Result<(), String> {
             Ok(())
         }
         "reconstruct" => {
+            let source = read_source(&path)?;
             let parsed = parse(&source);
             print!("{}", reconstruct(&parsed.tokens));
             Ok(())
@@ -65,6 +51,51 @@ fn run() -> Result<(), String> {
     }
 }
 
+fn check(path: &str) -> Result<(), String> {
+    match check_cli_path(path) {
+        Ok(()) => {
+            println!("ok");
+            Ok(())
+        }
+        Err(CliCheckError::Io(message)) => Err(message),
+        Err(CliCheckError::Build(failure)) => report_build_failure(failure),
+    }
+}
+
+fn report_build_failure(failure: EvolutionBuildFailure) -> Result<(), String> {
+    for diagnostic in &failure.diagnostics {
+        eprintln!("{}", format_source_set_diagnostic(diagnostic));
+    }
+    for cause in &failure.causes {
+        if !failure
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == cause)
+        {
+            eprintln!("{cause}");
+        }
+    }
+    Err("source contains check diagnostics".to_owned())
+}
+
+fn format_source_set_diagnostic(diagnostic: &SourceSetDiagnostic) -> String {
+    let mut line = format!(
+        "{}:{}:{}:{}:",
+        diagnostic.code, diagnostic.path, diagnostic.span.start, diagnostic.span.end
+    );
+    for (key, value) in &diagnostic.details {
+        line.push(' ');
+        line.push_str(key);
+        line.push('=');
+        line.push_str(value);
+    }
+    line
+}
+
+fn read_source(path: &str) -> Result<String, String> {
+    fs::read_to_string(path).map_err(|error| format!("{path}: {error}"))
+}
+
 fn usage(reason: &str) -> String {
-    format!("{reason}\nusage: ailc <check|format|reconstruct> <source.ail>")
+    format!("{reason}\nusage: ailc <check|format|reconstruct> <source>")
 }

@@ -1,84 +1,76 @@
-# ADR 0013: Hold `ailc check` until its checker is chosen
+# ADR 0013: `ailc check` means an EvolutionWorkspace
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-08-21
 
 ## Context
 
-`ailc check` only calls `parse`. A parseable program prints `ok` even when
+`ailc check` only called `parse`. A parseable program printed `ok` even when
 names, types, effects, modules, or recursion would fail the library checkers.
-That lets a human or agent treat the compiler as having accepted a program it
-did not check.
 
-Two existing checkers can close that gap. They are not the same command:
+Two existing checkers could close that gap. They are not the same command:
 
-1. `check_source(source, revision_id, capabilities)` checks one source unit.
-   `semantics.rs` never reads `module` or `import`. Unused imports are ignored.
-   A referenced imported name such as `model.Request` becomes
-   `AIL.NAME.UNRESOLVED`, not a module diagnostic. `compiler/examples/composed-service/domain.ail`
-   would pass. `service.ail` from the same example would fail as a unit even
-   though `EvolutionWorkspace` accepts the three-file set.
+1. `check_source` checks one source unit and never reads `module` or `import`.
+2. `EvolutionWorkspace::new` validates an ordered source set atomically, then
+   checks the linked unit.
 
-2. `EvolutionWorkspace::new(workspace_id, revision_id, sources, capabilities, coverage)`
-   validates paths, parses, canonicalizes, runs `validate_modules` (identity,
-   imports, cycles, ambiguity, visibility), links with `link_source_set`, then
-   calls `check_parsed_source`. Failure publishes no revision. The composed-service
-   example matches this API. A single file with an unresolved import fails as
-   `AIL.MODULE.MISSING_IMPORT`. Semantic diagnostics from the linked unit are
-   currently attributed to path `<source-set>`. Source paths must pass
-   `valid_source_path` (relative, no `.` / `..`, no leading `/`). Coverage is an
-   explicit completeness claim.
+Austin chose option 2. Option 1 is not the meaning of `check`.
 
-Neither API invents capability syntax. Both take a caller-supplied
-`CapabilityEnvironment`. The current driver has no way to pass one. An empty
-environment would reject capability-using examples for a different reason than
-parse-only `ok`.
-
-Wiring either checker, or silently switching on "file vs directory", would
-change the public meaning of `ailc check` without Austin choosing that meaning.
+There is no AIL project or source-set manifest. Examples name workspace files
+by basename (`domain.ail`, `service.ail`, `validation.ail`) and construct
+`CapabilityEnvironment` in Rust tests, not beside the sources.
 
 ## Decision
 
-Not chosen. Do not wire `check_source` or `EvolutionWorkspace` into `ailc check`
-until Austin picks what `check` means.
+`ailc check` builds one [`EvolutionWorkspace`](../../compiler/ail-compiler/src/evolution.rs).
+It does not call `check_source`.
 
-`ailc check` stays parse-only. That is still a lie about semantics, but it is
-the current command, not a new half-checker.
+Source set:
 
-A draft that called `check_source` with an empty capability environment was
-started and reverted. That draft is not the meaning of `check`.
+- `ailc check <dir>`: the `.ail` files in that directory whose names pass
+  `valid_source_path`, using those basenames as `EvolutionSource` paths.
+- `ailc check <file>`: a one-file workspace named by the file name. Imports
+  fail as `AIL.MODULE.MISSING_IMPORT`.
+
+Capability environment: empty. No host or project file supplies one next to
+examples. Missing capability interfaces fail as
+`AIL.CAPABILITY.UNKNOWN_INTERFACE`.
+
+Coverage: `declared_complete: true` with no unchecked boundaries or artifacts,
+the same claim `compiler/examples/composed-service/` uses when the tests
+construct the workspace.
+
+Revision id is `check`. Workspace id is the file or directory name.
 
 ## Consequences
 
-Agents and humans who run `ailc check` still only get parse results. Library
-callers continue to use `check_source` for one unit and `EvolutionWorkspace`
-for an atomic source set.
+`ailc check compiler/examples/composed-service` succeeds for the same reason
+`EvolutionWorkspace::new` accepts that three-file set. A type, name, effect,
+or recursion error fails with the workspace diagnostic. A single imported
+file fails as a module error, not as success. Capability-using examples such
+as `batch-lookup` fail honestly until a caller supplies the environment
+through the library API.
 
-The next implementation change is blocked on an explicit choice of option 1,
-option 2, or a later third meaning Austin writes down. A hybrid that uses one
-API for a file and the other for a directory is also a choice; it is not a
-default.
+`format` and `reconstruct` stay parse tools. The driver does not execute.
+
+Parse failures surface as `EvolutionBuildFailure` causes
+(`<file> has parse diagnostics`), not as `AIL.PARSE.EXPECTED_TOKEN`. That is
+the existing workspace API.
 
 ## Alternatives considered
 
-These remain open. Neither is selected.
-
-- Option 1, `check_source`: smallest single-file wire. Reports real unit
-  diagnostics. Still lies about modules and imports. Does not check the
-  composed-service program as a program.
-- Option 2, `EvolutionWorkspace`: same acceptance rule as the multi-file
-  examples and atomic candidate validation. Requires a source-set rule for the
-  CLI (explicit files, a directory of `*.ail`, or something else), a coverage
-  claim, and relative path mapping. Not a unit checker.
-- File vs directory hybrid: two meanings under one verb. Rejected as a silent
-  default; Austin may still choose it later.
-- Keep parse-only forever: leaves the original contradiction in place.
+- `check_source` as `check`: rejected. It still lies about modules.
+- File uses `check_source`, directory uses evolution: rejected. Two meanings
+  under one verb.
+- Invent a project manifest or capability config file: rejected. The repo has
+  none, and adding one would invent ambient project I/O.
+- Load `service-host` capability constructors from the CLI: rejected. Those
+  are Rust test/host values, not a source-set config.
 
 ## Validation
 
-This record is wrong if `ailc check` calls `check_source`,
-`check_parsed_source`, or `EvolutionWorkspace`, or if docs claim that `check`
-already means one of those.
-
-`compiler/ail-compiler/src/bin/ailc.rs` must keep using `parse` for `check`
-until a later accepted decision names the checker.
+`cargo +1.87.0 test -p ail-compiler --test ailc_check` proves the composed-service
+directory succeeds, `service.ail` alone reports `AIL.MODULE.MISSING_IMPORT`, a
+type error reports `AIL.TYPE.FIELD_MISMATCH`, recursion reports
+`AIL.CALL.RECURSIVE_CYCLE`, and `batch-lookup` reports
+`AIL.CAPABILITY.UNKNOWN_INTERFACE`.

@@ -43,6 +43,22 @@ arguments are rejected. The interpreter prepares the whole batch, keeps at most
 the fixed limit active, and stores completions at input positions. See
 `examples/batch-lookup/`.
 
+## Command line
+
+`ailc check <dir>` builds an `EvolutionWorkspace` from the `.ail` files in
+that directory whose names pass `valid_source_path`. `ailc check <file>`
+builds a one-file workspace. Both use an empty capability environment and the
+same complete-coverage claim as the composed-service example. The command
+prints `ok` only when that workspace is accepted. Diagnostics go to stderr.
+
+`check_source` is not the meaning of `ailc check`. A file with an unresolved
+import fails as `AIL.MODULE.MISSING_IMPORT`. Capability-using examples fail
+as `AIL.CAPABILITY.UNKNOWN_INTERFACE` unless a library caller supplies the
+environment.
+
+`ailc format <source.ail>` writes canonical source. `ailc reconstruct
+<source.ail>` writes the lossless token reconstruction.
+
 ## APIs
 
 - `check_source` checks one source revision and returns canonical source,
