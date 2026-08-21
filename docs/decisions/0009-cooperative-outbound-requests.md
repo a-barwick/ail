@@ -2,8 +2,6 @@
 
 - Status: Accepted contract
 - Date: 2026-08-08
-- Owners: project maintainers
-- Documentation layer and scope: M30 capability metadata, interpreter, provider, revision, and inspection semantics
 
 ## Context
 
@@ -70,5 +68,5 @@ rollback cannot be guaranteed by the current synchronous interpreter.
 The dependency-free
 [outbound request contract checker](../../specs/tools/outbound_request_contract.py)
 validates the numbered rules, canonical source, protocol shapes, diagnostics,
-and complete rejection matrix. M30 implementation tests must realize every
-matrix case before the milestone is reported as shipped.
+and complete rejection matrix. Implementation tests must realize every matrix
+case.

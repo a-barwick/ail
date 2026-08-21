@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check local links, decision records, and milestone consistency."""
+"""Check local Markdown links and decision-record filenames."""
 
 from __future__ import annotations
 
@@ -20,25 +20,8 @@ IGNORED_DIRECTORIES = {
     "node_modules",
     "target",
 }
-MILESTONE_ROW = re.compile(
-    r"^\|\s*(M\d+)\s*\|.*\|\s*(Complete|Active|Planned|Deferred|Superseded)\s*\|",
-    re.MULTILINE,
-)
 ADR_FILENAME = re.compile(r"^(\d{4})-[a-z0-9-]+\.md$")
 ADR_TITLE = re.compile(r"^# ADR (\d{4}): .+$", re.MULTILINE)
-ADR_METADATA = (
-    "- Status:",
-    "- Date:",
-    "- Owners:",
-    "- Documentation layer and scope:",
-)
-ADR_SECTIONS = (
-    "## Context",
-    "## Decision",
-    "## Consequences",
-    "## Alternatives considered",
-    "## Validation",
-)
 
 
 def markdown_files() -> list[Path]:
@@ -78,51 +61,6 @@ def local_link_errors() -> list[str]:
     return errors
 
 
-def milestone_errors() -> list[str]:
-    errors: list[str] = []
-    roadmap_path = ROOT / "docs" / "roadmap.md"
-    status_path = ROOT / "docs" / "STATUS.md"
-    roadmap = roadmap_path.read_text(encoding="utf-8")
-    status = status_path.read_text(encoding="utf-8")
-
-    rows = dict(MILESTONE_ROW.findall(roadmap))
-    active = [milestone for milestone, state in rows.items() if state == "Active"]
-    if len(active) > 1:
-        errors.append(
-            "docs/roadmap.md: dependency map must contain at most one Active "
-            f"milestone, found {active}"
-        )
-
-    status_match = re.search(
-        r"^## Active milestone\s*$\s*^(M\d+)\s+.+$",
-        status,
-        re.MULTILINE,
-    )
-    no_active_match = re.search(
-        r"^## Active milestone\s*$\s*^None\s+.+$",
-        status,
-        re.MULTILINE,
-    )
-    if active and not status_match:
-        errors.append("docs/STATUS.md: cannot find the active milestone")
-    elif active and status_match and status_match.group(1) != active[0]:
-        errors.append(
-            "docs/STATUS.md: active milestone "
-            f"{status_match.group(1)} does not match roadmap {active[0]}"
-        )
-    elif not active and not no_active_match:
-        errors.append("docs/STATUS.md: must state that no milestone is active")
-
-    forbidden_headings = ("## Current discovery gate", "## Phase ")
-    for heading in forbidden_headings:
-        if heading in roadmap:
-            errors.append(
-                "docs/roadmap.md: retired operational heading remains: "
-                f"{heading}"
-            )
-    return errors
-
-
 def decision_errors() -> list[str]:
     errors: list[str] = []
     decisions = ROOT / "docs" / "decisions"
@@ -158,39 +96,16 @@ def decision_errors() -> list[str]:
                 f"{path.relative_to(ROOT)}: title ADR {title_match.group(1)} "
                 f"does not match filename {decision_id}"
             )
-
-        for metadata in ADR_METADATA:
-            pattern = (
-                rf"^{re.escape(metadata)}(?:\s+.*)?$"
-                if decision_id == "0000"
-                else rf"^{re.escape(metadata)}\s+.+$"
-            )
-            if not re.search(pattern, text, re.MULTILINE):
-                errors.append(
-                    f"{path.relative_to(ROOT)}: missing decision metadata "
-                    f"'{metadata}'"
-                )
-
-        section_positions = [text.find(section) for section in ADR_SECTIONS]
-        for section, position in zip(ADR_SECTIONS, section_positions):
-            if position == -1:
-                errors.append(
-                    f"{path.relative_to(ROOT)}: missing decision section "
-                    f"'{section}'"
-                )
-        present_positions = [
-            position for position in section_positions if position != -1
-        ]
-        if present_positions != sorted(present_positions):
+        if "## Decision" not in text:
             errors.append(
-                f"{path.relative_to(ROOT)}: decision sections are out of order"
+                f"{path.relative_to(ROOT)}: missing '## Decision' section"
             )
 
     return errors
 
 
 def main() -> int:
-    errors = local_link_errors() + milestone_errors() + decision_errors()
+    errors = local_link_errors() + decision_errors()
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
@@ -198,8 +113,7 @@ def main() -> int:
 
     print(
         f"Documentation check passed: {len(markdown_files())} Markdown files, "
-        "local links valid, decision records structured, milestone status "
-        "aligned."
+        "local links valid, decision filenames unique."
     )
     return 0
 

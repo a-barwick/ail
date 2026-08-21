@@ -1,11 +1,11 @@
 # M8 calibration contract
 
-Status: **Tooling retained; data collection deferred after M8f**
+Status: **Tooling retained; data collection deferred**
 
-This directory defines the machine-checkable inputs, records, and checks for the
-M8 baseline experiment. It implements
-[M8 agent experiment decision](../../docs/decisions/0002-m8-agent-experiment-contract.md)
-without running an agent or measuring a baseline.
+This directory holds the machine-checkable inputs, records, and checks for a
+deferred agent-versus-baseline experiment. The locked contract is
+`experiment-contract.json`. [ADR 0002](../../docs/decisions/0002-m8-agent-experiment-contract.md)
+records that the campaign is not current work.
 
 `experiment-contract.json` locks the M8a treatment, the eight M7 task starts,
 the two rendered prompts, the six token categories, permissions, limits,

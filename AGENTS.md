@@ -39,23 +39,25 @@ facts, diagnostics, authority, behavior, and every proposed change.
 
 ## Read before changing the system
 
-Start with `docs/STATUS.md`, then read the owning numbered specification and
-its executable tests or fixtures. Read a workload record when it explains the
-application behavior behind that specification. Use historical documents only
-when a past decision still constrains the change.
+Start with `docs/language.md` and the owning numbered specification plus its
+tests or fixtures. Use `docs/STATUS.md` for current limits. Read a workload
+record when it explains the application behavior behind that specification.
 
 ## Current system
 
-`docs/STATUS.md` is the only current capability and next-work source. Do not
-repeat its inventory elsewhere or infer work from deferred history. The compiler
-has bounded sequential `map`, not general iteration; do not describe proposed
-features as shipped.
+`docs/language.md` describes what the compiler implements. `docs/STATUS.md`
+lists what it still cannot do. Do not copy either into other files. The
+compiler has bounded sequential `map`, not general iteration; do not describe
+proposed features as shipped.
 
 ## Engineering rules
 
 - Start from the failing behavior, missing capability, or measured constraint.
 - Ship the smallest coherent implementation that changes the result.
 - Add an executable check for every delivered behavior and rejection path.
+- Do not infer general collections, networking, routing, or concurrency from
+  sequential `map` or the pinned lookup host. Do not restart deferred
+  measurement campaigns by default.
 - Keep canonical source as the durable artifact. Expose inferred facts through
   the compiler instead of requiring hidden agent reasoning.
 - Keep public types, errors, effects, capabilities, and stable identities

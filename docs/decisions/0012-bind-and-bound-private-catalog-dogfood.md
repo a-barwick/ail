@@ -2,9 +2,6 @@
 
 - Status: Accepted contract
 - Date: 2026-08-16
-- Owners: project maintainers
-- Documentation layer and scope: M33 service-host catalog identity, audit
-  admission, and result correlation
 
 ## Context
 

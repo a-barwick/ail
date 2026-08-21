@@ -2,29 +2,23 @@
 
 - Status: Proposed
 - Date: YYYY-MM-DD
-- Owners: project maintainers
-- Documentation layer and scope:
 
 ## Context
 
-What decision is needed, which constraints matter, and what evidence is
-available?
+What decision is needed, and what constraints matter?
 
 ## Decision
 
-State the choice and its scope precisely.
+State the choice and its scope.
 
 ## Consequences
 
-List the positive, negative, and neutral consequences. Identify which future
-choices this constrains.
+What this enables, what it forbids, and what it leaves open.
 
 ## Alternatives considered
 
-Describe serious alternatives and why they were not selected.
+Serious alternatives and why they were rejected.
 
 ## Validation
 
-State how the decision will be tested and what evidence would justify revisiting
-it. Link the motivating use cases, requirements, normative rules, or prototype
-evidence where applicable.
+The test or command that would prove this wrong.

@@ -7,8 +7,8 @@ store call and return a closed outcome.
 Three candidates pass behavior tests. The domain-owned candidate is accepted.
 The centralized and helper-split candidates are rejected because transport gains
 responsibility, authority, state access, or dependency concentration. Analysis
-must return revision-bound facts and contributors; denied or incomplete changes
-publish no child revision.
+must return facts and contributors bound to the candidate revision; denied or
+incomplete changes publish no child revision.
 
 The exact semantics, policy, fixtures, and budgets are in
 [specs/architecture.md](../../specs/architecture.md) and its machine-readable

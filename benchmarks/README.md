@@ -164,34 +164,12 @@ It must contain one canonical fixture for each frozen hidden behavior category,
 use stored ZIP entries in lexical order with the fixed 1980 timestamp, and
 match the archive digest in every locked baseline manifest.
 
-## M8 agent experiment contract
+## Deferred agent experiment tooling
 
-[ADR 0002](../docs/decisions/0002-m8-agent-experiment-contract.md) freezes the
-candidate measured agent, model, interactive tool-use protocol, prompt, initial
-context, permissions, limits, token accounting, reference environment, and
-terminal classifications used by M8. It also records the reviewed NFR-002
-amendment from the infeasible 100,000-token pilot limit to a 500,000 cumulative
-delivered-input-token safety limit.
-
-M8b encodes the decision in the locked
-[calibration evidence contract](calibration/README.md), eight JSON schemas, and
-`verify-calibration`. The verifier accepts structurally complete empty, pilot,
-and partial campaigns, requires final counts for a campaign marked complete,
-and rejects changed, missing, inconsistent, mixed, or incorrectly summarized
-evidence. M8c implements and dry-tests the interactive runner, generated
-least-privilege configuration, pre-start gate, event and final-source capture,
-limit enforcement, and M2 activity accounting. M8d adds final-revision
-public/private correctness, seeded-role checks, protected-artifact checks,
-revision-bound completion evidence, and fresh functional replay. M8e adds
-four persistent language adapters and one shared warm/cold harness with
-functional and trace gating, native monotonic samples, percentile and variance
-derivation, throughput, process readiness, RSS, package identity, and
-network-denial observation. Its eight retained warm/cold pilots do not satisfy
-the required complete-run counts. M8f recorded provider-backed readiness and an
-enforced safety-limit path. ADR 0003 defers collection after the first
-M8g pre-start check found a TypeScript UC-001 task-start failure.
-
-Run the M8b gate with:
+Locked calibration schemas, runners, and pilots live under
+[calibration/](calibration/README.md). That campaign is deferred;
+[ADR 0002](../docs/decisions/0002-m8-agent-experiment-contract.md) is only the
+stable authority path named by the locked JSON contract.
 
 ```bash
 python3 benchmarks/tools/harness.py verify-calibration
@@ -199,9 +177,9 @@ python3 benchmarks/tools/harness.py verify-calibration
 
 ## Public and hidden boundary
 
-Only public behavior cases belong under `fixtures/public/`. Later milestones
-instantiate and package hidden combinations and seeded language-specific
-consumers outside that tree. The deterministic hidden ZIP is readable by the
-harness but outside agent-readable paths. Hidden inputs may exercise only
-behavior already accepted by UC-001 or UC-003, and their answers must not be
-disclosed by this public corpus, contract, or manifest.
+Only public behavior cases belong under `fixtures/public/`. Hidden combinations
+and seeded language-specific consumers live outside that tree. The
+deterministic hidden ZIP is readable by the harness but outside agent-readable
+paths. Hidden inputs may exercise only behavior already accepted by UC-001 or
+UC-003, and their answers must not be disclosed by this public corpus,
+contract, or manifest.

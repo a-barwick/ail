@@ -2,8 +2,6 @@
 
 - Status: Accepted contract
 - Date: 2026-08-09
-- Owners: project maintainers
-- Documentation layer and scope: M31 bounded outbound workflow semantics
 
 ## Context
 

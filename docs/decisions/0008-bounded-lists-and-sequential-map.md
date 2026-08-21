@@ -2,8 +2,6 @@
 
 - Status: Accepted and complete
 - Date: 2026-08-08
-- Owners: project maintainers
-- Documentation layer and scope: M29 language, interpreter, and inspection semantics
 
 ## Context
 

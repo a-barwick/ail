@@ -2,8 +2,6 @@
 
 - Status: Accepted contract
 - Date: 2026-08-09
-- Owners: project maintainers
-- Documentation layer and scope: M32 service-host boundary and version pinning
 
 ## Context
 
@@ -66,4 +64,4 @@ workspace manifests; fixture behavior and the 37 public cases are unchanged.
 `cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service` proves
 startup binding, strict zero-work rejection, bounded out-of-order success,
 fail-stop traces, immutable version selection, and fixed routing. The full
-workspace and M11–M31 contract checks remain the regression gate.
+workspace and existing contract checks remain the regression gate.
