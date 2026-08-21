@@ -48,8 +48,15 @@ the fixed limit active, and stores completions at input positions. See
 `ailc check <dir>` builds an `EvolutionWorkspace` from the `.ail` files in
 that directory whose names pass `valid_source_path`. `ailc check <file>`
 builds a one-file workspace. Both use an empty capability environment and the
-same complete-coverage claim as the composed-service example. The command
-prints `ok` only when that workspace is accepted. Diagnostics go to stderr.
+same complete-coverage claim as the composed-service example. When
+`architecture.json` is present next to the named path, check also evaluates
+that project policy through `ArchitectureWorkspace` and fails on a denied or
+incomplete result. The command prints `ok` only when that workspace is
+accepted. Check writes no revision. Diagnostics go to stderr.
+
+`ailc publish <dir>` runs the same checks and writes one revision under
+`<dir>/.ail/revisions/published` only when they pass. A failing candidate
+writes no revision and leaves an existing store unchanged.
 
 `check_source` is not the meaning of `ailc check`. A file with an unresolved
 import fails as `AIL.MODULE.MISSING_IMPORT`. Capability-using examples fail

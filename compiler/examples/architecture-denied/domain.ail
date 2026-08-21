@@ -1,0 +1,5 @@
+module domain;
+
+fn work(value: Text) -> Text {
+  value
+}

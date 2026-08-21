@@ -1,0 +1,45 @@
+{
+  "semantic_model_version": "source-architecture-v1",
+  "analysis_scope": "transport:dispatch",
+  "module_groups": {
+    "adapters": "persistence-adapter",
+    "contracts": "contract",
+    "domain": "domain",
+    "tests": "verification",
+    "transport": "transport"
+  },
+  "capability_namespaces": {},
+  "endpoint_groups": {},
+  "operations": {},
+  "policy": {
+    "revision": "policy-r1",
+    "allowed_group_dependencies": {
+      "contract": [],
+      "transport": ["contract"],
+      "domain": ["contract"],
+      "persistence-adapter": [],
+      "verification": ["contract", "domain", "transport"]
+    },
+    "transport_capabilities": [],
+    "transport_state": [],
+    "dispatch_no_growth": {
+      "control_flow_complexity": 4,
+      "minimal_context_node_count": 12
+    },
+    "new_unit": {
+      "control_flow_complexity_max": 6,
+      "minimal_context_node_count_max": 12
+    },
+    "new_cycles": false,
+    "coverage_required": true,
+    "baseline_match": {
+      "baseline_revision": "baseline-r1",
+      "scope": "transport:dispatch",
+      "metrics": {
+        "control_flow_complexity": 4,
+        "minimal_context_node_count": 12
+      },
+      "accepted_debt": true
+    }
+  }
+}

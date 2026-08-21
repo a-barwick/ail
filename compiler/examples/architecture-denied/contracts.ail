@@ -1,0 +1,5 @@
+module contracts;
+
+fn keep(value: Text) -> Text {
+  value
+}

@@ -1,22 +1,53 @@
-//! `ailc check` builds an [`EvolutionWorkspace`], not a one-file unit check.
+//! `ailc check` and `ailc publish` drive an [`EvolutionWorkspace`].
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use serde_json::Value;
 
 use crate::{
-    CapabilityEnvironment, EvolutionBuildFailure, EvolutionCoverage, EvolutionSource,
-    EvolutionWorkspace, valid_source_path,
+    ArchitectureChangeResult, CapabilityEnvironment, EvolutionBuildFailure, EvolutionCoverage,
+    EvolutionSource, EvolutionWorkspace, SourceArchitectureConfig, SourceSetRevision,
+    valid_source_path,
 };
 
 const CHECK_REVISION: &str = "check";
+const PUBLISH_REVISION: &str = "published";
+const ARCHITECTURE_FILE: &str = "architecture.json";
+const REVISION_STORE: &str = ".ail";
 
 /// Failure from the `ailc check` driver.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CliCheckError {
-    /// The path could not be read as a source set.
+    /// The path or project architecture file could not be read.
     Io(String),
     /// [`EvolutionWorkspace::new`] rejected the source set.
     Build(EvolutionBuildFailure),
+    /// Architecture policy rejected or could not evaluate the workspace.
+    Architecture(CliArchitectureFailure),
+}
+
+/// Architecture failure reported by `ailc check` or `ailc publish`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CliArchitectureFailure {
+    pub diagnostics: Vec<String>,
+}
+
+/// Failure from the `ailc publish` driver.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CliPublishError {
+    /// The candidate failed the same checks `ailc check` runs.
+    Check(CliCheckError),
+    /// A passed candidate could not be written.
+    Write(String),
+}
+
+/// A revision written by `ailc publish`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublishedRevision {
+    pub revision_id: String,
+    pub source_set_digest: String,
+    pub store: PathBuf,
 }
 
 /// Check a file or directory the same way `ailc check` does.
@@ -26,26 +57,235 @@ pub enum CliCheckError {
 /// environment is empty. Coverage is declared complete with no artifacts, the
 /// same claim the composed-service example uses.
 ///
+/// When `architecture.json` is present next to the named path, the workspace
+/// is built with those project settings and evaluated through
+/// [`EvolutionWorkspace::evaluate_current_architecture`]. Check does not write
+/// a revision.
+///
 /// # Errors
 ///
-/// Returns [`CliCheckError::Io`] when the path cannot be read, or
-/// [`CliCheckError::Build`] when [`EvolutionWorkspace::new`] rejects the
-/// source set.
+/// Returns [`CliCheckError::Io`] when the path cannot be read,
+/// [`CliCheckError::Build`] when the source set is rejected, or
+/// [`CliCheckError::Architecture`] when project architecture policy fails.
 pub fn check_cli_path(path: impl AsRef<Path>) -> Result<(), CliCheckError> {
+    build_cli_workspace(path.as_ref(), CHECK_REVISION).map(|_| ())
+}
+
+/// Publish a directory workspace the same way `ailc publish` does.
+///
+/// Runs the same checks as [`check_cli_path`]. A passing candidate writes one
+/// revision under `<dir>/.ail/revisions/published`. A failing candidate writes
+/// nothing.
+///
+/// # Errors
+///
+/// Returns [`CliPublishError::Check`] when the candidate fails check or
+/// architecture, or [`CliPublishError::Write`] when a passed candidate cannot
+/// be written. Check failures leave any existing store unchanged and create no
+/// store when none existed.
+pub fn publish_cli_path(path: impl AsRef<Path>) -> Result<PublishedRevision, CliPublishError> {
     let path = path.as_ref();
+    if !path.is_dir() {
+        return Err(CliPublishError::Check(CliCheckError::Io(
+            "publish requires a directory workspace".to_owned(),
+        )));
+    }
+    let workspace = build_cli_workspace(path, PUBLISH_REVISION).map_err(CliPublishError::Check)?;
+    write_published_revision(path, &workspace).map_err(CliPublishError::Write)
+}
+
+fn build_cli_workspace(
+    path: &Path,
+    revision_id: &str,
+) -> Result<EvolutionWorkspace, CliCheckError> {
     let sources = collect_sources(path)?;
-    EvolutionWorkspace::new(
-        workspace_id(path),
-        CHECK_REVISION,
-        sources,
-        &CapabilityEnvironment::new(),
-        EvolutionCoverage {
-            declared_complete: true,
-            ..EvolutionCoverage::default()
+    let architecture = load_architecture_policy(path)?;
+    let coverage = EvolutionCoverage {
+        declared_complete: true,
+        ..EvolutionCoverage::default()
+    };
+    let workspace = match architecture {
+        Some((config, analysis_scope)) => {
+            let workspace = EvolutionWorkspace::new_with_architecture(
+                workspace_id(path),
+                revision_id,
+                sources,
+                &CapabilityEnvironment::new(),
+                coverage,
+                config,
+            )
+            .map_err(CliCheckError::Build)?;
+            match workspace.evaluate_current_architecture(&analysis_scope) {
+                Ok(ArchitectureChangeResult::Success(_)) => workspace,
+                Ok(result) => {
+                    return Err(CliCheckError::Architecture(architecture_failure(&result)));
+                }
+                Err(error) => {
+                    return Err(CliCheckError::Architecture(CliArchitectureFailure {
+                        diagnostics: vec![format!(
+                            "AIL.ARCH.ANALYSIS_INCOMPLETE {}",
+                            error.message
+                        )],
+                    }));
+                }
+            }
+        }
+        None => EvolutionWorkspace::new(
+            workspace_id(path),
+            revision_id,
+            sources,
+            &CapabilityEnvironment::new(),
+            coverage,
+        )
+        .map_err(CliCheckError::Build)?,
+    };
+    Ok(workspace)
+}
+
+fn architecture_failure(result: &ArchitectureChangeResult) -> CliArchitectureFailure {
+    let diagnostics = match result {
+        ArchitectureChangeResult::Success(_) => Vec::new(),
+        ArchitectureChangeResult::Failure(failure) => format_findings(&failure.diagnostics),
+        ArchitectureChangeResult::Incomplete(failure) => format_findings(&failure.diagnostics),
+    };
+    CliArchitectureFailure {
+        diagnostics: if diagnostics.is_empty() {
+            vec!["AIL.ARCH.ANALYSIS_INCOMPLETE".to_owned()]
+        } else {
+            diagnostics
         },
-    )
-    .map(|_| ())
-    .map_err(CliCheckError::Build)
+    }
+}
+
+fn format_findings(findings: &[Value]) -> Vec<String> {
+    findings.iter().map(format_finding).collect()
+}
+
+fn format_finding(finding: &Value) -> String {
+    let code = finding
+        .get("code")
+        .and_then(Value::as_str)
+        .unwrap_or("AIL.ARCH.ANALYSIS_INCOMPLETE");
+    let scope = finding
+        .get("scope")
+        .and_then(Value::as_str)
+        .unwrap_or("workspace");
+    let rule = finding.get("rule").and_then(Value::as_str);
+    match rule {
+        Some(rule) => format!("{code}:{scope}:{rule}"),
+        None => format!("{code}:{scope}"),
+    }
+}
+
+fn load_architecture_policy(
+    path: &Path,
+) -> Result<Option<(SourceArchitectureConfig, String)>, CliCheckError> {
+    let directory = if path.is_dir() {
+        path.to_path_buf()
+    } else {
+        path.parent()
+            .unwrap_or_else(|| Path::new("."))
+            .to_path_buf()
+    };
+    let policy_path = directory.join(ARCHITECTURE_FILE);
+    if !policy_path.is_file() {
+        return Ok(None);
+    }
+    let text = fs::read_to_string(&policy_path)
+        .map_err(|error| CliCheckError::Io(format!("{}: {error}", policy_path.display())))?;
+    let value = serde_json::from_str::<Value>(&text)
+        .map_err(|error| CliCheckError::Io(format!("{}: {error}", policy_path.display())))?;
+    let analysis_scope = value
+        .get("analysis_scope")
+        .and_then(Value::as_str)
+        .unwrap_or("transport:dispatch")
+        .to_owned();
+    let config = SourceArchitectureConfig::from_json_value(&value)
+        .map_err(|error| CliCheckError::Io(format!("{}: {error}", policy_path.display())))?;
+    Ok(Some((config, analysis_scope)))
+}
+
+fn write_published_revision(
+    path: &Path,
+    workspace: &EvolutionWorkspace,
+) -> Result<PublishedRevision, String> {
+    let revision = workspace
+        .revision(PUBLISH_REVISION)
+        .ok_or_else(|| "published revision was not retained".to_owned())?;
+    let sources = workspace
+        .sources(PUBLISH_REVISION)
+        .ok_or_else(|| "published sources were not retained".to_owned())?;
+    let store = path.join(REVISION_STORE);
+    let staging = path.join(format!(
+        "{REVISION_STORE}.staging.{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|duration| duration.as_nanos())
+            .unwrap_or_default()
+    ));
+    if let Err(error) = write_revision_store(&staging, revision, sources) {
+        let _ = fs::remove_dir_all(&staging);
+        return Err(error);
+    }
+    let backup = path.join(format!("{REVISION_STORE}.backup.{}", std::process::id()));
+    if store.exists() {
+        fs::rename(&store, &backup).map_err(|error| {
+            let _ = fs::remove_dir_all(&staging);
+            format!("{}: {error}", store.display())
+        })?;
+    }
+    if let Err(error) = fs::rename(&staging, &store) {
+        if backup.exists() {
+            let _ = fs::rename(&backup, &store);
+        }
+        let _ = fs::remove_dir_all(&staging);
+        return Err(format!("{}: {error}", store.display()));
+    }
+    if backup.exists() {
+        let _ = fs::remove_dir_all(&backup);
+    }
+    Ok(PublishedRevision {
+        revision_id: revision.revision_id.clone(),
+        source_set_digest: revision.source_set_digest.clone(),
+        store,
+    })
+}
+
+fn write_revision_store(
+    store: &Path,
+    revision: &SourceSetRevision,
+    sources: &[EvolutionSource],
+) -> Result<(), String> {
+    let revision_dir = store.join("revisions").join(&revision.revision_id);
+    fs::create_dir_all(&revision_dir)
+        .map_err(|error| format!("{}: {error}", revision_dir.display()))?;
+    let sources_dir = revision_dir.join("sources");
+    fs::create_dir_all(&sources_dir)
+        .map_err(|error| format!("{}: {error}", sources_dir.display()))?;
+    for source in sources {
+        fs::write(sources_dir.join(&source.path), &source.source)
+            .map_err(|error| format!("{}: {error}", source.path))?;
+    }
+    let document = serde_json::json!({
+        "workspace_id": revision.workspace_id,
+        "revision_id": revision.revision_id,
+        "parent_revision_id": revision.parent_revision_id,
+        "source_set_digest": revision.source_set_digest,
+        "architecture_settings_digest": revision.architecture_settings_digest,
+        "capability_environment_digest": revision.capability_environment_digest,
+        "sources": revision.sources.iter().map(|source| {
+            serde_json::json!({
+                "path": source.path,
+                "sha256": source.sha256,
+            })
+        }).collect::<Vec<_>>(),
+    });
+    fs::write(revision_dir.join("revision.json"), format!("{document}\n"))
+        .map_err(|error| format!("revision.json: {error}"))?;
+    fs::write(store.join("current"), format!("{}\n", revision.revision_id))
+        .map_err(|error| format!("current: {error}"))?;
+    Ok(())
 }
 
 fn workspace_id(path: &Path) -> String {

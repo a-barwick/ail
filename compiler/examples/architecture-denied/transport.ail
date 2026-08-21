@@ -1,0 +1,6 @@
+module transport;
+import domain;
+
+fn dispatch(value: Text) -> Text {
+  domain.work(value)
+}
