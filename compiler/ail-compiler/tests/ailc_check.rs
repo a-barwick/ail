@@ -76,6 +76,33 @@ fn check_rejects_a_type_error_with_the_workspace_diagnostic() {
 }
 
 #[test]
+fn check_rejects_a_name_error_with_the_workspace_diagnostic() {
+    let path = write_temp_source("name", "fn run(value: Text) -> Text { missing(value) }\n");
+    let output = run_check(&path);
+    fs::remove_file(path).expect("temporary source is removable");
+
+    assert!(!output.status.success());
+    assert_ne!(output.stdout, b"ok\n");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("AIL.NAME.UNKNOWN_FUNCTION"), "{stderr}");
+}
+
+#[test]
+fn check_rejects_an_effect_error_with_the_workspace_diagnostic() {
+    let path = write_temp_source(
+        "effect",
+        "fn run(value: Text) -> Text effects { store.mark } {\n  value\n}\n",
+    );
+    let output = run_check(&path);
+    fs::remove_file(path).expect("temporary source is removable");
+
+    assert!(!output.status.success());
+    assert_ne!(output.stdout, b"ok\n");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("AIL.CAPABILITY.INVALID_EFFECT"), "{stderr}");
+}
+
+#[test]
 fn check_rejects_recursive_calls() {
     let path = write_temp_source(
         "recursion",
