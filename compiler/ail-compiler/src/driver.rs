@@ -92,7 +92,11 @@ fn directory_sources(path: &Path) -> Result<Vec<EvolutionSource>, CliCheckError>
         let Some(name) = file_path.file_name().and_then(|name| name.to_str()) else {
             continue;
         };
-        if !name.ends_with(".ail") || !valid_source_path(name) {
+        if !Path::new(name)
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("ail"))
+            || !valid_source_path(name)
+        {
             continue;
         }
         let source = fs::read_to_string(&file_path)
