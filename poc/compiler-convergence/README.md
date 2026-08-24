@@ -1,9 +1,14 @@
 # Compiler convergence proof-of-concept
 
-Results from three trials per arm are in [RESULTS.md](RESULTS.md). Short
-version: the compiler arm wins the median on every measure by a small margin,
-one control trial beat every compiler trial, and the clean result is variance,
-not magnitude. The thesis is not proven by those numbers.
+Results from seven trials per arm are in [RESULTS.md](RESULTS.md). Short
+version, in priority order: on **retries to a passing publish**, the win
+condition, the compiler arm ran 1,2,2,2,2,3,4 and the blind arm ran
+1,2,3,4,9,12,16, so median 2 against 4 and worst case 4 against 16, but the
+distributions overlap at the good end and two blind trials matched the best
+compiler trials. On **rebreak**, whether a later edit broke an earlier check,
+the compiler arm had zero events in seven trials and the blind arm had nine
+across four trials. **Tokens** are extra: median 8305 against 9096, agreeing
+with the other two rather than deciding anything.
 
 One broken AIL workspace, two agents, one success gate. The arms differ in a
 single variable: whether the agent may see what the AIL compiler already knows.
@@ -25,12 +30,16 @@ both arms; in the control arm it records the diagnostics and refuses to show
 them. That is what makes the two arms comparable: the same ledger is built from
 the same checker either way.
 
+Ranked by what decides the outcome. Retries to a passing publish is the win
+condition. Rebreak is whether the change was safe. Tokens are extra and decide
+nothing on their own.
+
 | measure | how it is computed |
 | --- | --- |
-| gate calls to pass | index of the first `publish` that passed the gate |
-| tokens | protocol tokens between agent and harness, both directions |
-| fix cycles | gate calls where a diagnostic appeared that the previous call did not have, that is, breakage introduced by the last edit |
-| rebreaks | diagnostics that were fixed and later came back |
+| 1. retries to a passing publish | failed gate calls before the `publish` that passed the gate |
+| 2. rebreaks | diagnostics that were fixed and later came back |
+| 2b. fix cycles | gate calls where a diagnostic appeared that the previous call did not have, that is, breakage introduced by the last edit |
+| 3. tokens | protocol tokens between agent and harness, both directions |
 | god-method rejections | gate calls denied by `M23-POL-DISPATCH-NO-GROWTH`, `M23-POL-NEW-UNIT`, `M23-POL-TRANSPORT-CAPABILITY`, or `M23-POL-TRANSPORT-STATE` |
 | worst dispatch control-flow complexity | highest `candidate_cfc` the architecture checker measured for `transport:dispatch`, against a policy budget of 4 |
 | distinct diagnostics reached | how deep into the failure chain the arm got |

@@ -798,6 +798,15 @@ def command_report(args: argparse.Namespace) -> None:
         )
     if len(spread) == 2 and all(spread.values()):
         (first, low), (second, high) = spread.items()
+        worse = sum(1 for a in low for b in high if b > a)
+        better = sum(1 for a in low for b in high if b < a)
+        tied = sum(1 for a in low for b in high if b == a)
+        lines += [
+            "",
+            f"  paired comparisons ({len(low) * len(high)} of them, every {first} trial "
+            f"against every {second} trial):",
+            f"    {second} needed more retries in {worse}, fewer in {better}, equal in {tied}",
+        ]
         if max(low) < min(high):
             verdict = f"{first} wins the win condition outright: every {first} trial beat every {second} trial."
         elif max(high) < min(low):
