@@ -2,7 +2,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use crate::finding::{FindingLocation, SourceFinding};
 use crate::semantics::check_parsed_source;
+use crate::syntax::ShiftSpans;
 use crate::{
     ArchitectureChangeResult, ArchitectureCoverage, ArchitectureEdge, ArchitectureEvaluationInput,
     ArchitecturePolicyContext, ArchitectureRequest, ArchitectureRequestError,
@@ -11,7 +13,8 @@ use crate::{
     CapabilityEnvironment, CapabilityProvider, ControlFlowGraph, Declaration, DispatchBudget,
     ExecutionFailure, ExecutionResponse, ExecutionSuccess, Expr, FunctionDecl, GroupDependencies,
     HandleKind, NewUnitBudget, ParameterType, ParseResult, RuntimeFault, RuntimeValue,
-    SemanticHandle, SourceUnit, Span, TypeCheckStatus, TypeRef, parse, source_digest,
+    SemanticHandle, SourceUnit, Span, StructuredDiagnostic, TypeCheckStatus, TypeRef, parse,
+    source_digest,
 };
 
 mod transaction;
@@ -433,6 +436,126 @@ pub struct ImpactFailure {
 pub struct EvolutionBuildFailure {
     pub causes: Vec<String>,
     pub diagnostics: Vec<SourceSetDiagnostic>,
+    /// One located, fact-carrying finding per rejected check.
+    pub findings: Vec<SourceFinding>,
+}
+
+impl EvolutionBuildFailure {
+    fn from_causes(causes: Vec<String>) -> Self {
+        Self {
+            causes,
+            diagnostics: Vec::new(),
+            findings: Vec::new(),
+        }
+    }
+}
+
+/// Byte layout of one linked source set inside a single virtual buffer.
+///
+/// Each file occupies a disjoint range, so a span on the linked unit names
+/// exactly one file and one offset inside it. Offset zero is reserved: the
+/// checker uses an empty span at zero for facts that have no source position.
+#[derive(Debug, Clone)]
+struct SourceSetLayout {
+    files: Vec<LayoutFile>,
+}
+
+#[derive(Debug, Clone)]
+struct LayoutFile {
+    path: String,
+    base: usize,
+    text: String,
+    canonical: bool,
+}
+
+/// One source file exactly as the caller supplied it, with its own parse.
+#[derive(Debug, Clone)]
+struct SuppliedSource {
+    path: String,
+    text: String,
+    canonical: bool,
+    parsed: ParseResult,
+}
+
+impl SourceSetLayout {
+    fn build(sources: &[SuppliedSource]) -> Self {
+        let mut files = Vec::with_capacity(sources.len());
+        let mut base = 1;
+        for source in sources {
+            files.push(LayoutFile {
+                path: source.path.clone(),
+                base,
+                text: source.text.clone(),
+                canonical: source.canonical,
+            });
+            base += source.text.len() + 1;
+        }
+        Self { files }
+    }
+
+    fn file(&self, path: &str) -> Option<&LayoutFile> {
+        self.files.iter().find(|file| file.path == path)
+    }
+
+    fn locate(&self, span: Span) -> Option<(&LayoutFile, Span)> {
+        if span.start == 0 {
+            return None;
+        }
+        let file = self
+            .files
+            .iter()
+            .find(|file| span.start >= file.base && span.start <= file.base + file.text.len())?;
+        let limit = file.base + file.text.len();
+        Some((
+            file,
+            Span::new(
+                span.start - file.base,
+                span.end.clamp(span.start, limit) - file.base,
+            ),
+        ))
+    }
+
+    fn shifted(&self, parsed_sources: &[(String, ParseResult)]) -> Vec<(String, ParseResult)> {
+        parsed_sources
+            .iter()
+            .map(|(path, parsed)| {
+                let mut unit = parsed.unit.clone();
+                unit.tokens = Vec::new();
+                if let Some(file) = self.file(path) {
+                    unit.shift_spans(file.base);
+                }
+                (
+                    path.clone(),
+                    ParseResult {
+                        unit,
+                        tokens: Vec::new(),
+                        diagnostics: Vec::new(),
+                    },
+                )
+            })
+            .collect()
+    }
+
+    fn module_names(&self) -> String {
+        self.files
+            .iter()
+            .filter_map(|file| parse(&file.text).unit.module.map(|module| module.name))
+            .collect::<Vec<_>>()
+            .join(",")
+    }
+
+    fn located_finding(&self, code: &str, category: &str, path: &str, span: Span) -> SourceFinding {
+        let mut finding = SourceFinding::new(code, category);
+        if let Some(file) = self.file(path) {
+            finding.location = FindingLocation::resolve(path, &file.text, span);
+            if !file.canonical {
+                finding
+                    .facts
+                    .insert("source.canonical".to_owned(), "false".to_owned());
+            }
+        }
+        finding
+    }
 }
 
 /// One structured diagnostic produced while linking an ordered source set.
@@ -507,9 +630,10 @@ impl EvolutionWorkspace {
         let stored = workspace
             .revisions
             .get_mut(&workspace.current_revision_id)
-            .ok_or_else(|| EvolutionBuildFailure {
-                causes: vec!["base revision was not retained".to_owned()],
-                diagnostics: Vec::new(),
+            .ok_or_else(|| {
+                EvolutionBuildFailure::from_causes(vec![
+                    "base revision was not retained".to_owned(),
+                ])
             })?;
         stored.revision.architecture_settings_digest = Some(config.stable_digest());
         stored.architecture_config = Some(config);
@@ -532,17 +656,15 @@ impl EvolutionWorkspace {
     ) -> Result<(), EvolutionBuildFailure> {
         let revision_id = revision_id.into();
         if self.revisions.contains_key(&revision_id) {
-            return Err(EvolutionBuildFailure {
-                causes: vec![format!("duplicate revision {revision_id}")],
-                diagnostics: Vec::new(),
-            });
+            return Err(EvolutionBuildFailure::from_causes(vec![format!(
+                "duplicate revision {revision_id}"
+            )]));
         }
         if let Some(parent) = parent_revision_id.as_deref() {
             if !self.revisions.contains_key(parent) {
-                return Err(EvolutionBuildFailure {
-                    causes: vec![format!("unknown parent revision {parent}")],
-                    diagnostics: Vec::new(),
-                });
+                return Err(EvolutionBuildFailure::from_causes(vec![format!(
+                    "unknown parent revision {parent}"
+                )]));
             }
         }
         let inherited_architecture = parent_revision_id.as_deref().and_then(|parent| {
@@ -1178,18 +1300,32 @@ impl StoredSourceSet {
             }
         }
         let mut parsed_sources = Vec::new();
+        let mut supplied_sources = Vec::new();
+        let mut parse_findings = Vec::new();
         for source in &mut sources {
             if !valid_source_path(&source.path) {
                 causes.push(format!("invalid source path {}", source.path));
                 continue;
             }
-            let parsed = parse(&source.source);
-            if !parsed.diagnostics.is_empty() {
+            let supplied = parse(&source.source);
+            if !supplied.diagnostics.is_empty() {
                 causes.push(format!("{} has parse diagnostics", source.path));
+                parse_findings.extend(parse_findings_for(
+                    &source.path,
+                    &source.source,
+                    &supplied.diagnostics,
+                ));
                 continue;
             }
-            let canonical = crate::formatter::format(&parsed.unit);
-            if canonical != source.source {
+            let canonical = crate::formatter::format(&supplied.unit);
+            let already_canonical = canonical == source.source;
+            supplied_sources.push(SuppliedSource {
+                path: source.path.clone(),
+                text: source.source.clone(),
+                canonical: already_canonical,
+                parsed: supplied,
+            });
+            if !already_canonical {
                 source.source = canonical;
             }
             let parsed = parse(&source.source);
@@ -1199,43 +1335,65 @@ impl StoredSourceSet {
             return Err(EvolutionBuildFailure {
                 causes,
                 diagnostics: Vec::new(),
+                findings: parse_findings,
             });
         }
-        let module_diagnostics = validate_modules(&parsed_sources);
+        // Diagnostics locate the source the caller supplied, not the canonical
+        // rewrite of it. Canonical formatting only moves whitespace, so both
+        // parses carry the same declarations, but only the supplied text has
+        // offsets a caller can open.
+        let layout = SourceSetLayout::build(&supplied_sources);
+        let located_sources = supplied_sources
+            .iter()
+            .map(|source| (source.path.clone(), source.parsed.clone()))
+            .collect::<Vec<_>>();
+        let module_diagnostics = validate_modules(&located_sources);
         if !module_diagnostics.is_empty() {
             return Err(EvolutionBuildFailure {
                 causes: module_diagnostics
                     .iter()
                     .map(|diagnostic| diagnostic.code.to_owned())
                     .collect(),
+                findings: module_findings(&module_diagnostics, &layout),
                 diagnostics: module_diagnostics,
             });
         }
+        let linked_for_check = ParseResult {
+            unit: link_source_set(&layout.shifted(&located_sources)),
+            tokens: Vec::new(),
+            diagnostics: Vec::new(),
+        };
         let merged = ParseResult {
             unit: link_source_set(&parsed_sources),
             tokens: Vec::new(),
             diagnostics: Vec::new(),
         };
-        let check = check_parsed_source(&merged, revision_id, capabilities);
+        let check = check_parsed_source(&linked_for_check, revision_id, capabilities);
         if !matches!(check.type_result.status, TypeCheckStatus::Ok) || !check.diagnostics.is_empty()
         {
             let diagnostics = check
                 .diagnostics
                 .iter()
-                .map(|diagnostic| SourceSetDiagnostic {
-                    code: diagnostic.code,
-                    path: "<source-set>".to_owned(),
-                    span: diagnostic.primary_span,
-                    details: diagnostic
-                        .expected
-                        .iter()
-                        .map(|(key, value)| {
-                            (format!("expected.{key}"), diagnostic_value_text(value))
-                        })
-                        .chain(diagnostic.actual.iter().map(|(key, value)| {
-                            (format!("actual.{key}"), diagnostic_value_text(value))
-                        }))
-                        .collect(),
+                .map(|diagnostic| {
+                    let (path, span) = layout.locate(diagnostic.primary_span).map_or_else(
+                        || ("<source-set>".to_owned(), diagnostic.primary_span),
+                        |(file, span)| (file.path.clone(), span),
+                    );
+                    SourceSetDiagnostic {
+                        code: diagnostic.code,
+                        path,
+                        span,
+                        details: diagnostic
+                            .expected
+                            .iter()
+                            .map(|(key, value)| {
+                                (format!("expected.{key}"), diagnostic_value_text(value))
+                            })
+                            .chain(diagnostic.actual.iter().map(|(key, value)| {
+                                (format!("actual.{key}"), diagnostic_value_text(value))
+                            }))
+                            .collect(),
+                    }
                 })
                 .collect();
             return Err(EvolutionBuildFailure {
@@ -1245,6 +1403,12 @@ impl StoredSourceSet {
                     .map(|diagnostic| diagnostic.code.to_owned())
                     .collect(),
                 diagnostics,
+                findings: semantic_findings(
+                    &check.diagnostics,
+                    &layout,
+                    capabilities,
+                    &linked_for_check.unit,
+                ),
             });
         }
         let identities = build_identities(revision_id, &parsed_sources)?;
@@ -1930,17 +2094,17 @@ fn validate_modules(parsed_sources: &[(String, ParseResult)]) -> Vec<SourceSetDi
                     }
                 }
             }
-            if declarations.contains_key(source_name(&name)) && !visible.contains(&name) {
-                diagnostics.push(source_set_diagnostic(
-                    "AIL.MODULE.INACCESSIBLE_DECLARATION",
-                    path,
-                    span,
-                    [
-                        ("declaration", name.as_str()),
-                        ("role", role),
-                        ("module", module_name.as_str()),
-                    ],
-                ));
+            if let Some(owners) = declarations.get(source_name(&name)) {
+                if !visible.contains(&name) {
+                    diagnostics.push(inaccessible_declaration(
+                        path,
+                        span,
+                        &name,
+                        role,
+                        module_name,
+                        owners,
+                    ));
+                }
             }
         }
     }
@@ -2411,6 +2575,224 @@ fn find_import_cycles(
     stack.pop();
 }
 
+fn parse_findings_for(
+    path: &str,
+    source: &str,
+    diagnostics: &[crate::Diagnostic],
+) -> Vec<SourceFinding> {
+    diagnostics
+        .iter()
+        .map(|diagnostic| {
+            let mut finding = SourceFinding::new(diagnostic.code, diagnostic.category);
+            finding.location = FindingLocation::resolve(path, source, diagnostic.span);
+            finding
+                .expected
+                .insert("token".to_owned(), diagnostic.expected.clone());
+            finding
+                .actual
+                .insert("token".to_owned(), diagnostic.actual.clone());
+            finding.with_derived_requirement()
+        })
+        .collect()
+}
+
+fn module_findings(
+    diagnostics: &[SourceSetDiagnostic],
+    layout: &SourceSetLayout,
+) -> Vec<SourceFinding> {
+    let module_names = layout.module_names();
+    diagnostics
+        .iter()
+        .map(|diagnostic| {
+            let mut finding = layout.located_finding(
+                diagnostic.code,
+                "module",
+                &diagnostic.path,
+                diagnostic.span,
+            );
+            for (key, value) in &diagnostic.details {
+                finding.facts.insert(key.clone(), value.clone());
+            }
+            if diagnostic.code == "AIL.MODULE.MISSING_IMPORT" {
+                finding
+                    .facts
+                    .insert("source_set.modules".to_owned(), module_names.clone());
+            }
+            finding.with_derived_requirement()
+        })
+        .collect()
+}
+
+fn semantic_findings(
+    diagnostics: &[StructuredDiagnostic],
+    layout: &SourceSetLayout,
+    capabilities: &CapabilityEnvironment,
+    unit: &SourceUnit,
+) -> Vec<SourceFinding> {
+    let interfaces = capabilities
+        .interfaces()
+        .map(|(name, _)| name.to_owned())
+        .collect::<Vec<_>>()
+        .join(",");
+    diagnostics
+        .iter()
+        .map(|diagnostic| {
+            let mut finding = match layout.locate(diagnostic.primary_span) {
+                Some((file, span)) => {
+                    layout.located_finding(diagnostic.code, diagnostic.category, &file.path, span)
+                }
+                None => SourceFinding::new(diagnostic.code, diagnostic.category),
+            };
+            for (key, value) in &diagnostic.expected {
+                finding
+                    .expected
+                    .insert(key.clone(), diagnostic_value_text(value));
+            }
+            for (key, value) in &diagnostic.actual {
+                finding
+                    .actual
+                    .insert(key.clone(), diagnostic_value_text(value));
+            }
+            if matches!(
+                diagnostic.code,
+                "AIL.CAPABILITY.UNKNOWN_INTERFACE" | "AIL.CAPABILITY.UNKNOWN_OPERATION"
+            ) {
+                finding.facts.insert(
+                    "capability_environment.interfaces".to_owned(),
+                    interfaces.clone(),
+                );
+            }
+            for handle in &diagnostic.related_handles {
+                if !matches!(handle.kind, HandleKind::Symbol) {
+                    continue;
+                }
+                if finding
+                    .related
+                    .iter()
+                    .any(|related| related.name == handle.local_id)
+                {
+                    continue;
+                }
+                finding.related.push(crate::finding::RelatedLocation {
+                    role: "declared".to_owned(),
+                    name: handle.local_id.clone(),
+                    location: symbol_handle_span(unit, &handle.local_id)
+                        .and_then(|span| layout.locate(span))
+                        .and_then(|(file, span)| {
+                            FindingLocation::resolve(&file.path, &file.text, span)
+                        }),
+                });
+            }
+            finding.with_derived_requirement()
+        })
+        .collect()
+}
+
+/// Resolve the source span a `kind:name` symbol handle points at.
+fn symbol_handle_span(unit: &SourceUnit, local_id: &str) -> Option<Span> {
+    let (kind, rest) = local_id.split_once(':')?;
+    match kind {
+        "record" | "variant" | "function" => unit
+            .declarations
+            .iter()
+            .find(|declaration| declaration_name(declaration).0 == rest)
+            .map(|declaration| declaration_name(declaration).1),
+        "field" => {
+            let (record_name, field_name) = rest.split_once(':')?;
+            unit.declarations.iter().find_map(|declaration| {
+                let Declaration::Record(record) = declaration else {
+                    return None;
+                };
+                (record.name == record_name)
+                    .then(|| {
+                        record
+                            .fields
+                            .iter()
+                            .find(|field| field.name == field_name)
+                            .map(|field| field.span)
+                    })
+                    .flatten()
+            })
+        }
+        "parameter" => {
+            let (function_name, parameter_name) = rest.split_once(':')?;
+            unit.declarations.iter().find_map(|declaration| {
+                let Declaration::Function(function) = declaration else {
+                    return None;
+                };
+                (function.name == function_name)
+                    .then(|| {
+                        function
+                            .parameters
+                            .iter()
+                            .find(|parameter| parameter.name == parameter_name)
+                            .map(|parameter| parameter.span)
+                    })
+                    .flatten()
+            })
+        }
+        _ => None,
+    }
+}
+
+/// Report a reference to a declaration the referring file cannot see.
+///
+/// The reported `module` is the module that declares the reference, not the
+/// module doing the referring: only the declaring module can be imported to make
+/// the reference resolve. A qualified reference names its own module, which may
+/// itself contain dots, so the qualifier is everything before the final dot.
+/// When several modules declare the name and the reference names none of them,
+/// the checker knows the candidates but not which one is meant, so it reports
+/// every candidate under `declaring_modules` instead of choosing one.
+fn inaccessible_declaration(
+    path: &str,
+    span: Span,
+    name: &str,
+    role: &'static str,
+    referring_module: &str,
+    owners: &[(String, String, Span)],
+) -> SourceSetDiagnostic {
+    let qualifier = name.rsplit_once('.').map(|(prefix, _)| prefix);
+    let declaring = qualifier
+        .and_then(|qualifier| owners.iter().find(|(module, _, _)| module == qualifier))
+        .or(match owners {
+            [single] => Some(single),
+            _ => None,
+        });
+    if let Some((declaring_module, declaring_path, _)) = declaring {
+        return source_set_diagnostic(
+            "AIL.MODULE.INACCESSIBLE_DECLARATION",
+            path,
+            span,
+            [
+                ("declaration", name),
+                ("role", role),
+                ("module", declaring_module.as_str()),
+                ("declaring_path", declaring_path.as_str()),
+                ("referring_module", referring_module),
+            ],
+        );
+    }
+    let declaring_modules = owners
+        .iter()
+        .map(|(module, _, _)| module.as_str())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>()
+        .join(",");
+    source_set_diagnostic(
+        "AIL.MODULE.INACCESSIBLE_DECLARATION",
+        path,
+        span,
+        [
+            ("declaration", name),
+            ("role", role),
+            ("declaring_modules", declaring_modules.as_str()),
+            ("referring_module", referring_module),
+        ],
+    )
+}
+
 fn source_set_diagnostic<const N: usize>(
     code: &'static str,
     path: &str,
@@ -2718,10 +3100,7 @@ fn build_identities(
         identities.sort_by(|left, right| left.identity.cmp(&right.identity));
         Ok(identities)
     } else {
-        Err(EvolutionBuildFailure {
-            causes,
-            diagnostics: Vec::new(),
-        })
+        Err(EvolutionBuildFailure::from_causes(causes))
     }
 }
 

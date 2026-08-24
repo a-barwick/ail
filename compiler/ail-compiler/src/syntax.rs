@@ -348,3 +348,235 @@ pub struct RecordFieldValue {
     pub value: Expr,
     pub span: Span,
 }
+
+/// Move every span in a syntax subtree by a fixed byte offset.
+///
+/// Linking an ordered source set into one unit loses which file a span came
+/// from, because every file numbers its own bytes from zero. Shifting each
+/// file's declarations into a disjoint range of one virtual buffer keeps that
+/// mapping exact, so a diagnostic on the linked unit still names its file.
+pub(crate) trait ShiftSpans {
+    fn shift_spans(&mut self, delta: usize);
+}
+
+fn shift(span: &mut Span, delta: usize) {
+    span.start += delta;
+    span.end += delta;
+}
+
+impl<T: ShiftSpans> ShiftSpans for Vec<T> {
+    fn shift_spans(&mut self, delta: usize) {
+        for item in self {
+            item.shift_spans(delta);
+        }
+    }
+}
+
+impl<T: ShiftSpans> ShiftSpans for Option<T> {
+    fn shift_spans(&mut self, delta: usize) {
+        if let Some(item) = self {
+            item.shift_spans(delta);
+        }
+    }
+}
+
+impl<T: ShiftSpans> ShiftSpans for Box<T> {
+    fn shift_spans(&mut self, delta: usize) {
+        self.as_mut().shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for SourceUnit {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.module.shift_spans(delta);
+        self.imports.shift_spans(delta);
+        self.declarations.shift_spans(delta);
+        for token in &mut self.tokens {
+            shift(&mut token.span, delta);
+        }
+    }
+}
+
+impl ShiftSpans for ModuleDecl {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+    }
+}
+
+impl ShiftSpans for ImportDecl {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+    }
+}
+
+impl ShiftSpans for Declaration {
+    fn shift_spans(&mut self, delta: usize) {
+        match self {
+            Self::Record(record) => record.shift_spans(delta),
+            Self::Variant(variant) => variant.shift_spans(delta),
+            Self::Function(function) => function.shift_spans(delta),
+        }
+    }
+}
+
+impl ShiftSpans for RecordDecl {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.fields.shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for Field {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.ty.shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for VariantDecl {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.cases.shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for VariantCase {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.payload.shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for FunctionDecl {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.parameters.shift_spans(delta);
+        self.result_type.shift_spans(delta);
+        self.effects.shift_spans(delta);
+        self.body.shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for Parameter {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        match &mut self.ty {
+            ParameterType::Value(ty) => ty.shift_spans(delta),
+            ParameterType::Capability(_) => {}
+        }
+    }
+}
+
+impl ShiftSpans for TypeRef {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        match &mut self.value {
+            ValueType::Named(_) => {}
+            ValueType::List {
+                element,
+                max_length_span,
+                ..
+            } => {
+                element.shift_spans(delta);
+                shift(max_length_span, delta);
+            }
+        }
+    }
+}
+
+impl ShiftSpans for Effect {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+    }
+}
+
+impl ShiftSpans for Block {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.bindings.shift_spans(delta);
+        self.tail.shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for LetBinding {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.value.shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for MatchArm {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.body.shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for RecordFieldValue {
+    fn shift_spans(&mut self, delta: usize) {
+        shift(&mut self.span, delta);
+        self.value.shift_spans(delta);
+    }
+}
+
+impl ShiftSpans for Expr {
+    fn shift_spans(&mut self, delta: usize) {
+        match self {
+            Self::Text { span, .. } | Self::Integer { span, .. } | Self::Name { span, .. } => {
+                shift(span, delta);
+            }
+            Self::Call {
+                arguments, span, ..
+            }
+            | Self::CapabilityCall {
+                arguments, span, ..
+            } => {
+                shift(span, delta);
+                arguments.shift_spans(delta);
+            }
+            Self::Record { fields, span, .. } => {
+                shift(span, delta);
+                fields.shift_spans(delta);
+            }
+            Self::Variant { payload, span, .. } => {
+                shift(span, delta);
+                payload.shift_spans(delta);
+            }
+            Self::FieldAccess { target, span, .. } => {
+                shift(span, delta);
+                target.shift_spans(delta);
+            }
+            Self::If {
+                condition,
+                then_branch,
+                else_branch,
+                span,
+            } => {
+                shift(span, delta);
+                condition.shift_spans(delta);
+                then_branch.shift_spans(delta);
+                else_branch.shift_spans(delta);
+            }
+            Self::Match {
+                scrutinee,
+                arms,
+                span,
+            } => {
+                shift(span, delta);
+                scrutinee.shift_spans(delta);
+                arms.shift_spans(delta);
+            }
+            Self::Map {
+                source, body, span, ..
+            }
+            | Self::ParallelMap {
+                source, body, span, ..
+            } => {
+                shift(span, delta);
+                source.shift_spans(delta);
+                body.shift_spans(delta);
+            }
+        }
+    }
+}
