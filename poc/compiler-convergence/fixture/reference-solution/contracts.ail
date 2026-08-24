@@ -1,0 +1,42 @@
+module contracts;
+
+record CancelRequest {
+  value: Text;
+}
+
+variant StoreOutcome {
+  Queued;
+  Running;
+  Missing;
+  Completed;
+  Cancelled;
+}
+
+variant CancelOutcome {
+  Malformed;
+  Cancelled;
+  NotFound;
+  NotCancellable;
+}
+
+fn classify_stored(stored: StoreOutcome) -> CancelOutcome {
+  match stored {
+    StoreOutcome::Queued => { CancelOutcome::Cancelled },
+    StoreOutcome::Running => { CancelOutcome::Cancelled },
+    StoreOutcome::Missing => { CancelOutcome::NotFound },
+    StoreOutcome::Completed => { CancelOutcome::NotCancellable },
+    StoreOutcome::Cancelled => { CancelOutcome::NotCancellable },
+  }
+}
+
+fn decide(request: CancelRequest, stored: StoreOutcome) -> CancelOutcome {
+  if text.is_empty(request.value) {
+    CancelOutcome::Malformed
+  } else {
+    if text.contains_control(request.value) {
+      CancelOutcome::Malformed
+    } else {
+      classify_stored(stored)
+    }
+  }
+}

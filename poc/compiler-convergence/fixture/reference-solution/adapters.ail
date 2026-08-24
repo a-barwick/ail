@@ -1,0 +1,5 @@
+module adapters;
+
+fn marker(value: Text) -> Text {
+  value
+}

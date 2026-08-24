@@ -1,5 +1,10 @@
 # Compiler convergence proof-of-concept
 
+Results from three trials per arm are in [RESULTS.md](RESULTS.md). Short
+version: the compiler arm wins the median on every measure by a small margin,
+one control trial beat every compiler trial, and the clean result is variance,
+not magnitude. The thesis is not proven by those numbers.
+
 One broken AIL workspace, two agents, one success gate. The arms differ in a
 single variable: whether the agent may see what the AIL compiler already knows.
 

@@ -95,13 +95,53 @@ def digest(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def strip_comments(text: str) -> str:
+    """Remove AIL line and block comments, leaving text literals intact.
+
+    Without this, a requirement stated as source text could be satisfied by
+    commenting the source text out, which is not an implementation.
+    """
+    out: list[str] = []
+    index = 0
+    end = len(text)
+    while index < end:
+        char = text[index]
+        if char == '"':
+            out.append(char)
+            index += 1
+            while index < end:
+                out.append(text[index])
+                if text[index] == "\\" and index + 1 < end:
+                    out.append(text[index + 1])
+                    index += 2
+                    continue
+                if text[index] == '"':
+                    index += 1
+                    break
+                index += 1
+            continue
+        if text.startswith("//", index):
+            while index < end and text[index] != "\n":
+                index += 1
+            continue
+        if text.startswith("/*", index):
+            closed = text.find("*/", index + 2)
+            index = end if closed == -1 else closed + 2
+            out.append(" ")
+            continue
+        out.append(char)
+        index += 1
+    return "".join(out)
+
+
 def normalize(text: str) -> str:
-    """Collapse whitespace and drop the `contracts.` qualifier.
+    """Collapse whitespace, drop comments, drop the `contracts.` qualifier.
 
     The task specification is matched against this form so a requirement does
     not dictate which module a declaration lives in or how it is indented.
     """
-    return re.sub(r"\s+", " ", text.replace("contracts.", "")).strip()
+    stripped = strip_comments(text).replace("contracts.", "")
+    return re.sub(r"\s+", " ", stripped).strip()
 
 
 def policy_of(arm_name: str) -> str:
@@ -744,6 +784,18 @@ def command_report(args: argparse.Namespace) -> None:
 # --------------------------------------------------------------------------
 
 
+def strip_comments_target(source: str) -> str:
+    """Comment out every line of one module body, keeping its module header.
+
+    Used only by the self-test, to prove a commented-out requirement does not
+    satisfy the specification.
+    """
+    lines = source.splitlines()
+    return "\n".join(
+        line if line.startswith("module ") else f"// {line}" for line in lines
+    ) + "\n"
+
+
 def command_self_test(args: argparse.Namespace) -> None:
     """Prove the fixture is solvable and the gate cannot be gamed.
 
@@ -831,6 +883,16 @@ def command_self_test(args: argparse.Namespace) -> None:
             "reference repair keeps policy byte-identical",
             repaired["architecture.json"] == broken["architecture.json"],
             "",
+        )
+    )
+
+    commented = dict(repaired)
+    commented["domain.ail"] = strip_comments_target(commented["domain.ail"])
+    checks.append(
+        (
+            "a requirement commented out does not satisfy the specification",
+            bool(specification_violations(commented)),
+            ",".join(item["id"] for item in specification_violations(commented)),
         )
     )
 

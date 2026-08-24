@@ -1,18 +1,37 @@
 per trial
 
+measure                                           ail      ail-t2      ail-t3     control  control-t2  control-t3
+converged                                        True        True        True        True        True        True
+gate calls to pass                                  3           3           3           2           5           4
+gate calls total                                    3           3           3           2           5           4
+first check that passed                             2           2           2           1        None           2
+tokens harness to agent                          7699        7701        7993        7883        8361        8112
+tokens agent to harness                           401         386         386         272         735         435
+tokens total (protocol)                          8100        8087        8379        8155        9096        8547
+source edits                                        4           4           4           3          10           5
+reads                                              20          20          23          23          25          25
+distinct diagnostics reached                        1           1           1           0           2           1
+fix cycles (new breakage after an edit)             0           0           0           0           2           0
+rebreaks (fixed then broken again)                  0           0           0           0           1           0
+god-method rejections                               1           1           1           0           2           1
+worst dispatch control-flow complexity              7           7           7        None           7           7
+attempts failing the task specification             0           0           0           0           2           1
+
+median of ail: 3 trials, control: 3 trials
+
 measure                                           ail     control
 converged                                        True        True
-gate calls to pass                                  3           2
-gate calls total                                    3           2
-first check that passed                             2           1
-tokens harness to agent                          7699        7883
-tokens agent to harness                           401         272
-tokens total (protocol)                          8100        8155
-source edits                                        4           3
-reads                                              20          23
-distinct diagnostics reached                        1           0
+gate calls to pass                                  3           4
+gate calls total                                    3           4
+first check that passed                             2           -
+tokens harness to agent                          7701        8112
+tokens agent to harness                           386         435
+tokens total (protocol)                          8100        8547
+source edits                                        4           5
+reads                                              20          25
+distinct diagnostics reached                        1           1
 fix cycles (new breakage after an edit)             0           0
 rebreaks (fixed then broken again)                  0           0
-god-method rejections                               1           0
-worst dispatch control-flow complexity              7        None
-attempts failing the task specification             0           0
+god-method rejections                               1           1
+worst dispatch control-flow complexity              7           -
+attempts failing the task specification             0           1
