@@ -16,6 +16,7 @@ measure                                             ail      ail-t2      ail-t3 
 - god-method rejections                               1           1           1           1           0           1           0           0           2           1           0           4           3           3
 - worst dispatch control-flow complexity              7           7           7           7        None           7        None        None           7           7        None           7           7           7
 - first check that passed                             2           2           2           3           2           4           1           1        None           2           1           5           4           7
+- ledger built from                                text        text        text        text        text        text        text        text        text        text        text        text        text        text
 
 median of ail: 7 trials, control: 7 trials
 
@@ -35,6 +36,7 @@ measure                                             ail     control
 - god-method rejections                               1           2
 - worst dispatch control-flow complexity              -           -
 - first check that passed                             2           -
+- ledger built from                                   -           -
 
 win condition: retries to a passing publish
 

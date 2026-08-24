@@ -333,6 +333,52 @@ def parse_diagnostics(output: str) -> list[dict]:
     return parsed
 
 
+def json_findings(workspace: Path) -> list[dict] | None:
+    """Read the ledger's diagnostics from `ailc check --json`, if supported.
+
+    `check` is read-only, so this probe is safe before either command and gives
+    the ledger a stable machine-readable shape instead of a line format that
+    changes when diagnostic rendering changes. Returns `None` when the compiler
+    has no `--json` view, and the caller falls back to parsing text.
+    """
+    completed = subprocess.run(
+        [str(ailc_binary()), "check", "--json", str(workspace)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    try:
+        document = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(document, dict) or "findings" not in document:
+        return None
+    parsed = []
+    for finding in document["findings"]:
+        facts = dict(finding.get("facts") or {})
+        for key, value in (finding.get("expected") or {}).items():
+            facts[f"expected.{key}"] = value
+        for key, value in (finding.get("actual") or {}).items():
+            facts[f"actual.{key}"] = value
+        # Keep the in-ledger shape the text parser produced, so every measure
+        # reads one format regardless of which compiler emitted it.
+        flat = " ".join(f"{key}={value}" for key, value in sorted(facts.items()))
+        code = finding["code"]
+        parsed.append(
+            {
+                "code": code,
+                "class": finding.get("category") or code.split(".")[1],
+                "path": (finding.get("location") or {}).get("path", "<source-set>"),
+                "rule": facts.get("rule"),
+                "scope": facts.get("scope"),
+                "facts": flat,
+                "requirement": finding.get("requirement"),
+                "key": f"{code}|{flat}",
+            }
+        )
+    return parsed
+
+
 def run_gate(state: dict, command: str) -> dict:
     """Materialize the workspace, run one real `ailc` command, tear it down."""
     files = state["files"]
@@ -340,6 +386,7 @@ def run_gate(state: dict, command: str) -> dict:
     try:
         for name, text in files.items():
             (workspace / name).write_text(text, encoding="utf-8")
+        findings = json_findings(workspace)
         completed = subprocess.run(
             [str(ailc_binary()), command, str(workspace)],
             capture_output=True,
@@ -363,7 +410,8 @@ def run_gate(state: dict, command: str) -> dict:
         "command": command,
         "exit_code": completed.returncode,
         "output": output,
-        "diagnostics": parse_diagnostics(output),
+        "diagnostics": findings if findings is not None else parse_diagnostics(output),
+        "diagnostic_source": "json" if findings is not None else "text",
         "store_written": store_written,
         "published_sources": published_sources,
     }
@@ -399,6 +447,7 @@ def gate(arm_name: str, command: str) -> None:
         "exit_code": result["exit_code"],
         "command_passed": command_passed,
         "compiler_output": result["output"],
+        "diagnostic_source": result["diagnostic_source"],
         "diagnostics": result["diagnostics"],
         "diagnostic_keys": sorted({item["key"] for item in result["diagnostics"]}),
         "specification_violations": [item["id"] for item in violations],
@@ -654,9 +703,10 @@ def measure(state: dict) -> dict:
         for item in attempt["diagnostics"]:
             if item.get("rule") in GOD_METHOD_RULES:
                 god_method_attempts.append(attempt["index"])
-            for fact in item.get("facts", "").split():
-                if fact.startswith("candidate_cfc="):
-                    dispatch_cfc.append(int(fact.split("=", 1)[1]))
+            for fact in (item.get("facts") or "").split():
+                name, _, value = fact.partition("=")
+                if name.removeprefix("facts.") == "candidate_cfc" and value.isdigit():
+                    dispatch_cfc.append(int(value))
 
     reads = [item for item in state["commands"] if item["command"] == "read"]
     return {
@@ -684,6 +734,10 @@ def measure(state: dict) -> dict:
         "tokens_total": state["tokens_out"] + state["tokens_in"],
         "chars_harness_to_agent": state["chars_out"],
         "chars_agent_to_harness": state["chars_in"],
+        "ledger_from": ",".join(
+            sorted({item.get("diagnostic_source", "text") for item in attempts})
+        )
+        or "-",
         "reads": len(reads),
         "reference_reads": sum(1 for item in reads if item["path"] in REFERENCE_READS),
         "edits": len(state["edits"]),
@@ -756,6 +810,7 @@ def command_report(args: argparse.Namespace) -> None:
         ("- god-method rejections", "god_method_rejections"),
         ("- worst dispatch control-flow complexity", "max_dispatch_control_flow_complexity_seen"),
         ("- first check that passed", "first_clean_check"),
+        ("- ledger built from", "ledger_from"),
     ]
     width = max(len(label) for label, _ in rows) + 2
     lines = ["per trial", ""]
@@ -868,6 +923,14 @@ def command_self_test(args: argparse.Namespace) -> None:
             "broken fixture fails check",
             result["exit_code"] != 0 and bool(result["diagnostics"]),
             result["output"].splitlines()[0] if result["output"] else "",
+        )
+    )
+    checks.append(
+        (
+            "ledger diagnostics carry a code and a stable key",
+            all(item["code"] and item["key"] for item in result["diagnostics"]),
+            f"source={result['diagnostic_source']}, "
+            f"codes={','.join(item['code'] for item in result['diagnostics'])}",
         )
     )
     checks.append(

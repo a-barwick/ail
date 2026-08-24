@@ -1,5 +1,31 @@
 # Results: seven trials per arm, same broken workspace
 
+## Superseded: these numbers measure the pre-#5 diagnostic format
+
+All fourteen trials below ran against this branch before
+[PR #5](https://github.com/a-barwick/ail/pull/5) merged, so the `ail` arm saw
+the old one-line diagnostic format plus the architecture facts this branch added.
+PR #5 replaces that with located structured findings, a `requirement` line per
+error, and `ailc check --json`, and a follow-up on that branch cut the two
+requirements that prescribed an edit rather than stating a constraint. The `ail`
+arm's information therefore changes when #5 lands, so **both arms must be re-run
+against the merged tree before any number here is quoted as the result.**
+
+Nothing about the control arm changes: it never sees compiler output. The
+comparison has to be re-run anyway, because an arm measured against a different
+compiler is not comparable to one measured against this branch.
+
+The numbers stay in this file because they are real, auditable, and the
+mechanism they exposed is unlikely to reverse. Treat them as the pre-#5
+baseline, not the result.
+
+The harness is already ported: it reads its ledger from `ailc check --json` when
+the compiler offers it and falls back to parsing text when it does not, so the
+same measures come out of either tree. `- ledger built from` in the report says
+which was used.
+
+## The pre-#5 baseline
+
 Run on 2026-08-24. Fourteen agent runs, seven per arm, same model, same broken
 fixture, same `ailc publish` gate, same reference material. The only difference
 between arms is whether the agent may see compiler output.
