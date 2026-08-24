@@ -1,0 +1,8 @@
+module tests;
+import batch;
+import report;
+import types;
+
+fn label_batch(requests: List<types.LabelRequest, 8>) -> List<types.LabelReport, 8> {
+  report.report_batch(batch.classify_batch(requests))
+}

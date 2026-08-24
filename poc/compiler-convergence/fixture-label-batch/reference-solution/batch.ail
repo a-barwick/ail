@@ -1,0 +1,9 @@
+module batch;
+import classify;
+import types;
+
+fn classify_batch(requests: List<types.LabelRequest, 8>) -> List<types.Label, 8> {
+  map request in requests {
+    classify.classify_one(request)
+  }
+}

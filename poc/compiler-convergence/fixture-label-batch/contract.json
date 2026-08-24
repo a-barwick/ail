@@ -1,0 +1,195 @@
+{
+  "description": "Task specification for the broken label-batch workspace. These requirements are handed to both arms verbatim. They are not compiler facts: the harness checks them by matching normalized workspace text, so the control arm learns exactly as much from them as the AIL arm does. Every requirement here already holds in the broken fixture, so a specification violation never points at one of the faults.",
+  "brief": {
+    "task": "A six-module AIL workspace is broken. Make `ailc publish` succeed on it while\nthe task specification below still holds. The workspace already exists; you\nrepair AIL source.",
+    "rules": [
+      "`types.ail` declares the public types and is immutable. The harness rejects\n   any write to it. Weakening a type is not a solution.",
+      "The capability environment is empty and stays empty. There is no capability\n   configuration file to add."
+    ],
+    "feedback_ail": "FEEDBACK POLICY (arm ail): `check` and `publish` return the AIL compiler's\nown output verbatim: diagnostic codes, spans, `expected.*` / `actual.*`\ndetails, and the facts the checker measured. Treat that output as the only\nsource of truth about what is wrong. Do not guess at causes the compiler did\nnot report."
+  },
+  "fault_classes": [
+    "type",
+    "capability"
+  ],
+  "excluded_fault_classes": [
+    "architecture"
+  ],
+  "comment_out_module": "rules.ail",
+  "strip_qualifiers": [
+    "types."
+  ],
+  "reference_reads": [
+    "docs/language.md",
+    "docs/STATUS.md",
+    "specs/core.md",
+    "specs/bounded-lists.md",
+    "compiler/examples/composed-service/domain.ail",
+    "compiler/examples/composed-service/service.ail",
+    "compiler/examples/composed-service/validation.ail",
+    "compiler/examples/batch-cancellation/domain.ail",
+    "compiler/examples/batch-cancellation/service.ail",
+    "compiler/examples/batch-cancellation/single.ail",
+    "compiler/examples/batch-lookup/service.ail",
+    "compiler/examples/batch-lookup/types.ail"
+  ],
+  "immutable_reason": "the immutable public type surface of this workspace",
+  "immutable_files": [
+    "types.ail"
+  ],
+  "broken_satisfies_specification": true,
+  "required_files": [
+    "batch.ail",
+    "classify.ail",
+    "report.ail",
+    "rules.ail",
+    "tests.ail",
+    "types.ail"
+  ],
+  "negative_controls": [
+    {
+      "id": "thread-capability-up",
+      "base": "reference",
+      "requirement": "passing the audit capability up through report_one and report_batch does not publish",
+      "expect": {
+        "compiler": "fail",
+        "specification": "satisfied"
+      }
+    },
+    {
+      "id": "bypass-pipeline",
+      "base": "reference",
+      "requirement": "building reports in tests without the classify and report pipeline does not satisfy the specification",
+      "expect": {
+        "compiler": "pass",
+        "specification": "violated"
+      }
+    },
+    {
+      "id": "hollow-note",
+      "base": "reference",
+      "requirement": "a note_for that returns one constant does not satisfy the specification",
+      "expect": {
+        "compiler": "pass",
+        "specification": "violated"
+      }
+    }
+  ],
+  "required_declarations": [
+    {
+      "id": "module.batch",
+      "requirement": "a module named batch exists",
+      "pattern": "module batch;"
+    },
+    {
+      "id": "module.classify",
+      "requirement": "a module named classify exists",
+      "pattern": "module classify;"
+    },
+    {
+      "id": "module.report",
+      "requirement": "a module named report exists",
+      "pattern": "module report;"
+    },
+    {
+      "id": "module.rules",
+      "requirement": "a module named rules exists",
+      "pattern": "module rules;"
+    },
+    {
+      "id": "module.tests",
+      "requirement": "a module named tests exists",
+      "pattern": "module tests;"
+    },
+    {
+      "id": "module.types",
+      "requirement": "a module named types exists",
+      "pattern": "module types;"
+    },
+    {
+      "id": "type.LabelRequest",
+      "requirement": "record LabelRequest keeps its two Text fields in order",
+      "pattern": "record LabelRequest \\{ raw: Text; origin: Text; \\}"
+    },
+    {
+      "id": "type.Label",
+      "requirement": "variant Label keeps its three cases and their payloads in order",
+      "pattern": "variant Label \\{ Accepted\\(Text\\); Empty; Illegal\\(Text\\); \\}"
+    },
+    {
+      "id": "type.LabelReport",
+      "requirement": "record LabelReport keeps its label and note fields in order",
+      "pattern": "record LabelReport \\{ label: Label; note: Text; \\}"
+    },
+    {
+      "id": "entry.tests.label_batch",
+      "requirement": "tests.label_batch keeps its exact signature, taking and returning a list bounded at 8",
+      "pattern": "fn label_batch\\(requests: List<LabelRequest, 8>\\) -> List<LabelReport, 8>"
+    },
+    {
+      "id": "call.tests.classify_batch",
+      "requirement": "tests.label_batch still calls batch.classify_batch",
+      "pattern": "batch\\.classify_batch\\("
+    },
+    {
+      "id": "call.tests.report_batch",
+      "requirement": "tests.label_batch still calls report.report_batch",
+      "pattern": "report\\.report_batch\\("
+    },
+    {
+      "id": "entry.rules.is_blank",
+      "requirement": "rules.is_blank still decides blankness from the request's raw text and nothing else",
+      "pattern": "fn is_blank\\(request: LabelRequest\\) -> Bool \\{ text\\.is_empty\\(request\\.raw\\) \\}"
+    },
+    {
+      "id": "entry.rules.is_illegal",
+      "requirement": "rules.is_illegal still decides illegality from control characters in the request's raw text and nothing else",
+      "pattern": "fn is_illegal\\(request: LabelRequest\\) -> Bool \\{ text\\.contains_control\\(request\\.raw\\) \\}"
+    },
+    {
+      "id": "rule.blank_is_empty",
+      "requirement": "a blank request still decides Empty",
+      "pattern": "if rules\\.is_blank\\(request\\) \\{ Label::Empty \\}"
+    },
+    {
+      "id": "rule.control_characters_are_illegal",
+      "requirement": "a request with control characters still decides Illegal",
+      "pattern": "if rules\\.is_illegal\\([a-z_.]+\\) \\{ Label::Illegal"
+    },
+    {
+      "id": "rule.other_requests_are_accepted",
+      "requirement": "every other request still decides Accepted carrying the request's raw text",
+      "pattern": "\\{ Label::Accepted\\(request\\.raw\\) \\}"
+    },
+    {
+      "id": "rule.accepted_note",
+      "requirement": "the note for an Accepted label is still that label's own text",
+      "pattern": "Label::Accepted\\((\\w+)\\) => \\{ \\1 \\}"
+    },
+    {
+      "id": "rule.empty_note",
+      "requirement": "the note for an Empty label is still \"empty\"",
+      "pattern": "Label::Empty => \\{ \"empty\" \\}"
+    },
+    {
+      "id": "rule.illegal_note",
+      "requirement": "the note for an Illegal label is still \"illegal\"",
+      "pattern": "Label::Illegal(?:\\(\\w+\\))? => \\{ \"illegal\" \\}"
+    },
+    {
+      "id": "record.report_one",
+      "requirement": "report_one still builds a LabelReport",
+      "pattern": "LabelReport \\{"
+    },
+    {
+      "id": "pipeline.classify_batch",
+      "requirement": "batch.classify_batch still maps classify.classify_one over its requests in order",
+      "pattern": "map request in requests \\{ classify\\.classify_one\\(request\\) \\}"
+    },
+    {
+      "id": "pipeline.report_batch",
+      "requirement": "report.report_batch still maps report_one over its labels in order",
+      "pattern": "map label in labels \\{ report_one\\(label\\) \\}"
+    }
+  ]
+}

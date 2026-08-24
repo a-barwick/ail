@@ -1,0 +1,17 @@
+module types;
+
+record LabelRequest {
+  raw: Text;
+  origin: Text;
+}
+
+variant Label {
+  Accepted(Text);
+  Empty;
+  Illegal(Text);
+}
+
+record LabelReport {
+  label: Label;
+  note: Text;
+}

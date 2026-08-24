@@ -1,0 +1,15 @@
+module classify;
+import rules;
+import types;
+
+fn classify_one(request: types.LabelRequest) -> types.Label {
+  if rules.is_blank(request) {
+    types.Label::Empty
+  } else {
+    if rules.is_illegal(request) {
+      types.Label::Illegal(request.origin)
+    } else {
+      types.Label::Accepted(request.raw)
+    }
+  }
+}

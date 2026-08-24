@@ -1,0 +1,26 @@
+module report;
+import types;
+
+fn note_for(label: types.Label, journal: capability AuditJournal) -> Text effects { journal.write } {
+  match label {
+    types.Label::Accepted(value) => {
+      value
+    },
+    types.Label::Empty => {
+      "empty"
+    },
+    types.Label::Illegal(origin) => {
+      "illegal"
+    },
+  }
+}
+
+fn report_one(label: types.Label, journal: capability AuditJournal) -> types.LabelReport effects { journal.write } {
+  types.LabelReport { label: label, note: note_for(label) }
+}
+
+fn report_batch(labels: List<types.Label, 8>, journal: capability AuditJournal) -> List<types.LabelReport, 8> effects { journal.write } {
+  map label in labels {
+    report_one(label)
+  }
+}

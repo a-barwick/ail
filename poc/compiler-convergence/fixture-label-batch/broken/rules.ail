@@ -1,0 +1,10 @@
+module rules;
+import types;
+
+fn is_blank(request: types.LabelRequest) -> Bool {
+  text.is_empty(request.raw)
+}
+
+fn is_illegal(request: types.LabelRequest) -> Bool {
+  text.contains_control(request.raw)
+}

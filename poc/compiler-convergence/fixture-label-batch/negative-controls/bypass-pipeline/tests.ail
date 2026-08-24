@@ -1,0 +1,8 @@
+module tests;
+import types;
+
+fn label_batch(requests: List<types.LabelRequest, 8>) -> List<types.LabelReport, 8> {
+  map request in requests {
+    types.LabelReport { label: types.Label::Accepted(request.raw), note: request.raw }
+  }
+}
