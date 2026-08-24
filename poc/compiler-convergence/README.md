@@ -107,8 +107,11 @@ python3 poc/compiler-convergence/harness.py publish --arm ail
 Repeat for `--arm control`. Then:
 
 ```bash
-python3 poc/compiler-convergence/harness.py report
+python3 poc/compiler-convergence/harness.py report --operator
 ```
+
+`report` needs `--operator` because it shows both arms, including diagnostics
+that were withheld from the control arm.
 
 `report/measures.txt` is the table, `report/measures.json` has the per-attempt
 detail, and `runs/<arm>/state.json` is the full ledger: every command, every

@@ -594,6 +594,11 @@ def measure(state: dict) -> dict:
 
 
 def command_report(args: argparse.Namespace) -> None:
+    if not args.operator:
+        fail(
+            "report is an operator command: it shows both arms, including the "
+            "diagnostics withheld from the control arm. Pass --operator."
+        )
     results = {}
     for name in ARMS:
         state_path = RUNS / name / "state.json"
@@ -764,6 +769,7 @@ def main() -> None:
     with_arm("status", command_status, help="show remaining gate calls")
 
     report = sub.add_parser("report", help="write the two-arm measure table")
+    report.add_argument("--operator", action="store_true")
     report.add_argument("--out")
     report.set_defaults(handler=command_report)
 
