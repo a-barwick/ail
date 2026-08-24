@@ -1,0 +1,24 @@
+{
+  "arm": "control-t2",
+  "policy": "control",
+  "started_at": 1787553132.442,
+  "fixture_digest": "be9b7ea64a9d68cf679f350044f1ff28893b6bcaf59bbd2625d9258712f4d9dc",
+  "attempt_limit": 40,
+  "files": {
+    "adapters.ail": "module adapters;\n\nfn marker(value: Text) -> Text {\n  value\n}\n",
+    "architecture.json": "{\n  \"semantic_model_version\": \"source-architecture-v1\",\n  \"analysis_scope\": \"transport:dispatch\",\n  \"module_groups\": {\n    \"adapters\": \"persistence-adapter\",\n    \"contracts\": \"contract\",\n    \"domain\": \"domain\",\n    \"tests\": \"verification\",\n    \"transport\": \"transport\"\n  },\n  \"capability_namespaces\": {},\n  \"endpoint_groups\": {\n    \"text:is_empty\": \"contract\",\n    \"text:byte_length_between\": \"contract\",\n    \"text:scalar_count_gt\": \"contract\",\n    \"text:contains_control\": \"contract\",\n    \"text:first_ascii_alphanumeric\": \"contract\",\n    \"text:rest_ascii_alphanumeric_or\": \"contract\"\n  },\n  \"operations\": {},\n  \"policy\": {\n    \"revision\": \"policy-r1\",\n    \"allowed_group_dependencies\": {\n      \"contract\": [],\n      \"transport\": [\n        \"contract\"\n      ],\n      \"domain\": [\n        \"contract\"\n      ],\n      \"persistence-adapter\": [],\n      \"verification\": [\n        \"contract\",\n        \"domain\",\n        \"transport\"\n      ]\n    },\n    \"transport_capabilities\": [],\n    \"transport_state\": [],\n    \"dispatch_no_growth\": {\n      \"control_flow_complexity\": 4,\n      \"minimal_context_node_count\": 12\n    },\n    \"new_unit\": {\n      \"control_flow_complexity_max\": 6,\n      \"minimal_context_node_count_max\": 12\n    },\n    \"new_cycles\": false,\n    \"coverage_required\": true,\n    \"baseline_match\": {\n      \"baseline_revision\": \"baseline-r1\",\n      \"scope\": \"transport:dispatch\",\n      \"metrics\": {\n        \"control_flow_complexity\": 4,\n        \"minimal_context_node_count\": 12\n      },\n      \"accepted_debt\": true\n    }\n  }\n}\n",
+    "contracts.ail": "module contracts;\n\nrecord CancelRequest {\n  value: Text;\n}\n\nvariant StoreOutcome {\n  Queued;\n  Running;\n  Missing;\n  Completed;\n  Cancelled;\n}\n\nvariant CancelOutcome {\n  Malformed;\n  Cancelled;\n  NotFound;\n  NotCancellable;\n}\n",
+    "domain.ail": "module domain;\nimport contracts;\n\nfn normalize(request: contracts.CancelRequest) -> contracts.CancelRequest {\n  request\n}\n\nfn summarize(outcome: contracts.CancelOutcome, store: capability JobsStore) -> Text effects { store.describe } {\n  store.describe(outcome)\n}\n",
+    "tests.ail": "module tests;\nimport contracts;\n\nfn cancel_case(value: Text, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  let request = contracts.CancelRequest { value: 1 };\n  transport.dispatch(request, stored)\n}\n",
+    "transport.ail": "module transport;\nimport contracts;\nimport domain;\n\nfn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  let normalized = domain.normalize(request);\n  if text.is_empty(normalized.value) {\n    contracts.CancelOutcome::Malformed\n  } else {\n    if text.contains_control(normalized.value) {\n      contracts.CancelOutcome::Malformed\n    } else {\n      match stored {\n        contracts.StoreOutcome::Queued => { contracts.CancelOutcome::Cancelled },\n        contracts.StoreOutcome::Running => { contracts.CancelOutcome::Cancelled },\n        contracts.StoreOutcome::Missing => { contracts.CancelOutcome::NotFound },\n        contracts.StoreOutcome::Completed => { contracts.CancelOutcome::NotCancellable },\n      }\n    }\n  }\n}\n"
+  },
+  "attempts": [],
+  "commands": [],
+  "edits": [],
+  "tokens_out": 12,
+  "chars_out": 56,
+  "tokens_in": 0,
+  "chars_in": 0,
+  "passed_at_attempt": null,
+  "published_sources": {}
+}

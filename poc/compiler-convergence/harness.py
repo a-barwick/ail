@@ -31,13 +31,15 @@ import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from statistics import median
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 FIXTURE = HERE / "fixture" / "broken"
 CONTRACT = HERE / "fixture" / "contract.json"
 RUNS = HERE / "runs"
-ARMS = ("ail", "control")
+POLICIES = ("ail", "control")
+ARM_NAME = re.compile(r"^(?P<policy>ail|control)(?:-t(?P<trial>\d+))?$")
 ATTEMPT_LIMIT = 40
 
 # Reference material both arms may read through the harness. Identical for the
@@ -102,10 +104,24 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.replace("contracts.", "")).strip()
 
 
+def policy_of(arm_name: str) -> str:
+    matched = ARM_NAME.match(arm_name)
+    if not matched:
+        fail(
+            f"unknown arm {arm_name}; expected ail, control, or a trial such as "
+            "ail-t2 or control-t3"
+        )
+    return matched.group("policy")
+
+
 @dataclass
 class Arm:
     name: str
     path: Path
+
+    @property
+    def policy(self) -> str:
+        return policy_of(self.name)
 
     @property
     def state_path(self) -> Path:
@@ -127,8 +143,7 @@ def fail(message: str) -> None:
 
 
 def arm(name: str) -> Arm:
-    if name not in ARMS:
-        fail(f"unknown arm {name}; expected one of {', '.join(ARMS)}")
+    policy_of(name)
     return Arm(name=name, path=RUNS / name)
 
 
@@ -367,7 +382,7 @@ def gate(arm_name: str, command: str) -> None:
         lines.append("check is read-only and never satisfies the gate; publish does")
     else:
         lines.append("PASS" if accepted else "FAIL")
-    if state["arm"] == "ail" and result["output"]:
+    if state.get("policy", policy_of(state["arm"])) == "ail" and result["output"]:
         lines.append(result["output"])
     if violations:
         lines.append("task specification not satisfied:")
@@ -394,7 +409,7 @@ def brief_text(arm_name: str) -> str:
     requirements = "\n".join(
         f"  - {rule['id']}: {rule['requirement']}" for rule in spec["required_declarations"]
     )
-    if arm_name == "ail":
+    if policy_of(arm_name) == "ail":
         feedback = (
             "FEEDBACK POLICY (arm ail): `check` and `publish` return the AIL compiler's\n"
             "own output verbatim: diagnostic codes, spans, `expected.*` / `actual.*`\n"
@@ -449,6 +464,7 @@ def command_start(args: argparse.Namespace) -> None:
     }
     state = {
         "arm": args.arm,
+        "policy": policy_of(args.arm),
         "started_at": round(time.time(), 3),
         "fixture_digest": workspace_digest(files),
         "attempt_limit": ATTEMPT_LIMIT,
@@ -605,6 +621,7 @@ def measure(state: dict) -> dict:
     reads = [item for item in state["commands"] if item["command"] == "read"]
     return {
         "arm": state["arm"],
+        "policy": state.get("policy", policy_of(state["arm"])),
         "converged": state["passed_at_attempt"] is not None,
         "passed_at_attempt": state["passed_at_attempt"],
         "gate_calls": len(attempts),
@@ -661,12 +678,14 @@ def command_report(args: argparse.Namespace) -> None:
             "diagnostics withheld from the control arm. Pass --operator."
         )
     results = {}
-    for name in ARMS:
-        state_path = RUNS / name / "state.json"
-        if state_path.is_file():
+    for state_path in sorted(RUNS.glob("*/state.json")):
+        name = state_path.parent.name
+        if ARM_NAME.match(name):
             results[name] = measure(json.loads(state_path.read_text(encoding="utf-8")))
     if not results:
         fail("no arm has run yet")
+    order = sorted(results, key=lambda name: (policy_of(name) != "ail", name))
+    results = {name: results[name] for name in order}
 
     out_dir = Path(args.out) if args.out else HERE / "report"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -692,10 +711,29 @@ def command_report(args: argparse.Namespace) -> None:
         ("attempts failing the task specification", "specification_violation_attempts"),
     ]
     width = max(len(label) for label, _ in rows) + 2
-    lines = ["measure".ljust(width) + "".join(name.rjust(12) for name in results)]
+    lines = ["per trial", ""]
+    lines.append("measure".ljust(width) + "".join(name.rjust(12) for name in results))
     for label, key in rows:
         cells = "".join(str(results[name][key]).rjust(12) for name in results)
         lines.append(label.ljust(width) + cells)
+
+    policies = {
+        policy: [name for name in results if policy_of(name) == policy]
+        for policy in POLICIES
+    }
+    policies = {policy: names for policy, names in policies.items() if names}
+    if any(len(names) > 1 for names in policies.values()):
+        lines += ["", f"median of {', '.join(f'{k}: {len(v)} trials' for k, v in policies.items())}", ""]
+        lines.append("measure".ljust(width) + "".join(policy.rjust(12) for policy in policies))
+        for label, key in rows:
+            cells = ""
+            for names in policies.values():
+                values = [results[name][key] for name in names]
+                numeric = [value for value in values if isinstance(value, (int, float))]
+                cell = str(median(numeric)) if len(numeric) == len(values) else "-"
+                cells += cell.rjust(12)
+            lines.append(label.ljust(width) + cells)
+
     table = "\n".join(lines)
     (out_dir / "measures.txt").write_text(table + "\n", encoding="utf-8")
     print(table)
@@ -812,7 +850,7 @@ def main() -> None:
 
     def with_arm(name: str, handler, **kwargs):
         item = sub.add_parser(name, **kwargs)
-        item.add_argument("--arm", required=True, choices=ARMS)
+        item.add_argument("--arm", required=True)
         item.set_defaults(handler=handler)
         return item
 
