@@ -77,6 +77,16 @@ reject a workspace against project architecture policy. Check writes no
 revision. `ailc publish` writes a revision only after check and architecture
 pass. A failed candidate publishes nothing.
 
+Every rejected check emits one structured finding. A finding names the file,
+the byte range, the line and column, the source text at that range, the
+expected and actual facts the checker computed, and the requirement those facts
+imply. Cross-file errors name the file that holds the error and the file that
+holds the declaration it disagrees with. Architecture findings name the denied
+rule, its scope, its measured facts, and the declaration of each contributing
+unit. `ailc check --json` and `ailc publish --json` emit the same findings as
+one JSON document. See
+[0015-structured-check-findings.md](decisions/0015-structured-check-findings.md).
+
 The interpreter executes a checked entry point with caller-supplied
 capabilities.
 

@@ -5,10 +5,11 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
+use crate::finding::{FindingLocation, RelatedLocation, SourceFinding, flatten_json};
 use crate::{
-    ArchitectureChangeResult, CapabilityEnvironment, EvolutionBuildFailure, EvolutionCoverage,
-    EvolutionSource, EvolutionWorkspace, SourceArchitectureConfig, SourceSetRevision,
-    valid_source_path,
+    ArchitectureChangeResult, CapabilityEnvironment, Declaration, EvolutionBuildFailure,
+    EvolutionCoverage, EvolutionSource, EvolutionWorkspace, SourceArchitectureConfig,
+    SourceSetRevision, valid_source_path,
 };
 
 const CHECK_REVISION: &str = "check";
@@ -31,6 +32,8 @@ pub enum CliCheckError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CliArchitectureFailure {
     pub diagnostics: Vec<String>,
+    /// One located, fact-carrying finding per denied policy rule.
+    pub findings: Vec<SourceFinding>,
 }
 
 /// Failure from the `ailc publish` driver.
@@ -106,6 +109,7 @@ fn build_cli_workspace(
     };
     let workspace = match architecture {
         Some((config, analysis_scope)) => {
+            let policy_sources = sources.clone();
             let workspace = EvolutionWorkspace::new_with_architecture(
                 workspace_id(path),
                 revision_id,
@@ -118,14 +122,23 @@ fn build_cli_workspace(
             match workspace.evaluate_current_architecture(&analysis_scope) {
                 Ok(ArchitectureChangeResult::Success(_)) => workspace,
                 Ok(result) => {
-                    return Err(CliCheckError::Architecture(architecture_failure(&result)));
+                    return Err(CliCheckError::Architecture(architecture_failure(
+                        &result,
+                        &policy_sources,
+                    )));
                 }
                 Err(error) => {
+                    let mut finding =
+                        SourceFinding::new("AIL.ARCH.ANALYSIS_INCOMPLETE", "architecture");
+                    finding
+                        .facts
+                        .insert("reason".to_owned(), error.message.clone());
                     return Err(CliCheckError::Architecture(CliArchitectureFailure {
                         diagnostics: vec![format!(
                             "AIL.ARCH.ANALYSIS_INCOMPLETE {}",
                             error.message
                         )],
+                        findings: vec![finding],
                     }));
                 }
             }
@@ -142,23 +155,36 @@ fn build_cli_workspace(
     Ok(workspace)
 }
 
-fn architecture_failure(result: &ArchitectureChangeResult) -> CliArchitectureFailure {
-    let diagnostics = match result {
-        ArchitectureChangeResult::Success(_) => Vec::new(),
-        ArchitectureChangeResult::Failure(failure) => format_findings(&failure.diagnostics),
-        ArchitectureChangeResult::Incomplete(failure) => format_findings(&failure.diagnostics),
+fn architecture_failure(
+    result: &ArchitectureChangeResult,
+    sources: &[EvolutionSource],
+) -> CliArchitectureFailure {
+    let policy_findings = match result {
+        ArchitectureChangeResult::Success(_) => &[] as &[Value],
+        ArchitectureChangeResult::Failure(failure) => &failure.diagnostics,
+        ArchitectureChangeResult::Incomplete(failure) => &failure.diagnostics,
     };
-    CliArchitectureFailure {
-        diagnostics: if diagnostics.is_empty() {
-            vec!["AIL.ARCH.ANALYSIS_INCOMPLETE".to_owned()]
-        } else {
-            diagnostics
-        },
+    let diagnostics = policy_findings
+        .iter()
+        .map(format_finding)
+        .collect::<Vec<_>>();
+    let findings = policy_findings
+        .iter()
+        .map(|finding| source_finding(finding, sources))
+        .collect::<Vec<_>>();
+    if diagnostics.is_empty() {
+        return CliArchitectureFailure {
+            diagnostics: vec!["AIL.ARCH.ANALYSIS_INCOMPLETE".to_owned()],
+            findings: vec![SourceFinding::new(
+                "AIL.ARCH.ANALYSIS_INCOMPLETE",
+                "architecture",
+            )],
+        };
     }
-}
-
-fn format_findings(findings: &[Value]) -> Vec<String> {
-    findings.iter().map(format_finding).collect()
+    CliArchitectureFailure {
+        diagnostics,
+        findings,
+    }
 }
 
 fn format_finding(finding: &Value) -> String {
@@ -175,6 +201,86 @@ fn format_finding(finding: &Value) -> String {
         Some(rule) => format!("{code}:{scope}:{rule}"),
         None => format!("{code}:{scope}"),
     }
+}
+
+/// Turn one architecture policy finding into a located structured finding.
+///
+/// Policy identity is architectural: a rule, a scope, and ordered contributor
+/// unit identifiers of the form `module:function`. Those identifiers resolve
+/// back to a declared function, so a denied rule names the source that violated
+/// it instead of leaving the caller to search for it.
+fn source_finding(policy_finding: &Value, sources: &[EvolutionSource]) -> SourceFinding {
+    let code = policy_finding
+        .get("code")
+        .and_then(Value::as_str)
+        .unwrap_or("AIL.ARCH.ANALYSIS_INCOMPLETE");
+    let mut finding = SourceFinding::new(code, "architecture");
+    for key in ["rule", "scope", "classification"] {
+        if let Some(value) = policy_finding.get(key).and_then(Value::as_str) {
+            finding.facts.insert(key.to_owned(), value.to_owned());
+        }
+    }
+    if let Some(facts) = policy_finding.get("facts") {
+        flatten_json("facts", facts, &mut finding.facts);
+    }
+    let contributors = policy_finding
+        .get("contributors")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(Value::as_str)
+                .map(str::to_owned)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let scope = policy_finding.get("scope").and_then(Value::as_str);
+    let primary = finding
+        .facts
+        .get("facts.forbidden_group_edges.0.source")
+        .cloned()
+        .or_else(|| {
+            scope
+                .filter(|scope| contributors.iter().any(|unit| unit == scope))
+                .map(str::to_owned)
+        })
+        .or_else(|| contributors.first().cloned());
+    if let Some(unit) = &primary {
+        finding.location = unit_location(unit, sources);
+    }
+    for unit in &contributors {
+        if Some(unit) == primary.as_ref() {
+            continue;
+        }
+        finding.related.push(RelatedLocation {
+            role: "contributor".to_owned(),
+            name: unit.clone(),
+            location: unit_location(unit, sources),
+        });
+    }
+    finding.with_derived_requirement()
+}
+
+/// Resolve an architecture unit identifier `module:function` to its declaration.
+fn unit_location(unit: &str, sources: &[EvolutionSource]) -> Option<FindingLocation> {
+    let (module, function) = unit.split_once(':')?;
+    for source in sources {
+        let parsed = crate::parse(&source.source);
+        let declared_module = parsed.unit.module.as_ref().map(|item| item.name.as_str());
+        if declared_module.unwrap_or("") != module {
+            continue;
+        }
+        let span = parsed.unit.declarations.iter().find_map(|declaration| {
+            let Declaration::Function(candidate) = declaration else {
+                return None;
+            };
+            (candidate.name == function).then_some(candidate.span)
+        });
+        if let Some(span) = span {
+            return FindingLocation::resolve(&source.path, &source.source, span);
+        }
+    }
+    None
 }
 
 fn load_architecture_policy(

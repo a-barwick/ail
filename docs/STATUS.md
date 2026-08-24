@@ -26,6 +26,13 @@ present, check evaluates that project policy and fails with an architecture
 diagnostic. Check writes no revision. `ailc publish` writes one revision only
 after the same checks pass.
 
+Structured findings expose only facts the checkers already compute. A finding
+carries no suggested rewrite and no repair edit. Findings have no stable
+requirement text for every code: a code whose expected and actual facts do not
+name a requirement reports none rather than guessing one. Findings are not a
+protocol surface with its own conformance fixtures; they are the `ailc` check
+and publish output.
+
 The architecture checker implements the existing metric and policy contract. It
 does not make AIL a general application platform.
 
@@ -37,6 +44,7 @@ does not make AIL a general application platform.
 cargo +1.87.0 fmt --all --check
 cargo +1.87.0 test --workspace
 cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
+cargo +1.87.0 test -p ail-compiler --test ailc_findings
 cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
 cargo +1.87.0 test -p ail-service-host --test m33_private_catalog_dogfood
 python3 specs/tools/architecture_acceptance.py check

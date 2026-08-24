@@ -3,9 +3,12 @@ use std::fs;
 use std::process::ExitCode;
 
 use ail_compiler::{
-    CliCheckError, CliPublishError, EvolutionBuildFailure, SourceSetDiagnostic, check_cli_path,
-    format_source, parse, publish_cli_path, reconstruct,
+    CliCheckError, CliPublishError, EvolutionBuildFailure, SourceFinding, check_cli_path,
+    findings_document, format_source, parse, publish_cli_path, reconstruct,
 };
+
+const CHECK_SUMMARY: &str = "source contains check diagnostics";
+const ARCHITECTURE_SUMMARY: &str = "source contains architecture diagnostics";
 
 fn main() -> ExitCode {
     match run() {
@@ -17,21 +20,41 @@ fn main() -> ExitCode {
     }
 }
 
-fn run() -> Result<(), String> {
-    let mut arguments = env::args().skip(1);
-    let command = arguments.next().ok_or_else(|| usage("missing command"))?;
-    let path = arguments
-        .next()
-        .ok_or_else(|| usage("missing source path"))?;
-    if arguments.next().is_some() {
-        return Err(usage("too many arguments"));
-    }
+struct Invocation {
+    command: String,
+    path: String,
+    json: bool,
+}
 
-    match command.as_str() {
-        "check" => check(&path),
-        "publish" => publish(&path),
+fn parse_arguments() -> Result<Invocation, String> {
+    let mut command = None;
+    let mut path = None;
+    let mut json = false;
+    for argument in env::args().skip(1) {
+        if argument == "--json" {
+            json = true;
+        } else if command.is_none() {
+            command = Some(argument);
+        } else if path.is_none() {
+            path = Some(argument);
+        } else {
+            return Err(usage("too many arguments"));
+        }
+    }
+    Ok(Invocation {
+        command: command.ok_or_else(|| usage("missing command"))?,
+        path: path.ok_or_else(|| usage("missing source path"))?,
+        json,
+    })
+}
+
+fn run() -> Result<(), String> {
+    let invocation = parse_arguments()?;
+    match invocation.command.as_str() {
+        "check" => check(&invocation.path, invocation.json),
+        "publish" => publish(&invocation.path, invocation.json),
         "format" => {
-            let source = read_source(&path)?;
+            let source = read_source(&invocation.path)?;
             let formatted = format_source(&source).map_err(|diagnostics| {
                 diagnostics
                     .iter()
@@ -43,7 +66,7 @@ fn run() -> Result<(), String> {
             Ok(())
         }
         "reconstruct" => {
-            let source = read_source(&path)?;
+            let source = read_source(&invocation.path)?;
             let parsed = parse(&source);
             print!("{}", reconstruct(&parsed.tokens));
             Ok(())
@@ -52,70 +75,93 @@ fn run() -> Result<(), String> {
     }
 }
 
-fn check(path: &str) -> Result<(), String> {
+fn check(path: &str, json: bool) -> Result<(), String> {
     match check_cli_path(path) {
         Ok(()) => {
-            println!("ok");
+            if json {
+                print!("{}", findings_document("ok", "", &[]));
+            } else {
+                println!("ok");
+            }
             Ok(())
         }
-        Err(error) => report_check_error(error),
+        Err(error) => report_check_error(error, json),
     }
 }
 
-fn publish(path: &str) -> Result<(), String> {
+fn publish(path: &str, json: bool) -> Result<(), String> {
     match publish_cli_path(path) {
         Ok(revision) => {
-            println!("published");
-            println!("revision_id={}", revision.revision_id);
-            println!("source_set_digest={}", revision.source_set_digest);
+            if json {
+                let document = serde_json::json!({
+                    "status": "published",
+                    "revision_id": revision.revision_id,
+                    "source_set_digest": revision.source_set_digest,
+                    "findings": [],
+                });
+                println!("{document}");
+            } else {
+                println!("published");
+                println!("revision_id={}", revision.revision_id);
+                println!("source_set_digest={}", revision.source_set_digest);
+            }
             Ok(())
         }
-        Err(CliPublishError::Check(error)) => report_check_error(error),
+        Err(CliPublishError::Check(error)) => report_check_error(error, json),
         Err(CliPublishError::Write(message)) => Err(message),
     }
 }
 
-fn report_check_error(error: CliCheckError) -> Result<(), String> {
+fn report_check_error(error: CliCheckError, json: bool) -> Result<(), String> {
     match error {
-        CliCheckError::Io(message) => Err(message),
-        CliCheckError::Build(failure) => report_build_failure(&failure),
-        CliCheckError::Architecture(failure) => {
-            for diagnostic in failure.diagnostics {
-                eprintln!("{diagnostic}");
+        CliCheckError::Io(message) => {
+            if json {
+                print!("{}", findings_document("failed", &message, &[]));
             }
-            Err("source contains architecture diagnostics".to_owned())
+            Err(message)
+        }
+        CliCheckError::Build(failure) => {
+            if json {
+                print!(
+                    "{}",
+                    findings_document("failed", CHECK_SUMMARY, &failure.findings)
+                );
+            } else {
+                report_build_failure(&failure);
+            }
+            Err(CHECK_SUMMARY.to_owned())
+        }
+        CliCheckError::Architecture(failure) => {
+            if json {
+                print!(
+                    "{}",
+                    findings_document("failed", ARCHITECTURE_SUMMARY, &failure.findings)
+                );
+            } else {
+                report_findings(&failure.findings);
+            }
+            Err(ARCHITECTURE_SUMMARY.to_owned())
         }
     }
 }
 
-fn report_build_failure(failure: &EvolutionBuildFailure) -> Result<(), String> {
-    for diagnostic in &failure.diagnostics {
-        eprintln!("{}", format_source_set_diagnostic(diagnostic));
-    }
+fn report_build_failure(failure: &EvolutionBuildFailure) {
+    report_findings(&failure.findings);
     for cause in &failure.causes {
         if !failure
-            .diagnostics
+            .findings
             .iter()
-            .any(|diagnostic| diagnostic.code == cause)
+            .any(|finding| finding.code == *cause)
         {
             eprintln!("{cause}");
         }
     }
-    Err("source contains check diagnostics".to_owned())
 }
 
-fn format_source_set_diagnostic(diagnostic: &SourceSetDiagnostic) -> String {
-    let mut line = format!(
-        "{}:{}:{}:{}:",
-        diagnostic.code, diagnostic.path, diagnostic.span.start, diagnostic.span.end
-    );
-    for (key, value) in &diagnostic.details {
-        line.push(' ');
-        line.push_str(key);
-        line.push('=');
-        line.push_str(value);
+fn report_findings(findings: &[SourceFinding]) {
+    for finding in findings {
+        eprintln!("{}", finding.render());
     }
-    line
 }
 
 fn read_source(path: &str) -> Result<String, String> {
@@ -123,5 +169,5 @@ fn read_source(path: &str) -> Result<String, String> {
 }
 
 fn usage(reason: &str) -> String {
-    format!("{reason}\nusage: ailc <check|publish|format|reconstruct> <source>")
+    format!("{reason}\nusage: ailc <check|publish|format|reconstruct> [--json] <source>")
 }

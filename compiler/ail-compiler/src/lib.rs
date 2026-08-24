@@ -7,6 +7,7 @@ mod architecture;
 mod diagnostic;
 mod driver;
 mod evolution;
+mod finding;
 mod formatter;
 mod interpreter;
 mod lexer;
@@ -46,6 +47,7 @@ pub use evolution::{
     UncheckedBoundary, ValidationSummary, ValueParameterInspection, relationship_kinds,
     valid_source_path,
 };
+pub use finding::{FindingLocation, RelatedLocation, SourceFinding, findings_document};
 pub use interpreter::{
     CancellationToken, CapabilityProvider, ObservedCapabilityCall, ObservedOutboundCall,
     OutboundBatchCheck, OutboundCapabilityRequest, OutboundProviderOutcome, OutboundRequestHandle,
