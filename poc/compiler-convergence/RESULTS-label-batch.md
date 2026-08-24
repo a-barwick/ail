@@ -157,14 +157,23 @@ faults were locally readable type and capability errors at this scale.
    and no arm chose it.
 5. Behavior is checked by matching normalized source text, not by executing
    anything. An arm can satisfy the letter of a rule.
-6. Trust assumption. Nothing physically prevented an arm from reading its own
-   state file, which holds the workspace and, for the control arm, the withheld
-   compiler output. While the arms ran, the broken sources, the reference repair,
-   and the negative controls were outside the repository and had never been
-   committed, so the fastest cheat was unavailable; each state file carries an
-   operator canary asking any arm that reads it to disclose; and every arm
-   reported that it used only harness commands. That is a documented assumption,
-   not enforcement.
+6. Trust assumption, and it is weaker here than it should be. While the arms
+   ran, the broken sources, the reference repair, and the negative controls were
+   moved out of the repository and had never been committed, so no arm could read
+   the fixture or the answer from the tree or from git history. But the trials ran
+   concurrently, so an `ail` arm's state file, which contains the full compiler
+   output, existed on the same machine while the `control` arms were working. The
+   prompts forbade reading any state file and every state file carries an operator
+   canary asking a reader to disclose, but nothing enforced it. The timestamps do
+   not clear it either: each `control` arm wrote its repair 96 to 597 seconds
+   after the first `ail` findings landed on disk.
+
+   A peeking control arm and a reading control arm would produce the same number
+   here, since 1 retry is the minimum for a check-then-publish strategy, so this
+   cannot be resolved after the fact. The protocol fix is to stagger the arms so
+   that no `ail` ledger exists on disk while a `control` trial runs. Treat the
+   control arm's 1 retry as an upper bound that the next run should confirm under
+   staggering.
 
 ## What would make the next fixture decide something
 
@@ -175,6 +184,8 @@ faults were locally readable type and capability errors at this scale.
 - Behavior verification in the gate, so specification text cannot stand in for
   working code.
 - A weaker or cheaper model as a second condition.
+- Staggered arms: every `control` trial finished before any `ail` trial starts,
+  so no ledger holding compiler output exists on disk while a blind arm works.
 
 ## Full tables
 
