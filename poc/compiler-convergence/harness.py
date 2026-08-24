@@ -35,31 +35,9 @@ from statistics import median
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
-FIXTURE = HERE / "fixture" / "broken"
-CONTRACT = HERE / "fixture" / "contract.json"
-RUNS = HERE / "runs"
 POLICIES = ("ail", "control")
 ARM_NAME = re.compile(r"^(?P<policy>ail|control)(?:-t(?P<trial>\d+))?$")
 ATTEMPT_LIMIT = 40
-
-# Reference material both arms may read through the harness. Identical for the
-# two arms, so it cannot explain a difference between them.
-REFERENCE_READS = (
-    "docs/language.md",
-    "docs/STATUS.md",
-    "specs/core.md",
-    "specs/architecture.md",
-    "compiler/examples/architecture-denied/architecture.json",
-    "compiler/examples/architecture-denied/transport.ail",
-    "compiler/examples/architecture-denied/domain.ail",
-    "compiler/examples/architecture-denied/contracts.ail",
-    "compiler/examples/composed-service/domain.ail",
-    "compiler/examples/composed-service/service.ail",
-    "compiler/examples/composed-service/validation.ail",
-    "compiler/examples/batch-cancellation/domain.ail",
-    "compiler/examples/batch-cancellation/service.ail",
-    "compiler/examples/batch-cancellation/single.ail",
-)
 
 # Approximation of the cl100k_base pre-tokenizer. Counting its matches is a
 # deterministic, offline, model-free lower bound on BPE token count. Raw
@@ -85,6 +63,56 @@ TRAILER_LINES = (
     "source contains check diagnostics",
     "source contains architecture diagnostics",
 )
+
+
+@dataclass(frozen=True)
+class Fixture:
+    """One broken workspace, its task specification, and its run directories.
+
+    A fixture owns everything that varies between experiments: the broken
+    source, the specification the harness matches, the reference material both
+    arms may read, and where its runs and report are written. The protocol, the
+    gate, and the measures are shared, so two fixtures are comparable as
+    experiments even when their faults are unrelated.
+    """
+
+    name: str
+    directory: str
+
+    @property
+    def root(self) -> Path:
+        return HERE / self.directory
+
+    @property
+    def broken(self) -> Path:
+        return self.root / "broken"
+
+    @property
+    def contract_path(self) -> Path:
+        return self.root / "contract.json"
+
+    @property
+    def reference(self) -> Path:
+        return self.root / "reference-solution"
+
+    @property
+    def negative_controls(self) -> Path:
+        return self.root / "negative-controls"
+
+    @property
+    def runs(self) -> Path:
+        return HERE / f"runs-{self.name}" if self.directory != "fixture" else HERE / "runs"
+
+    @property
+    def report(self) -> Path:
+        return HERE / f"report-{self.name}" if self.directory != "fixture" else HERE / "report"
+
+
+FIXTURES = {
+    "cancel-dispatch": Fixture(name="cancel-dispatch", directory="fixture"),
+    "label-batch": Fixture(name="label-batch", directory="fixture-label-batch"),
+}
+DEFAULT_FIXTURE = "cancel-dispatch"
 
 
 def tokens(text: str) -> int:
@@ -134,13 +162,15 @@ def strip_comments(text: str) -> str:
     return "".join(out)
 
 
-def normalize(text: str) -> str:
-    """Collapse whitespace, drop comments, drop the `contracts.` qualifier.
+def normalize(text: str, qualifiers: tuple[str, ...]) -> str:
+    """Collapse whitespace, drop comments, drop the fixture's type qualifiers.
 
     The task specification is matched against this form so a requirement does
     not dictate which module a declaration lives in or how it is indented.
     """
-    stripped = strip_comments(text).replace("contracts.", "")
+    stripped = strip_comments(text)
+    for qualifier in qualifiers:
+        stripped = stripped.replace(qualifier, "")
     return re.sub(r"\s+", " ", stripped).strip()
 
 
@@ -158,6 +188,7 @@ def policy_of(arm_name: str) -> str:
 class Arm:
     name: str
     path: Path
+    fixture: Fixture
 
     @property
     def policy(self) -> str:
@@ -169,7 +200,10 @@ class Arm:
 
     def load(self) -> dict:
         if not self.state_path.is_file():
-            fail(f"arm {self.name} has not started; run: harness.py start --arm {self.name}")
+            fail(
+                f"arm {self.name} has not started; run: harness.py start "
+                f"--fixture {self.fixture.name} --arm {self.name}"
+            )
         return json.loads(self.state_path.read_text(encoding="utf-8"))
 
     def save(self, state: dict) -> None:
@@ -182,13 +216,28 @@ def fail(message: str) -> None:
     raise SystemExit(2)
 
 
-def arm(name: str) -> Arm:
+def fixture_named(name: str) -> Fixture:
+    if name not in FIXTURES:
+        fail(f"unknown fixture {name}; expected one of {', '.join(sorted(FIXTURES))}")
+    return FIXTURES[name]
+
+
+def arm(name: str, fixture: Fixture) -> Arm:
     policy_of(name)
-    return Arm(name=name, path=RUNS / name)
+    return Arm(name=name, path=fixture.runs / name, fixture=fixture)
 
 
-def contract() -> dict:
-    return json.loads(CONTRACT.read_text(encoding="utf-8"))
+def contract(fixture: Fixture) -> dict:
+    return json.loads(fixture.contract_path.read_text(encoding="utf-8"))
+
+
+def qualifiers(spec: dict) -> tuple[str, ...]:
+    return tuple(spec.get("strip_qualifiers", []))
+
+
+def reference_reads(spec: dict) -> tuple[str, ...]:
+    """Reference material both arms may read, identical for the two arms."""
+    return tuple(spec["reference_reads"])
 
 
 def ailc_binary() -> Path:
@@ -222,15 +271,15 @@ def log(state: dict, entry: dict) -> None:
 # --------------------------------------------------------------------------
 
 
-def specification_violations(files: dict[str, str]) -> list[dict]:
-    spec = contract()
+def specification_violations(files: dict[str, str], fixture: Fixture) -> list[dict]:
+    spec = contract(fixture)
     violations: list[dict] = []
     for required in spec["required_files"]:
         if required not in files:
             violations.append(
                 {"id": f"file.{required}", "requirement": f"file {required} exists"}
             )
-    blob = normalize("\n".join(files[name] for name in sorted(files)))
+    blob = normalize("\n".join(files[name] for name in sorted(files)), qualifiers(spec))
     for rule in spec["required_declarations"]:
         if not re.search(rule["pattern"], blob):
             violations.append({"id": rule["id"], "requirement": rule["requirement"]})
@@ -417,8 +466,8 @@ def run_gate(state: dict, command: str) -> dict:
     }
 
 
-def gate(arm_name: str, command: str) -> None:
-    active = arm(arm_name)
+def gate(arm_name: str, command: str, fixture: Fixture) -> None:
+    active = arm(arm_name, fixture)
     state = active.load()
     if state.get("passed_at_attempt") is not None:
         emit(state, f"PASS (already passed at attempt {state['passed_at_attempt']})")
@@ -429,7 +478,7 @@ def gate(arm_name: str, command: str) -> None:
         active.save(state)
         return
 
-    violations = specification_violations(state["files"])
+    violations = specification_violations(state["files"], fixture)
     result = run_gate(state, command)
     index = len(state["attempts"]) + 1
     # The invoked command's own outcome. Both arms are told this bit, because
@@ -493,19 +542,30 @@ def workspace_digest(files: dict[str, str]) -> str:
 # --------------------------------------------------------------------------
 
 
-def brief_text(arm_name: str) -> str:
-    spec = contract()
+def fixture_flag(fixture: Fixture) -> str:
+    """The `--fixture` argument an arm must pass, empty for the default."""
+    return "" if fixture.name == DEFAULT_FIXTURE else f" --fixture {fixture.name}"
+
+
+def brief_text(arm_name: str, fixture: Fixture) -> str:
+    spec = contract(fixture)
     requirements = "\n".join(
         f"  - {rule['id']}: {rule['requirement']}" for rule in spec["required_declarations"]
     )
+    reads = reference_reads(spec)
+    rules = [
+        "The harness is your only access to the workspace. Use `files`, `read`,\n"
+        "   `write`, `check`, `publish`. Do not look for the workspace on disk, do not\n"
+        "   run `ailc` yourself, and do not read the harness state file. There is no\n"
+        "   on-disk copy of the workspace between gate calls.",
+        *spec["brief"]["rules"],
+        "You may `read` these reference paths, which are identical for both arms:\n"
+        + chr(10).join("     " + path for path in reads),
+        f"At most {ATTEMPT_LIMIT} gate calls (`check` plus `publish`) in total.",
+    ]
+    numbered = "\n".join(f"{index}. {rule}" for index, rule in enumerate(rules, start=1))
     if policy_of(arm_name) == "ail":
-        feedback = (
-            "FEEDBACK POLICY (arm ail): `check` and `publish` return the AIL compiler's\n"
-            "own output verbatim: diagnostic codes, spans, `expected.*` / `actual.*`\n"
-            "details, and architecture rule findings with the numbers the checker\n"
-            "measured. Treat that output as the only source of truth about what is\n"
-            "wrong. Do not guess at causes the compiler did not report."
-        )
+        feedback = spec["brief"]["feedback_ail"]
     else:
         feedback = (
             "FEEDBACK POLICY (arm control): `check` and `publish` return only `PASS` or\n"
@@ -514,22 +574,10 @@ def brief_text(arm_name: str) -> str:
             "reference material alone."
         )
     return f"""TASK
-A five-module AIL workspace is broken. Make `ailc publish` succeed on it while
-the task specification below still holds. The workspace and its project policy
-already exist; you repair AIL source.
+{spec["brief"]["task"]}
 
 RULES
-1. The harness is your only access to the workspace. Use `files`, `read`,
-   `write`, `check`, `publish`. Do not look for the workspace on disk, do not
-   run `ailc` yourself, and do not read the harness state file. There is no
-   on-disk copy of the workspace between gate calls.
-2. `architecture.json` is project policy and is immutable. The harness rejects
-   any write to it. Weakening policy is not a solution.
-3. The capability environment is empty and stays empty. There is no capability
-   configuration file to add.
-4. You may `read` these reference paths, which are identical for both arms:
-{chr(10).join('     ' + path for path in REFERENCE_READS)}
-5. At most {ATTEMPT_LIMIT} gate calls (`check` plus `publish`) in total.
+{numbered}
 
 TASK SPECIFICATION (checked by the harness, not by the compiler)
 {requirements}
@@ -538,22 +586,24 @@ Immutable files: {', '.join(spec['immutable_files'])}
 {feedback}
 
 SUCCESS
-`harness.py publish --arm {arm_name}` reports PASS.
+`harness.py publish{fixture_flag(fixture)} --arm {arm_name}` reports PASS.
 """
 
 
 def command_start(args: argparse.Namespace) -> None:
-    active = arm(args.arm)
+    fixture = fixture_named(args.fixture)
+    active = arm(args.arm, fixture)
     if active.state_path.exists() and not args.force:
         fail(f"arm {args.arm} already started; pass --force to reset it")
     files = {
         item.name: item.read_text(encoding="utf-8")
-        for item in sorted(FIXTURE.iterdir())
+        for item in sorted(fixture.broken.iterdir())
         if item.is_file()
     }
     state = {
         "arm": args.arm,
         "policy": policy_of(args.arm),
+        "fixture": fixture.name,
         "started_at": round(time.time(), 3),
         "fixture_digest": workspace_digest(files),
         "attempt_limit": ATTEMPT_LIMIT,
@@ -574,15 +624,16 @@ def command_start(args: argparse.Namespace) -> None:
 
 
 def command_brief(args: argparse.Namespace) -> None:
-    active = arm(args.arm)
+    fixture = fixture_named(args.fixture)
+    active = arm(args.arm, fixture)
     state = active.load()
-    emit(state, brief_text(args.arm))
+    emit(state, brief_text(args.arm, fixture))
     log(state, {"command": "brief"})
     active.save(state)
 
 
 def command_files(args: argparse.Namespace) -> None:
-    active = arm(args.arm)
+    active = arm(args.arm, fixture_named(args.fixture))
     state = active.load()
     listing = "\n".join(
         f"{name}  {len(text)} chars" for name, text in sorted(state["files"].items())
@@ -593,12 +644,13 @@ def command_files(args: argparse.Namespace) -> None:
 
 
 def command_read(args: argparse.Namespace) -> None:
-    active = arm(args.arm)
+    fixture = fixture_named(args.fixture)
+    active = arm(args.arm, fixture)
     state = active.load()
     target = args.path
     if target in state["files"]:
         text = state["files"][target]
-    elif target in REFERENCE_READS:
+    elif target in reference_reads(contract(fixture)):
         text = (REPO / target).read_text(encoding="utf-8")
     else:
         fail(
@@ -612,13 +664,13 @@ def command_read(args: argparse.Namespace) -> None:
 
 
 def command_write(args: argparse.Namespace) -> None:
-    active = arm(args.arm)
+    fixture = fixture_named(args.fixture)
+    active = arm(args.arm, fixture)
     state = active.load()
-    spec = contract()
-    if args.path in spec["immutable_files"]:
-        fail(f"{args.path} is immutable project policy; the harness rejects this write")
-    if not re.fullmatch(r"[a-z_][a-z0-9_]*\.ail", args.path):
-        fail(f"{args.path} is not a writable workspace source name (expected <module>.ail)")
+    spec = contract(fixture)
+    rejection = write_rejection(args.path, spec)
+    if rejection:
+        fail(rejection)
     text = sys.stdin.read()
     if not text.strip():
         fail("refusing to write empty source; pass the full file on stdin")
@@ -642,8 +694,21 @@ def command_write(args: argparse.Namespace) -> None:
     active.save(state)
 
 
+def write_rejection(path: str, spec: dict) -> str | None:
+    """Why the harness refuses to write `path`, or `None` when it accepts it.
+
+    The immutable check runs first, so an immutable file with a source-shaped
+    name is still rejected as immutable.
+    """
+    if path in spec["immutable_files"]:
+        return f"{path} is {spec['immutable_reason']}; the harness rejects this write"
+    if not re.fullmatch(r"[a-z_][a-z0-9_]*\.ail", path):
+        return f"{path} is not a writable workspace source name (expected <module>.ail)"
+    return None
+
+
 def command_status(args: argparse.Namespace) -> None:
-    active = arm(args.arm)
+    active = arm(args.arm, fixture_named(args.fixture))
     state = active.load()
     used = len(state["attempts"])
     lines = [
@@ -659,11 +724,11 @@ def command_status(args: argparse.Namespace) -> None:
 
 
 def command_check(args: argparse.Namespace) -> None:
-    gate(args.arm, "check")
+    gate(args.arm, "check", fixture_named(args.fixture))
 
 
 def command_publish(args: argparse.Namespace) -> None:
-    gate(args.arm, "publish")
+    gate(args.arm, "publish", fixture_named(args.fixture))
 
 
 # --------------------------------------------------------------------------
@@ -678,7 +743,20 @@ GOD_METHOD_RULES = {
 }
 
 
-def measure(state: dict) -> dict:
+def diagnostic_class(item: dict) -> str:
+    """Uppercase failure class of one ledger diagnostic.
+
+    `ailc check --json` reports a category (`type`, `capability`, `architecture`)
+    and the text parser derives the class from the code, so both ledger formats
+    reduce to one comparable label.
+    """
+    label = item.get("class") or item.get("category") or ""
+    if not label:
+        label = item.get("code", "").split(".")[1] if "." in item.get("code", "") else "UNKNOWN"
+    return label.upper()
+
+
+def measure(state: dict, fixture: Fixture) -> dict:
     attempts = state["attempts"]
     seen: set[str] = set()
     fixed: set[str] = set()
@@ -687,6 +765,7 @@ def measure(state: dict) -> dict:
     previous: set[str] = set()
     god_method_attempts: list[int] = []
     dispatch_cfc: list[int] = []
+    keys_by_class: dict[str, set[str]] = {}
 
     for attempt in attempts:
         current = set(attempt["diagnostic_keys"])
@@ -701,6 +780,7 @@ def measure(state: dict) -> dict:
         previous = current
 
         for item in attempt["diagnostics"]:
+            keys_by_class.setdefault(diagnostic_class(item), set()).add(item["key"])
             if item.get("rule") in GOD_METHOD_RULES:
                 god_method_attempts.append(attempt["index"])
             for fact in (item.get("facts") or "").split():
@@ -709,9 +789,11 @@ def measure(state: dict) -> dict:
                     dispatch_cfc.append(int(value))
 
     reads = [item for item in state["commands"] if item["command"] == "read"]
+    allowed_reads = reference_reads(contract(fixture))
     return {
         "arm": state["arm"],
         "policy": state.get("policy", policy_of(state["arm"])),
+        "fixture": state.get("fixture", fixture.name),
         "converged": state["passed_at_attempt"] is not None,
         "passed_at_attempt": state["passed_at_attempt"],
         # The win condition: failed gate calls before the passing publish.
@@ -739,10 +821,15 @@ def measure(state: dict) -> dict:
         )
         or "-",
         "reads": len(reads),
-        "reference_reads": sum(1 for item in reads if item["path"] in REFERENCE_READS),
+        "reference_reads": sum(1 for item in reads if item["path"] in allowed_reads),
         "edits": len(state["edits"]),
         "distinct_diagnostics_seen": len(seen),
         "diagnostics_seen": sorted(seen),
+        "diagnostic_classes": ",".join(sorted(keys_by_class)) or "-",
+        "type_diagnostics_seen": len(keys_by_class.get("TYPE", ())),
+        "capability_diagnostics_seen": len(keys_by_class.get("CAPABILITY", ())),
+        "architecture_diagnostics_seen": len(keys_by_class.get("ARCHITECTURE", ()))
+        + len(keys_by_class.get("ARCH", ())),
         "fix_cycles": len(new_breakage_events),
         "new_breakage_events": new_breakage_events,
         "rebreaks": len(rebreak_events),
@@ -775,17 +862,19 @@ def command_report(args: argparse.Namespace) -> None:
             "report is an operator command: it shows both arms, including the "
             "diagnostics withheld from the control arm. Pass --operator."
         )
+    fixture = fixture_named(args.fixture)
     results = {}
-    for state_path in sorted(RUNS.glob("*/state.json")):
+    for state_path in sorted(fixture.runs.glob("*/state.json")):
         name = state_path.parent.name
         if ARM_NAME.match(name):
-            results[name] = measure(json.loads(state_path.read_text(encoding="utf-8")))
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            results[name] = measure(state, fixture)
     if not results:
-        fail("no arm has run yet")
+        fail(f"no arm has run yet for fixture {fixture.name}")
     order = sorted(results, key=lambda name: (policy_of(name) != "ail", name))
     results = {name: results[name] for name in order}
 
-    out_dir = Path(args.out) if args.out else HERE / "report"
+    out_dir = Path(args.out) if args.out else fixture.report
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "measures.json").write_text(
         json.dumps(results, indent=2) + "\n", encoding="utf-8"
@@ -807,6 +896,9 @@ def command_report(args: argparse.Namespace) -> None:
         ("- source edits", "edits"),
         ("- reads", "reads"),
         ("- distinct diagnostics reached", "distinct_diagnostics_seen"),
+        ("- distinct type diagnostics reached", "type_diagnostics_seen"),
+        ("- distinct capability diagnostics reached", "capability_diagnostics_seen"),
+        ("- distinct architecture diagnostics reached", "architecture_diagnostics_seen"),
         ("- god-method rejections", "god_method_rejections"),
         ("- worst dispatch control-flow complexity", "max_dispatch_control_flow_complexity_seen"),
         ("- first check that passed", "first_clean_check"),
@@ -899,20 +991,31 @@ def strip_comments_target(source: str) -> str:
     ) + "\n"
 
 
+def overlay(base: dict[str, str], directory: Path) -> dict[str, str]:
+    """Return `base` with every file in `directory` replacing its namesake."""
+    merged = dict(base)
+    for item in sorted(directory.iterdir()):
+        if item.is_file():
+            merged[item.name] = item.read_text(encoding="utf-8")
+    return merged
+
+
 def command_self_test(args: argparse.Namespace) -> None:
     """Prove the fixture is solvable and the gate cannot be gamed.
 
     Runs no agent. Applies a reference repair directly, so it is labelled a
     self-test and never counted as an arm result.
     """
-    reference = Path(args.reference)
+    fixture = fixture_named(args.fixture)
+    spec = contract(fixture)
+    reference = Path(args.reference) if args.reference else fixture.reference
     if not reference.is_dir():
         fail(f"{reference} is not a directory of reference sources")
     checks: list[tuple[str, bool, str]] = []
 
     broken = {
         item.name: item.read_text(encoding="utf-8")
-        for item in sorted(FIXTURE.iterdir())
+        for item in sorted(fixture.broken.iterdir())
         if item.is_file()
     }
     state = {"arm": "self-test", "files": dict(broken)}
@@ -933,6 +1036,27 @@ def command_self_test(args: argparse.Namespace) -> None:
             f"codes={','.join(item['code'] for item in result['diagnostics'])}",
         )
     )
+    classes = sorted({diagnostic_class(item) for item in result["diagnostics"]})
+    declared_classes = sorted(item.upper() for item in spec["fault_classes"])
+    checks.append(
+        (
+            f"broken fixture fails only in its declared classes {declared_classes}",
+            set(classes) <= set(declared_classes),
+            ",".join(classes),
+        )
+    )
+    for excluded in spec["excluded_fault_classes"]:
+        label = excluded.upper()
+        structural = label != "ARCHITECTURE" or "architecture.json" not in broken
+        checks.append(
+            (
+                f"no {excluded} failure is reachable in this fixture",
+                label not in classes and label not in declared_classes and structural,
+                "no architecture.json in the workspace"
+                if label == "ARCHITECTURE" and structural
+                else ",".join(classes),
+            )
+        )
     checks.append(
         ("failing check writes no revision store", not result["store_written"], "")
     )
@@ -943,67 +1067,109 @@ def command_self_test(args: argparse.Namespace) -> None:
         ("failing publish writes no revision store", not result["store_written"], "")
     )
 
-    violations = specification_violations(broken)
-    checks.append(
-        (
-            "broken fixture violates the task specification",
-            bool(violations),
-            ",".join(item["id"] for item in violations),
+    violations = specification_violations(broken, fixture)
+    if spec["broken_satisfies_specification"]:
+        checks.append(
+            (
+                "broken fixture satisfies the task specification, so a violation "
+                "never points at a fault",
+                not violations,
+                ",".join(item["id"] for item in violations),
+            )
         )
-    )
+    else:
+        checks.append(
+            (
+                "broken fixture violates the task specification",
+                bool(violations),
+                ",".join(item["id"] for item in violations),
+            )
+        )
 
-    weakened = dict(broken)
-    policy = json.loads(weakened["architecture.json"])
-    policy["policy"]["allowed_group_dependencies"]["transport"] = ["contract", "domain"]
-    weakened["architecture.json"] = json.dumps(policy, indent=2) + "\n"
-    weakened_state = {"arm": "self-test", "files": weakened}
-    weakened_result = run_gate(weakened_state, "publish")
-    checks.append(
-        (
-            "weakening policy is not accepted by the harness write rule",
-            "architecture.json" in contract()["immutable_files"],
-            "harness.py write rejects architecture.json",
+    for name in spec["immutable_files"]:
+        rejection = write_rejection(name, spec)
+        checks.append(
+            (
+                f"harness.py write rejects the immutable file {name}",
+                bool(rejection),
+                rejection or "write was accepted",
+            )
         )
-    )
-    checks.append(
-        (
-            "weakened policy alone still does not publish the broken fixture",
-            weakened_result["exit_code"] != 0,
-            "",
-        )
-    )
 
-    repaired = dict(broken)
-    for item in sorted(reference.iterdir()):
-        if item.is_file():
-            repaired[item.name] = item.read_text(encoding="utf-8")
-    repaired["architecture.json"] = broken["architecture.json"]
-    repaired_state = {"arm": "self-test", "files": repaired}
-    result = run_gate(repaired_state, "publish")
+    if "architecture.json" in broken:
+        weakened = dict(broken)
+        policy = json.loads(weakened["architecture.json"])
+        policy["policy"]["allowed_group_dependencies"]["transport"] = ["contract", "domain"]
+        weakened["architecture.json"] = json.dumps(policy, indent=2) + "\n"
+        weakened_result = run_gate({"arm": "self-test", "files": weakened}, "publish")
+        checks.append(
+            (
+                "weakened policy alone still does not publish the broken fixture",
+                weakened_result["exit_code"] != 0,
+                "",
+            )
+        )
+
+    repaired = overlay(broken, reference)
+    for name in spec["immutable_files"]:
+        repaired[name] = broken[name]
+    result = run_gate({"arm": "self-test", "files": repaired}, "publish")
     checks.append(("reference repair publishes", result["exit_code"] == 0, result["output"]))
     checks.append(("reference repair writes a revision store", result["store_written"], ""))
     checks.append(
         (
             "reference repair satisfies the task specification",
-            not specification_violations(repaired),
+            not specification_violations(repaired, fixture),
             "",
         )
     )
     checks.append(
         (
-            "reference repair keeps policy byte-identical",
-            repaired["architecture.json"] == broken["architecture.json"],
-            "",
+            "reference repair keeps every immutable file byte-identical",
+            all(repaired[name] == broken[name] for name in spec["immutable_files"]),
+            ",".join(spec["immutable_files"]),
         )
     )
 
+    for control in spec.get("negative_controls", []):
+        directory = fixture.negative_controls / control["id"]
+        if not directory.is_dir():
+            checks.append((f"negative control {control['id']} exists", False, str(directory)))
+            continue
+        base = repaired if control["base"] == "reference" else broken
+        candidate = overlay(base, directory)
+        control_result = run_gate({"arm": "self-test", "files": candidate}, "publish")
+        control_violations = specification_violations(candidate, fixture)
+        compiler_denied = control_result["exit_code"] != 0
+        want_compiler_fail = control["expect"]["compiler"] == "fail"
+        want_violation = control["expect"]["specification"] == "violated"
+        detail = (
+            f"compiler {'denied' if compiler_denied else 'accepted'}, "
+            f"specification {','.join(item['id'] for item in control_violations) or 'satisfied'}"
+        )
+        checks.append(
+            (
+                f"negative control {control['id']}: {control['requirement']}",
+                compiler_denied == want_compiler_fail
+                and bool(control_violations) == want_violation
+                and not (
+                    control_result["exit_code"] == 0
+                    and not control_violations
+                    and control_result["store_written"]
+                ),
+                detail,
+            )
+        )
+
     commented = dict(repaired)
-    commented["domain.ail"] = strip_comments_target(commented["domain.ail"])
+    target = spec["comment_out_module"]
+    commented[target] = strip_comments_target(commented[target])
+    commented_violations = specification_violations(commented, fixture)
     checks.append(
         (
-            "a requirement commented out does not satisfy the specification",
-            bool(specification_violations(commented)),
-            ",".join(item["id"] for item in specification_violations(commented)),
+            f"commenting out {target} does not satisfy the specification",
+            bool(commented_violations),
+            ",".join(item["id"] for item in commented_violations),
         )
     )
 
@@ -1021,8 +1187,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    def with_arm(name: str, handler, **kwargs):
+    def with_fixture(name: str, **kwargs):
         item = sub.add_parser(name, **kwargs)
+        item.add_argument(
+            "--fixture",
+            default=DEFAULT_FIXTURE,
+            choices=sorted(FIXTURES),
+            help=f"which broken workspace to run (default {DEFAULT_FIXTURE})",
+        )
+        return item
+
+    def with_arm(name: str, handler, **kwargs):
+        item = with_fixture(name, **kwargs)
         item.add_argument("--arm", required=True)
         item.set_defaults(handler=handler)
         return item
@@ -1041,13 +1217,15 @@ def main() -> None:
     with_arm("publish", command_publish, help="run ailc publish through the gate")
     with_arm("status", command_status, help="show remaining gate calls")
 
-    report = sub.add_parser("report", help="write the two-arm measure table")
+    report = with_fixture("report", help="write the two-arm measure table")
     report.add_argument("--operator", action="store_true")
     report.add_argument("--out")
     report.set_defaults(handler=command_report)
 
-    self_test = sub.add_parser("self-test", help="prove the fixture is solvable and gated")
-    self_test.add_argument("--reference", required=True)
+    self_test = with_fixture("self-test", help="prove the fixture is solvable and gated")
+    self_test.add_argument(
+        "--reference", help="directory of reference sources (default: the fixture's own)"
+    )
     self_test.set_defaults(handler=command_self_test)
 
     args = parser.parse_args()

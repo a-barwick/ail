@@ -1,5 +1,43 @@
 {
   "description": "Task specification for the broken cancel-dispatch workspace. These requirements are handed to both arms verbatim. They are not compiler facts: the harness checks them by matching normalized workspace text, so the control arm learns exactly as much from them as the AIL arm does.",
+  "brief": {
+    "task": "A five-module AIL workspace is broken. Make `ailc publish` succeed on it while\nthe task specification below still holds. The workspace and its project policy\nalready exist; you repair AIL source.",
+    "rules": [
+      "`architecture.json` is project policy and is immutable. The harness rejects\n   any write to it. Weakening policy is not a solution.",
+      "The capability environment is empty and stays empty. There is no capability\n   configuration file to add."
+    ],
+    "feedback_ail": "FEEDBACK POLICY (arm ail): `check` and `publish` return the AIL compiler's\nown output verbatim: diagnostic codes, spans, `expected.*` / `actual.*`\ndetails, and architecture rule findings with the numbers the checker\nmeasured. Treat that output as the only source of truth about what is\nwrong. Do not guess at causes the compiler did not report."
+  },
+  "fault_classes": [
+    "module",
+    "name",
+    "type",
+    "capability",
+    "architecture"
+  ],
+  "excluded_fault_classes": [],
+  "broken_satisfies_specification": false,
+  "comment_out_module": "domain.ail",
+  "strip_qualifiers": [
+    "contracts."
+  ],
+  "reference_reads": [
+    "docs/language.md",
+    "docs/STATUS.md",
+    "specs/core.md",
+    "specs/architecture.md",
+    "compiler/examples/architecture-denied/architecture.json",
+    "compiler/examples/architecture-denied/transport.ail",
+    "compiler/examples/architecture-denied/domain.ail",
+    "compiler/examples/architecture-denied/contracts.ail",
+    "compiler/examples/composed-service/domain.ail",
+    "compiler/examples/composed-service/service.ail",
+    "compiler/examples/composed-service/validation.ail",
+    "compiler/examples/batch-cancellation/domain.ail",
+    "compiler/examples/batch-cancellation/service.ail",
+    "compiler/examples/batch-cancellation/single.ail"
+  ],
+  "immutable_reason": "immutable project policy",
   "immutable_files": [
     "architecture.json"
   ],
