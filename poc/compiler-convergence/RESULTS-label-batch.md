@@ -111,6 +111,14 @@ which passed. The compiler arm reached zero diagnostics: it published without
 ever seeing compiler output. On this fault set the treatment can be skipped
 entirely and still succeed on the first attempt.
 
+All six arms gave the same reason for spending one call: `publish` runs the same
+checks as `check`, emits the same findings on failure, and writes nothing when it
+fails, so `check` is dominated. That reasoning is what switched the compiler arm's
+information channel off. Under the primary protocol its brief tells it to treat
+compiler output as the only source of truth, and it opened with a probe; told to
+economize, it reasoned that a failing `publish` would have returned the same
+findings anyway, and never needed them.
+
 That condition also answers the obvious objection to the primary numbers. The
 `ail` brief tells that arm to treat compiler output as its only source of truth,
 which encourages spending a gate call on a diagnostic probe. So the primary
@@ -174,6 +182,14 @@ faults were locally readable type and capability errors at this scale.
    that no `ail` ledger exists on disk while a `control` trial runs. Treat the
    control arm's 1 retry as an upper bound that the next run should confirm under
    staggering.
+
+   All twenty arms reported, unprompted and in detail, that they used only harness
+   commands: no state file read, no `ailc` or `cargo` run, no private copy of the
+   workspace compiled, no other arm's files read, and reference reads limited to
+   the paths in the brief. Several disclosed running `git status`, which printed
+   the run directories' names and no contents. Those are self-reports from the
+   arms themselves, which is weaker evidence than enforcement, and they are
+   consistent with what each committed command log shows.
 
 ## What would make the next fixture decide something
 
