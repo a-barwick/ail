@@ -354,6 +354,25 @@ fn a_recursive_cycle_names_the_cycle_and_both_declarations() {
 }
 
 #[test]
+fn a_long_snippet_is_bounded_and_says_so() {
+    let padding = "x".repeat(300);
+    let source =
+        format!("record R {{\n  n: Int;\n}}\n\nfn f() -> R {{\n  R {{ n: \"{padding}\" }}\n}}\n");
+    let workspace = Workspace::new("bounded", &[("long.ail", source.as_str())]);
+    let path = workspace.path().to_str().expect("temp path is UTF-8");
+
+    let document = json_document(&["check", "--json", path]);
+    let finding = only_finding(&document);
+    let snippet = finding["location"]["snippet"]
+        .as_str()
+        .expect("snippet is a string");
+    assert_eq!(finding["location"]["snippet_truncated"], true);
+    assert_eq!(snippet.len(), 243, "{snippet}");
+    assert!(snippet.ends_with("..."), "{snippet}");
+    assert!(snippet.starts_with("\"xxx"), "{snippet}");
+}
+
+#[test]
 fn a_passing_workspace_reports_no_findings() {
     let path = examples_dir().join("composed-service");
     let path = path.to_str().expect("example path is UTF-8");

@@ -179,6 +179,7 @@ impl SourceFinding {
                 lines.push(format!("  source: {}", one_line(&location.snippet)));
             }
             if location.start_line == location.end_line
+                && !location.snippet_truncated
                 && location.line_text.trim() != location.snippet.trim()
             {
                 lines.push(format!(
