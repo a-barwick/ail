@@ -664,6 +664,10 @@ def measure(state: dict) -> dict:
         "policy": state.get("policy", policy_of(state["arm"])),
         "converged": state["passed_at_attempt"] is not None,
         "passed_at_attempt": state["passed_at_attempt"],
+        # The win condition: failed gate calls before the passing publish.
+        "retries_to_pass": (
+            state["passed_at_attempt"] - 1 if state["passed_at_attempt"] else None
+        ),
         "gate_calls": len(attempts),
         "gate_calls_check": sum(1 for item in attempts if item["command"] == "check"),
         "gate_calls_publish": sum(1 for item in attempts if item["command"] == "publish"),
@@ -733,22 +737,25 @@ def command_report(args: argparse.Namespace) -> None:
         json.dumps(results, indent=2) + "\n", encoding="utf-8"
     )
 
+    # Ordered by what decides the outcome. Retries to a passing publish is the
+    # win condition. Rebreak is whether the change was safe. Tokens are extra
+    # and never decide anything on their own.
     rows = [
-        ("converged", "converged"),
-        ("gate calls to pass", "passed_at_attempt"),
-        ("gate calls total", "gate_calls"),
-        ("first check that passed", "first_clean_check"),
-        ("tokens harness to agent", "tokens_harness_to_agent"),
-        ("tokens agent to harness", "tokens_agent_to_harness"),
-        ("tokens total (protocol)", "tokens_total"),
-        ("source edits", "edits"),
-        ("reads", "reads"),
-        ("distinct diagnostics reached", "distinct_diagnostics_seen"),
-        ("fix cycles (new breakage after an edit)", "fix_cycles"),
-        ("rebreaks (fixed then broken again)", "rebreaks"),
-        ("god-method rejections", "god_method_rejections"),
-        ("worst dispatch control-flow complexity", "max_dispatch_control_flow_complexity_seen"),
-        ("attempts failing the task specification", "specification_violation_attempts"),
+        ("1 RETRIES to passing publish", "retries_to_pass"),
+        ("  converged", "converged"),
+        ("  gate calls to pass", "passed_at_attempt"),
+        ("2 REBREAKS (fixed, then broken again)", "rebreaks"),
+        ("  fix cycles (new breakage after an edit)", "fix_cycles"),
+        ("  attempts failing the task specification", "specification_violation_attempts"),
+        ("3 TOKENS total (protocol, extra)", "tokens_total"),
+        ("  tokens harness to agent", "tokens_harness_to_agent"),
+        ("  tokens agent to harness", "tokens_agent_to_harness"),
+        ("- source edits", "edits"),
+        ("- reads", "reads"),
+        ("- distinct diagnostics reached", "distinct_diagnostics_seen"),
+        ("- god-method rejections", "god_method_rejections"),
+        ("- worst dispatch control-flow complexity", "max_dispatch_control_flow_complexity_seen"),
+        ("- first check that passed", "first_clean_check"),
     ]
     width = max(len(label) for label, _ in rows) + 2
     lines = ["per trial", ""]
@@ -773,6 +780,38 @@ def command_report(args: argparse.Namespace) -> None:
                 cell = str(median(numeric)) if len(numeric) == len(values) else "-"
                 cells += cell.rjust(12)
             lines.append(label.ljust(width) + cells)
+
+    lines += ["", "win condition: retries to a passing publish", ""]
+    spread = {}
+    for policy, names in policies.items():
+        values = sorted(
+            results[name]["retries_to_pass"]
+            for name in names
+            if results[name]["retries_to_pass"] is not None
+        )
+        stalled = sum(1 for name in names if not results[name]["converged"])
+        spread[policy] = values
+        lines.append(
+            f"  {policy:<8} n={len(names)}  retries {values}  "
+            f"median {median(values) if values else '-'}  "
+            f"worst {max(values) if values else '-'}  did not converge {stalled}"
+        )
+    if len(spread) == 2 and all(spread.values()):
+        (first, low), (second, high) = spread.items()
+        if max(low) < min(high):
+            verdict = f"{first} wins the win condition outright: every {first} trial beat every {second} trial."
+        elif max(high) < min(low):
+            verdict = f"{second} wins the win condition outright: every {second} trial beat every {first} trial."
+        elif median(low) == median(high):
+            verdict = "no win on the win condition: the medians are equal and the distributions overlap."
+        else:
+            better = first if median(low) < median(high) else second
+            worse = second if better == first else first
+            verdict = (
+                f"{better} wins the median but not outright: the distributions overlap, so at "
+                f"least one {worse} trial beat at least one {better} trial. Not a clean win."
+            )
+        lines += ["", f"  {verdict}"]
 
     table = "\n".join(lines)
     (out_dir / "measures.txt").write_text(table + "\n", encoding="utf-8")
