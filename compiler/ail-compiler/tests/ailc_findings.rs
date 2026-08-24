@@ -238,6 +238,120 @@ fn a_missing_import_names_the_import_and_the_file() {
 }
 
 #[test]
+fn an_inaccessible_declaration_names_the_module_that_must_be_imported() {
+    // `tests` references `transport.dispatch` without importing `transport`.
+    // Only `transport` can be imported to resolve that reference, so naming the
+    // referring module `tests` would be a false fact.
+    let workspace = Workspace::new(
+        "inaccessible",
+        &[
+            (
+                "transport.ail",
+                "module transport;\n\nfn dispatch(value: Text) -> Text {\n  value\n}\n",
+            ),
+            (
+                "tests.ail",
+                "module tests;\n\nfn verify() -> Text {\n  transport.dispatch(\"x\")\n}\n",
+            ),
+        ],
+    );
+    let path = workspace.path().to_str().expect("temp path is UTF-8");
+
+    let document = json_document(&["check", "--json", path]);
+    let finding = finding_with_code(&document, "AIL.MODULE.INACCESSIBLE_DECLARATION");
+    assert_eq!(finding["location"]["path"], "tests.ail");
+    assert_eq!(finding["facts"]["declaration"], "transport.dispatch");
+    assert_eq!(finding["facts"]["module"], "transport");
+    assert_eq!(finding["facts"]["declaring_path"], "transport.ail");
+    assert_eq!(finding["facts"]["referring_module"], "tests");
+    assert_eq!(
+        finding["requirement"],
+        "this file must import transport to reference transport.dispatch"
+    );
+
+    let requirement = finding["requirement"]
+        .as_str()
+        .expect("requirement is a string");
+    assert!(
+        !requirement.contains("tests"),
+        "the requirement must not name the referring module: {requirement}"
+    );
+}
+
+#[test]
+fn an_inaccessible_bare_reference_names_the_declaring_module() {
+    let workspace = Workspace::new(
+        "inaccessible-bare",
+        &[
+            ("a.ail", "module a;\n\nfn hidden() -> Text {\n  \"a\"\n}\n"),
+            ("b.ail", "module b;\n\nfn run() -> Text {\n  hidden()\n}\n"),
+        ],
+    );
+    let path = workspace.path().to_str().expect("temp path is UTF-8");
+
+    let document = json_document(&["check", "--json", path]);
+    let finding = finding_with_code(&document, "AIL.MODULE.INACCESSIBLE_DECLARATION");
+    assert_eq!(finding["facts"]["module"], "a");
+    assert_eq!(finding["facts"]["referring_module"], "b");
+    assert_eq!(
+        finding["requirement"],
+        "this file must import a to reference hidden"
+    );
+}
+
+#[test]
+fn an_inaccessible_dotted_module_reference_names_the_whole_module() {
+    let workspace = Workspace::new(
+        "inaccessible-dotted",
+        &[
+            (
+                "deep.ail",
+                "module a.deep;\n\nfn hidden() -> Text {\n  \"a\"\n}\n",
+            ),
+            (
+                "b.ail",
+                "module b;\n\nfn run() -> Text {\n  a.deep.hidden()\n}\n",
+            ),
+        ],
+    );
+    let path = workspace.path().to_str().expect("temp path is UTF-8");
+
+    let document = json_document(&["check", "--json", path]);
+    let finding = finding_with_code(&document, "AIL.MODULE.INACCESSIBLE_DECLARATION");
+    assert_eq!(finding["facts"]["module"], "a.deep");
+    assert_eq!(finding["facts"]["declaring_path"], "deep.ail");
+    assert_eq!(
+        finding["requirement"],
+        "this file must import a.deep to reference a.deep.hidden"
+    );
+}
+
+#[test]
+fn an_inaccessible_declaration_with_several_owners_names_every_candidate() {
+    // Two modules declare `hidden` and the bare reference names neither. The
+    // checker knows the candidates but not which one is meant, so it reports
+    // both instead of picking one.
+    let workspace = Workspace::new(
+        "inaccessible-ambiguous",
+        &[
+            ("a.ail", "module a;\n\nfn hidden() -> Text {\n  \"a\"\n}\n"),
+            ("c.ail", "module c;\n\nfn hidden() -> Text {\n  \"c\"\n}\n"),
+            ("b.ail", "module b;\n\nfn run() -> Text {\n  hidden()\n}\n"),
+        ],
+    );
+    let path = workspace.path().to_str().expect("temp path is UTF-8");
+
+    let document = json_document(&["check", "--json", path]);
+    let finding = finding_with_code(&document, "AIL.MODULE.INACCESSIBLE_DECLARATION");
+    assert_eq!(finding["facts"]["declaring_modules"], "a,c");
+    assert_eq!(finding["facts"]["module"], Value::Null);
+    assert_eq!(
+        finding["requirement"],
+        "this file must import the module that declares hidden; a,c declare it"
+    );
+}
+
+#[test]
 fn an_architecture_failure_names_the_rule_and_the_violating_source() {
     let path = examples_dir().join("architecture-denied");
     let path = path.to_str().expect("example path is UTF-8");
@@ -382,62 +496,72 @@ const EDIT_VERBS: [&str; 22] = [
     "split", "try", "wrap",
 ];
 
-#[test]
-fn requirement_is_a_constraint_and_never_an_edit() {
-    let type_error = Workspace::new("rule-type", &[("types.ail", FIELD_MISMATCH_SOURCE)]);
-    let parse_error = Workspace::new(
-        "rule-parse",
-        &[("broken.ail", "record Job {\n  job_id\n}\n")],
-    );
-    let recursion = Workspace::new(
-        "rule-recursion",
-        &[(
-            "cycle.ail",
-            "fn first(value: Text) -> Text {\n  second(value)\n}\n\nfn second(value: Text) -> Text {\n  first(value)\n}\n",
-        )],
-    );
-    let name_error = Workspace::new(
-        "rule-name",
-        &[(
-            "names.ail",
-            "fn run(value: Text) -> Text {\n  missing(value)\n}\n",
-        )],
-    );
-    let unresolved = Workspace::new(
-        "rule-unresolved",
-        &[("types.ail", "record R {\n  n: Missing;\n}\n")],
-    );
-    let duplicate = Workspace::new(
-        "rule-duplicate",
-        &[(
-            "dup.ail",
-            "fn run(value: Text) -> Text {\n  value\n}\n\nfn run(other: Text) -> Text {\n  other\n}\n",
-        )],
-    );
-    let effect = Workspace::new(
-        "rule-effect",
-        &[(
-            "effect.ail",
-            "fn run(value: Text) -> Text effects { store.mark } {\n  value\n}\n",
-        )],
-    );
+/// Temporary workspaces covering one rejection class each.
+fn failing_workspaces() -> Vec<Workspace> {
+    vec![
+        Workspace::new("rule-type", &[("types.ail", FIELD_MISMATCH_SOURCE)]),
+        Workspace::new(
+            "rule-parse",
+            &[("broken.ail", "record Job {\n  job_id\n}\n")],
+        ),
+        Workspace::new(
+            "rule-recursion",
+            &[(
+                "cycle.ail",
+                "fn first(value: Text) -> Text {\n  second(value)\n}\n\nfn second(value: Text) -> Text {\n  first(value)\n}\n",
+            )],
+        ),
+        Workspace::new(
+            "rule-name",
+            &[(
+                "names.ail",
+                "fn run(value: Text) -> Text {\n  missing(value)\n}\n",
+            )],
+        ),
+        Workspace::new(
+            "rule-unresolved",
+            &[("types.ail", "record R {\n  n: Missing;\n}\n")],
+        ),
+        Workspace::new(
+            "rule-duplicate",
+            &[(
+                "dup.ail",
+                "fn run(value: Text) -> Text {\n  value\n}\n\nfn run(other: Text) -> Text {\n  other\n}\n",
+            )],
+        ),
+        Workspace::new(
+            "rule-effect",
+            &[(
+                "effect.ail",
+                "fn run(value: Text) -> Text effects { store.mark } {\n  value\n}\n",
+            )],
+        ),
+        Workspace::new(
+            "rule-inaccessible",
+            &[
+                (
+                    "transport.ail",
+                    "module transport;\n\nfn dispatch(value: Text) -> Text {\n  value\n}\n",
+                ),
+                (
+                    "tests.ail",
+                    "module tests;\n\nfn verify() -> Text {\n  transport.dispatch(\"x\")\n}\n",
+                ),
+            ],
+        ),
+        Workspace::new(
+            "rule-ambiguous-owner",
+            &[
+                ("a.ail", "module a;\n\nfn hidden() -> Text {\n  \"a\"\n}\n"),
+                ("c.ail", "module c;\n\nfn hidden() -> Text {\n  \"c\"\n}\n"),
+                ("b.ail", "module b;\n\nfn run() -> Text {\n  hidden()\n}\n"),
+            ],
+        ),
+    ]
+}
 
-    let architecture = examples_dir().join("architecture-denied");
-    let missing_import = examples_dir().join("composed-service/service.ail");
-    let capability = examples_dir().join("batch-lookup");
-    let inputs = [
-        type_error.path(),
-        parse_error.path(),
-        recursion.path(),
-        name_error.path(),
-        unresolved.path(),
-        duplicate.path(),
-        effect.path(),
-        architecture.as_path(),
-        missing_import.as_path(),
-        capability.as_path(),
-    ];
-
+/// Every code and every requirement `ailc check` emits for these inputs.
+fn all_findings(inputs: &[&Path]) -> (Vec<String>, Vec<(String, String)>) {
     let mut codes = Vec::new();
     let mut requirements = Vec::new();
     for input in inputs {
@@ -457,9 +581,26 @@ fn requirement_is_a_constraint_and_never_an_edit() {
             }
         }
     }
-
     codes.sort_unstable();
     codes.dedup();
+    (codes, requirements)
+}
+
+#[test]
+fn requirement_is_a_constraint_and_never_an_edit() {
+    let workspaces = failing_workspaces();
+    let examples = [
+        examples_dir().join("architecture-denied"),
+        examples_dir().join("composed-service/service.ail"),
+        examples_dir().join("batch-lookup"),
+    ];
+    let inputs = workspaces
+        .iter()
+        .map(Workspace::path)
+        .chain(examples.iter().map(PathBuf::as_path))
+        .collect::<Vec<_>>();
+    let (codes, requirements) = all_findings(&inputs);
+
     assert!(
         codes.len() >= 8,
         "this rule must be checked against a wide spread of codes, saw {codes:?}"

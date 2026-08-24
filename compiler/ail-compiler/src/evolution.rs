@@ -2094,17 +2094,17 @@ fn validate_modules(parsed_sources: &[(String, ParseResult)]) -> Vec<SourceSetDi
                     }
                 }
             }
-            if declarations.contains_key(source_name(&name)) && !visible.contains(&name) {
-                diagnostics.push(source_set_diagnostic(
-                    "AIL.MODULE.INACCESSIBLE_DECLARATION",
-                    path,
-                    span,
-                    [
-                        ("declaration", name.as_str()),
-                        ("role", role),
-                        ("module", module_name.as_str()),
-                    ],
-                ));
+            if let Some(owners) = declarations.get(source_name(&name)) {
+                if !visible.contains(&name) {
+                    diagnostics.push(inaccessible_declaration(
+                        path,
+                        span,
+                        &name,
+                        role,
+                        module_name,
+                        owners,
+                    ));
+                }
             }
         }
     }
@@ -2733,6 +2733,64 @@ fn symbol_handle_span(unit: &SourceUnit, local_id: &str) -> Option<Span> {
         }
         _ => None,
     }
+}
+
+/// Report a reference to a declaration the referring file cannot see.
+///
+/// The reported `module` is the module that declares the reference, not the
+/// module doing the referring: only the declaring module can be imported to make
+/// the reference resolve. A qualified reference names its own module, which may
+/// itself contain dots, so the qualifier is everything before the final dot.
+/// When several modules declare the name and the reference names none of them,
+/// the checker knows the candidates but not which one is meant, so it reports
+/// every candidate under `declaring_modules` instead of choosing one.
+fn inaccessible_declaration(
+    path: &str,
+    span: Span,
+    name: &str,
+    role: &'static str,
+    referring_module: &str,
+    owners: &[(String, String, Span)],
+) -> SourceSetDiagnostic {
+    let qualifier = name.rsplit_once('.').map(|(prefix, _)| prefix);
+    let declaring = qualifier
+        .and_then(|qualifier| owners.iter().find(|(module, _, _)| module == qualifier))
+        .or(match owners {
+            [single] => Some(single),
+            _ => None,
+        });
+    if let Some((declaring_module, declaring_path, _)) = declaring {
+        return source_set_diagnostic(
+            "AIL.MODULE.INACCESSIBLE_DECLARATION",
+            path,
+            span,
+            [
+                ("declaration", name),
+                ("role", role),
+                ("module", declaring_module.as_str()),
+                ("declaring_path", declaring_path.as_str()),
+                ("referring_module", referring_module),
+            ],
+        );
+    }
+    let declaring_modules = owners
+        .iter()
+        .map(|(module, _, _)| module.as_str())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>()
+        .join(",");
+    source_set_diagnostic(
+        "AIL.MODULE.INACCESSIBLE_DECLARATION",
+        path,
+        span,
+        [
+            ("declaration", name),
+            ("role", role),
+            ("declaring_modules", declaring_modules.as_str()),
+            ("referring_module", referring_module),
+        ],
+    )
 }
 
 fn source_set_diagnostic<const N: usize>(

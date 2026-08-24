@@ -81,6 +81,23 @@ canonical text as before. Canonical formatting moves whitespace only, so both
 parses carry the same declarations. When the supplied text is not canonical the
 finding carries the fact `source.canonical=false`.
 
+### One false fact the old output hid
+
+`AIL.MODULE.INACCESSIBLE_DECLARATION` reported `module` as the module of the file
+doing the referring. `tests.ail` referencing `transport.dispatch` reported
+`module=tests`. That fact was useless while the output was a `key=value` line and
+false once a requirement read it: `this file must import tests`. The referring
+module is already named by the finding's path, and only the declaring module can
+be imported to resolve the reference.
+
+`module` now names the module that declares the reference, and
+`declaring_path` names its file. The referring module is retained under the
+honest name `referring_module`. A qualified reference names its own module,
+which may itself contain dots, so the qualifier is everything before the final
+dot. When several modules declare the name and the reference names none of them,
+the checker knows the candidates but not which one is meant, so it reports every
+candidate under `declaring_modules` and no `module`.
+
 ### Architecture findings
 
 Policy identity is architectural: a rule, a scope, and ordered contributor unit
@@ -93,7 +110,9 @@ contributor otherwise.
 ## Consequences
 
 `SourceSetDiagnostic` now reports the owning file and its local span instead of
-`<source-set>`. `EvolutionBuildFailure` gains `findings`, and
+`<source-set>`. Its `AIL.MODULE.INACCESSIBLE_DECLARATION` details change as
+described above; no test or fixture pinned the old `module` value.
+`EvolutionBuildFailure` gains `findings`, and
 `CliArchitectureFailure` gains `findings`; `causes` and `diagnostics` keep their
 existing meaning, so library callers are unaffected.
 
@@ -151,13 +170,18 @@ and proves:
   contributor, and the requirement
   `group transport must not depend on group domain; the candidate has a calls
   edge transport:dispatch -> domain:work`;
-- every requirement across ten failing inputs and at least eight distinct codes
-  states a constraint with `must` and contains none of 22 edit verbs, so no code
-  can reintroduce a prescribed rewrite;
+- every requirement across twelve failing inputs and at least eight distinct
+  codes states a constraint with `must` and contains none of 22 edit verbs, so
+  no code can reintroduce a prescribed rewrite;
 - a parse failure reports `broken.ail:2:9-2:9` with `expected.token=:` and
   `actual.token=}`;
 - an unknown capability interface names the interfaces the check environment
   supplies, which is none;
+- `tests.ail` referencing `transport.dispatch` requires
+  `this file must import transport`, names `transport.ail` as the declaring path
+  and `tests` as the referring module, and never names `tests` in the
+  requirement; a bare reference and a dotted module name resolve the same way,
+  and two declaring modules report both candidates;
 - a recursive cycle names the cycle and both declarations once each;
 - a passing workspace reports zero findings;
 - a rejected `publish --json` reports the same findings as `check --json` and

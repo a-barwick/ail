@@ -396,10 +396,21 @@ fn named_requirement(
         }
         "AIL.MODULE.INACCESSIBLE_DECLARATION" => {
             let declaration = value_of(facts, "declaration")?;
-            let module = value_of(facts, "module")?;
-            Some(format!(
-                "this file must import {module} to reference {declaration}"
-            ))
+            // `module` is the module that declares the reference. When several
+            // modules declare that name and the reference names none of them,
+            // the checker knows the candidates but not which one is meant.
+            match (
+                value_of(facts, "module"),
+                value_of(facts, "declaring_modules"),
+            ) {
+                (Some(module), _) => Some(format!(
+                    "this file must import {module} to reference {declaration}"
+                )),
+                (None, Some(modules)) => Some(format!(
+                    "this file must import the module that declares {declaration}; {modules} declare it"
+                )),
+                (None, None) => None,
+            }
         }
         "AIL.MODULE.IMPORT_CYCLE" => {
             let cycle = value_of(facts, "cycle")?;
