@@ -117,6 +117,21 @@ that were withheld from the control arm.
 detail, and `runs/<arm>/state.json` is the full ledger: every command, every
 edit, every gate call, the compiler output for each, and the final source.
 
+## Gate semantics
+
+`check` reports whether `ailc check` passed. `publish` reports whether the gate
+was satisfied. Both arms are told that bit for the command they ran, because
+both arms must be able to tell whether the command they invoked succeeded. Only
+the compiler's diagnostics are withheld.
+
+The first run of this harness got that wrong: `check` reported `FAIL` even when
+`ailc check` passed, because only `publish` could report `PASS`. The `ail` arm
+could see `ok` in the compiler output and ignore the label; the control arm
+could not, so a clean workspace looked like a failure to it. That is an
+asymmetry beyond the intended variable, so the first run's control number is
+not a valid measurement. It is kept in `runs-v1-gate-defect/` with its report,
+because the defect and its effect are part of the record.
+
 ## Guards against a fake win
 
 - **No fact-applying script.** The harness never edits `.ail` source. It reads,

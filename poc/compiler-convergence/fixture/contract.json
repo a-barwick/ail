@@ -73,9 +73,34 @@
       "pattern": "fn summarize\\("
     },
     {
+      "id": "rule.summarize_malformed_label",
+      "requirement": "summarize still maps Malformed to \"malformed\"",
+      "pattern": "CancelOutcome::Malformed => \\{ \"malformed\" \\}"
+    },
+    {
+      "id": "rule.summarize_cancelled_label",
+      "requirement": "summarize still maps Cancelled to \"cancelled\"",
+      "pattern": "CancelOutcome::Cancelled => \\{ \"cancelled\" \\}"
+    },
+    {
+      "id": "rule.summarize_not_found_label",
+      "requirement": "summarize still maps NotFound to \"not-found\"",
+      "pattern": "CancelOutcome::NotFound => \\{ \"not-found\" \\}"
+    },
+    {
+      "id": "rule.summarize_not_cancellable_label",
+      "requirement": "summarize still maps NotCancellable to \"not-cancellable\"",
+      "pattern": "CancelOutcome::NotCancellable => \\{ \"not-cancellable\" \\}"
+    },
+    {
       "id": "rule.empty_value_is_malformed",
       "requirement": "an empty request value still decides Malformed",
       "pattern": "text\\.is_empty\\("
+    },
+    {
+      "id": "rule.control_value_is_malformed",
+      "requirement": "a request value containing control characters still decides Malformed",
+      "pattern": "text\\.contains_control\\("
     },
     {
       "id": "rule.queued_is_cancelled",

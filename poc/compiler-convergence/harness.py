@@ -73,6 +73,16 @@ SOURCE_DIAGNOSTIC = re.compile(
 ARCH_DIAGNOSTIC = re.compile(
     r"^(?P<code>AIL\.ARCH\.[A-Z0-9_]+):(?P<scope>.+?):(?P<rule>M\d+-[A-Z0-9-]+):(?P<facts>.*)$"
 )
+ARCH_INCOMPLETE = re.compile(r"^(?P<code>AIL\.ARCH\.ANALYSIS_INCOMPLETE)\s*(?P<reason>.*)$")
+BARE_DIAGNOSTIC = re.compile(r"^(?P<code>AIL\.[A-Z0-9_.]+)\b(?P<rest>.*)$")
+
+# Lines `ailc` prints that are summaries or success output, not findings.
+TRAILER_LINES = (
+    "ok",
+    "published",
+    "source contains check diagnostics",
+    "source contains architecture diagnostics",
+)
 
 
 def tokens(text: str) -> int:
@@ -215,16 +225,56 @@ def parse_diagnostics(output: str) -> list[dict]:
                 }
             )
             continue
+        match = ARCH_INCOMPLETE.match(line)
+        if match:
+            reason = match.group("reason").strip()
+            parsed.append(
+                {
+                    "code": match.group("code"),
+                    "class": "ARCH",
+                    "scope": "workspace",
+                    "rule": "M23-ANALYSIS-COMPLETE",
+                    "facts": reason,
+                    "key": f"{match.group('code')}|{reason}",
+                }
+            )
+            continue
         if line.endswith("has parse diagnostics"):
+            path = line.split(" ", 1)[0]
             parsed.append(
                 {
                     "code": "AIL.PARSE.DIAGNOSTICS",
                     "class": "PARSE",
-                    "path": line.split(" ", 1)[0],
+                    "path": path,
                     "details": "",
-                    "key": f"AIL.PARSE.DIAGNOSTICS|{line.split(' ', 1)[0]}",
+                    "key": f"AIL.PARSE.DIAGNOSTICS|{path}",
                 }
             )
+            continue
+        if line in TRAILER_LINES or line.startswith(("revision_id=", "source_set_digest=")):
+            continue
+        match = BARE_DIAGNOSTIC.match(line)
+        if match:
+            rest = match.group("rest").strip()
+            parsed.append(
+                {
+                    "code": match.group("code"),
+                    "class": match.group("code").split(".")[1],
+                    "details": rest,
+                    "key": f"{match.group('code')}|{rest}",
+                }
+            )
+            continue
+        # Nothing recognized. Record it so the ledger never silently loses a
+        # failure the compiler reported.
+        parsed.append(
+            {
+                "code": "HARNESS.UNPARSED_OUTPUT",
+                "class": "UNPARSED",
+                "details": line,
+                "key": f"HARNESS.UNPARSED_OUTPUT|{line}",
+            }
+        )
     return parsed
 
 
@@ -279,11 +329,12 @@ def gate(arm_name: str, command: str) -> None:
     violations = specification_violations(state["files"])
     result = run_gate(state, command)
     index = len(state["attempts"]) + 1
+    # The invoked command's own outcome. Both arms are told this bit, because
+    # both arms must be able to tell whether the command they ran succeeded.
+    # Only the compiler's diagnostics are withheld from the control arm.
+    command_passed = result["exit_code"] == 0
     accepted = (
-        command == "publish"
-        and result["exit_code"] == 0
-        and result["store_written"]
-        and not violations
+        command == "publish" and command_passed and result["store_written"] and not violations
     )
 
     attempt = {
@@ -291,6 +342,7 @@ def gate(arm_name: str, command: str) -> None:
         "command": command,
         "workspace_digest": workspace_digest(state["files"]),
         "exit_code": result["exit_code"],
+        "command_passed": command_passed,
         "compiler_output": result["output"],
         "diagnostics": result["diagnostics"],
         "diagnostic_keys": sorted({item["key"] for item in result["diagnostics"]}),
@@ -310,12 +362,13 @@ def gate(arm_name: str, command: str) -> None:
 
     remaining = ATTEMPT_LIMIT - len(state["attempts"])
     lines = [f"attempt {index} of at most {ATTEMPT_LIMIT} ({remaining} left)"]
-    if state["arm"] == "ail":
-        lines.append("PASS" if accepted else "FAIL")
-        if result["output"]:
-            lines.append(result["output"])
+    if command == "check":
+        lines.append(f"ailc check: {'PASS' if command_passed else 'FAIL'}")
+        lines.append("check is read-only and never satisfies the gate; publish does")
     else:
         lines.append("PASS" if accepted else "FAIL")
+    if state["arm"] == "ail" and result["output"]:
+        lines.append(result["output"])
     if violations:
         lines.append("task specification not satisfied:")
         lines.extend(f"  - {item['id']}: {item['requirement']}" for item in violations)
@@ -557,6 +610,14 @@ def measure(state: dict) -> dict:
         "gate_calls": len(attempts),
         "gate_calls_check": sum(1 for item in attempts if item["command"] == "check"),
         "gate_calls_publish": sum(1 for item in attempts if item["command"] == "publish"),
+        "first_clean_check": next(
+            (
+                item["index"]
+                for item in attempts
+                if item["command"] == "check" and item["exit_code"] == 0
+            ),
+            None,
+        ),
         "tokens_harness_to_agent": state["tokens_out"],
         "tokens_agent_to_harness": state["tokens_in"],
         "tokens_total": state["tokens_out"] + state["tokens_in"],
@@ -617,6 +678,7 @@ def command_report(args: argparse.Namespace) -> None:
         ("converged", "converged"),
         ("gate calls to pass", "passed_at_attempt"),
         ("gate calls total", "gate_calls"),
+        ("first check that passed", "first_clean_check"),
         ("tokens harness to agent", "tokens_harness_to_agent"),
         ("tokens agent to harness", "tokens_agent_to_harness"),
         ("tokens total (protocol)", "tokens_total"),

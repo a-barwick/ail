@@ -1,0 +1,117 @@
+{
+  "ail": {
+    "arm": "ail",
+    "converged": true,
+    "passed_at_attempt": 3,
+    "gate_calls": 3,
+    "gate_calls_check": 2,
+    "gate_calls_publish": 1,
+    "tokens_harness_to_agent": 7900,
+    "tokens_agent_to_harness": 313,
+    "tokens_total": 8213,
+    "chars_harness_to_agent": 41693,
+    "chars_agent_to_harness": 1902,
+    "reads": 25,
+    "reference_reads": 14,
+    "edits": 4,
+    "distinct_diagnostics_seen": 1,
+    "diagnostics_seen": [
+      "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch"
+    ],
+    "fix_cycles": 0,
+    "new_breakage_events": [],
+    "rebreaks": 0,
+    "rebreak_events": [],
+    "god_method_rejections": 1,
+    "god_method_attempts": [
+      1
+    ],
+    "max_dispatch_control_flow_complexity_seen": 6,
+    "specification_violation_attempts": 0,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "control": {
+    "arm": "control",
+    "converged": true,
+    "passed_at_attempt": 22,
+    "gate_calls": 22,
+    "gate_calls_check": 20,
+    "gate_calls_publish": 2,
+    "tokens_harness_to_agent": 9235,
+    "tokens_agent_to_harness": 3039,
+    "tokens_total": 12274,
+    "chars_harness_to_agent": 48237,
+    "chars_agent_to_harness": 16807,
+    "reads": 30,
+    "reference_reads": 14,
+    "edits": 49,
+    "distinct_diagnostics_seen": 4,
+    "diagnostics_seen": [
+      "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch",
+      "AIL.NAME.UNRESOLVED|expected.name=undefined_name_probe expected.role=value",
+      "AIL.PARSE.DIAGNOSTICS|contracts.ail",
+      "AIL.PARSE.DIAGNOSTICS|transport.ail"
+    ],
+    "fix_cycles": 5,
+    "new_breakage_events": [
+      {
+        "attempt": 6,
+        "keys": [
+          "AIL.NAME.UNRESOLVED|expected.name=undefined_name_probe expected.role=value"
+        ]
+      },
+      {
+        "attempt": 8,
+        "keys": [
+          "AIL.PARSE.DIAGNOSTICS|transport.ail"
+        ]
+      },
+      {
+        "attempt": 9,
+        "keys": [
+          "AIL.PARSE.DIAGNOSTICS|contracts.ail"
+        ]
+      },
+      {
+        "attempt": 11,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 21,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 2,
+    "rebreak_events": [
+      {
+        "attempt": 11,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 21,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch"
+        ]
+      }
+    ],
+    "god_method_rejections": 3,
+    "god_method_attempts": [
+      1,
+      11,
+      21
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 6,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  }
+}
