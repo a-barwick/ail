@@ -86,7 +86,7 @@ holds the declaration it disagrees with. Architecture findings name the denied
 rule, its scope, its measured facts, and the declaration of each contributing
 unit. `ailc check --json` and `ailc publish --json` emit the same findings as
 one JSON document. See
-[0015-structured-check-findings.md](decisions/0015-structured-check-findings.md).
+[0016-structured-check-findings.md](decisions/0016-structured-check-findings.md).
 
 The interpreter executes a checked entry point with caller-supplied
 capabilities.

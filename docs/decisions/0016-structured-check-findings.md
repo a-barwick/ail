@@ -1,7 +1,16 @@
-# ADR 0015: `ailc check` emits located structured findings
+# ADR 0016: `ailc check` emits located structured findings
 
 - Status: Proposed
 - Date: 2026-08-24
+
+Supersedes the output shape of
+[ADR 0015](0015-ailc-architecture-diagnostic-facts.md). That record added the
+evaluator's `facts` pairs to the architecture line
+`code:scope:rule: key=value ...`. Every one of those pairs is retained here
+under a `facts.` key, alongside the rule, the scope, the classification, the
+declaration of each contributing unit, and the constraint the facts state. Both
+records reject deriving a suggested rewrite from the facts. This one replaces
+only the rendering.
 
 ## Context
 
@@ -11,6 +20,12 @@
 AIL.TYPE.FIELD_MISMATCH:<source-set>:164:203: expected.type=Text actual.type=Int
 AIL.ARCH.BOUNDARY:group:transport:M23-POL-GROUP-DEPENDENCY
 ```
+
+ADR 0015 landed the architecture half of the second line in parallel with this
+work, making it
+`AIL.ARCH.BOUNDARY:group:transport:M23-POL-GROUP-DEPENDENCY: forbidden_group_edges.0.kind=calls ...`.
+That fixed the missing facts and left the missing location: the line still names
+no file, no line, and no source text.
 
 That is a log line, not a compiler result. Four facts were missing or wrong:
 

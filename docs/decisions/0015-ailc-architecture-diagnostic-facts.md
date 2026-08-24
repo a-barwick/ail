@@ -1,7 +1,15 @@
 # ADR 0015: `ailc` prints the architecture facts the checker computed
 
-- Status: Accepted
+- Status: Accepted; rendering superseded by
+  [ADR 0016](0016-structured-check-findings.md)
 - Date: 2026-08-24
+
+The decision below is the record of why architecture facts belong in check
+output, and it stands. The `code:scope:rule: key=value ...` line it specifies no
+longer exists: ADR 0016 landed in parallel and replaced check's rendering with
+structured findings that carry every one of these `facts` pairs under a `facts.`
+key, plus the file, line, column, and source text the line lacked. Read the
+Validation section below as history.
 
 ## Context
 

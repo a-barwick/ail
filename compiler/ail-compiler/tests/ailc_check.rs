@@ -77,10 +77,14 @@ fn check_reports_the_architecture_facts_the_checker_already_computed() {
     let output = run_check(&path);
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
+    // ADR 0016 replaced the `code:scope:rule:` line with a structured finding.
+    // The rule and scope are still reported, now as their own facts.
     assert!(
-        stderr.contains("AIL.ARCH.BOUNDARY:group:transport:M23-POL-GROUP-DEPENDENCY:"),
+        stderr.contains("AIL.ARCH.BOUNDARY architecture error"),
         "{stderr}"
     );
+    assert!(stderr.contains("rule=M23-POL-GROUP-DEPENDENCY"), "{stderr}");
+    assert!(stderr.contains("scope=group:transport"), "{stderr}");
     assert!(
         stderr.contains("forbidden_group_edges.0.source_group=transport"),
         "{stderr}"
