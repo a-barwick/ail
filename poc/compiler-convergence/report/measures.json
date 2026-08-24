@@ -1,0 +1,773 @@
+{
+  "ail": {
+    "arm": "ail",
+    "policy": "ail",
+    "converged": true,
+    "passed_at_attempt": 3,
+    "retries_to_pass": 2,
+    "gate_calls": 3,
+    "gate_calls_check": 2,
+    "gate_calls_publish": 1,
+    "first_clean_check": 2,
+    "tokens_harness_to_agent": 8046,
+    "tokens_agent_to_harness": 401,
+    "tokens_total": 8447,
+    "chars_harness_to_agent": 42343,
+    "chars_agent_to_harness": 2367,
+    "ledger_from": "json",
+    "reads": 20,
+    "reference_reads": 14,
+    "edits": 4,
+    "distinct_diagnostics_seen": 1,
+    "diagnostics_seen": [
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 0,
+    "new_breakage_events": [],
+    "rebreaks": 0,
+    "rebreak_events": [],
+    "god_method_rejections": 1,
+    "god_method_attempts": [
+      1
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 0,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "ail-t2": {
+    "arm": "ail-t2",
+    "policy": "ail",
+    "converged": true,
+    "passed_at_attempt": 4,
+    "retries_to_pass": 3,
+    "gate_calls": 4,
+    "gate_calls_check": 3,
+    "gate_calls_publish": 1,
+    "first_clean_check": 3,
+    "tokens_harness_to_agent": 8521,
+    "tokens_agent_to_harness": 401,
+    "tokens_total": 8922,
+    "chars_harness_to_agent": 45010,
+    "chars_agent_to_harness": 2369,
+    "ledger_from": "json",
+    "reads": 23,
+    "reference_reads": 14,
+    "edits": 4,
+    "distinct_diagnostics_seen": 2,
+    "diagnostics_seen": [
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.MODULE.INACCESSIBLE_DECLARATION|declaration=transport.dispatch declaring_path=transport.ail module=transport referring_module=tests role=function"
+    ],
+    "fix_cycles": 1,
+    "new_breakage_events": [
+      {
+        "attempt": 2,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 0,
+    "rebreak_events": [],
+    "god_method_rejections": 1,
+    "god_method_attempts": [
+      2
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 1,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "ail-t3": {
+    "arm": "ail-t3",
+    "policy": "ail",
+    "converged": true,
+    "passed_at_attempt": 3,
+    "retries_to_pass": 2,
+    "gate_calls": 3,
+    "gate_calls_check": 2,
+    "gate_calls_publish": 1,
+    "first_clean_check": 2,
+    "tokens_harness_to_agent": 8048,
+    "tokens_agent_to_harness": 401,
+    "tokens_total": 8449,
+    "chars_harness_to_agent": 42349,
+    "chars_agent_to_harness": 2369,
+    "ledger_from": "json",
+    "reads": 20,
+    "reference_reads": 14,
+    "edits": 4,
+    "distinct_diagnostics_seen": 1,
+    "diagnostics_seen": [
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 0,
+    "new_breakage_events": [],
+    "rebreaks": 0,
+    "rebreak_events": [],
+    "god_method_rejections": 1,
+    "god_method_attempts": [
+      1
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 0,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "ail-t4": {
+    "arm": "ail-t4",
+    "policy": "ail",
+    "converged": true,
+    "passed_at_attempt": 2,
+    "retries_to_pass": 1,
+    "gate_calls": 2,
+    "gate_calls_check": 1,
+    "gate_calls_publish": 1,
+    "first_clean_check": null,
+    "tokens_harness_to_agent": 8019,
+    "tokens_agent_to_harness": 386,
+    "tokens_total": 8405,
+    "chars_harness_to_agent": 42234,
+    "chars_agent_to_harness": 2280,
+    "ledger_from": "json",
+    "reads": 20,
+    "reference_reads": 14,
+    "edits": 4,
+    "distinct_diagnostics_seen": 1,
+    "diagnostics_seen": [
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 0,
+    "new_breakage_events": [],
+    "rebreaks": 0,
+    "rebreak_events": [],
+    "god_method_rejections": 1,
+    "god_method_attempts": [
+      1
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 0,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "ail-t5": {
+    "arm": "ail-t5",
+    "policy": "ail",
+    "converged": true,
+    "passed_at_attempt": 4,
+    "retries_to_pass": 3,
+    "gate_calls": 4,
+    "gate_calls_check": 3,
+    "gate_calls_publish": 1,
+    "first_clean_check": 3,
+    "tokens_harness_to_agent": 8214,
+    "tokens_agent_to_harness": 401,
+    "tokens_total": 8615,
+    "chars_harness_to_agent": 43294,
+    "chars_agent_to_harness": 2369,
+    "ledger_from": "json",
+    "reads": 20,
+    "reference_reads": 14,
+    "edits": 4,
+    "distinct_diagnostics_seen": 2,
+    "diagnostics_seen": [
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.MODULE.INACCESSIBLE_DECLARATION|declaration=transport.dispatch declaring_path=transport.ail module=transport referring_module=tests role=function"
+    ],
+    "fix_cycles": 1,
+    "new_breakage_events": [
+      {
+        "attempt": 2,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 0,
+    "rebreak_events": [],
+    "god_method_rejections": 1,
+    "god_method_attempts": [
+      2
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 1,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "ail-t6": {
+    "arm": "ail-t6",
+    "policy": "ail",
+    "converged": true,
+    "passed_at_attempt": 4,
+    "retries_to_pass": 3,
+    "gate_calls": 4,
+    "gate_calls_check": 3,
+    "gate_calls_publish": 1,
+    "first_clean_check": 3,
+    "tokens_harness_to_agent": 8214,
+    "tokens_agent_to_harness": 386,
+    "tokens_total": 8600,
+    "chars_harness_to_agent": 43294,
+    "chars_agent_to_harness": 2280,
+    "ledger_from": "json",
+    "reads": 20,
+    "reference_reads": 14,
+    "edits": 4,
+    "distinct_diagnostics_seen": 2,
+    "diagnostics_seen": [
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.MODULE.INACCESSIBLE_DECLARATION|declaration=transport.dispatch declaring_path=transport.ail module=transport referring_module=tests role=function"
+    ],
+    "fix_cycles": 1,
+    "new_breakage_events": [
+      {
+        "attempt": 2,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 0,
+    "rebreak_events": [],
+    "god_method_rejections": 1,
+    "god_method_attempts": [
+      2
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 1,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "ail-t7": {
+    "arm": "ail-t7",
+    "policy": "ail",
+    "converged": true,
+    "passed_at_attempt": 3,
+    "retries_to_pass": 2,
+    "gate_calls": 3,
+    "gate_calls_check": 2,
+    "gate_calls_publish": 1,
+    "first_clean_check": 2,
+    "tokens_harness_to_agent": 8383,
+    "tokens_agent_to_harness": 401,
+    "tokens_total": 8784,
+    "chars_harness_to_agent": 44207,
+    "chars_agent_to_harness": 2369,
+    "ledger_from": "json",
+    "reads": 25,
+    "reference_reads": 14,
+    "edits": 4,
+    "distinct_diagnostics_seen": 1,
+    "diagnostics_seen": [
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 0,
+    "new_breakage_events": [],
+    "rebreaks": 0,
+    "rebreak_events": [],
+    "god_method_rejections": 1,
+    "god_method_attempts": [
+      1
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 0,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "control": {
+    "arm": "control",
+    "policy": "control",
+    "converged": true,
+    "passed_at_attempt": 14,
+    "retries_to_pass": 13,
+    "gate_calls": 14,
+    "gate_calls_check": 13,
+    "gate_calls_publish": 1,
+    "first_clean_check": 4,
+    "tokens_harness_to_agent": 10315,
+    "tokens_agent_to_harness": 1528,
+    "tokens_total": 11843,
+    "chars_harness_to_agent": 55364,
+    "chars_agent_to_harness": 8590,
+    "ledger_from": "json",
+    "reads": 25,
+    "reference_reads": 14,
+    "edits": 23,
+    "distinct_diagnostics_seen": 4,
+    "diagnostics_seen": [
+      "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=3 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=5 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 4,
+    "new_breakage_events": [
+      {
+        "attempt": 2,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 5,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 8,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=5 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 10,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=3 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 1,
+    "rebreak_events": [
+      {
+        "attempt": 5,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      }
+    ],
+    "god_method_rejections": 3,
+    "god_method_attempts": [
+      1,
+      8,
+      10
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 11,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "control-t2": {
+    "arm": "control-t2",
+    "policy": "control",
+    "converged": true,
+    "passed_at_attempt": 12,
+    "retries_to_pass": 11,
+    "gate_calls": 12,
+    "gate_calls_check": 11,
+    "gate_calls_publish": 1,
+    "first_clean_check": 4,
+    "tokens_harness_to_agent": 10097,
+    "tokens_agent_to_harness": 1222,
+    "tokens_total": 11319,
+    "chars_harness_to_agent": 53976,
+    "chars_agent_to_harness": 6890,
+    "ledger_from": "json",
+    "reads": 25,
+    "reference_reads": 14,
+    "edits": 22,
+    "distinct_diagnostics_seen": 4,
+    "diagnostics_seen": [
+      "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=3 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=5 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 4,
+    "new_breakage_events": [
+      {
+        "attempt": 2,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 6,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 7,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=5 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 8,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=3 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 1,
+    "rebreak_events": [
+      {
+        "attempt": 6,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "god_method_rejections": 5,
+    "god_method_attempts": [
+      1,
+      6,
+      7,
+      8,
+      9
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 9,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "control-t3": {
+    "arm": "control-t3",
+    "policy": "control",
+    "converged": true,
+    "passed_at_attempt": 15,
+    "retries_to_pass": 14,
+    "gate_calls": 15,
+    "gate_calls_check": 14,
+    "gate_calls_publish": 1,
+    "first_clean_check": 5,
+    "tokens_harness_to_agent": 10986,
+    "tokens_agent_to_harness": 1240,
+    "tokens_total": 12226,
+    "chars_harness_to_agent": 59304,
+    "chars_agent_to_harness": 6879,
+    "ledger_from": "json",
+    "reads": 30,
+    "reference_reads": 14,
+    "edits": 24,
+    "distinct_diagnostics_seen": 3,
+    "diagnostics_seen": [
+      "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=5 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 5,
+    "new_breakage_events": [
+      {
+        "attempt": 2,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 6,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 10,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 11,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=5 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 13,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=5 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 3,
+    "rebreak_events": [
+      {
+        "attempt": 6,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 10,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 13,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=5 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "god_method_rejections": 4,
+    "god_method_attempts": [
+      1,
+      10,
+      11,
+      13
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 12,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "control-t4": {
+    "arm": "control-t4",
+    "policy": "control",
+    "converged": true,
+    "passed_at_attempt": 2,
+    "retries_to_pass": 1,
+    "gate_calls": 2,
+    "gate_calls_check": 1,
+    "gate_calls_publish": 1,
+    "first_clean_check": 1,
+    "tokens_harness_to_agent": 8244,
+    "tokens_agent_to_harness": 308,
+    "tokens_total": 8552,
+    "chars_harness_to_agent": 43351,
+    "chars_agent_to_harness": 1687,
+    "ledger_from": "json",
+    "reads": 25,
+    "reference_reads": 14,
+    "edits": 4,
+    "distinct_diagnostics_seen": 0,
+    "diagnostics_seen": [],
+    "fix_cycles": 0,
+    "new_breakage_events": [],
+    "rebreaks": 0,
+    "rebreak_events": [],
+    "god_method_rejections": 0,
+    "god_method_attempts": [],
+    "max_dispatch_control_flow_complexity_seen": null,
+    "specification_violation_attempts": 0,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "control-t5": {
+    "arm": "control-t5",
+    "policy": "control",
+    "converged": true,
+    "passed_at_attempt": 11,
+    "retries_to_pass": 10,
+    "gate_calls": 11,
+    "gate_calls_check": 10,
+    "gate_calls_publish": 1,
+    "first_clean_check": 4,
+    "tokens_harness_to_agent": 9626,
+    "tokens_agent_to_harness": 1055,
+    "tokens_total": 10681,
+    "chars_harness_to_agent": 51439,
+    "chars_agent_to_harness": 6013,
+    "ledger_from": "json",
+    "reads": 25,
+    "reference_reads": 14,
+    "edits": 18,
+    "distinct_diagnostics_seen": 3,
+    "diagnostics_seen": [
+      "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=4 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 4,
+    "new_breakage_events": [
+      {
+        "attempt": 2,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 5,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 7,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 9,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=4 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 2,
+    "rebreak_events": [
+      {
+        "attempt": 5,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 7,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "god_method_rejections": 3,
+    "god_method_attempts": [
+      1,
+      7,
+      9
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 7,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "control-t6": {
+    "arm": "control-t6",
+    "policy": "control",
+    "converged": true,
+    "passed_at_attempt": 9,
+    "retries_to_pass": 8,
+    "gate_calls": 9,
+    "gate_calls_check": 8,
+    "gate_calls_publish": 1,
+    "first_clean_check": 4,
+    "tokens_harness_to_agent": 9454,
+    "tokens_agent_to_harness": 903,
+    "tokens_total": 10357,
+    "chars_harness_to_agent": 50244,
+    "chars_agent_to_harness": 5181,
+    "ledger_from": "json",
+    "reads": 30,
+    "reference_reads": 14,
+    "edits": 15,
+    "distinct_diagnostics_seen": 3,
+    "diagnostics_seen": [
+      "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=4 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 3,
+    "new_breakage_events": [
+      {
+        "attempt": 2,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 5,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 7,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=4 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 1,
+    "rebreak_events": [
+      {
+        "attempt": 5,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "god_method_rejections": 3,
+    "god_method_attempts": [
+      1,
+      5,
+      7
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 5,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  },
+  "control-t7": {
+    "arm": "control-t7",
+    "policy": "control",
+    "converged": true,
+    "passed_at_attempt": 12,
+    "retries_to_pass": 11,
+    "gate_calls": 12,
+    "gate_calls_check": 11,
+    "gate_calls_publish": 1,
+    "first_clean_check": 5,
+    "tokens_harness_to_agent": 9939,
+    "tokens_agent_to_harness": 1185,
+    "tokens_total": 11124,
+    "chars_harness_to_agent": 52895,
+    "chars_agent_to_harness": 6645,
+    "ledger_from": "json",
+    "reads": 30,
+    "reference_reads": 14,
+    "edits": 21,
+    "distinct_diagnostics_seen": 3,
+    "diagnostics_seen": [
+      "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=4 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+      "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+    ],
+    "fix_cycles": 3,
+    "new_breakage_events": [
+      {
+        "attempt": 2,
+        "keys": [
+          "AIL.ARCH.ANALYSIS_INCOMPLETE|reason=base architecture is incomplete"
+        ]
+      },
+      {
+        "attempt": 8,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      },
+      {
+        "attempt": 10,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=5 facts.candidate_context=4 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "rebreaks": 1,
+    "rebreak_events": [
+      {
+        "attempt": 8,
+        "keys": [
+          "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
+        ]
+      }
+    ],
+    "god_method_rejections": 3,
+    "god_method_attempts": [
+      1,
+      8,
+      10
+    ],
+    "max_dispatch_control_flow_complexity_seen": 7,
+    "specification_violation_attempts": 8,
+    "invariant_breaches": [],
+    "check_never_published": true,
+    "failed_publish_never_published": true
+  }
+}

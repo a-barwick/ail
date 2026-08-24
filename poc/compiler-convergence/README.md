@@ -1,19 +1,20 @@
 # Compiler convergence proof-of-concept
 
-Results from seven trials per arm against `main` at `5fd65db`, which carries
-[PR #5](https://github.com/a-barwick/ail/pull/5)'s structured findings, are in
-[RESULTS.md](RESULTS.md). In priority order: on **retries to a passing publish**,
-the win condition, the compiler arm ran 2,2,2,2,3,3,3 and the blind arm ran
-2,2,3,12,13,13,14, so median 2 against 12 and worst case 3 against 14 — but
-three blind trials matched or beat every compiler trial, and the blind
-distribution is bimodal. On **rebreak**, whether a later edit broke an earlier
-check, the compiler arm had zero events in seven trials and the blind arm had
-six across three trials. **Tokens** are extra: median 8490 against 11430.
+Results are in [RESULTS.md](RESULTS.md), from seven trials per arm against
+`main` at `36636f8` plus seven more against `5fd65db`, which is the same
+compiler binary. Pooled over fourteen trials per arm, in priority order.
 
-The magnitude is not stable. The control arm's information did not change
-between the pre-#5 and post-#5 runs, and its median retries still moved from 4
-to 12. The direction repeated; the ratio did not. `runs-pre-pr5/` holds that
-earlier run.
+On **retries to a passing publish**, the win condition, the compiler arm ran
+1,2,2,2,2,2,2,2,3,3,3,3,3,3 and the blind arm ran
+1,2,2,3,8,10,11,11,12,13,13,13,14,14: median 2 against 11, worst 3 against 14.
+The compiler arm never exceeded 3 retries in fourteen trials. The blind arm is
+bimodal — four trials got the whole repair right before the first gate call and
+finished in 1 to 3, the other ten fell into bisection and needed 8 to 14. Report
+that distribution, not the median.
+
+On **rebreak**, whether a later edit broke an earlier check, the compiler arm
+had zero events in fourteen trials. **Tokens** are extra: median 8600 against
+11124 on the latest run.
 
 One broken AIL workspace, two agents, one success gate. The arms differ in a
 single variable: whether the agent may see what the AIL compiler already knows.
