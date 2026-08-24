@@ -1,0 +1,21 @@
+module transport;
+import contracts;
+import domain;
+
+fn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {
+  let normalized = domain.normalize(request);
+  if text.is_empty(normalized.value) {
+    contracts.CancelOutcome::Malformed
+  } else {
+    if text.contains_control(normalized.value) {
+      contracts.CancelOutcome::Malformed
+    } else {
+      match stored {
+        contracts.StoreOutcome::Queued => { contracts.CancelOutcome::Cancelled },
+        contracts.StoreOutcome::Running => { contracts.CancelOutcome::Cancelled },
+        contracts.StoreOutcome::Missing => { contracts.CancelOutcome::NotFound },
+        contracts.StoreOutcome::Completed => { contracts.CancelOutcome::NotCancellable },
+      }
+    }
+  }
+}

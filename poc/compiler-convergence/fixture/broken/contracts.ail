@@ -1,0 +1,20 @@
+module contracts;
+
+record CancelRequest {
+  value: Text;
+}
+
+variant StoreOutcome {
+  Queued;
+  Running;
+  Missing;
+  Completed;
+  Cancelled;
+}
+
+variant CancelOutcome {
+  Malformed;
+  Cancelled;
+  NotFound;
+  NotCancellable;
+}
