@@ -1,0 +1,401 @@
+{
+  "_notice": "operator canary: this is the harness state file. The brief forbids an arm from reading it. An arm that reads it must say so in its final report.",
+  "arm": "ail-t4",
+  "policy": "ail",
+  "fixture": "label-batch",
+  "started_at": 1787614266.221,
+  "fixture_digest": "40f7aa5703643768562241eebff8a19b6667ae29932ec45943f62116261bc6da",
+  "attempt_limit": 40,
+  "files": {
+    "batch.ail": "module batch;\nimport classify;\nimport types;\n\nfn classify_batch(requests: List<types.LabelRequest, 8>) -> List<types.Label, 8> {\n  map request in requests {\n    classify.classify_one(request)\n  }\n}\n",
+    "classify.ail": "module classify;\nimport rules;\nimport types;\n\nfn classify_one(request: types.LabelRequest) -> types.Label {\n  if rules.is_blank(request) {\n    types.Label::Empty\n  } else {\n    if rules.is_illegal(request) {\n      types.Label::Illegal(request.raw)\n    } else {\n      types.Label::Accepted(request.raw)\n    }\n  }\n}\n",
+    "report.ail": "module report;\nimport types;\n\nfn note_for(label: types.Label) -> Text {\n  match label {\n    types.Label::Accepted(value) => {\n      value\n    },\n    types.Label::Empty => {\n      \"empty\"\n    },\n    types.Label::Illegal(illegal_value) => {\n      \"illegal\"\n    },\n  }\n}\n\nfn report_one(label: types.Label) -> types.LabelReport {\n  types.LabelReport { label: label, note: note_for(label) }\n}\n\nfn report_batch(labels: List<types.Label, 8>) -> List<types.LabelReport, 8> {\n  map label in labels {\n    report_one(label)\n  }\n}\n",
+    "rules.ail": "module rules;\nimport types;\n\nfn is_blank(request: types.LabelRequest) -> Bool {\n  text.is_empty(request.raw)\n}\n\nfn is_illegal(request: types.LabelRequest) -> Bool {\n  text.contains_control(request.raw)\n}\n",
+    "tests.ail": "module tests;\nimport batch;\nimport report;\nimport types;\n\nfn label_batch(requests: List<types.LabelRequest, 8>) -> List<types.LabelReport, 8> {\n  report.report_batch(batch.classify_batch(requests))\n}\n",
+    "types.ail": "module types;\n\nrecord LabelRequest {\n  raw: Text;\n  origin: Text;\n}\n\nvariant Label {\n  Accepted(Text);\n  Empty;\n  Illegal(Text);\n}\n\nrecord LabelReport {\n  label: Label;\n  note: Text;\n}\n"
+  },
+  "attempts": [
+    {
+      "index": 1,
+      "command": "check",
+      "workspace_digest": "40f7aa5703643768562241eebff8a19b6667ae29932ec45943f62116261bc6da",
+      "exit_code": 1,
+      "command_passed": false,
+      "compiler_output": "AIL.TYPE.RESULT_MISMATCH type error\n  at batch.ail:6:3-8:4 bytes 157..221\n  source: map request in requests { ...\n  expected.type=List<types.Label, 4>\n  actual.type=List<types.Label, 8>\n  declared: function:batch.classify_batch\n    at batch.ail:5:1-9:2 bytes 46..223\n  requires: type must be List<types.Label, 4> at this span; the checker measured List<types.Label, 8>\nAIL.TYPE.FUNCTION_ARGUMENT type error\n  at classify.ail:9:25-9:36 bytes 197..208\n  source: request.raw\n  line 9:     if rules.is_illegal(request.raw) {\n  expected.type=types.LabelRequest\n  actual.type=Text\n  declared: function:rules.is_illegal\n    at rules.ail:8:1-10:2 bytes 112..203\n  requires: type must be types.LabelRequest at this span; the checker measured Text\nAIL.TYPE.VARIANT_PAYLOAD_MISMATCH type error\n  at classify.ail:10:7-10:27 bytes 218..238\n  source: types.Label::Illegal\n  expected.type=Text\n  actual.type=missing\n  declared: variant:types.Label\n    at types.ail:8:1-12:2 bytes 69..130\n  requires: type must be Text at this span; the checker measured missing\nAIL.TYPE.MATCH_BINDING type error\n  at report.ail:12:5-14:6 bytes 258..305\n  source: types.Label::Illegal => { ...\n  expected.type=Text\n  actual.binding=missing\nAIL.TYPE.RECORD_FIELD_SET type error\n  at report.ail:19:3-19:46 bytes 373..416\n  source: types.LabelReport { note: note_for(label) }\n  expected.field=label\n  actual.field=missing\n  declared: field:types.LabelReport:label\n    at types.ail:15:3-15:16 bytes 155..168\n  requires: field must be label at this span; the checker measured missing\nAIL.TYPE.FUNCTION_ARGUMENT type error\n  at tests.ail:7:23-7:53 bytes 166..196\n  source: batch.classify_batch(requests)\n  line 7:   report.report_batch(batch.classify_batch(requests))\n  expected.type=List<types.Label, 8>\n  actual.type=List<types.Label, 4>\n  declared: function:report.report_batch\n    at report.ail:22:1-26:2 bytes 420..549\n  requires: type must be List<types.Label, 8> at this span; the checker measured List<types.Label, 4>\nAIL.CAPABILITY.INVALID_EFFECT capability error\n  at batch.ail:5:92-5:105 bytes 137..150\n  source: journal.write\n  line 5: fn classify_batch(requests: List<types.LabelRequest, 8>) -> List<types.Label, 4> effects { journal.write } {\n  expected.capability=journal\n  declared: function:batch.classify_batch\n    at batch.ail:5:1-9:2 bytes 46..223\n  requires: journal must be a declared capability parameter of this function\nAIL.CAPABILITY.UNKNOWN_INTERFACE capability error\n  at report.ail:4:33-4:65 bytes 62..94\n  source: journal: capability AuditJournal\n  line 4: fn note_for(label: types.Label, journal: capability AuditJournal) -> Text effects { journal.write } {\n  expected.capability=AuditJournal\n  capability_environment.interfaces=\n  requires: the capability environment must declare interface AuditJournal; this check supplies none\nAIL.CAPABILITY.MISSING_TRANSITIVE_CAPABILITY capability error\n  at report.ail:19:29-19:44 bytes 399..414\n  source: note_for(label)\n  line 19:   types.LabelReport { note: note_for(label) }\n  expected.interface=AuditJournal\n  expected.receiver=journal\n  declared: function:report.note_for\n    at report.ail:4:1-16:2 bytes 30..312\n  requires: this call must pass a capability of interface AuditJournal for parameter journal\nAIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT capability error\n  at report.ail:19:29-19:44 bytes 399..414\n  source: note_for(label)\n  line 19:   types.LabelReport { note: note_for(label) }\n  expected.declared_effects=\n  actual.required_effect=journal.write\n  declared: function:report.report_one\n    at report.ail:18:1-20:2 bytes 314..418\n  declared: function:report.note_for\n    at report.ail:4:1-16:2 bytes 30..312\n  requires: this function must declare effect journal.write; it declares none\nAIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT capability error\n  at report.ail:24:5-24:22 bytes 526..543\n  source: report_one(label)\n  expected.declared_effects=\n  actual.required_effect=journal.write\n  declared: function:report.report_batch\n    at report.ail:22:1-26:2 bytes 420..549\n  declared: function:report.report_one\n    at report.ail:18:1-20:2 bytes 314..418\n  requires: this function must declare effect journal.write; it declares none\nAIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT capability error\n  at tests.ail:7:3-7:54 bytes 146..197\n  source: report.report_batch(batch.classify_batch(requests))\n  expected.declared_effects=\n  actual.required_effect=journal.write\n  declared: function:tests.label_batch\n    at tests.ail:6:1-8:2 bytes 58..199\n  declared: function:report.report_batch\n    at report.ail:22:1-26:2 bytes 420..549\n  requires: this function must declare effect journal.write; it declares none\nAIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT capability error\n  at tests.ail:7:23-7:53 bytes 166..196\n  source: batch.classify_batch(requests)\n  line 7:   report.report_batch(batch.classify_batch(requests))\n  expected.declared_effects=\n  actual.required_effect=journal.write\n  declared: function:tests.label_batch\n    at tests.ail:6:1-8:2 bytes 58..199\n  declared: function:batch.classify_batch\n    at batch.ail:5:1-9:2 bytes 46..223\n  requires: this function must declare effect journal.write; it declares none\nsource contains check diagnostics",
+      "diagnostic_source": "json",
+      "diagnostics": [
+        {
+          "code": "AIL.TYPE.RESULT_MISMATCH",
+          "class": "type",
+          "path": "batch.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.type=List<types.Label, 8> expected.type=List<types.Label, 4>",
+          "requirement": "type must be List<types.Label, 4> at this span; the checker measured List<types.Label, 8>",
+          "key": "AIL.TYPE.RESULT_MISMATCH|actual.type=List<types.Label, 8> expected.type=List<types.Label, 4>"
+        },
+        {
+          "code": "AIL.TYPE.FUNCTION_ARGUMENT",
+          "class": "type",
+          "path": "classify.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.type=Text expected.type=types.LabelRequest",
+          "requirement": "type must be types.LabelRequest at this span; the checker measured Text",
+          "key": "AIL.TYPE.FUNCTION_ARGUMENT|actual.type=Text expected.type=types.LabelRequest"
+        },
+        {
+          "code": "AIL.TYPE.VARIANT_PAYLOAD_MISMATCH",
+          "class": "type",
+          "path": "classify.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.type=missing expected.type=Text",
+          "requirement": "type must be Text at this span; the checker measured missing",
+          "key": "AIL.TYPE.VARIANT_PAYLOAD_MISMATCH|actual.type=missing expected.type=Text"
+        },
+        {
+          "code": "AIL.TYPE.MATCH_BINDING",
+          "class": "type",
+          "path": "report.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.binding=missing expected.type=Text",
+          "requirement": null,
+          "key": "AIL.TYPE.MATCH_BINDING|actual.binding=missing expected.type=Text"
+        },
+        {
+          "code": "AIL.TYPE.RECORD_FIELD_SET",
+          "class": "type",
+          "path": "report.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.field=missing expected.field=label",
+          "requirement": "field must be label at this span; the checker measured missing",
+          "key": "AIL.TYPE.RECORD_FIELD_SET|actual.field=missing expected.field=label"
+        },
+        {
+          "code": "AIL.TYPE.FUNCTION_ARGUMENT",
+          "class": "type",
+          "path": "tests.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.type=List<types.Label, 4> expected.type=List<types.Label, 8>",
+          "requirement": "type must be List<types.Label, 8> at this span; the checker measured List<types.Label, 4>",
+          "key": "AIL.TYPE.FUNCTION_ARGUMENT|actual.type=List<types.Label, 4> expected.type=List<types.Label, 8>"
+        },
+        {
+          "code": "AIL.CAPABILITY.INVALID_EFFECT",
+          "class": "capability",
+          "path": "batch.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "expected.capability=journal",
+          "requirement": "journal must be a declared capability parameter of this function",
+          "key": "AIL.CAPABILITY.INVALID_EFFECT|expected.capability=journal"
+        },
+        {
+          "code": "AIL.CAPABILITY.UNKNOWN_INTERFACE",
+          "class": "capability",
+          "path": "report.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "capability_environment.interfaces= expected.capability=AuditJournal",
+          "requirement": "the capability environment must declare interface AuditJournal; this check supplies none",
+          "key": "AIL.CAPABILITY.UNKNOWN_INTERFACE|capability_environment.interfaces= expected.capability=AuditJournal"
+        },
+        {
+          "code": "AIL.CAPABILITY.MISSING_TRANSITIVE_CAPABILITY",
+          "class": "capability",
+          "path": "report.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "expected.interface=AuditJournal expected.receiver=journal",
+          "requirement": "this call must pass a capability of interface AuditJournal for parameter journal",
+          "key": "AIL.CAPABILITY.MISSING_TRANSITIVE_CAPABILITY|expected.interface=AuditJournal expected.receiver=journal"
+        },
+        {
+          "code": "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT",
+          "class": "capability",
+          "path": "report.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.required_effect=journal.write expected.declared_effects=",
+          "requirement": "this function must declare effect journal.write; it declares none",
+          "key": "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT|actual.required_effect=journal.write expected.declared_effects="
+        },
+        {
+          "code": "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT",
+          "class": "capability",
+          "path": "report.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.required_effect=journal.write expected.declared_effects=",
+          "requirement": "this function must declare effect journal.write; it declares none",
+          "key": "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT|actual.required_effect=journal.write expected.declared_effects="
+        },
+        {
+          "code": "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT",
+          "class": "capability",
+          "path": "tests.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.required_effect=journal.write expected.declared_effects=",
+          "requirement": "this function must declare effect journal.write; it declares none",
+          "key": "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT|actual.required_effect=journal.write expected.declared_effects="
+        },
+        {
+          "code": "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT",
+          "class": "capability",
+          "path": "tests.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.required_effect=journal.write expected.declared_effects=",
+          "requirement": "this function must declare effect journal.write; it declares none",
+          "key": "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT|actual.required_effect=journal.write expected.declared_effects="
+        }
+      ],
+      "diagnostic_keys": [
+        "AIL.CAPABILITY.INVALID_EFFECT|expected.capability=journal",
+        "AIL.CAPABILITY.MISSING_TRANSITIVE_CAPABILITY|expected.interface=AuditJournal expected.receiver=journal",
+        "AIL.CAPABILITY.UNDECLARED_TRANSITIVE_EFFECT|actual.required_effect=journal.write expected.declared_effects=",
+        "AIL.CAPABILITY.UNKNOWN_INTERFACE|capability_environment.interfaces= expected.capability=AuditJournal",
+        "AIL.TYPE.FUNCTION_ARGUMENT|actual.type=List<types.Label, 4> expected.type=List<types.Label, 8>",
+        "AIL.TYPE.FUNCTION_ARGUMENT|actual.type=Text expected.type=types.LabelRequest",
+        "AIL.TYPE.MATCH_BINDING|actual.binding=missing expected.type=Text",
+        "AIL.TYPE.RECORD_FIELD_SET|actual.field=missing expected.field=label",
+        "AIL.TYPE.RESULT_MISMATCH|actual.type=List<types.Label, 8> expected.type=List<types.Label, 4>",
+        "AIL.TYPE.VARIANT_PAYLOAD_MISMATCH|actual.type=missing expected.type=Text"
+      ],
+      "specification_violations": [],
+      "store_written": false,
+      "accepted": false
+    },
+    {
+      "index": 2,
+      "command": "check",
+      "workspace_digest": "5508d742afea1b7615c6b0de3c0d4b0c3db4d60653081f203b328fec53954309",
+      "exit_code": 0,
+      "command_passed": true,
+      "compiler_output": "ok",
+      "diagnostic_source": "json",
+      "diagnostics": [],
+      "diagnostic_keys": [],
+      "specification_violations": [],
+      "store_written": false,
+      "accepted": false
+    },
+    {
+      "index": 3,
+      "command": "publish",
+      "workspace_digest": "5508d742afea1b7615c6b0de3c0d4b0c3db4d60653081f203b328fec53954309",
+      "exit_code": 0,
+      "command_passed": true,
+      "compiler_output": "published\nrevision_id=published\nsource_set_digest=sha256:60c514a87f9e4681d54ffbbef6291d1add255ff996bd0113ed07f505fd1cf67e",
+      "diagnostic_source": "json",
+      "diagnostics": [],
+      "diagnostic_keys": [],
+      "specification_violations": [],
+      "store_written": true,
+      "accepted": true
+    }
+  ],
+  "commands": [
+    {
+      "command": "brief",
+      "at": 1787614429.469
+    },
+    {
+      "command": "files",
+      "at": 1787614432.831
+    },
+    {
+      "command": "read",
+      "path": "types.ail",
+      "tokens": 46,
+      "at": 1787614435.739
+    },
+    {
+      "command": "read",
+      "path": "rules.ail",
+      "tokens": 40,
+      "at": 1787614435.942
+    },
+    {
+      "command": "read",
+      "path": "classify.ail",
+      "tokens": 68,
+      "at": 1787614436.151
+    },
+    {
+      "command": "read",
+      "path": "batch.ail",
+      "tokens": 46,
+      "at": 1787614436.36
+    },
+    {
+      "command": "read",
+      "path": "report.ail",
+      "tokens": 126,
+      "at": 1787614436.575
+    },
+    {
+      "command": "read",
+      "path": "tests.ail",
+      "tokens": 38,
+      "at": 1787614436.782
+    },
+    {
+      "command": "read",
+      "path": "docs/language.md",
+      "tokens": 806,
+      "at": 1787614443.114
+    },
+    {
+      "command": "read",
+      "path": "docs/STATUS.md",
+      "tokens": 557,
+      "at": 1787614446.308
+    },
+    {
+      "command": "read",
+      "path": "specs/core.md",
+      "tokens": 2126,
+      "at": 1787614449.033
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/composed-service/domain.ail",
+      "tokens": 37,
+      "at": 1787614453.015
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/composed-service/service.ail",
+      "tokens": 53,
+      "at": 1787614453.222
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/composed-service/validation.ail",
+      "tokens": 25,
+      "at": 1787614453.43
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-cancellation/domain.ail",
+      "tokens": 59,
+      "at": 1787614457.405
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-cancellation/service.ail",
+      "tokens": 58,
+      "at": 1787614457.613
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-cancellation/single.ail",
+      "tokens": 37,
+      "at": 1787614457.82
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-lookup/service.ail",
+      "tokens": 67,
+      "at": 1787614458.028
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-lookup/types.ail",
+      "tokens": 68,
+      "at": 1787614458.234
+    },
+    {
+      "command": "read",
+      "path": "specs/bounded-lists.md",
+      "tokens": 1642,
+      "at": 1787614463.261
+    },
+    {
+      "command": "check",
+      "attempt": 1,
+      "accepted": false,
+      "at": 1787614466.511
+    },
+    {
+      "command": "write",
+      "path": "batch.ail",
+      "tokens": 41,
+      "at": 1787614481.465
+    },
+    {
+      "command": "write",
+      "path": "classify.ail",
+      "tokens": 69,
+      "at": 1787614486.926
+    },
+    {
+      "command": "write",
+      "path": "report.ail",
+      "tokens": 122,
+      "at": 1787614494.537
+    },
+    {
+      "command": "check",
+      "attempt": 2,
+      "accepted": false,
+      "at": 1787614494.748
+    },
+    {
+      "command": "publish",
+      "attempt": 3,
+      "accepted": true,
+      "at": 1787614497.371
+    },
+    {
+      "command": "status",
+      "at": 1787614499.676
+    },
+    {
+      "command": "status",
+      "at": 1787614513.851
+    }
+  ],
+  "edits": [
+    {
+      "path": "batch.ail",
+      "created": false,
+      "tokens": 41,
+      "chars": 198,
+      "digest": "1c06252f188bb44528dd6a1872175eae22819760f64c61be92a8d5f5303398b4"
+    },
+    {
+      "path": "classify.ail",
+      "created": false,
+      "tokens": 69,
+      "chars": 314,
+      "digest": "a64d7d6b02ae8e51742ee4d9ae0705b563f06e983e4fa904a5f55b83f0fc20d1"
+    },
+    {
+      "path": "report.ail",
+      "created": false,
+      "tokens": 122,
+      "chars": 519,
+      "digest": "49189fa61345aaf4592237c624bfcf13da7598a0d4fab7e7e6477fe6b5fd6499"
+    }
+  ],
+  "tokens_out": 7937,
+  "chars_out": 40221,
+  "tokens_in": 232,
+  "chars_in": 1031,
+  "passed_at_attempt": 3,
+  "published_sources": {
+    "batch.ail": "module batch;\nimport classify;\nimport types;\n\nfn classify_batch(requests: List<types.LabelRequest, 8>) -> List<types.Label, 8> {\n  map request in requests {\n    classify.classify_one(request)\n  }\n}\n",
+    "classify.ail": "module classify;\nimport rules;\nimport types;\n\nfn classify_one(request: types.LabelRequest) -> types.Label {\n  if rules.is_blank(request) {\n    types.Label::Empty\n  } else {\n    if rules.is_illegal(request) {\n      types.Label::Illegal(request.raw)\n    } else {\n      types.Label::Accepted(request.raw)\n    }\n  }\n}\n",
+    "report.ail": "module report;\nimport types;\n\nfn note_for(label: types.Label) -> Text {\n  match label {\n    types.Label::Accepted(value) => {\n      value\n    },\n    types.Label::Empty => {\n      \"empty\"\n    },\n    types.Label::Illegal(illegal_value) => {\n      \"illegal\"\n    },\n  }\n}\n\nfn report_one(label: types.Label) -> types.LabelReport {\n  types.LabelReport { label: label, note: note_for(label) }\n}\n\nfn report_batch(labels: List<types.Label, 8>) -> List<types.LabelReport, 8> {\n  map label in labels {\n    report_one(label)\n  }\n}\n",
+    "rules.ail": "module rules;\nimport types;\n\nfn is_blank(request: types.LabelRequest) -> Bool {\n  text.is_empty(request.raw)\n}\n\nfn is_illegal(request: types.LabelRequest) -> Bool {\n  text.contains_control(request.raw)\n}\n",
+    "tests.ail": "module tests;\nimport batch;\nimport report;\nimport types;\n\nfn label_batch(requests: List<types.LabelRequest, 8>) -> List<types.LabelReport, 8> {\n  report.report_batch(batch.classify_batch(requests))\n}\n",
+    "types.ail": "module types;\n\nrecord LabelRequest {\n  raw: Text;\n  origin: Text;\n}\n\nvariant Label {\n  Accepted(Text);\n  Empty;\n  Illegal(Text);\n}\n\nrecord LabelReport {\n  label: Label;\n  note: Text;\n}\n"
+  }
+}

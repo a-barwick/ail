@@ -1,0 +1,57 @@
+per trial
+
+measure                                               ail      ail-t2      ail-t3      ail-t4      ail-t5      ail-t6      ail-t7     control  control-t2  control-t3  control-t4  control-t5  control-t6  control-t7
+1 RETRIES to passing publish                            2           2           2           2           2           1           2           1           1           1           1           1           1           1
+  of those, gate calls that failed                      1           1           1           1           1           0           1           0           0           0           0           0           0           0
+  converged                                          True        True        True        True        True        True        True        True        True        True        True        True        True        True
+  gate calls to pass                                    3           3           3           3           3           2           3           2           2           2           2           2           2           2
+2 REBREAKS (fixed, then broken again)                   0           0           0           0           0           0           0           0           0           0           0           0           0           0
+  fix cycles (new breakage after an edit)               0           0           0           0           0           0           0           0           0           0           0           0           0           0
+  attempts failing the task specification               0           0           0           0           0           0           0           0           0           0           0           0           0           0
+3 TOKENS total (protocol, extra)                     8521        7844        7867        8169        8539        7015        8154        7357        7020        6804        6448        7020        7237        6990
+  tokens harness to agent                            8289        7612        7635        7937        8307        6783        7922        7125        6788        6572        6216        6788        7005        6758
+  tokens agent to harness                             232         232         232         232         232         232         232         232         232         232         232         232         232         232
+- source edits                                          3           3           3           3           3           3           3           3           3           3           3           3           3           3
+- reads                                                24          20          20          18          24          18          18          24          18          23          17          18          21          18
+- distinct diagnostics reached                         10          10          10          10          10           0          10           0           0           0           0           0           0           0
+- distinct type diagnostics reached                     6           6           6           6           6           0           6           0           0           0           0           0           0           0
+- distinct capability diagnostics reached               4           4           4           4           4           0           4           0           0           0           0           0           0           0
+- distinct architecture diagnostics reached             0           0           0           0           0           0           0           0           0           0           0           0           0           0
+- god-method rejections                                 0           0           0           0           0           0           0           0           0           0           0           0           0           0
+- worst dispatch control-flow complexity             None        None        None        None        None        None        None        None        None        None        None        None        None        None
+- first check that passed                               2           2           2           2           2           1           2           1           1           1           1           1           1           1
+- ledger built from                                  json        json        json        json        json        json        json        json        json        json        json        json        json        json
+
+median of ail: 7 trials, control: 7 trials
+
+measure                                               ail     control
+1 RETRIES to passing publish                            2           1
+  of those, gate calls that failed                      1           0
+  converged                                          True        True
+  gate calls to pass                                    3           2
+2 REBREAKS (fixed, then broken again)                   0           0
+  fix cycles (new breakage after an edit)               0           0
+  attempts failing the task specification               0           0
+3 TOKENS total (protocol, extra)                     8154        7020
+  tokens harness to agent                            7922        6788
+  tokens agent to harness                             232         232
+- source edits                                          3           3
+- reads                                                20          18
+- distinct diagnostics reached                         10           0
+- distinct type diagnostics reached                     6           0
+- distinct capability diagnostics reached               4           0
+- distinct architecture diagnostics reached             0           0
+- god-method rejections                                 0           0
+- worst dispatch control-flow complexity                -           -
+- first check that passed                               2           1
+- ledger built from                                     -           -
+
+win condition: retries to a passing publish
+
+  ail      n=7  retries [1, 2, 2, 2, 2, 2, 2]  median 2  worst 2  did not converge 0
+  control  n=7  retries [1, 1, 1, 1, 1, 1, 1]  median 1  worst 1  did not converge 0
+
+  paired comparisons (49 of them, every ail trial against every control trial):
+    control needed more retries in 0, fewer in 42, equal in 7
+
+  control wins the win condition, with ties: no ail trial needed fewer retries than any control trial, and 42 of 49 comparisons went to control.

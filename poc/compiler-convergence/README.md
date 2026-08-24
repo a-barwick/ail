@@ -1,5 +1,26 @@
 # Compiler convergence proof-of-concept
 
+One broken AIL workspace, two agents, one success gate. The arms differ in a
+single variable: whether the agent may see what the AIL compiler already knows.
+
+Two independent fixtures run on this harness. Their numbers are separate
+experiments and must not be quoted as one result.
+
+| fixture | faults | who won the win condition | results |
+| --- | --- | --- | --- |
+| `cancel-dispatch` (default) | module, type, capability, and an architecture complexity budget | the compiler arm, median 2 retries against 11 | [RESULTS.md](RESULTS.md) |
+| `label-batch` | type, capability, and effect only; no `architecture.json` in the workspace | the blind arm, 1 retry against 2 | [RESULTS-label-batch.md](RESULTS-label-batch.md), [fixture-label-batch/README.md](fixture-label-batch/README.md) |
+
+Read that second row before quoting the first. Compiler visibility paid when the
+repair depended on a number only the compiler measures, and paid nothing when
+every fault was a locally readable type or capability error in six small files.
+
+Pass `--fixture <name>` to every harness command. It defaults to
+`cancel-dispatch`, so the commands in this file run the first fixture. The rest
+of this file describes that fixture.
+
+## Fixture `cancel-dispatch`
+
 Results are in [RESULTS.md](RESULTS.md), from seven trials per arm against
 `main` at `36636f8` plus seven more against `5fd65db`, which is the same
 compiler binary. Pooled over fourteen trials per arm, in priority order.
@@ -16,8 +37,7 @@ On **rebreak**, whether a later edit broke an earlier check, the compiler arm
 had zero events in fourteen trials. **Tokens** are extra: median 8600 against
 11124 on the latest run.
 
-One broken AIL workspace, two agents, one success gate. The arms differ in a
-single variable: whether the agent may see what the AIL compiler already knows.
+Both fixtures use the same two arms:
 
 - Arm `ail`: `check` and `publish` return the compiler's own output, including
   `expected.type`, `expected.cases`, `expected.capability`, and architecture
@@ -136,6 +156,13 @@ that were withheld from the control arm.
 `report/measures.txt` is the table, `report/measures.json` has the per-attempt
 detail, and `runs/<arm>/state.json` is the full ledger: every command, every
 edit, every gate call, the compiler output for each, and the final source.
+
+Every command takes `--fixture`. Each fixture keeps its own task specification,
+its own reference material list, its own reference repair, and its own
+`runs-<fixture>/` and `report-<fixture>/` directories; `cancel-dispatch` keeps
+the original `runs/` and `report/` paths. The protocol, the gate, and the
+measures are shared, which is what makes two fixtures comparable as experiments
+even when their faults are unrelated.
 
 ## Gate semantics
 
