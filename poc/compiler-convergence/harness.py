@@ -111,6 +111,11 @@ class Fixture:
 FIXTURES = {
     "cancel-dispatch": Fixture(name="cancel-dispatch", directory="fixture"),
     "label-batch": Fixture(name="label-batch", directory="fixture-label-batch"),
+    # Same broken workspace and same brief as `label-batch`, separate runs. Used
+    # for a second condition in which the operator adds one instruction, worded
+    # identically for both arms, so its trials never pool with the first
+    # condition's.
+    "label-batch-frugal": Fixture(name="label-batch-frugal", directory="fixture-label-batch"),
 }
 DEFAULT_FIXTURE = "cancel-dispatch"
 
@@ -804,9 +809,23 @@ def measure(state: dict, fixture: Fixture) -> dict:
         "fixture": state.get("fixture", fixture.name),
         "converged": state["passed_at_attempt"] is not None,
         "passed_at_attempt": state["passed_at_attempt"],
-        # The win condition: failed gate calls before the passing publish.
+        # The win condition: gate calls spent before the publish that passed,
+        # whether each one failed or passed.
         "retries_to_pass": (
             state["passed_at_attempt"] - 1 if state["passed_at_attempt"] else None
+        ),
+        # Of those gate calls, the ones the compiler or the specification denied.
+        # `retries_to_pass` counts every earlier gate call, including a passing
+        # `check`, so the two numbers differ for an arm that checks before it
+        # publishes.
+        "failed_gate_calls_before_pass": (
+            sum(
+                1
+                for item in attempts
+                if item["index"] < state["passed_at_attempt"] and not item["command_passed"]
+            )
+            if state["passed_at_attempt"]
+            else None
         ),
         "gate_calls": len(attempts),
         "gate_calls_check": sum(1 for item in attempts if item["command"] == "check"),
@@ -893,6 +912,7 @@ def command_report(args: argparse.Namespace) -> None:
     # and never decide anything on their own.
     rows = [
         ("1 RETRIES to passing publish", "retries_to_pass"),
+        ("  of those, gate calls that failed", "failed_gate_calls_before_pass"),
         ("  converged", "converged"),
         ("  gate calls to pass", "passed_at_attempt"),
         ("2 REBREAKS (fixed, then broken again)", "rebreaks"),
@@ -953,27 +973,49 @@ def command_report(args: argparse.Namespace) -> None:
         )
     if len(spread) == 2 and all(spread.values()):
         (first, low), (second, high) = spread.items()
-        worse = sum(1 for a in low for b in high if b > a)
-        better = sum(1 for a in low for b in high if b < a)
-        tied = sum(1 for a in low for b in high if b == a)
+        pairs = len(low) * len(high)
+        second_worse = sum(1 for a in low for b in high if b > a)
+        second_better = sum(1 for a in low for b in high if b < a)
+        tied = pairs - second_worse - second_better
         lines += [
             "",
-            f"  paired comparisons ({len(low) * len(high)} of them, every {first} trial "
+            f"  paired comparisons ({pairs} of them, every {first} trial "
             f"against every {second} trial):",
-            f"    {second} needed more retries in {worse}, fewer in {better}, equal in {tied}",
+            f"    {second} needed more retries in {second_worse}, fewer in "
+            f"{second_better}, equal in {tied}",
         ]
-        if max(low) < min(high):
-            verdict = f"{first} wins the win condition outright: every {first} trial beat every {second} trial."
-        elif max(high) < min(low):
-            verdict = f"{second} wins the win condition outright: every {second} trial beat every {first} trial."
+        # The verdict states only what the paired comparisons support. Fewer
+        # retries is better, so a win means the other arm never needed fewer.
+        if second_worse == pairs:
+            verdict = (
+                f"{first} wins the win condition outright: every {first} trial needed "
+                f"fewer retries than every {second} trial."
+            )
+        elif second_better == pairs:
+            verdict = (
+                f"{second} wins the win condition outright: every {second} trial needed "
+                f"fewer retries than every {first} trial."
+            )
+        elif second_better == 0 and second_worse > 0:
+            verdict = (
+                f"{first} wins the win condition, with ties: no {second} trial needed "
+                f"fewer retries than any {first} trial, and {second_worse} of {pairs} "
+                f"comparisons went to {first}."
+            )
+        elif second_worse == 0 and second_better > 0:
+            verdict = (
+                f"{second} wins the win condition, with ties: no {first} trial needed "
+                f"fewer retries than any {second} trial, and {second_better} of {pairs} "
+                f"comparisons went to {second}."
+            )
         elif median(low) == median(high):
             verdict = "no win on the win condition: the medians are equal and the distributions overlap."
         else:
-            better = first if median(low) < median(high) else second
-            worse = second if better == first else first
+            ahead = first if median(low) < median(high) else second
+            behind = second if ahead == first else first
             verdict = (
-                f"{better} wins the median but not outright: the distributions overlap, so at "
-                f"least one {worse} trial beat at least one {better} trial. Not a clean win."
+                f"{ahead} wins the median but not outright: the distributions overlap, so at "
+                f"least one {behind} trial beat at least one {ahead} trial. Not a clean win."
             )
         lines += ["", f"  {verdict}"]
 
@@ -1191,6 +1233,107 @@ def command_self_test(args: argparse.Namespace) -> None:
     raise SystemExit(0 if failed == 0 else 1)
 
 
+def command_audit(args: argparse.Namespace) -> None:
+    """Audit finished runs against claims a reader can check without trusting us.
+
+    Every check here reads the committed run ledger and the committed fixture. It
+    answers: did any arm touch an immutable file, did any published workspace
+    fail the task specification, did a failure class this fixture excludes ever
+    appear, and did any gate call break the write invariants.
+    """
+    fixture = fixture_named(args.fixture)
+    spec = contract(fixture)
+    broken = {
+        item.name: item.read_text(encoding="utf-8")
+        for item in sorted(fixture.broken.iterdir())
+        if item.is_file()
+    }
+    checks: list[tuple[str, bool, str]] = []
+    for state_path in sorted(fixture.runs.glob("*/state.json")):
+        name = state_path.parent.name
+        if not ARM_NAME.match(name):
+            continue
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        for immutable in spec["immutable_files"]:
+            checks.append(
+                (
+                    f"{name}: {immutable} byte-identical to the fixture",
+                    state["files"].get(immutable) == broken[immutable],
+                    "",
+                )
+            )
+        published = state.get("published_sources") or {}
+        if state["passed_at_attempt"]:
+            violations = specification_violations(published, fixture)
+            checks.append(
+                (
+                    f"{name}: published workspace satisfies the specification",
+                    not violations,
+                    ",".join(item["id"] for item in violations),
+                )
+            )
+            checks.append(
+                (
+                    f"{name}: published sources are the arm's last written sources",
+                    published == state["files"],
+                    "",
+                )
+            )
+        for excluded in spec["excluded_fault_classes"]:
+            label = excluded.upper()
+            hits = sorted(
+                {
+                    attempt["index"]
+                    for attempt in state["attempts"]
+                    for item in attempt["diagnostics"]
+                    if diagnostic_class(item) == label
+                }
+            )
+            checks.append(
+                (
+                    f"{name}: no {excluded} finding in any gate call",
+                    not hits,
+                    f"attempts {hits}" if hits else "",
+                )
+            )
+        checks.append(
+            (
+                f"{name}: check never wrote a revision store",
+                all(
+                    not attempt["store_written"]
+                    for attempt in state["attempts"]
+                    if attempt["command"] == "check"
+                ),
+                "",
+            )
+        )
+        checks.append(
+            (
+                f"{name}: failed publish never wrote a revision store",
+                all(
+                    not attempt["store_written"]
+                    for attempt in state["attempts"]
+                    if attempt["command"] == "publish" and attempt["exit_code"] != 0
+                ),
+                "",
+            )
+        )
+        created = sorted({edit["path"] for edit in state["edits"] if edit["created"]})
+        edited = sorted({edit["path"] for edit in state["edits"] if not edit["created"]})
+        print(f"info {name}: edited {edited or 'nothing'}, created {created or 'nothing'}")
+
+    if not checks:
+        fail(f"no arm has run yet for fixture {fixture.name}")
+    failed = 0
+    for label, ok, detail in checks:
+        status = "ok  " if ok else "FAIL"
+        suffix = f"  [{detail}]" if detail else ""
+        print(f"{status} {label}{suffix}")
+        failed += 0 if ok else 1
+    print(f"\n{len(checks) - failed}/{len(checks)} audit checks passed")
+    raise SystemExit(0 if failed == 0 else 1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1229,6 +1372,9 @@ def main() -> None:
     report.add_argument("--operator", action="store_true")
     report.add_argument("--out")
     report.set_defaults(handler=command_report)
+
+    audit = with_fixture("audit", help="audit finished runs of one fixture")
+    audit.set_defaults(handler=command_audit)
 
     self_test = with_fixture("self-test", help="prove the fixture is solvable and gated")
     self_test.add_argument(
