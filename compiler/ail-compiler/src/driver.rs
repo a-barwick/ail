@@ -171,9 +171,58 @@ fn format_finding(finding: &Value) -> String {
         .and_then(Value::as_str)
         .unwrap_or("workspace");
     let rule = finding.get("rule").and_then(Value::as_str);
-    match rule {
-        Some(rule) => format!("{code}:{scope}:{rule}"),
-        None => format!("{code}:{scope}"),
+    let mut line = match rule {
+        Some(rule) => format!("{code}:{scope}:{rule}:"),
+        None => format!("{code}:{scope}:"),
+    };
+    let mut facts = Vec::new();
+    if let Some(value) = finding.get("facts") {
+        flatten_fact(String::new(), value, &mut facts);
+    }
+    for (key, value) in facts {
+        line.push(' ');
+        line.push_str(&key);
+        line.push('=');
+        line.push_str(&value);
+    }
+    line
+}
+
+/// Flatten one finding fact tree into deterministic `key=value` pairs.
+///
+/// Object keys are already ordered by `serde_json`'s map. Array elements use
+/// their index. The pairs carry the numbers and identities the architecture
+/// checker computed, so a reader never has to guess a threshold.
+fn flatten_fact(prefix: String, value: &Value, facts: &mut Vec<(String, String)>) {
+    let child = |key: &str| {
+        if prefix.is_empty() {
+            key.to_owned()
+        } else {
+            format!("{prefix}.{key}")
+        }
+    };
+    match value {
+        Value::Object(entries) => {
+            for (key, entry) in entries {
+                flatten_fact(child(key), entry, facts);
+            }
+        }
+        Value::Array(entries) => {
+            for (index, entry) in entries.iter().enumerate() {
+                flatten_fact(child(&index.to_string()), entry, facts);
+            }
+        }
+        Value::String(text) => facts.push((fact_key(prefix), text.clone())),
+        Value::Null => facts.push((fact_key(prefix), "null".to_owned())),
+        other => facts.push((fact_key(prefix), other.to_string())),
+    }
+}
+
+fn fact_key(prefix: String) -> String {
+    if prefix.is_empty() {
+        "facts".to_owned()
+    } else {
+        prefix
     }
 }
 

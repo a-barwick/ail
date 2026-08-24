@@ -1,0 +1,311 @@
+{
+  "arm": "ail",
+  "started_at": 1787550654.997,
+  "fixture_digest": "be9b7ea64a9d68cf679f350044f1ff28893b6bcaf59bbd2625d9258712f4d9dc",
+  "attempt_limit": 40,
+  "files": {
+    "adapters.ail": "module adapters;\n\nfn marker(value: Text) -> Text {\n  value\n}\n",
+    "architecture.json": "{\n  \"semantic_model_version\": \"source-architecture-v1\",\n  \"analysis_scope\": \"transport:dispatch\",\n  \"module_groups\": {\n    \"adapters\": \"persistence-adapter\",\n    \"contracts\": \"contract\",\n    \"domain\": \"domain\",\n    \"tests\": \"verification\",\n    \"transport\": \"transport\"\n  },\n  \"capability_namespaces\": {},\n  \"endpoint_groups\": {\n    \"text:is_empty\": \"contract\",\n    \"text:byte_length_between\": \"contract\",\n    \"text:scalar_count_gt\": \"contract\",\n    \"text:contains_control\": \"contract\",\n    \"text:first_ascii_alphanumeric\": \"contract\",\n    \"text:rest_ascii_alphanumeric_or\": \"contract\"\n  },\n  \"operations\": {},\n  \"policy\": {\n    \"revision\": \"policy-r1\",\n    \"allowed_group_dependencies\": {\n      \"contract\": [],\n      \"transport\": [\n        \"contract\"\n      ],\n      \"domain\": [\n        \"contract\"\n      ],\n      \"persistence-adapter\": [],\n      \"verification\": [\n        \"contract\",\n        \"domain\",\n        \"transport\"\n      ]\n    },\n    \"transport_capabilities\": [],\n    \"transport_state\": [],\n    \"dispatch_no_growth\": {\n      \"control_flow_complexity\": 4,\n      \"minimal_context_node_count\": 12\n    },\n    \"new_unit\": {\n      \"control_flow_complexity_max\": 6,\n      \"minimal_context_node_count_max\": 12\n    },\n    \"new_cycles\": false,\n    \"coverage_required\": true,\n    \"baseline_match\": {\n      \"baseline_revision\": \"baseline-r1\",\n      \"scope\": \"transport:dispatch\",\n      \"metrics\": {\n        \"control_flow_complexity\": 4,\n        \"minimal_context_node_count\": 12\n      },\n      \"accepted_debt\": true\n    }\n  }\n}\n",
+    "contracts.ail": "module contracts;\n\nrecord CancelRequest {\n  value: Text;\n}\n\nvariant StoreOutcome {\n  Queued;\n  Running;\n  Missing;\n  Completed;\n  Cancelled;\n}\n\nvariant CancelOutcome {\n  Malformed;\n  Cancelled;\n  NotFound;\n  NotCancellable;\n}\n",
+    "domain.ail": "module domain;\nimport contracts;\n\nfn normalize(request: contracts.CancelRequest) -> contracts.CancelRequest {\n  request\n}\n\nfn summarize(outcome: contracts.CancelOutcome) -> contracts.CancelOutcome {\n  outcome\n}\n",
+    "tests.ail": "module tests;\nimport contracts;\nimport transport;\n\nfn cancel_case(value: Text, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  let request = contracts.CancelRequest { value: value };\n  transport.dispatch(request, stored)\n}\n",
+    "transport.ail": "module transport;\nimport contracts;\n\nfn cancel_decision(stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  match stored {\n    contracts.StoreOutcome::Queued => { contracts.CancelOutcome::Cancelled },\n    contracts.StoreOutcome::Running => { contracts.CancelOutcome::Cancelled },\n    contracts.StoreOutcome::Missing => { contracts.CancelOutcome::NotFound },\n    contracts.StoreOutcome::Completed => { contracts.CancelOutcome::NotCancellable },\n    contracts.StoreOutcome::Cancelled => { contracts.CancelOutcome::NotCancellable },\n  }\n}\n\nfn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  if text.is_empty(request.value) {\n    contracts.CancelOutcome::Malformed\n  } else {\n    cancel_decision(stored)\n  }\n}\n"
+  },
+  "attempts": [
+    {
+      "index": 1,
+      "command": "check",
+      "workspace_digest": "f0332ad3b09293c746b2a97ff46ec94e879a4b1d55663c9778a82343761b5502",
+      "exit_code": 1,
+      "compiler_output": "AIL.ARCH.HOTSPOT_GROWTH:transport:dispatch:M23-POL-DISPATCH-NO-GROWTH: base_cfc=4 base_context=12 candidate_cfc=6 candidate_context=5\nsource contains architecture diagnostics",
+      "diagnostics": [
+        {
+          "code": "AIL.ARCH.HOTSPOT_GROWTH",
+          "class": "ARCH",
+          "scope": "transport:dispatch",
+          "rule": "M23-POL-DISPATCH-NO-GROWTH",
+          "facts": "base_cfc=4 base_context=12 candidate_cfc=6 candidate_context=5",
+          "key": "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch"
+        }
+      ],
+      "diagnostic_keys": [
+        "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch"
+      ],
+      "specification_violations": [],
+      "store_written": false,
+      "accepted": false
+    },
+    {
+      "index": 2,
+      "command": "check",
+      "workspace_digest": "7f015b8792ec4d24eaaa41943825b6d5b0e507338031341b56310652eeb4c3f2",
+      "exit_code": 0,
+      "compiler_output": "ok",
+      "diagnostics": [],
+      "diagnostic_keys": [],
+      "specification_violations": [],
+      "store_written": false,
+      "accepted": false
+    },
+    {
+      "index": 3,
+      "command": "publish",
+      "workspace_digest": "7f015b8792ec4d24eaaa41943825b6d5b0e507338031341b56310652eeb4c3f2",
+      "exit_code": 0,
+      "compiler_output": "published\nrevision_id=published\nsource_set_digest=sha256:5544d64f78bcb111fcdaa0c00bd0fef4fcfbbd6dda453672e452bb8a3a8abba4",
+      "diagnostics": [],
+      "diagnostic_keys": [],
+      "specification_violations": [],
+      "store_written": true,
+      "accepted": true
+    }
+  ],
+  "commands": [
+    {
+      "command": "brief",
+      "at": 1787550705.487
+    },
+    {
+      "command": "files",
+      "at": 1787550710.881
+    },
+    {
+      "command": "read",
+      "path": "adapters.ail",
+      "tokens": 16,
+      "at": 1787550715.418
+    },
+    {
+      "command": "read",
+      "path": "architecture.json",
+      "tokens": 309,
+      "at": 1787550715.608
+    },
+    {
+      "command": "read",
+      "path": "contracts.ail",
+      "tokens": 47,
+      "at": 1787550715.798
+    },
+    {
+      "command": "read",
+      "path": "domain.ail",
+      "tokens": 47,
+      "at": 1787550715.985
+    },
+    {
+      "command": "read",
+      "path": "tests.ail",
+      "tokens": 40,
+      "at": 1787550716.17
+    },
+    {
+      "command": "read",
+      "path": "transport.ail",
+      "tokens": 128,
+      "at": 1787550716.357
+    },
+    {
+      "command": "read",
+      "path": "docs/language.md",
+      "tokens": 661,
+      "at": 1787550726.872
+    },
+    {
+      "command": "read",
+      "path": "specs/architecture.md",
+      "tokens": 2430,
+      "at": 1787550731.791
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/architecture-denied/architecture.json",
+      "tokens": 245,
+      "at": 1787550745.731
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/architecture-denied/transport.ail",
+      "tokens": 21,
+      "at": 1787550745.917
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/architecture-denied/domain.ail",
+      "tokens": 16,
+      "at": 1787550746.101
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/architecture-denied/contracts.ail",
+      "tokens": 16,
+      "at": 1787550746.284
+    },
+    {
+      "command": "read",
+      "path": "specs/core.md",
+      "tokens": 2126,
+      "at": 1787550763.92
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/composed-service/domain.ail",
+      "tokens": 37,
+      "at": 1787550770.73
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/composed-service/service.ail",
+      "tokens": 53,
+      "at": 1787550770.916
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/composed-service/validation.ail",
+      "tokens": 25,
+      "at": 1787550771.103
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-cancellation/domain.ail",
+      "tokens": 59,
+      "at": 1787550776.0
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-cancellation/service.ail",
+      "tokens": 58,
+      "at": 1787550776.185
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-cancellation/single.ail",
+      "tokens": 37,
+      "at": 1787550776.373
+    },
+    {
+      "command": "read",
+      "path": "docs/STATUS.md",
+      "tokens": 437,
+      "at": 1787550776.56
+    },
+    {
+      "command": "write",
+      "path": "domain.ail",
+      "tokens": 36,
+      "at": 1787550799.898
+    },
+    {
+      "command": "write",
+      "path": "transport.ail",
+      "tokens": 109,
+      "at": 1787550807.154
+    },
+    {
+      "command": "write",
+      "path": "tests.ail",
+      "tokens": 43,
+      "at": 1787550812.213
+    },
+    {
+      "command": "check",
+      "attempt": 1,
+      "accepted": false,
+      "at": 1787550816.931
+    },
+    {
+      "command": "write",
+      "path": "transport.ail",
+      "tokens": 125,
+      "at": 1787550841.346
+    },
+    {
+      "command": "check",
+      "attempt": 2,
+      "accepted": false,
+      "at": 1787550841.536
+    },
+    {
+      "command": "publish",
+      "attempt": 3,
+      "accepted": true,
+      "at": 1787550859.976
+    },
+    {
+      "command": "files",
+      "at": 1787550879.974
+    },
+    {
+      "command": "read",
+      "path": "contracts.ail",
+      "tokens": 47,
+      "at": 1787550882.021
+    },
+    {
+      "command": "read",
+      "path": "transport.ail",
+      "tokens": 125,
+      "at": 1787550882.394
+    },
+    {
+      "command": "read",
+      "path": "domain.ail",
+      "tokens": 36,
+      "at": 1787550882.801
+    },
+    {
+      "command": "read",
+      "path": "tests.ail",
+      "tokens": 43,
+      "at": 1787550883.149
+    },
+    {
+      "command": "read",
+      "path": "adapters.ail",
+      "tokens": 16,
+      "at": 1787550883.481
+    }
+  ],
+  "edits": [
+    {
+      "path": "domain.ail",
+      "created": false,
+      "tokens": 36,
+      "chars": 211,
+      "digest": "134a5347af0abbef29bd4aea1dd0ad5544b10299eb05f07cd21a044b3d767c0b"
+    },
+    {
+      "path": "transport.ail",
+      "created": false,
+      "tokens": 109,
+      "chars": 678,
+      "digest": "519809b4137371df18a14f6d4d0f1f1f0db34ca823bff0fe5c3253df85bf42af"
+    },
+    {
+      "path": "tests.ail",
+      "created": false,
+      "tokens": 43,
+      "chars": 238,
+      "digest": "c7488d44f30d0cc9e57251e5966477c0fe7eff083551feda10fa5c3ee5179ed5"
+    },
+    {
+      "path": "transport.ail",
+      "created": false,
+      "tokens": 125,
+      "chars": 775,
+      "digest": "6c5046e6db8c3a3f94d16a617e3822ce3fd9ddb0bbc96f5d744265affe062617"
+    }
+  ],
+  "tokens_out": 7900,
+  "chars_out": 41693,
+  "tokens_in": 313,
+  "chars_in": 1902,
+  "passed_at_attempt": 3,
+  "published_sources": {
+    "adapters.ail": "module adapters;\n\nfn marker(value: Text) -> Text {\n  value\n}\n",
+    "contracts.ail": "module contracts;\n\nrecord CancelRequest {\n  value: Text;\n}\n\nvariant StoreOutcome {\n  Queued;\n  Running;\n  Missing;\n  Completed;\n  Cancelled;\n}\n\nvariant CancelOutcome {\n  Malformed;\n  Cancelled;\n  NotFound;\n  NotCancellable;\n}\n",
+    "domain.ail": "module domain;\nimport contracts;\n\nfn normalize(request: contracts.CancelRequest) -> contracts.CancelRequest {\n  request\n}\n\nfn summarize(outcome: contracts.CancelOutcome) -> contracts.CancelOutcome {\n  outcome\n}\n",
+    "tests.ail": "module tests;\nimport contracts;\nimport transport;\n\nfn cancel_case(value: Text, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  let request = contracts.CancelRequest { value: value };\n  transport.dispatch(request, stored)\n}\n",
+    "transport.ail": "module transport;\nimport contracts;\n\nfn cancel_decision(stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  match stored {\n    contracts.StoreOutcome::Queued => {\n      contracts.CancelOutcome::Cancelled\n    },\n    contracts.StoreOutcome::Running => {\n      contracts.CancelOutcome::Cancelled\n    },\n    contracts.StoreOutcome::Missing => {\n      contracts.CancelOutcome::NotFound\n    },\n    contracts.StoreOutcome::Completed => {\n      contracts.CancelOutcome::NotCancellable\n    },\n    contracts.StoreOutcome::Cancelled => {\n      contracts.CancelOutcome::NotCancellable\n    },\n  }\n}\n\nfn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  if text.is_empty(request.value) {\n    contracts.CancelOutcome::Malformed\n  } else {\n    cancel_decision(stored)\n  }\n}\n"
+  }
+}

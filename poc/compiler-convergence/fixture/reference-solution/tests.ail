@@ -1,0 +1,8 @@
+module tests;
+import contracts;
+import transport;
+
+fn cancel_case(value: Text, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {
+  let request = contracts.CancelRequest { value: value };
+  transport.dispatch(request, stored)
+}

@@ -1,0 +1,10 @@
+module domain;
+import contracts;
+
+fn normalize(request: contracts.CancelRequest) -> contracts.CancelRequest {
+  request
+}
+
+fn summarize(outcome: contracts.CancelOutcome, store: capability JobsStore) -> Text effects { store.describe } {
+  store.describe(outcome)
+}

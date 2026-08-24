@@ -1,0 +1,15 @@
+measure                                           ail     control
+converged                                        True        True
+gate calls to pass                                  3          22
+gate calls total                                    3          22
+tokens harness to agent                          7900        9235
+tokens agent to harness                           313        3039
+tokens total (protocol)                          8213       12274
+source edits                                        4          49
+reads                                              25          30
+distinct diagnostics reached                        1           4
+fix cycles (new breakage after an edit)             0           5
+rebreaks (fixed then broken again)                  0           2
+god-method rejections                               1           3
+worst dispatch control-flow complexity              6           7
+attempts failing the task specification             0           6

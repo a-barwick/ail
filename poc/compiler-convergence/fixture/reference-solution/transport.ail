@@ -1,0 +1,6 @@
+module transport;
+import contracts;
+
+fn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {
+  contracts.decide(request, stored)
+}

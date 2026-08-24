@@ -1,0 +1,131 @@
+{
+  "description": "Task specification for the broken cancel-dispatch workspace. These requirements are handed to both arms verbatim. They are not compiler facts: the harness checks them by matching normalized workspace text, so the control arm learns exactly as much from them as the AIL arm does.",
+  "immutable_files": [
+    "architecture.json"
+  ],
+  "required_files": [
+    "adapters.ail",
+    "architecture.json",
+    "contracts.ail",
+    "domain.ail",
+    "tests.ail",
+    "transport.ail"
+  ],
+  "required_declarations": [
+    {
+      "id": "module.adapters",
+      "requirement": "a module named adapters exists",
+      "pattern": "module adapters;"
+    },
+    {
+      "id": "module.contracts",
+      "requirement": "a module named contracts exists",
+      "pattern": "module contracts;"
+    },
+    {
+      "id": "module.domain",
+      "requirement": "a module named domain exists",
+      "pattern": "module domain;"
+    },
+    {
+      "id": "module.tests",
+      "requirement": "a module named tests exists",
+      "pattern": "module tests;"
+    },
+    {
+      "id": "module.transport",
+      "requirement": "a module named transport exists",
+      "pattern": "module transport;"
+    },
+    {
+      "id": "type.CancelRequest",
+      "requirement": "record CancelRequest keeps its Text field named value",
+      "pattern": "record CancelRequest \\{ value: Text; \\}"
+    },
+    {
+      "id": "type.StoreOutcome",
+      "requirement": "variant StoreOutcome keeps its five cases in order",
+      "pattern": "variant StoreOutcome \\{ Queued; Running; Missing; Completed; Cancelled; \\}"
+    },
+    {
+      "id": "type.CancelOutcome",
+      "requirement": "variant CancelOutcome keeps its four cases in order",
+      "pattern": "variant CancelOutcome \\{ Malformed; Cancelled; NotFound; NotCancellable; \\}"
+    },
+    {
+      "id": "entry.transport.dispatch",
+      "requirement": "transport.dispatch keeps its exact signature",
+      "pattern": "fn dispatch\\(request: CancelRequest, stored: StoreOutcome\\) -> CancelOutcome"
+    },
+    {
+      "id": "entry.tests.cancel_case",
+      "requirement": "tests.cancel_case keeps its exact signature and calls transport.dispatch",
+      "pattern": "fn cancel_case\\(value: Text, stored: StoreOutcome\\) -> CancelOutcome"
+    },
+    {
+      "id": "call.tests.cancel_case",
+      "requirement": "tests.cancel_case still calls transport.dispatch",
+      "pattern": "transport\\.dispatch\\("
+    },
+    {
+      "id": "entry.domain.summarize",
+      "requirement": "a function named summarize still exists in module domain",
+      "pattern": "fn summarize\\("
+    },
+    {
+      "id": "rule.summarize_malformed_label",
+      "requirement": "summarize still maps Malformed to \"malformed\"",
+      "pattern": "CancelOutcome::Malformed => \\{ \"malformed\" \\}"
+    },
+    {
+      "id": "rule.summarize_cancelled_label",
+      "requirement": "summarize still maps Cancelled to \"cancelled\"",
+      "pattern": "CancelOutcome::Cancelled => \\{ \"cancelled\" \\}"
+    },
+    {
+      "id": "rule.summarize_not_found_label",
+      "requirement": "summarize still maps NotFound to \"not-found\"",
+      "pattern": "CancelOutcome::NotFound => \\{ \"not-found\" \\}"
+    },
+    {
+      "id": "rule.summarize_not_cancellable_label",
+      "requirement": "summarize still maps NotCancellable to \"not-cancellable\"",
+      "pattern": "CancelOutcome::NotCancellable => \\{ \"not-cancellable\" \\}"
+    },
+    {
+      "id": "rule.empty_value_is_malformed",
+      "requirement": "an empty request value still decides Malformed",
+      "pattern": "text\\.is_empty\\("
+    },
+    {
+      "id": "rule.control_value_is_malformed",
+      "requirement": "a request value containing control characters still decides Malformed",
+      "pattern": "text\\.contains_control\\("
+    },
+    {
+      "id": "rule.queued_is_cancelled",
+      "requirement": "a queued job decides Cancelled",
+      "pattern": "StoreOutcome::Queued => \\{ CancelOutcome::Cancelled \\}"
+    },
+    {
+      "id": "rule.running_is_cancelled",
+      "requirement": "a running job decides Cancelled",
+      "pattern": "StoreOutcome::Running => \\{ CancelOutcome::Cancelled \\}"
+    },
+    {
+      "id": "rule.missing_is_not_found",
+      "requirement": "a missing job decides NotFound",
+      "pattern": "StoreOutcome::Missing => \\{ CancelOutcome::NotFound \\}"
+    },
+    {
+      "id": "rule.completed_is_not_cancellable",
+      "requirement": "a completed job decides NotCancellable",
+      "pattern": "StoreOutcome::Completed => \\{ CancelOutcome::NotCancellable \\}"
+    },
+    {
+      "id": "rule.cancelled_is_not_cancellable",
+      "requirement": "an already cancelled job decides NotCancellable",
+      "pattern": "StoreOutcome::Cancelled => \\{ CancelOutcome::NotCancellable \\}"
+    }
+  ]
+}
