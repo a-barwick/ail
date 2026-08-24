@@ -1,22 +1,19 @@
 # Compiler convergence proof-of-concept
 
-**The recorded numbers are superseded.** All fourteen trials ran before
-[PR #5](https://github.com/a-barwick/ail/pull/5) merged, so the `ail` arm saw
-the old one-line diagnostics rather than the located structured findings and
-`requirement` lines that #5 emits. Both arms must be re-run against the merged
-tree before any number is quoted as the result. The harness reads its ledger
-from `ailc check --json` when available and falls back to text parsing, so it
-produces the same measures on either tree.
+Results from seven trials per arm against `main` at `5fd65db`, which carries
+[PR #5](https://github.com/a-barwick/ail/pull/5)'s structured findings, are in
+[RESULTS.md](RESULTS.md). In priority order: on **retries to a passing publish**,
+the win condition, the compiler arm ran 2,2,2,2,3,3,3 and the blind arm ran
+2,2,3,12,13,13,14, so median 2 against 12 and worst case 3 against 14 — but
+three blind trials matched or beat every compiler trial, and the blind
+distribution is bimodal. On **rebreak**, whether a later edit broke an earlier
+check, the compiler arm had zero events in seven trials and the blind arm had
+six across three trials. **Tokens** are extra: median 8490 against 11430.
 
-Pre-#5 baseline from seven trials per arm, in [RESULTS.md](RESULTS.md). Short
-version, in priority order: on **retries to a passing publish**, the win
-condition, the compiler arm ran 1,2,2,2,2,3,4 and the blind arm ran
-1,2,3,4,9,12,16, so median 2 against 4 and worst case 4 against 16, but the
-distributions overlap at the good end and two blind trials matched the best
-compiler trials. On **rebreak**, whether a later edit broke an earlier check,
-the compiler arm had zero events in seven trials and the blind arm had nine
-across four trials. **Tokens** are extra: median 8305 against 9096, agreeing
-with the other two rather than deciding anything.
+The magnitude is not stable. The control arm's information did not change
+between the pre-#5 and post-#5 runs, and its median retries still moved from 4
+to 12. The direction repeated; the ratio did not. `runs-pre-pr5/` holds that
+earlier run.
 
 One broken AIL workspace, two agents, one success gate. The arms differ in a
 single variable: whether the agent may see what the AIL compiler already knows.

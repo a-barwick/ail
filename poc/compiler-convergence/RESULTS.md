@@ -1,36 +1,14 @@
-# Results: seven trials per arm, same broken workspace
+# Results: seven trials per arm on the merged tree
 
-## Superseded: these numbers measure the pre-#5 diagnostic format
+Run on 2026-08-24 against `main` at `5fd65db`, which carries the structured
+findings from [PR #5](https://github.com/a-barwick/ail/pull/5): located
+findings, a `requirement` line per error stating a constraint and never an edit,
+the `AIL.MODULE.INACCESSIBLE_DECLARATION` module fix, and `ailc check --json`.
+Fourteen agent runs, seven per arm, same model, same broken fixture, same
+`ailc publish` gate, same reference material. Every ledger was built from
+`ailc check --json`.
 
-All fourteen trials below ran against this branch before
-[PR #5](https://github.com/a-barwick/ail/pull/5) merged, so the `ail` arm saw
-the old one-line diagnostic format plus the architecture facts this branch added.
-PR #5 replaces that with located structured findings, a `requirement` line per
-error, and `ailc check --json`, and a follow-up on that branch cut the two
-requirements that prescribed an edit rather than stating a constraint. The `ail`
-arm's information therefore changes when #5 lands, so **both arms must be re-run
-against the merged tree before any number here is quoted as the result.**
-
-Nothing about the control arm changes: it never sees compiler output. The
-comparison has to be re-run anyway, because an arm measured against a different
-compiler is not comparable to one measured against this branch.
-
-The numbers stay in this file because they are real, auditable, and the
-mechanism they exposed is unlikely to reverse. Treat them as the pre-#5
-baseline, not the result.
-
-The harness is already ported: it reads its ledger from `ailc check --json` when
-the compiler offers it and falls back to parsing text when it does not, so the
-same measures come out of either tree. `- ledger built from` in the report says
-which was used.
-
-## The pre-#5 baseline
-
-Run on 2026-08-24. Fourteen agent runs, seven per arm, same model, same broken
-fixture, same `ailc publish` gate, same reference material. The only difference
-between arms is whether the agent may see compiler output.
-
-Measures are reported in the order that decides the outcome:
+Measures in the order that decides the outcome:
 
 1. **Retries to a passing publish** is the win condition.
 2. **Rebreak** is whether the change was actually safe.
@@ -39,69 +17,71 @@ Measures are reported in the order that decides the outcome:
 ## 1. Retries to a passing publish (the win condition)
 
 ```
-ail      n=7  retries [1, 2, 2, 2, 2, 3, 4]   median 2  worst 4   total 16
-control  n=7  retries [1, 2, 3, 4, 9, 12, 16] median 4  worst 16  total 47
+ail      n=7  retries [2, 2, 2, 2, 3, 3, 3]        median 2   worst 3   total 17
+control  n=7  retries [2, 2, 3, 12, 13, 13, 14]    median 12  worst 14  total 59
 
 paired comparisons (49, every ail trial against every control trial):
-  control needed more retries in 33, fewer in 9, equal in 7
+  control needed more retries in 32, fewer in 6, equal in 11
 ```
 
 Both arms converged in all seven trials; neither hit the 40-call limit.
 
-**The `ail` arm wins the win condition on median and on worst case, and it is
-not a clean sweep.** Median 2 retries against 4. Worst case 4 against 16. Total
-16 against 47, so the blind arm spent roughly three times the retries overall.
-In 33 of 49 paired comparisons the control trial needed more retries, in 9 it
-needed fewer, and in 7 the two tied.
+**The `ail` arm wins the win condition: median 2 retries against 12, worst case
+3 against 14.** It is not a clean sweep. Three control trials landed at 2, 2,
+and 3, matching or beating every `ail` trial, so an agent that gets the whole
+repair right before its first gate call does not need the compiler. The other
+four control trials needed 12 to 14.
 
-The overlap is real and worth naming: `control` and `control-t4` needed 1 and 2
-retries, matching the best `ail` trials. A lucky first-pass repair does not need
-the compiler. What the compiler changes is the tail. Three of seven control
-trials needed 9, 12, and 16 retries; no `ail` trial needed more than 4.
+The distribution is bimodal, and that is the finding. A blind arm either guesses
+the whole repair correctly on the first try, or it starts bisecting, and
+bisecting costs an order of magnitude more. The compiler arm has no such split:
+every trial took 2 or 3 retries.
 
 ## 2. Rebreak: did a later edit break an earlier check
 
 ```
 ail      rebreak events 0, across 0 of 7 trials
-control  rebreak events 9, across 4 of 7 trials
-         fix cycles: ail 3 events in 2 trials, control 14 events in 4 trials
+control  rebreak events 6, across 3 of 7 trials
+         fix cycles: ail 3 events in 3 trials, control 18 events in 5 trials
 ```
 
-**The `ail` arm wins this outright: zero rebreaks in seven trials.** No `ail`
-trial ever saw a diagnostic reappear after fixing it. Four of seven control
-trials did, nine times in total.
+**The `ail` arm wins this outright again: zero rebreaks in seven trials.** No
+`ail` trial ever saw a diagnostic reappear after fixing it. Note the median
+hides this, because four of seven control trials had none; the totals and the
+per-trial column are the honest view.
 
-A rebreak is recorded when a diagnostic that was fixed at some earlier gate call
-comes back at a later one. Identity is the diagnostic's code plus its detail or
-fact payload, never its span, because spans move on every edit. The harness runs
-the real compiler in the control arm too and records the diagnostics it refuses
-to show, so both ledgers are built by the same checker.
+The mechanism repeated exactly what the pre-#5 run showed. Four control trials
+bisected by gutting modules, and all four concluded that `contracts.ail` needs
+an executable function because a types-only `contracts.ail` failed while a
+gutted workspace passed. That conclusion is false. Five `ail` trials and three
+control trials published with `contracts.ail` byte-identical to the fixture.
 
-The mechanism is visible in the ledgers. With binary feedback, the rational move
-is to break working code on purpose: gut a module, watch the bit, infer. Three
-control trials bisected the workspace that way, and it cost them. `control-t5`,
-`control-t6`, and `control-t7` all reduced modules to trivial bodies, hit
-`AIL.ARCH.ANALYSIS_INCOMPLETE base architecture is incomplete` because a group
-had lost all its units, and concluded the original `contracts.ail` needed an
-executable function to satisfy coverage. It did not. Four `ail` trials and two
-control trials published with `contracts.ail` byte-identical to the fixture,
-types only. Those three trials spent retries fixing a fault they had created and
-then wrote it into their final source. That is the "fix one, break another"
-failure, and it happened only where the compiler's facts were withheld.
+Two of those four shipped the invented fix as dead code:
+
+| trial | added to `contracts.ail` | called anywhere |
+| --- | --- | --- |
+| `control-t6` | `fn keep(value: Text) -> Text` | no |
+| `control-t7` | `fn is_blank`, `fn has_control` | no |
+
+The other two put a real decision helper there, which is a legitimate design
+choice, and so did `ail` and `ail-t2`. The distinction matters: moving the
+store-outcome match into the contract group is a defensible shape, while adding
+`fn keep` to satisfy a coverage rule that does not exist is a false belief
+written into published source.
 
 ## 3. Tokens (extra)
 
 ```
-ail      median 8305  range 5623 to 8752
-control  median 9096  range 8155 to 12268
+ail      median 8490   range 8043 to 8857
+control  median 11430  range 8725 to 11904
 ```
 
-Protocol tokens: briefs, file reads, gate feedback, and written source. Median
-is about 9 percent lower for `ail`, and the worst control trial cost 40 percent
-more than the worst `ail` trial. Most of the volume in both arms is reference
-reading before the first edit, which is identical by construction, so the arms
-can only differ in the tail — the same place the retries differ. Tokens do not
-change the verdict either way here; they agree with it.
+Median about 35 percent lower for `ail`, and the ranges barely overlap: the most
+expensive `ail` trial cost less than the cheapest control trial but one. Tokens
+agree with the other two measures rather than deciding anything. The structured
+findings did not make the `ail` arm more expensive: its median rose from 8305
+pre-#5 to 8490, about 2 percent, while carrying locations, snippets, and a
+requirement per finding.
 
 Protocol tokens exclude an agent's private reasoning tokens, which this
 environment does not expose. They are a lower bound, measured identically for
@@ -111,55 +91,60 @@ both arms.
 
 ```
 measure                                             ail      ail-t2      ail-t3      ail-t4      ail-t5      ail-t6      ail-t7     control  control-t2  control-t3  control-t4  control-t5  control-t6  control-t7
-1 RETRIES to passing publish                          2           2           2           3           2           4           1           1           4           3           2          12           9          16
+1 RETRIES to passing publish                          2           3           2           2           2           3           3           2           2          12          13           3          13          14
   converged                                        True        True        True        True        True        True        True        True        True        True        True        True        True        True
-2 REBREAKS (fixed, then broken again)                 0           0           0           0           0           0           0           0           1           0           0           4           2           2
-  fix cycles (new breakage after an edit)             0           0           0           1           0           2           0           0           2           0           0           5           3           4
-  attempts failing the task specification             0           0           0           1           1           1           0           0           2           1           0           8           6          12
-3 TOKENS total (protocol, extra)                   8100        8087        8379        8493        8305        8752        5623        8155        9096        8547        8501       10930       10082       12268
-- source edits                                        4           4           4           4           3           5           3           3          10           5           6          22          16          31
-- god-method rejections                               1           1           1           1           0           1           0           0           2           1           0           4           3           3
-- worst dispatch control-flow complexity              7           7           7           7        None           7        None        None           7           7        None           7           7           7
+2 REBREAKS (fixed, then broken again)                 0           0           0           0           0           0           0           0           0           2           2           0           0           2
+  fix cycles (new breakage after an edit)             0           1           0           0           0           1           1           0           0           4           5           1           5           3
+  attempts failing the task specification             0           1           0           0           0           1           1           0           0           9          10           1          11          11
+3 TOKENS total (protocol, extra)                   8490        8658        8449        8449        8830        8857        8043        8725        8859       11430       11725        9340       11850       11904
+- source edits                                        5           5           4           4           4           4           4           4           4          24          23           7          24          23
+- god-method rejections                               1           1           1           1           1           1           1           1           1           3           3           1           7           2
+- worst dispatch control-flow complexity              7           7           7           7           7           7           7           7           7           7           7           7           7           7
+- ledger built from                                json        json        json        json        json        json        json        json        json        json        json        json        json        json
 ```
+
+## The magnitude is unstable; the direction was not
+
+The control arm's information is identical before and after #5: `PASS` or `FAIL`
+and nothing else. Its median retries still moved from 4 in the pre-#5 run to 12
+here. That is run-to-run variance in blind search across two samples of seven,
+not an effect of the compiler change, and it is the strongest caution in this
+report. **Do not quote the 6x median ratio as a stable effect size.** Across
+both runs of the experiment the `ail` arm's median was 2 retries with a worst
+case of 4, and the control arm was worse at the median both times, but how much
+worse swung by a factor of three under an unchanged condition.
 
 ## God methods
 
-Eleven of fourteen trials submitted a `transport.dispatch` that inlined
-validation and a five-arm match. The architecture checker measured control-flow
-complexity 7 against the policy budget of 4 and denied it, in both arms. Every
-trial ended up splitting the decision into a second unit, and no trial published
-an over-budget dispatch.
-
-So the gate prevented the god method regardless of visibility. What visibility
-changed is the cost of learning why: the `ail` arm read
-`base_cfc=4 candidate_cfc=7` and fixed it in one edit, while control trials
-needed up to 4 separate denials of the same rule (`control-t5`) to locate it.
+All fourteen trials submitted a `transport.dispatch` measuring control-flow
+complexity 7 against the policy budget of 4, and the architecture checker denied
+it in both arms. No trial published an over-budget dispatch, so the gate
+prevented the god method regardless of visibility. Visibility changed the cost
+of learning why: one denial and one edit for every `ail` trial, reading
+`facts.candidate_cfc=7` and the requirement `control-flow complexity must stay
+at most 4 and minimal review context at most 12; the candidate measured 7 and
+6`, against up to seven denials of the same rule for `control-t6`.
 
 ## What actually separated the arms
 
 Only one of the six faults was hard to see by reading. Every trial in both arms
 found the missing import, the `Int` in a `Text` field, the unknown capability,
-and the non-exhaustive match from the source, `docs/STATUS.md`, and
-`compiler/examples/architecture-denied`. The `ail` ledgers show a median of one
-diagnostic class ever reached: `AIL.ARCH.HOTSPOT_GROWTH`. That is where the
-compiler earned its keep, and it is also where a control agent could substitute
-arithmetic, since `architecture.json` states the budget and
-`specs/architecture.md` gives the metric as `E - N + 2`. Two control trials did
-that arithmetic correctly and matched the best `ail` trials. Five did not.
-
-The compiler's advantage here is not that its facts are unavailable elsewhere.
-It is that they arrive without the agent having to be right about them first,
-and that being wrong about them is expensive: 9, 12, and 16 retries, with a
-false conclusion written into the final source in three trials.
+and the non-exhaustive match from the source and the reference material. The
+`ail` ledgers reached a median of one diagnostic class:
+`AIL.ARCH.HOTSPOT_GROWTH`. That is where the compiler earned its keep, and a
+control agent could substitute arithmetic for it, since `architecture.json`
+states the budget and `specs/architecture.md` gives the metric as `E - N + 2`.
+Three control trials did that arithmetic before their first gate call and
+converged as fast as the `ail` arm. Four did not, and paid 12 to 14 retries.
 
 ## Threats to validity
 
-1. Seven trials per arm, one fixture, one model. The medians and the tail are
-   consistent, but this is still a demonstration and not a measurement with
-   error bars.
+1. Seven trials per arm, one fixture, one model, and a control distribution
+   whose median moved 3x between two runs of an unchanged condition. Treat the
+   direction as repeatable and the magnitude as not.
 2. The control arm can read the policy file and the metric definition, so most
-   compiler facts in this fixture are re-derivable by hand. That is realistic,
-   a project's policy is readable, and it caps how large the gap can be.
+   compiler facts in this fixture are re-derivable by hand. That is realistic
+   and it caps how large the gap can be.
 3. The fixture is five modules and six faults, small enough to hold in context
    entirely. The thesis is about scale; this does not test scale.
 4. Both arms used the same strong model. The compiler's facts should matter more
@@ -167,12 +152,10 @@ false conclusion written into the final source in three trials.
 5. The gate is `ailc publish` plus a task specification matched against
    normalized source text. There is no behavior test in this language fragment,
    so an arm can satisfy the letter of the specification while losing behavior.
-   Two holes of this kind were found and closed during this work; more may
-   remain.
 6. Both arms are told which task-specification rules fail. That is symmetric,
-   but it hands both arms one of the six faults, the missing match arm, with no
-   compiler involvement. Three control trials used the specification list as a
-   free oracle while bisecting.
+   but it hands both arms one of the six faults with no compiler involvement,
+   and every bisecting control trial used the specification list as a free
+   oracle while probing.
 7. Nothing physically prevented a control agent from reconstructing the
    workspace from `runs/<arm>/state.json` and compiling it itself. The brief
    forbids it and the committed command logs show none did, but this is a trust
@@ -180,40 +163,43 @@ false conclusion written into the final source in three trials.
 
 ## What would make this a real measurement
 
-- A weaker model as a second condition, and enough trials to put error bars on
-  the tail rather than the median.
+- Enough trials to put error bars on a bimodal distribution, and a weaker model
+  as a second condition.
 - A fixture too large to hold in context, where the agent must locate the
   relevant module before it can reason about it.
-- A fault whose fix is not derivable from readable policy: cross-module type and
-  effect interactions several calls deep, where the compiler's answer is cheap
-  and hand derivation is not.
+- A fault whose fix is not derivable from readable policy.
 - Behavior verification in the gate, so specification text cannot stand in for
   working code.
 
-## Defects found in the harness, and fixed
+## Audit of all fourteen final workspaces
 
-Recorded because they changed the numbers.
+`architecture.json` byte-identical to the fixture in all fourteen. Zero
+task-specification violations in every final source. No comments used to satisfy
+a requirement in any final source. No arm emptied or weakened policy, and the
+harness never applied a checker fact to source.
 
-1. **The gate lied about `check`.** The first run reported `FAIL` for a `check`
-   that passed, because only `publish` could report `PASS`. The `ail` arm saw
-   `ok` in the compiler output and ignored the label; the control arm could not,
-   and spent 18 gate calls probing a workspace that had been correct since its
-   second attempt. That run measured my bug, not the withheld diagnostics, and
-   is archived as invalid in `runs-v1-gate-defect/`. `check` now reports its own
-   outcome in both arms, and every trial in this report ran on the fixed gate.
-2. **The ledger dropped diagnostics.** `AIL.ARCH.ANALYSIS_INCOMPLETE` lines
-   carry no rule field and matched no parser, so five control-arm failures
-   recorded no diagnostic at all. Unrecognized compiler output is now recorded
-   as `HARNESS.UNPARSED_OUTPUT` rather than vanishing. That fix is what made the
-   `contracts.ail` coverage story above visible.
-3. **The specification was too weak.** It required only that a function named
-   `summarize` exist, so an arm could hollow it out to an identity function and
-   still pass. It now pins the four outcome labels and the control-character
-   rule, which both arms must implement.
-4. **Comments satisfied the specification.** AIL has `//` and `/* */` comments,
-   and the specification was matched against raw source text, so commenting a
-   requirement out satisfied it. The archived invalid run exploited this.
-   Normalization now strips comments, and the self-test asserts that a
-   commented-out requirement fails. All fourteen trials were audited against the
-   hardened check: policy byte-identical in all fourteen, zero specification
-   violations in every final source, no comments in any final source.
+## Earlier runs kept for the record
+
+- `runs-pre-pr5/`, `report-pre-pr5/`: seven trials per arm against the one-line
+  diagnostic format, before #5 merged. Superseded by this run; kept because the
+  `contracts.ail` phantom appears in both, under two different compilers.
+- `runs-v1-gate-defect/`: the first two trials, invalidated by a harness bug
+  where `check` reported `FAIL` even when `ailc check` passed. The control arm
+  could not see through that label and spent 18 gate calls on a workspace that
+  had been correct since its second attempt.
+
+## Harness defects found and fixed
+
+1. The gate reported `FAIL` for a passing `check`. Fixed; `check` now reports
+   its own outcome in both arms.
+2. The ledger dropped `AIL.ARCH.ANALYSIS_INCOMPLETE` lines, which carry no rule
+   field. Unrecognized output is now recorded rather than vanishing.
+3. The task specification required only that a function named `summarize` exist,
+   so an arm could hollow it out. It now pins the four outcome labels.
+4. AIL has `//` and `/* */` comments and the specification matched raw source,
+   so commenting a requirement out satisfied it. Normalization strips comments
+   and the self-test asserts it.
+5. The line-format ledger parser could not read #5's findings and would have
+   recorded zero diagnostics for every attempt. The gate now reads
+   `ailc check --json` and falls back to text when the compiler has no JSON
+   view, recording which it used.

@@ -1,7 +1,7 @@
 {
   "arm": "ail-t4",
   "policy": "ail",
-  "started_at": 1787554065.356,
+  "started_at": 1787588939.416,
   "fixture_digest": "be9b7ea64a9d68cf679f350044f1ff28893b6bcaf59bbd2625d9258712f4d9dc",
   "attempt_limit": 40,
   "files": {
@@ -10,69 +10,44 @@
     "contracts.ail": "module contracts;\n\nrecord CancelRequest {\n  value: Text;\n}\n\nvariant StoreOutcome {\n  Queued;\n  Running;\n  Missing;\n  Completed;\n  Cancelled;\n}\n\nvariant CancelOutcome {\n  Malformed;\n  Cancelled;\n  NotFound;\n  NotCancellable;\n}\n",
     "domain.ail": "module domain;\nimport contracts;\n\nfn normalize(request: contracts.CancelRequest) -> contracts.CancelRequest {\n  request\n}\n\nfn summarize(outcome: contracts.CancelOutcome) -> Text {\n  match outcome {\n    contracts.CancelOutcome::Malformed => { \"malformed\" },\n    contracts.CancelOutcome::Cancelled => { \"cancelled\" },\n    contracts.CancelOutcome::NotFound => { \"not-found\" },\n    contracts.CancelOutcome::NotCancellable => { \"not-cancellable\" },\n  }\n}\n",
     "tests.ail": "module tests;\nimport contracts;\nimport transport;\n\nfn cancel_case(value: Text, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  let request = contracts.CancelRequest { value: value };\n  transport.dispatch(request, stored)\n}\n",
-    "transport.ail": "module transport;\nimport contracts;\n\nfn decide_stored(stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  match stored {\n    contracts.StoreOutcome::Queued => { contracts.CancelOutcome::Cancelled },\n    contracts.StoreOutcome::Running => { contracts.CancelOutcome::Cancelled },\n    contracts.StoreOutcome::Missing => { contracts.CancelOutcome::NotFound },\n    contracts.StoreOutcome::Completed => { contracts.CancelOutcome::NotCancellable },\n    contracts.StoreOutcome::Cancelled => { contracts.CancelOutcome::NotCancellable },\n  }\n}\n\nfn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  if text.is_empty(request.value) {\n    contracts.CancelOutcome::Malformed\n  } else {\n    if text.contains_control(request.value) {\n      contracts.CancelOutcome::Malformed\n    } else {\n      decide_stored(stored)\n    }\n  }\n}\n"
+    "transport.ail": "module transport;\nimport contracts;\n\nfn decide(stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  match stored {\n    contracts.StoreOutcome::Queued => { contracts.CancelOutcome::Cancelled },\n    contracts.StoreOutcome::Running => { contracts.CancelOutcome::Cancelled },\n    contracts.StoreOutcome::Missing => { contracts.CancelOutcome::NotFound },\n    contracts.StoreOutcome::Completed => { contracts.CancelOutcome::NotCancellable },\n    contracts.StoreOutcome::Cancelled => { contracts.CancelOutcome::NotCancellable },\n  }\n}\n\nfn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  if text.is_empty(request.value) {\n    contracts.CancelOutcome::Malformed\n  } else {\n    if text.contains_control(request.value) {\n      contracts.CancelOutcome::Malformed\n    } else {\n      decide(stored)\n    }\n  }\n}\n"
   },
   "attempts": [
     {
       "index": 1,
       "command": "check",
-      "workspace_digest": "be9b7ea64a9d68cf679f350044f1ff28893b6bcaf59bbd2625d9258712f4d9dc",
-      "exit_code": 1,
-      "command_passed": false,
-      "compiler_output": "AIL.MODULE.INACCESSIBLE_DECLARATION:tests.ail:178:213: declaration=transport.dispatch module=tests role=function\nsource contains check diagnostics",
-      "diagnostics": [
-        {
-          "code": "AIL.MODULE.INACCESSIBLE_DECLARATION",
-          "class": "MODULE",
-          "path": "tests.ail",
-          "details": "declaration=transport.dispatch module=tests role=function",
-          "key": "AIL.MODULE.INACCESSIBLE_DECLARATION|declaration=transport.dispatch module=tests role=function"
-        }
-      ],
-      "diagnostic_keys": [
-        "AIL.MODULE.INACCESSIBLE_DECLARATION|declaration=transport.dispatch module=tests role=function"
-      ],
-      "specification_violations": [
-        "rule.summarize_malformed_label",
-        "rule.summarize_cancelled_label",
-        "rule.summarize_not_found_label",
-        "rule.summarize_not_cancellable_label",
-        "rule.cancelled_is_not_cancellable"
-      ],
-      "store_written": false,
-      "accepted": false
-    },
-    {
-      "index": 2,
-      "command": "check",
       "workspace_digest": "b83217da005144c81ab830a9000d4f17e80e61e58be2a440dceac0d113e6e32d",
       "exit_code": 1,
       "command_passed": false,
-      "compiler_output": "AIL.ARCH.HOTSPOT_GROWTH:transport:dispatch:M23-POL-DISPATCH-NO-GROWTH: base_cfc=4 base_context=12 candidate_cfc=7 candidate_context=6\nsource contains architecture diagnostics",
+      "compiler_output": "AIL.ARCH.HOTSPOT_GROWTH architecture error\n  at transport.ail:4:1-20:2 bytes 37..797\n  source: fn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome { ...\n  classification=regression\n  facts.base_cfc=4\n  facts.base_context=12\n  facts.candidate_cfc=7\n  facts.candidate_context=6\n  rule=M23-POL-DISPATCH-NO-GROWTH\n  scope=transport:dispatch\n  requires: control-flow complexity must stay at most 4 and minimal review context at most 12; the candidate measured 7 and 6\nsource contains architecture diagnostics",
+      "diagnostic_source": "json",
       "diagnostics": [
         {
           "code": "AIL.ARCH.HOTSPOT_GROWTH",
-          "class": "ARCH",
-          "scope": "transport:dispatch",
+          "class": "architecture",
+          "path": "transport.ail",
           "rule": "M23-POL-DISPATCH-NO-GROWTH",
-          "facts": "base_cfc=4 base_context=12 candidate_cfc=7 candidate_context=6",
-          "key": "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch"
+          "scope": "transport:dispatch",
+          "facts": "classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch",
+          "requirement": "control-flow complexity must stay at most 4 and minimal review context at most 12; the candidate measured 7 and 6",
+          "key": "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
         }
       ],
       "diagnostic_keys": [
-        "AIL.ARCH.HOTSPOT_GROWTH|M23-POL-DISPATCH-NO-GROWTH|transport:dispatch"
+        "AIL.ARCH.HOTSPOT_GROWTH|classification=regression facts.base_cfc=4 facts.base_context=12 facts.candidate_cfc=7 facts.candidate_context=6 rule=M23-POL-DISPATCH-NO-GROWTH scope=transport:dispatch"
       ],
       "specification_violations": [],
       "store_written": false,
       "accepted": false
     },
     {
-      "index": 3,
+      "index": 2,
       "command": "check",
-      "workspace_digest": "acf23547bb4e501fdf70dd672d717933428a8a3f4d4ed2f6d1038090335b4038",
+      "workspace_digest": "a58454d68e430fef693eefea0cbb720868f9be25fd6307d4559b3a85b5e99968",
       "exit_code": 0,
       "command_passed": true,
       "compiler_output": "ok",
+      "diagnostic_source": "json",
       "diagnostics": [],
       "diagnostic_keys": [],
       "specification_violations": [],
@@ -80,12 +55,13 @@
       "accepted": false
     },
     {
-      "index": 4,
+      "index": 3,
       "command": "publish",
-      "workspace_digest": "acf23547bb4e501fdf70dd672d717933428a8a3f4d4ed2f6d1038090335b4038",
+      "workspace_digest": "a58454d68e430fef693eefea0cbb720868f9be25fd6307d4559b3a85b5e99968",
       "exit_code": 0,
       "command_passed": true,
-      "compiler_output": "published\nrevision_id=published\nsource_set_digest=sha256:7b893a06055298409defe431b1865d5295015266079f0ffdc0e55ca1b2644234",
+      "compiler_output": "published\nrevision_id=published\nsource_set_digest=sha256:8b717b883be427040240c9498996ab1ab864389d63fddc74161049382ca689a7",
+      "diagnostic_source": "json",
       "diagnostics": [],
       "diagnostic_keys": [],
       "specification_violations": [],
@@ -96,207 +72,176 @@
   "commands": [
     {
       "command": "brief",
-      "at": 1787554141.747
+      "at": 1787589014.609
     },
     {
       "command": "files",
-      "at": 1787554149.251
+      "at": 1787589017.724
     },
     {
       "command": "read",
       "path": "adapters.ail",
       "tokens": 16,
-      "at": 1787554153.6
-    },
-    {
-      "command": "read",
-      "path": "architecture.json",
-      "tokens": 309,
-      "at": 1787554153.799
+      "at": 1787589021.037
     },
     {
       "command": "read",
       "path": "contracts.ail",
       "tokens": 47,
-      "at": 1787554153.995
+      "at": 1787589021.237
     },
     {
       "command": "read",
       "path": "domain.ail",
       "tokens": 47,
-      "at": 1787554154.191
+      "at": 1787589021.433
     },
     {
       "command": "read",
       "path": "tests.ail",
       "tokens": 40,
-      "at": 1787554154.386
+      "at": 1787589021.629
     },
     {
       "command": "read",
       "path": "transport.ail",
       "tokens": 128,
-      "at": 1787554154.581
+      "at": 1787589021.823
+    },
+    {
+      "command": "read",
+      "path": "architecture.json",
+      "tokens": 309,
+      "at": 1787589022.019
     },
     {
       "command": "read",
       "path": "docs/language.md",
-      "tokens": 661,
-      "at": 1787554168.989
+      "tokens": 806,
+      "at": 1787589036.25
     },
     {
       "command": "read",
       "path": "specs/architecture.md",
       "tokens": 2430,
-      "at": 1787554172.555
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/architecture-denied/architecture.json",
-      "tokens": 245,
-      "at": 1787554190.689
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/architecture-denied/transport.ail",
-      "tokens": 21,
-      "at": 1787554190.888
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/architecture-denied/domain.ail",
-      "tokens": 16,
-      "at": 1787554191.089
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/architecture-denied/contracts.ail",
-      "tokens": 16,
-      "at": 1787554191.285
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/batch-cancellation/domain.ail",
-      "tokens": 59,
-      "at": 1787554197.237
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/batch-cancellation/service.ail",
-      "tokens": 58,
-      "at": 1787554197.435
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/batch-cancellation/single.ail",
-      "tokens": 37,
-      "at": 1787554197.631
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/composed-service/domain.ail",
-      "tokens": 37,
-      "at": 1787554202.738
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/composed-service/service.ail",
-      "tokens": 53,
-      "at": 1787554202.938
-    },
-    {
-      "command": "read",
-      "path": "compiler/examples/composed-service/validation.ail",
-      "tokens": 25,
-      "at": 1787554203.136
-    },
-    {
-      "command": "read",
-      "path": "docs/STATUS.md",
-      "tokens": 437,
-      "at": 1787554207.92
+      "at": 1787589039.592
     },
     {
       "command": "read",
       "path": "specs/core.md",
       "tokens": 2126,
-      "at": 1787554213.834
+      "at": 1787589056.012
     },
     {
-      "command": "check",
-      "attempt": 1,
-      "accepted": false,
-      "at": 1787554221.937
+      "command": "read",
+      "path": "compiler/examples/architecture-denied/architecture.json",
+      "tokens": 245,
+      "at": 1787589060.576
     },
     {
-      "command": "write",
-      "path": "tests.ail",
-      "tokens": 43,
-      "at": 1787554264.102
+      "command": "read",
+      "path": "compiler/examples/architecture-denied/transport.ail",
+      "tokens": 21,
+      "at": 1787589060.777
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/architecture-denied/domain.ail",
+      "tokens": 16,
+      "at": 1787589060.979
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/architecture-denied/contracts.ail",
+      "tokens": 16,
+      "at": 1787589061.179
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/composed-service/domain.ail",
+      "tokens": 37,
+      "at": 1787589065.564
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/composed-service/service.ail",
+      "tokens": 53,
+      "at": 1787589065.766
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/composed-service/validation.ail",
+      "tokens": 25,
+      "at": 1787589065.961
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-cancellation/domain.ail",
+      "tokens": 59,
+      "at": 1787589066.157
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-cancellation/service.ail",
+      "tokens": 58,
+      "at": 1787589066.352
+    },
+    {
+      "command": "read",
+      "path": "compiler/examples/batch-cancellation/single.ail",
+      "tokens": 37,
+      "at": 1787589066.551
+    },
+    {
+      "command": "read",
+      "path": "docs/STATUS.md",
+      "tokens": 557,
+      "at": 1787589070.743
     },
     {
       "command": "write",
       "path": "domain.ail",
       "tokens": 84,
-      "at": 1787554276.271
+      "at": 1787589089.09
     },
     {
       "command": "write",
       "path": "transport.ail",
       "tokens": 129,
-      "at": 1787554276.474
+      "at": 1787589095.002
+    },
+    {
+      "command": "write",
+      "path": "tests.ail",
+      "tokens": 43,
+      "at": 1787589098.747
     },
     {
       "command": "check",
-      "attempt": 2,
+      "attempt": 1,
       "accepted": false,
-      "at": 1787554280.582
+      "at": 1787589101.562
     },
     {
       "command": "write",
       "path": "transport.ail",
       "tokens": 145,
-      "at": 1787554316.488
+      "at": 1787589133.767
     },
     {
       "command": "check",
-      "attempt": 3,
+      "attempt": 2,
       "accepted": false,
-      "at": 1787554316.694
+      "at": 1787589133.972
     },
     {
       "command": "publish",
-      "attempt": 4,
+      "attempt": 3,
       "accepted": true,
-      "at": 1787554322.611
-    },
-    {
-      "command": "read",
-      "path": "domain.ail",
-      "tokens": 84,
-      "at": 1787554328.796
-    },
-    {
-      "command": "read",
-      "path": "tests.ail",
-      "tokens": 43,
-      "at": 1787554328.995
-    },
-    {
-      "command": "read",
-      "path": "transport.ail",
-      "tokens": 145,
-      "at": 1787554329.201
+      "at": 1787589138.499
     }
   ],
   "edits": [
-    {
-      "path": "tests.ail",
-      "created": false,
-      "tokens": 43,
-      "chars": 238,
-      "digest": "c7488d44f30d0cc9e57251e5966477c0fe7eff083551feda10fa5c3ee5179ed5"
-    },
     {
       "path": "domain.ail",
       "created": false,
@@ -312,23 +257,30 @@
       "digest": "4ecabdc6e31aab874566a442b88e02088c9e39fd74b196f7e38f20c6f9c4be6d"
     },
     {
+      "path": "tests.ail",
+      "created": false,
+      "tokens": 43,
+      "chars": 238,
+      "digest": "c7488d44f30d0cc9e57251e5966477c0fe7eff083551feda10fa5c3ee5179ed5"
+    },
+    {
       "path": "transport.ail",
       "created": false,
       "tokens": 145,
-      "chars": 879,
-      "digest": "2258f289027e674afd70c6d059371424822ed8738417f89a89610a488223c1db"
+      "chars": 865,
+      "digest": "1ed3d233dff19086a62c95827cf78859dd45c0bf1c4bcab8f9752d9e29ff88bf"
     }
   ],
-  "tokens_out": 8092,
-  "chars_out": 42933,
+  "tokens_out": 8048,
+  "chars_out": 42349,
   "tokens_in": 401,
-  "chars_in": 2365,
-  "passed_at_attempt": 4,
+  "chars_in": 2351,
+  "passed_at_attempt": 3,
   "published_sources": {
     "adapters.ail": "module adapters;\n\nfn marker(value: Text) -> Text {\n  value\n}\n",
     "contracts.ail": "module contracts;\n\nrecord CancelRequest {\n  value: Text;\n}\n\nvariant StoreOutcome {\n  Queued;\n  Running;\n  Missing;\n  Completed;\n  Cancelled;\n}\n\nvariant CancelOutcome {\n  Malformed;\n  Cancelled;\n  NotFound;\n  NotCancellable;\n}\n",
     "domain.ail": "module domain;\nimport contracts;\n\nfn normalize(request: contracts.CancelRequest) -> contracts.CancelRequest {\n  request\n}\n\nfn summarize(outcome: contracts.CancelOutcome) -> Text {\n  match outcome {\n    contracts.CancelOutcome::Malformed => {\n      \"malformed\"\n    },\n    contracts.CancelOutcome::Cancelled => {\n      \"cancelled\"\n    },\n    contracts.CancelOutcome::NotFound => {\n      \"not-found\"\n    },\n    contracts.CancelOutcome::NotCancellable => {\n      \"not-cancellable\"\n    },\n  }\n}\n",
     "tests.ail": "module tests;\nimport contracts;\nimport transport;\n\nfn cancel_case(value: Text, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  let request = contracts.CancelRequest { value: value };\n  transport.dispatch(request, stored)\n}\n",
-    "transport.ail": "module transport;\nimport contracts;\n\nfn decide_stored(stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  match stored {\n    contracts.StoreOutcome::Queued => {\n      contracts.CancelOutcome::Cancelled\n    },\n    contracts.StoreOutcome::Running => {\n      contracts.CancelOutcome::Cancelled\n    },\n    contracts.StoreOutcome::Missing => {\n      contracts.CancelOutcome::NotFound\n    },\n    contracts.StoreOutcome::Completed => {\n      contracts.CancelOutcome::NotCancellable\n    },\n    contracts.StoreOutcome::Cancelled => {\n      contracts.CancelOutcome::NotCancellable\n    },\n  }\n}\n\nfn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  if text.is_empty(request.value) {\n    contracts.CancelOutcome::Malformed\n  } else {\n    if text.contains_control(request.value) {\n      contracts.CancelOutcome::Malformed\n    } else {\n      decide_stored(stored)\n    }\n  }\n}\n"
+    "transport.ail": "module transport;\nimport contracts;\n\nfn decide(stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  match stored {\n    contracts.StoreOutcome::Queued => {\n      contracts.CancelOutcome::Cancelled\n    },\n    contracts.StoreOutcome::Running => {\n      contracts.CancelOutcome::Cancelled\n    },\n    contracts.StoreOutcome::Missing => {\n      contracts.CancelOutcome::NotFound\n    },\n    contracts.StoreOutcome::Completed => {\n      contracts.CancelOutcome::NotCancellable\n    },\n    contracts.StoreOutcome::Cancelled => {\n      contracts.CancelOutcome::NotCancellable\n    },\n  }\n}\n\nfn dispatch(request: contracts.CancelRequest, stored: contracts.StoreOutcome) -> contracts.CancelOutcome {\n  if text.is_empty(request.value) {\n    contracts.CancelOutcome::Malformed\n  } else {\n    if text.contains_control(request.value) {\n      contracts.CancelOutcome::Malformed\n    } else {\n      decide(stored)\n    }\n  }\n}\n"
   }
 }

@@ -1,49 +1,49 @@
 per trial
 
 measure                                             ail      ail-t2      ail-t3      ail-t4      ail-t5      ail-t6      ail-t7     control  control-t2  control-t3  control-t4  control-t5  control-t6  control-t7
-1 RETRIES to passing publish                          2           2           2           3           2           4           1           1           4           3           2          12           9          16
+1 RETRIES to passing publish                          2           3           2           2           2           3           3           2           2          12          13           3          13          14
   converged                                        True        True        True        True        True        True        True        True        True        True        True        True        True        True
-  gate calls to pass                                  3           3           3           4           3           5           2           2           5           4           3          13          10          17
-2 REBREAKS (fixed, then broken again)                 0           0           0           0           0           0           0           0           1           0           0           4           2           2
-  fix cycles (new breakage after an edit)             0           0           0           1           0           2           0           0           2           0           0           5           3           4
-  attempts failing the task specification             0           0           0           1           1           1           0           0           2           1           0           8           6          12
-3 TOKENS total (protocol, extra)                   8100        8087        8379        8493        8305        8752        5623        8155        9096        8547        8501       10930       10082       12268
-  tokens harness to agent                          7699        7701        7993        8092        8033        8171        5351        7883        8361        8112        8016        9497        9133       10423
-  tokens agent to harness                           401         386         386         401         272         581         272         272         735         435         485        1433         949        1845
-- source edits                                        4           4           4           4           3           5           3           3          10           5           6          22          16          31
-- reads                                              20          20          23          23          23          23          21          23          25          25          25          25          25          25
-- distinct diagnostics reached                        1           1           1           2           1           3           0           0           2           1           0           2           2           3
-- god-method rejections                               1           1           1           1           0           1           0           0           2           1           0           4           3           3
-- worst dispatch control-flow complexity              7           7           7           7        None           7        None        None           7           7        None           7           7           7
-- first check that passed                             2           2           2           3           2           4           1           1        None           2           1           5           4           7
-- ledger built from                                text        text        text        text        text        text        text        text        text        text        text        text        text        text
+  gate calls to pass                                  3           4           3           3           3           4           4           3           3          13          14           4          14          15
+2 REBREAKS (fixed, then broken again)                 0           0           0           0           0           0           0           0           0           2           2           0           0           2
+  fix cycles (new breakage after an edit)             0           1           0           0           0           1           1           0           0           4           5           1           5           3
+  attempts failing the task specification             0           1           0           0           0           1           1           0           0           9          10           1          11          11
+3 TOKENS total (protocol, extra)                   8490        8658        8449        8449        8830        8857        8043        8725        8859       11430       11725        9340       11850       11904
+  tokens harness to agent                          8053        8221        8048        8048        8406        8471        7657        8302        8473       10115       10485        8805       10323       10776
+  tokens agent to harness                           437         437         401         401         424         386         386         423         386        1315        1240         535        1527        1128
+- source edits                                        5           5           4           4           4           4           4           4           4          24          23           7          24          23
+- reads                                              20          20          20          20          25          23          19          25          28          25          30          30          33          28
+- distinct diagnostics reached                        1           2           1           1           1           2           2           1           1           3           4           2           6           2
+- god-method rejections                               1           1           1           1           1           1           1           1           1           3           3           1           7           2
+- worst dispatch control-flow complexity              7           7           7           7           7           7           7           7           7           7           7           7           7           7
+- first check that passed                             2           3           2           2           2           3           3           2           2           4           5           3           5           6
+- ledger built from                                json        json        json        json        json        json        json        json        json        json        json        json        json        json
 
 median of ail: 7 trials, control: 7 trials
 
 measure                                             ail     control
-1 RETRIES to passing publish                          2           4
+1 RETRIES to passing publish                          2          12
   converged                                        True        True
-  gate calls to pass                                  3           5
-2 REBREAKS (fixed, then broken again)                 0           1
-  fix cycles (new breakage after an edit)             0           2
-  attempts failing the task specification             0           2
-3 TOKENS total (protocol, extra)                   8305        9096
-  tokens harness to agent                          7993        8361
-  tokens agent to harness                           386         735
-- source edits                                        4          10
-- reads                                              23          25
+  gate calls to pass                                  3          13
+2 REBREAKS (fixed, then broken again)                 0           0
+  fix cycles (new breakage after an edit)             0           3
+  attempts failing the task specification             0           9
+3 TOKENS total (protocol, extra)                   8490       11430
+  tokens harness to agent                          8053       10115
+  tokens agent to harness                           401        1128
+- source edits                                        4          23
+- reads                                              20          28
 - distinct diagnostics reached                        1           2
 - god-method rejections                               1           2
-- worst dispatch control-flow complexity              -           -
-- first check that passed                             2           -
+- worst dispatch control-flow complexity              7           7
+- first check that passed                             2           4
 - ledger built from                                   -           -
 
 win condition: retries to a passing publish
 
-  ail      n=7  retries [1, 2, 2, 2, 2, 3, 4]  median 2  worst 4  did not converge 0
-  control  n=7  retries [1, 2, 3, 4, 9, 12, 16]  median 4  worst 16  did not converge 0
+  ail      n=7  retries [2, 2, 2, 2, 3, 3, 3]  median 2  worst 3  did not converge 0
+  control  n=7  retries [2, 2, 3, 12, 13, 13, 14]  median 12  worst 14  did not converge 0
 
   paired comparisons (49 of them, every ail trial against every control trial):
-    control needed more retries in 33, fewer in 9, equal in 7
+    control needed more retries in 32, fewer in 6, equal in 11
 
   ail wins the median but not outright: the distributions overlap, so at least one control trial beat at least one ail trial. Not a clean win.
