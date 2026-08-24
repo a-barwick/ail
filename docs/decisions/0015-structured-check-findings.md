@@ -44,11 +44,19 @@ finding carries:
   with, or each contributing architecture unit;
 - a `requirement`: the constraint those facts state.
 
-`requirement` is a restatement of facts, never a rewrite. Codes with a named
-fact shape get a named requirement. Otherwise a shared `expected`/`actual` key
-produces `<key> must be <expected> at this span; the checker measured <actual>`,
-and a lone `expected` key produces `<key> must be <expected> at this span`. A
-code whose facts name no requirement reports none.
+`requirement` states the constraint the checker enforced and the value it
+measured. It never prescribes an edit. Every requirement reads
+`<subject> must <constraint>` and may add the measured value after a semicolon.
+`group transport must not depend on group domain` is a requirement;
+`remove the calls edge transport:dispatch -> domain:work` is a rewrite, and the
+checker has no fact that chooses one repair over another. Removing that edge,
+moving the callee, or widening the policy all satisfy the same constraint.
+
+Codes with a named fact shape get a named requirement. Otherwise a shared
+`expected`/`actual` key produces
+`<key> must be <expected> at this span; the checker measured <actual>`, and a
+lone `expected` key produces `<key> must be <expected> at this span`. A code
+whose facts name no constraint reports none.
 
 Text output is the default. `--json` emits the same findings as one JSON
 document on stdout. Both render the same values, so the two views cannot drift.
@@ -118,6 +126,10 @@ configuration file. `architecture.json` keeps its contents and its meaning.
   rejected. A caller cannot open an offset that exists only in a rewrite.
 - Caret and underline rendering: rejected. The product is the facts. The text
   view exists so a human can read them.
+- A repair clause in the requirement, such as naming the edge to remove for
+  `AIL.ARCH.BOUNDARY`: rejected. The checker measures a forbidden edge; it does
+  not know which of the several edits that satisfy the constraint the caller
+  wants. Naming one is a guessed rewrite wearing a fact's clothing.
 - Emit only JSON: rejected. The existing text output is what tests and operators
   read today.
 
@@ -135,8 +147,13 @@ and proves:
 - a missing import names the import text, the file, the module, and the modules
   the source set declares;
 - `AIL.ARCH.BOUNDARY` names `M23-POL-GROUP-DEPENDENCY`, its scope, its forbidden
-  edge facts, `transport.ail` as the violating source, and `domain:work` as a
-  contributor;
+  edge facts, `transport.ail` as the violating source, `domain:work` as a
+  contributor, and the requirement
+  `group transport must not depend on group domain; the candidate has a calls
+  edge transport:dispatch -> domain:work`;
+- every requirement across ten failing inputs and at least eight distinct codes
+  states a constraint with `must` and contains none of 22 edit verbs, so no code
+  can reintroduce a prescribed rewrite;
 - a parse failure reports `broken.ail:2:9-2:9` with `expected.token=:` and
   `actual.token=}`;
 - an unknown capability interface names the interfaces the check environment

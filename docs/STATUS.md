@@ -27,11 +27,13 @@ diagnostic. Check writes no revision. `ailc publish` writes one revision only
 after the same checks pass.
 
 Structured findings expose only facts the checkers already compute. A finding
-carries no suggested rewrite and no repair edit. Findings have no stable
-requirement text for every code: a code whose expected and actual facts do not
-name a requirement reports none rather than guessing one. Findings are not a
-protocol surface with its own conformance fixtures; they are the `ailc` check
-and publish output.
+states the constraint that must hold and the value the checker measured. It
+never names the edit that would satisfy the constraint, because the checker has
+no fact that chooses one repair over another. Findings have no stable
+requirement text for every code: a code whose expected and actual facts name no
+constraint reports none rather than guessing one. Findings are not a protocol
+surface with its own conformance fixtures; they are the `ailc` check and publish
+output.
 
 The architecture checker implements the existing metric and policy contract. It
 does not make AIL a general application platform.

@@ -298,8 +298,17 @@ fn value_of<'a>(map: &'a BTreeMap<String, String>, key: &str) -> Option<&'a str>
 
 /// Derive the requirement implied by facts the checker already produced.
 ///
-/// Every branch restates compiler facts. When the facts do not name a
-/// requirement, this returns `None` rather than guessing one.
+/// A requirement states the constraint the checker enforced and the value it
+/// measured. It never prescribes an edit: no branch may tell a caller to
+/// remove, add, rename, replace, or rewrite anything. "group transport must not
+/// depend on group domain" is a requirement; "remove the calls edge" is a
+/// rewrite the checker has no basis for. Every branch therefore reads
+/// `<subject> must <constraint>` and may add the measured value after a
+/// semicolon. When the facts name no constraint, this returns `None` rather
+/// than guessing one.
+///
+/// `requirement_is_a_constraint_and_never_an_edit` in `tests/ailc_findings.rs`
+/// enforces both halves of that rule against real `ailc` output.
 fn derive_requirement(
     code: &str,
     expected: &BTreeMap<String, String>,
@@ -491,7 +500,7 @@ fn named_requirement(
             let source_group = value_of(facts, "facts.forbidden_group_edges.0.source_group")?;
             let target_group = value_of(facts, "facts.forbidden_group_edges.0.target_group")?;
             Some(format!(
-                "group {source_group} must not depend on group {target_group}; remove the {kind} edge {source} -> {target}"
+                "group {source_group} must not depend on group {target_group}; the candidate has a {kind} edge {source} -> {target}"
             ))
         }
         "AIL.ARCH.AUTHORITY" => Some(format!(
@@ -508,7 +517,7 @@ fn named_requirement(
         "AIL.ARCH.CYCLE" => {
             let members = value_of(facts, "facts.components.0.members")?;
             Some(format!(
-                "the unit graph must not gain a cycle; break the cycle among {members}"
+                "the unit graph must not gain a cycle; the candidate has a cycle among {members}"
             ))
         }
         "AIL.ARCH.STALE_BASELINE" => Some(format!(

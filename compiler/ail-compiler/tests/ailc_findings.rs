@@ -268,7 +268,7 @@ fn an_architecture_failure_names_the_rule_and_the_violating_source() {
     assert_eq!(finding["location"]["start_line"], 4);
     assert_eq!(
         finding["requirement"],
-        "group transport must not depend on group domain; remove the calls edge transport:dispatch -> domain:work"
+        "group transport must not depend on group domain; the candidate has a calls edge transport:dispatch -> domain:work"
     );
     let related = finding["related"]
         .as_array()
@@ -370,6 +370,120 @@ fn a_long_snippet_is_bounded_and_says_so() {
     assert_eq!(snippet.len(), 243, "{snippet}");
     assert!(snippet.ends_with("..."), "{snippet}");
     assert!(snippet.starts_with("\"xxx"), "{snippet}");
+}
+
+/// Verbs that would make a requirement an edit instruction instead of a
+/// constraint. A finding reports what must hold and what the checker measured.
+/// Choosing the repair is the caller's work, and the checker has no fact that
+/// justifies picking one.
+const EDIT_VERBS: [&str; 22] = [
+    "add", "avoid", "break", "change", "consider", "delete", "drop", "edit", "extract", "fix",
+    "insert", "instead", "move", "prefer", "remove", "rename", "replace", "rewrite", "should",
+    "split", "try", "wrap",
+];
+
+#[test]
+fn requirement_is_a_constraint_and_never_an_edit() {
+    let type_error = Workspace::new("rule-type", &[("types.ail", FIELD_MISMATCH_SOURCE)]);
+    let parse_error = Workspace::new(
+        "rule-parse",
+        &[("broken.ail", "record Job {\n  job_id\n}\n")],
+    );
+    let recursion = Workspace::new(
+        "rule-recursion",
+        &[(
+            "cycle.ail",
+            "fn first(value: Text) -> Text {\n  second(value)\n}\n\nfn second(value: Text) -> Text {\n  first(value)\n}\n",
+        )],
+    );
+    let name_error = Workspace::new(
+        "rule-name",
+        &[(
+            "names.ail",
+            "fn run(value: Text) -> Text {\n  missing(value)\n}\n",
+        )],
+    );
+    let unresolved = Workspace::new(
+        "rule-unresolved",
+        &[("types.ail", "record R {\n  n: Missing;\n}\n")],
+    );
+    let duplicate = Workspace::new(
+        "rule-duplicate",
+        &[(
+            "dup.ail",
+            "fn run(value: Text) -> Text {\n  value\n}\n\nfn run(other: Text) -> Text {\n  other\n}\n",
+        )],
+    );
+    let effect = Workspace::new(
+        "rule-effect",
+        &[(
+            "effect.ail",
+            "fn run(value: Text) -> Text effects { store.mark } {\n  value\n}\n",
+        )],
+    );
+
+    let architecture = examples_dir().join("architecture-denied");
+    let missing_import = examples_dir().join("composed-service/service.ail");
+    let capability = examples_dir().join("batch-lookup");
+    let inputs = [
+        type_error.path(),
+        parse_error.path(),
+        recursion.path(),
+        name_error.path(),
+        unresolved.path(),
+        duplicate.path(),
+        effect.path(),
+        architecture.as_path(),
+        missing_import.as_path(),
+        capability.as_path(),
+    ];
+
+    let mut codes = Vec::new();
+    let mut requirements = Vec::new();
+    for input in inputs {
+        let path = input.to_str().expect("input path is UTF-8");
+        let document = json_document(&["check", "--json", path]);
+        for finding in document["findings"]
+            .as_array()
+            .expect("document carries findings")
+        {
+            let code = finding["code"]
+                .as_str()
+                .expect("code is a string")
+                .to_owned();
+            codes.push(code.clone());
+            if let Some(requirement) = finding["requirement"].as_str() {
+                requirements.push((code, requirement.to_owned()));
+            }
+        }
+    }
+
+    codes.sort_unstable();
+    codes.dedup();
+    assert!(
+        codes.len() >= 8,
+        "this rule must be checked against a wide spread of codes, saw {codes:?}"
+    );
+    assert!(
+        requirements.len() >= 8,
+        "this rule must be checked against real requirements, saw {requirements:?}"
+    );
+
+    for (code, requirement) in &requirements {
+        assert!(
+            requirement.contains(" must "),
+            "{code} requirement must state a constraint with `must`: {requirement}"
+        );
+        for word in requirement.split_whitespace() {
+            let word = word
+                .trim_matches(|character: char| !character.is_ascii_alphabetic())
+                .to_ascii_lowercase();
+            assert!(
+                !EDIT_VERBS.contains(&word.as_str()),
+                "{code} requirement prescribes an edit with `{word}`: {requirement}"
+            );
+        }
+    }
 }
 
 #[test]
