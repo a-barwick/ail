@@ -72,6 +72,34 @@ fn check_rejects_a_type_correct_architecture_policy_violation() {
 }
 
 #[test]
+fn check_reports_the_architecture_facts_the_checker_already_computed() {
+    let path = examples_dir().join("architecture-denied");
+    let output = run_check(&path);
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("AIL.ARCH.BOUNDARY:group:transport:M23-POL-GROUP-DEPENDENCY:"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("forbidden_group_edges.0.source_group=transport"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("forbidden_group_edges.0.target_group=domain"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("forbidden_group_edges.0.source=transport:dispatch"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("forbidden_group_edges.0.target=domain:work"),
+        "{stderr}"
+    );
+}
+
+#[test]
 fn check_rejects_an_imported_file_as_a_one_file_workspace() {
     let path = examples_dir().join("composed-service/service.ail");
     let output = run_check(&path);
