@@ -1,15 +1,17 @@
 # Proof of concept: when does compiler output help an agent?
 
-Two tests. Same harness, same model, same publish gate.
+Three tests. Same harness, same model, same publish gate.
 
 Each test hands two agents the same broken AIL workspace and the same success
 gate, `ailc publish`. One arm sees the compiler's output. The other arm gets
 `PASS` or `FAIL` and nothing else. The measure that decides the outcome is
 retries: gate calls spent before the publish that passed, whether each one
-failed or passed. Both tests ran on 2026-08-24 against the same `ailc` binary.
+failed or passed. The first two tests ran on 2026-08-24 against the same `ailc`
+binary. The third ran later, after the arms were staggered and the blind ledger
+was sealed.
 
-The two tests use different fixtures and are separate experiments. Their numbers
-do not combine.
+The three tests use different fixtures and are separate experiments. Their
+numbers do not combine.
 
 ## Test 1: a rule you cannot see by reading the files
 
@@ -72,15 +74,42 @@ number cannot settle it either way, because 1 retry is the floor for a
 check-then-publish strategy, so a peeking arm and an honest arm would report the
 same number.
 
+## Test 3: the same kind of mistake, in a bigger folder
+
+Fixture `release-review`, seven trials per arm, in
+[RESULTS-release-review.md](../poc/compiler-convergence/RESULTS-release-review.md).
+Thirty-five modules. Both arms used `gpt-5.6-sol-high`. The arms were staggered
+and sealed: the blind trials finished first, and the blind arm never saw
+compiler findings while it ran.
+
+The compiler arm needed two tries: retries [2, 2, 2, 2, 2, 2, 2], median 2.
+
+The blind arm needed one: retries [1, 1, 1, 1, 1, 1, 1], median 1. Across all
+49 pairings, the blind arm needed fewer retries in 49. Neither arm rebroke a
+fix.
+
+The extra compiler-arm retry is the opening check, same as fixture 2. Every
+compiler trial checked the broken workspace first, repaired two files, checked
+again, then published. Every blind trial repaired both files before its first
+check.
+
+Size showed up as reads, about 34 against 4, and as tokens, where the compiler
+arm used fewer. That is not the scale test. This is fixture 2 with a bigger
+folder.
+
+Every command log used only the harness commands. No trial ran a private
+compiler.
+
 ## What it shows
 
 The compiler helps when the rule is hidden. It does not help when the bug is
-already on the page.
+already on the page. A bigger folder of the same kind of bug does not change
+that.
 
 ## What it does not show
 
-This is not a proof at scale. One model, two fixtures. Both workspaces are
-small enough to read in full, and neither gate executes the program.
+This is not a proof at scale. One model, three fixtures. Test 3 is fixture 2
+with a bigger folder, not a scale test. None of the gates execute the program.
 
 ## Full results
 
@@ -90,3 +119,6 @@ small enough to read in full, and neither gate executes the program.
 - [poc/compiler-convergence/RESULTS-label-batch.md](../poc/compiler-convergence/RESULTS-label-batch.md)
   — fixture `label-batch`, including the full tables, the secondary condition,
   and threats to validity.
+- [poc/compiler-convergence/RESULTS-release-review.md](../poc/compiler-convergence/RESULTS-release-review.md)
+  — fixture `release-review`, including the full tables and the sealed-run
+  protocol.
