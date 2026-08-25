@@ -15,11 +15,18 @@ lives in `runs/<arm>/state.json` and is materialized into a private temporary
 directory only while `ailc` runs, so no on-disk workspace exists for an arm to
 compile behind the harness's back.
 
-The arms are staggered. Every `control` arm of a broken workspace finishes
-before the first `ail` arm of that workspace starts, so a blind trial cannot
-read compiler findings out of a compiler arm's ledger: no such ledger exists
-while it works. The harness enforces both halves of that order and records it,
-and `self-test` proves it by driving the real command line.
+No compiler output exists on disk while a blind trial runs, so there is nothing
+for it to read. Two rules get that, and `self-test` proves both by driving the
+real command line.
+
+- The arms are staggered. Every `control` arm of a broken workspace finishes
+  before the first `ail` arm of that workspace starts, so no compiler arm's
+  ledger exists while a blind arm works.
+- A `control` arm's own ledger is sealed. Its gate calls record the outcome the
+  arm was told and its own source, never the compiler output the harness
+  withheld. `unseal` rebuilds the findings by running that stored source again,
+  after every blind arm has finished, and `report` and `audit` refuse to score a
+  ledger that is still sealed.
 
 The harness never repairs source and never edits policy. It measures.
 """
@@ -389,20 +396,22 @@ def require_no_compiler_ledger(fixture: Fixture, arm_name: str, action: str) -> 
     )
 
 
-def require_blind_arms_finished(fixture: Fixture, arm_name: str) -> dict[str, float]:
+def require_blind_arms_finished(
+    fixture: Fixture, arm_name: str, action: str = "start compiler arm"
+) -> dict[str, float]:
     arms = blind_arms(fixture)
     unfinished = sorted(item.label for item in arms if finished_at(item.state) is None)
     if unfinished:
         fail(
-            f"arm order violation: refusing to start compiler arm {arm_name} while "
+            f"arm order violation: refusing to {action} {arm_name} while "
             f"blind arms are still running: {', '.join(unfinished)}. Every control "
-            "arm finishes first, so no compiler-arm ledger exists on disk while a "
-            "blind arm works. Close an abandoned arm with: harness.py close --arm "
-            "<name> --operator --reason <why>"
+            "arm finishes first, so no compiler output for its workspace exists on "
+            "disk while a blind arm works. Close an abandoned arm with: harness.py "
+            "close --arm <name> --operator --reason <why>"
         )
     if not arms:
         fail(
-            f"arm order violation: refusing to start compiler arm {arm_name} before "
+            f"arm order violation: refusing to {action} {arm_name} before "
             "any blind arm of this workspace has run. The blind arms run first."
         )
     return {item.label: finished_at(item.state) for item in arms}
@@ -674,14 +683,21 @@ def gate(arm_name: str, command: str, fixture: Fixture) -> None:
         "workspace_digest": workspace_digest(state["files"]),
         "exit_code": result["exit_code"],
         "command_passed": command_passed,
-        "compiler_output": result["output"],
-        "diagnostic_source": result["diagnostic_source"],
-        "diagnostics": result["diagnostics"],
-        "diagnostic_keys": sorted({item["key"] for item in result["diagnostics"]}),
         "specification_violations": [item["id"] for item in violations],
         "store_written": result["store_written"],
         "accepted": accepted,
     }
+    policy = state.get("policy", policy_of(state["arm"]))
+    if policy == "control":
+        # The blind arm's own ledger holds no compiler output while it runs, so
+        # reading it is worth nothing. `unseal` rebuilds the findings from the
+        # sources below once every blind arm has finished.
+        seal(state, attempt, command)
+    else:
+        attempt["compiler_output"] = result["output"]
+        attempt["diagnostic_source"] = result["diagnostic_source"]
+        attempt["diagnostics"] = result["diagnostics"]
+        attempt["diagnostic_keys"] = sorted({item["key"] for item in result["diagnostics"]})
     if command == "check" and result["store_written"]:
         attempt["invariant_breach"] = "check wrote a revision store"
     if command == "publish" and result["exit_code"] != 0 and result["store_written"]:
@@ -699,7 +715,7 @@ def gate(arm_name: str, command: str, fixture: Fixture) -> None:
         lines.append("check is read-only and never satisfies the gate; publish does")
     else:
         lines.append("PASS" if accepted else "FAIL")
-    if state.get("policy", policy_of(state["arm"])) == "ail" and result["output"]:
+    if policy == "ail" and result["output"]:
         lines.append(result["output"])
     if violations:
         lines.append("task specification not satisfied:")
@@ -715,6 +731,121 @@ def gate(arm_name: str, command: str, fixture: Fixture) -> None:
 def workspace_digest(files: dict[str, str]) -> str:
     blob = "\n".join(f"{name}:{digest(text)}" for name, text in sorted(files.items()))
     return digest(blob)
+
+
+# --------------------------------------------------------------------------
+# sealed blind ledgers: withheld during the run, rebuilt from the arm's sources
+# --------------------------------------------------------------------------
+
+
+def seal(state: dict, attempt: dict, command: str) -> None:
+    """Record one blind gate call without the compiler output it produced.
+
+    What is kept is the arm's own source, content-addressed, plus the outcome
+    the arm was told. That is enough for `unseal` to run the same command again
+    and recover the findings, and it is nothing the arm did not already have.
+    """
+    blobs = state.setdefault("blobs", {})
+    sources = {}
+    for name, text in state["files"].items():
+        key = digest(text)
+        blobs[key] = text
+        sources[name] = key
+    attempt["sealed"] = {
+        "reason": "compiler output withheld from the blind arm during its run",
+        "command": command,
+        "sources": sources,
+        "rebuild_with": f"harness.py unseal --arm {state['arm']} --operator",
+    }
+
+
+def sealed_attempts(state: dict) -> list[int]:
+    """Gate calls whose findings are still withheld, so no measure can read them."""
+    return [
+        item["index"]
+        for item in state.get("attempts", [])
+        if "sealed" in item and "diagnostics" not in item
+    ]
+
+
+def require_unsealed(fixture: Fixture, name: str, state: dict) -> None:
+    pending = sealed_attempts(state)
+    if not pending:
+        return
+    fail(
+        f"arm {name} has {len(pending)} sealed gate call(s) at attempts {pending}: their "
+        "findings were withheld from the blind arm and have not been rebuilt yet. "
+        "Reporting them now would count zero diagnostics for a run that produced them. "
+        f"Run: harness.py unseal --fixture {fixture.name} --arm {name} --operator"
+    )
+
+
+def command_unseal(args: argparse.Namespace) -> None:
+    """Rebuild one blind arm's withheld findings by running its own sources again.
+
+    Runs only after every blind arm of the workspace has finished, so no blind
+    trial is in flight when the findings land on disk. Each gate call must
+    reproduce the outcome the run recorded; if one does not, the compiler or the
+    fixture has changed since the run, and the ledger stays sealed rather than
+    gaining a reconstruction that is not what the arm faced.
+    """
+    if not args.operator:
+        fail(
+            "unseal writes the compiler output that was withheld from a blind arm "
+            "into its ledger. Pass --operator."
+        )
+    fixture = fixture_named(args.fixture, args.runs_root)
+    require_blind_arms_finished(fixture, args.arm, action="unseal")
+    active = Arm(name=args.arm, path=fixture.runs / args.arm, fixture=fixture)
+    state = active.load()
+    if policy_of(args.arm) != "control":
+        fail(f"arm {args.arm} is a compiler arm; its ledger was never sealed")
+    if state.get("finished_at") is None:
+        fail(
+            f"arm {args.arm} has not finished, so unsealing it would put compiler "
+            "output on disk while it is still working"
+        )
+    pending = sealed_attempts(state)
+    if not pending:
+        calls = len(state["attempts"])
+        print(f"arm {args.arm}: nothing sealed, {calls} gate call(s) already readable")
+        return
+
+    rebuilt = []
+    for attempt in state["attempts"]:
+        if "sealed" not in attempt or "diagnostics" in attempt:
+            continue
+        sealed = attempt["sealed"]
+        files = {name: state["blobs"][key] for name, key in sealed["sources"].items()}
+        if workspace_digest(files) != attempt["workspace_digest"]:
+            fail(
+                f"attempt {attempt['index']}: stored sources do not match the workspace "
+                "digest the run recorded; the ledger stays sealed"
+            )
+        result = run_gate({"arm": f"{args.arm}-unseal", "files": files}, sealed["command"])
+        if (
+            result["exit_code"] != attempt["exit_code"]
+            or result["store_written"] != attempt["store_written"]
+        ):
+            fail(
+                f"attempt {attempt['index']}: rebuilding does not reproduce the run. "
+                f"Recorded exit {attempt['exit_code']} and store_written "
+                f"{attempt['store_written']}; rebuilt exit {result['exit_code']} and "
+                f"store_written {result['store_written']}. The compiler or the fixture "
+                "changed since this arm ran; the ledger stays sealed."
+            )
+        attempt["compiler_output"] = result["output"]
+        attempt["diagnostic_source"] = result["diagnostic_source"]
+        attempt["diagnostics"] = result["diagnostics"]
+        attempt["diagnostic_keys"] = sorted({item["key"] for item in result["diagnostics"]})
+        attempt["rebuilt_at"] = round(time.time(), 3)
+        rebuilt.append(attempt["index"])
+
+    active.save(state)
+    print(
+        f"unsealed arm {args.arm}: rebuilt {len(rebuilt)} gate call(s) at attempts "
+        f"{rebuilt}, each reproducing the outcome the run recorded"
+    )
 
 
 # --------------------------------------------------------------------------
@@ -1101,6 +1232,7 @@ def command_report(args: argparse.Namespace) -> None:
         name = state_path.parent.name
         if ARM_NAME.match(name):
             state = json.loads(state_path.read_text(encoding="utf-8"))
+            require_unsealed(fixture, name, state)
             results[name] = measure(state, fixture)
     if not results:
         fail(f"no arm has run yet for fixture {fixture.name}")
@@ -1281,19 +1413,34 @@ def first_line(text: str) -> str:
     return text.strip().splitlines()[0] if text.strip() else ""
 
 
-def arm_order_checks(fixture: Fixture, reference: Path, spec: dict) -> list[tuple[str, bool, str]]:
-    """Prove a blind trial runs to its end before any compiler ledger exists.
+def blind_arm_checks(
+    fixture: Fixture, reference: Path, spec: dict, broken_keys: list[str]
+) -> list[tuple[str, bool, str]]:
+    """Prove no compiler output is readable while a blind trial runs.
 
     Drives the real command line in a temporary runs root, so the committed runs
     are untouched and every refusal here is the one an operator would hit. The
-    blind trial is a real one: it writes the stored reference repair through the
-    harness and publishes, with `PASS` or `FAIL` as its only feedback.
+    blind trial is a real one: it fails a gate call on the broken workspace,
+    writes the stored reference repair through the harness, and publishes, with
+    `PASS` or `FAIL` as its only feedback. `broken_keys` are the findings the
+    compiler really produced on that first call, computed independently above,
+    so the checks can say what is missing from the ledger and what comes back.
     """
     checks: list[tuple[str, bool, str]] = []
-    root = Path(tempfile.mkdtemp(prefix="ail-arm-order-"))
+    root = Path(tempfile.mkdtemp(prefix="ail-blind-arm-"))
 
     def ledger_arms() -> list[str]:
         return sorted(path.parent.name for path in root.glob("runs*/*/state.json"))
+
+    def ledger_text(name: str) -> str:
+        """Exactly what an arm would get by reading its own state file."""
+        return (root / fixture.runs.name / name / "state.json").read_text(encoding="utf-8")
+
+    def ledger_keys(name: str) -> set[str]:
+        document = json.loads(ledger_text(name))
+        return {
+            key for entry in document["attempts"] for key in entry.get("diagnostic_keys", [])
+        }
 
     try:
         started = harness_cli(root, fixture, "start", "--arm", "control")
@@ -1310,6 +1457,52 @@ def arm_order_checks(fixture: Fixture, reference: Path, spec: dict) -> list[tupl
                 "compiler arm is refused while a blind arm is still running",
                 early.returncode != 0 and "arm order violation" in early.stderr,
                 first_line(early.stderr),
+            )
+        )
+
+        # One failing gate call on the broken workspace, which is where the
+        # compiler has the most to say and the blind arm must be told least.
+        failed = harness_cli(root, fixture, "check", "--arm", "control")
+        checks.append(
+            (
+                "blind arm's failing gate call returns FAIL and no diagnostic",
+                failed.returncode == 0
+                and "FAIL" in failed.stdout
+                and "AIL." not in failed.stdout,
+                first_line(failed.stdout.splitlines()[1] if failed.stdout else ""),
+            )
+        )
+        own = ledger_text("control")
+        codes = sorted({key.split("|")[0] for key in broken_keys})
+        checks.append(
+            (
+                "a blind arm reading its own state file sees no diagnostic code",
+                "AIL." not in own and not any(code in own for code in codes),
+                "no AIL. code anywhere in the ledger",
+            )
+        )
+        checks.append(
+            (
+                f"the {len(broken_keys)} findings that call produced are absent from its ledger",
+                bool(broken_keys) and not ledger_keys("control"),
+                f"withheld {len(broken_keys)} findings, {len(codes)} distinct codes",
+            )
+        )
+        first = json.loads(own)["attempts"][0]
+        checks.append(
+            (
+                "the blind arm's gate call is recorded as sealed and as failing",
+                "sealed" in first and first["exit_code"] != 0 and "diagnostics" not in first,
+                "",
+            )
+        )
+        premature = harness_cli(root, fixture, "unseal", "--arm", "control", "--operator")
+        refused = "still running" in premature.stderr or "has not finished" in premature.stderr
+        checks.append(
+            (
+                "unseal is refused while the blind arm is still working",
+                premature.returncode != 0 and refused,
+                first_line(premature.stderr),
             )
         )
 
@@ -1379,19 +1572,62 @@ def arm_order_checks(fixture: Fixture, reference: Path, spec: dict) -> list[tupl
                 first_line(blocked.stderr),
             )
         )
+        # The same gate call in the compiler arm, for contrast: one harness, one
+        # compiler, and the findings land in that arm's ledger.
+        probed = harness_cli(root, fixture, "check", "--arm", "ail")
+        checks.append(
+            (
+                "the compiler arm's ledger does hold the findings, so sealing is what differs",
+                "AIL." in probed.stdout and set(broken_keys) <= ledger_keys("ail"),
+                f"{len(broken_keys)} findings recorded",
+            )
+        )
+
+        early_report = harness_cli(root, fixture, "report", "--operator")
+        checks.append(
+            (
+                "report refuses to score a sealed ledger instead of counting zero findings",
+                early_report.returncode != 0 and "sealed gate call" in early_report.stderr,
+                first_line(early_report.stderr),
+            )
+        )
+        rebuilt = harness_cli(root, fixture, "unseal", "--arm", "control", "--operator")
+        checks.append(
+            (
+                "unseal rebuilds exactly the findings the blind arm was never shown",
+                rebuilt.returncode == 0 and ledger_keys("control") == set(broken_keys),
+                first_line(rebuilt.stdout) or first_line(rebuilt.stderr),
+            )
+        )
+        scored = harness_cli(root, fixture, "report", "--operator")
+        checks.append(
+            (
+                "report scores the rebuilt ledger",
+                scored.returncode == 0 and "retries to a passing publish" in scored.stdout,
+                first_line(scored.stderr),
+            )
+        )
+
         audited = harness_cli(root, fixture, "audit")
         # Audit reports the whole run, so its exit code answers more than the
-        # arm order. Read its arm-order lines, which is the claim under test.
-        order_lines = [
+        # blind-arm protocol. Read the lines that state it, which is the claim
+        # under test.
+        claims = (
+            "compiler-arm ledger existed",
+            "had finished before it started",
+            "every gate call was sealed",
+            "rebuilt only after the arm finished",
+        )
+        stated = [
             line
             for line in audited.stdout.splitlines()
-            if "compiler-arm ledger existed" in line or "had finished before it started" in line
+            if any(claim in line for claim in claims)
         ]
         checks.append(
             (
-                "audit confirms the order from the ledgers alone",
-                len(order_lines) == 2 and all(line.startswith("ok") for line in order_lines),
-                "; ".join(line.strip() for line in order_lines) or first_line(audited.stderr),
+                "audit confirms order, sealing, and rebuild time from the ledgers alone",
+                len(stated) == 4 and all(line.startswith("ok") for line in stated),
+                "; ".join(line.strip() for line in stated) or first_line(audited.stderr),
             )
         )
     finally:
@@ -1400,7 +1636,7 @@ def arm_order_checks(fixture: Fixture, reference: Path, spec: dict) -> list[tupl
 
 
 def command_self_test(args: argparse.Namespace) -> None:
-    """Prove the fixture is solvable, the gate cannot be gamed, and the arms are staggered.
+    """Prove the fixture is solvable, the gate cannot be gamed, and the blind arm is blind.
 
     Runs no agent. Applies a reference repair directly, so it is labelled a
     self-test and never counted as an arm result.
@@ -1416,6 +1652,10 @@ def command_self_test(args: argparse.Namespace) -> None:
     state = {"arm": "self-test", "files": dict(broken)}
 
     result = run_gate(state, "check")
+    # What the compiler really says about the broken workspace, computed here
+    # without the harness's arms. The blind-arm checks below use it to name what
+    # is missing from a sealed ledger and what `unseal` has to bring back.
+    broken_keys = sorted({item["key"] for item in result["diagnostics"]})
     checks.append(
         (
             "broken fixture fails check",
@@ -1568,7 +1808,7 @@ def command_self_test(args: argparse.Namespace) -> None:
         )
     )
 
-    checks += arm_order_checks(fixture, reference, spec)
+    checks += blind_arm_checks(fixture, reference, spec, broken_keys)
 
     failed = 0
     for label, ok, detail in checks:
@@ -1580,14 +1820,15 @@ def command_self_test(args: argparse.Namespace) -> None:
     raise SystemExit(0 if failed == 0 else 1)
 
 
-def audit_arm_order(fixture: Fixture) -> list[tuple[str, bool, str]]:
+def audit_blind_arms(fixture: Fixture) -> list[tuple[str, bool, str]]:
     """Check from the ledgers alone that no compiler output existed during a blind trial.
 
-    Two facts decide it, and both are recorded by the run rather than asserted
-    here: a blind arm saw no compiler-arm ledger when it started, and every
-    compiler arm started after the last blind arm had finished. Arms recorded
-    before this order was enforced carry neither fact, so they are reported as
-    what they are instead of being scored.
+    Four facts decide it, and the run records each one rather than this function
+    asserting it: a blind arm saw no compiler-arm ledger when it started, every
+    compiler arm started after the last blind arm had finished, every blind gate
+    call was sealed while the arm ran, and the withheld findings were rebuilt
+    only after the arm finished. Arms recorded before this was enforced carry
+    none of it, so they are reported as what they are instead of being scored.
     """
     checks: list[tuple[str, bool, str]] = []
     blind = blind_arms(fixture)
@@ -1607,6 +1848,28 @@ def audit_arm_order(fixture: Fixture) -> list[tuple[str, bool, str]]:
                 f"{item.label}: no compiler-arm ledger existed when this blind arm started",
                 not seen,
                 ",".join(seen),
+            )
+        )
+        attempts = item.state.get("attempts") or []
+        loose = [entry["index"] for entry in attempts if "sealed" not in entry]
+        checks.append(
+            (
+                f"{item.label}: every gate call was sealed while the arm ran",
+                not loose,
+                f"attempts {loose} hold compiler output that was never sealed" if loose else "",
+            )
+        )
+        done = finished_at(item.state)
+        early = [
+            entry["index"]
+            for entry in attempts
+            if "rebuilt_at" in entry and (done is None or entry["rebuilt_at"] < done)
+        ]
+        checks.append(
+            (
+                f"{item.label}: withheld findings were rebuilt only after the arm finished",
+                not early,
+                f"attempts {early} rebuilt before {done}" if early else "",
             )
         )
     for item in compiler:
@@ -1641,12 +1904,13 @@ def command_audit(args: argparse.Namespace) -> None:
     fixture = fixture_named(args.fixture, args.runs_root)
     spec = contract(fixture)
     broken = broken_files(fixture)
-    checks: list[tuple[str, bool, str]] = audit_arm_order(fixture)
+    checks: list[tuple[str, bool, str]] = audit_blind_arms(fixture)
     for state_path in sorted(fixture.runs.glob("*/state.json")):
         name = state_path.parent.name
         if not ARM_NAME.match(name):
             continue
         state = json.loads(state_path.read_text(encoding="utf-8"))
+        require_unsealed(fixture, name, state)
         for immutable in spec["immutable_files"]:
             checks.append(
                 (
@@ -1772,6 +2036,11 @@ def main() -> None:
     close = with_arm("close", command_close, help="close an arm the agent abandoned")
     close.add_argument("--operator", action="store_true")
     close.add_argument("--reason", default="", help="why this trial ended unfinished")
+
+    unseal = with_arm(
+        "unseal", command_unseal, help="rebuild a finished blind arm's withheld findings"
+    )
+    unseal.add_argument("--operator", action="store_true")
 
     report = with_fixture("report", help="write the two-arm measure table")
     report.add_argument("--operator", action="store_true")

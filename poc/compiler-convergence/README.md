@@ -52,9 +52,10 @@ job with the compiler's facts hidden.
 ## What is being measured
 
 The harness records every gate call for both arms. It runs the real compiler in
-both arms; in the control arm it records the diagnostics and refuses to show
-them. That is what makes the two arms comparable: the same ledger is built from
-the same checker either way.
+both arms; in the control arm it refuses to show the diagnostics and keeps them
+out of that arm's ledger until `unseal` rebuilds them from the arm's own sources
+after it finishes. That is what makes the two arms comparable: the same ledger
+is built from the same checker either way.
 
 Ranked by what decides the outcome. Retries to a passing publish is the win
 condition. Rebreak is whether the change was safe. Tokens are extra and decide
@@ -146,7 +147,14 @@ python3 poc/compiler-convergence/harness.py publish --arm control
 ```
 
 Repeat for every other blind trial (`control-t2`, `control-t3`, ...). Once all
-of them have finished, repeat for `--arm ail`. Then:
+of them have finished, rebuild their withheld findings and run the compiler
+arms:
+
+```bash
+python3 poc/compiler-convergence/harness.py unseal --arm control --operator
+```
+
+Then, after the `ail` arms have run:
 
 ```bash
 python3 poc/compiler-convergence/harness.py report --operator
@@ -166,7 +174,13 @@ the original `runs/` and `report/` paths. The protocol, the gate, and the
 measures are shared, which is what makes two fixtures comparable as experiments
 even when their faults are unrelated.
 
-## Arm order
+## No compiler output while a blind arm works
+
+Two rules together mean a blind trial has nothing to read: the arms are
+staggered, and the blind arm's own ledger is sealed while it runs.
+`harness.py self-test` proves both.
+
+### Arm order
 
 Every blind arm of a broken workspace finishes before the first compiler arm of
 that workspace starts. The harness enforces both halves and refuses the command
@@ -196,11 +210,46 @@ arm finished. `harness.py audit` rechecks both from the committed ledgers, and
 reports arms recorded before this was enforced as exactly that instead of
 scoring them.
 
-`harness.py self-test` proves the order by driving the real command line in a
-temporary runs root: a blind arm starts and runs a full trial to a passing
-publish while no `ail` ledger exists anywhere on disk, the compiler arm is
-refused mid-trial, it is admitted once the blind arm finishes, and from then on
-the blind arm and a new blind arm are both refused.
+### Sealed blind ledgers
+
+A control arm's own state file used to record the compiler output the harness
+had just withheld from it, so an arm that disobeyed the brief and read its own
+ledger saw every finding. The operator canary asked it to disclose that; nothing
+stopped it.
+
+A blind arm's gate call now records what the arm was told — the command, the
+exit code, the specification violations, the revision-store facts — and its own
+source, content-addressed. It records no compiler output, no diagnostic, and no
+finding count. There is nothing in the file to read.
+
+`harness.py unseal --arm <name> --operator` rebuilds the withheld findings by
+running each stored gate call's own sources through `ailc` again. It refuses
+while any blind arm of that workspace is still working, so the findings never
+land on disk during a trial, and it refuses to write a reconstruction that does
+not reproduce the exit code and revision-store outcome the run recorded, which
+is what happens if the compiler or the fixture changed since. `ailc` output is
+byte-identical on identical sources, so the rebuilt ledger is the run's ledger.
+
+`report` and `audit` refuse to score a sealed ledger. Counting zero diagnostics
+for a run that produced ten would be a partial result reported as complete, so
+they name the arm and the `unseal` command instead.
+
+### What the self-test proves
+
+`harness.py self-test` drives the real command line in a temporary runs root, so
+the committed runs are untouched and every refusal is the one an operator would
+hit. A blind arm starts, fails a gate call on the broken workspace, repairs it
+and publishes, and around that:
+
+- No `ail` ledger exists anywhere on disk while it works, and the compiler arm
+  is refused mid-trial, admitted once the blind arm finishes, after which the
+  blind arm and a new blind arm are both refused.
+- Reading the blind arm's own state file finds no `AIL.` code at all, and none
+  of the findings that failing gate call produced.
+- The compiler arm's ledger does hold those findings, so sealing is the only
+  difference between the two files.
+- `report` refuses the sealed ledger, `unseal` rebuilds exactly the findings the
+  blind arm was never shown, and `report` then scores it.
 
 ## Gate semantics
 
@@ -230,12 +279,14 @@ because the defect and its effect are part of the record.
 - **Publish writes nothing on fail.** The workspace exists on disk only while
   `ailc` runs, in a private temporary directory. The harness asserts no
   revision store survives a failed publish and that `check` never writes one.
-- **The compiler runs in both arms.** The control arm's diagnostics are
-  recorded and withheld, not skipped, so both ledgers are built from the same
-  checker.
-- **The blind arms run first.** No compiler-arm ledger exists on disk while a
-  blind trial works, so its number cannot come from reading one. The harness
-  refuses the commands that would break that order and `self-test` proves it.
+- **The compiler runs in both arms.** The control arm's gate call runs the same
+  `ailc` command against the same checker; its findings are withheld during the
+  run and rebuilt from its own sources afterwards, so both ledgers state what
+  the same checker said.
+- **The blind arms run first, and their ledgers are sealed.** No compiler output
+  for a workspace exists on disk while a blind trial works, in a compiler arm's
+  ledger or in its own. The harness refuses the commands that would break either
+  rule and `self-test` proves both.
 - **No new language.** The only compiler change this work needed is that
   `ailc` now prints the architecture facts the checker had already computed
   (ADR 0015). No new syntax, no new capability file, no new command.
@@ -249,14 +300,15 @@ agent that deliberately reconstructed the workspace from the state file and ran
 `ailc` itself would defeat the experiment; the brief forbids it, and each arm's
 command log is committed with the run so a reader can audit the trajectory.
 
-The arm order removes one specific way to cheat that no brief can detect after
-the fact: reading another arm's findings. The `label-batch` run had a compiler
-arm's full findings sitting on disk while the blind arms worked, so its control
-number is an upper bound. Under the enforced order that file does not exist
-yet, so there is nothing to read.
+Two ways to cheat that no brief can detect after the fact are now closed by
+construction rather than by instruction: reading a compiler arm's findings, and
+reading the findings the harness withheld from this arm. The `label-batch` run
+had both files available — a compiler arm's full findings on the same machine,
+and each control arm's own ledger recording what it had just been denied — so
+its control number is an upper bound. Neither file holds compiler output during
+a blind trial now.
 
-Two holes stay open. A control arm's own ledger records the compiler output the
-harness withheld from it, so an arm that reads its own state file still sees
-findings; that is what the operator canary in every state file is for. And an
-arm that runs `ailc` on a workspace it reconstructed defeats the experiment
-whatever the order is.
+One hole stays open, and no ordering or sealing closes it: an arm that
+reconstructs the workspace and runs `ailc` on it defeats the experiment. The
+brief forbids it, the state file's operator canary asks a reader to disclose,
+and each arm's command log is committed so a reader can audit the trajectory.
