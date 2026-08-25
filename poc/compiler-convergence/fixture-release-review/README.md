@@ -12,6 +12,6 @@ changes two source files; `contracts.ail` is immutable. There is no
 complexity result. The point is locating two faults across a source set large
 enough that an exhaustive read is material work.
 
-Two-arm trials are held until the harness prevents a blind arm from recovering
-withheld compiler findings from its own state file. No result is recorded for
-this fixture yet.
+The measured two-arm run used the sealed blind-ledger protocol from `7981e32`.
+Its result and limits are in
+[RESULTS-release-review.md](../RESULTS-release-review.md).

@@ -1,0 +1,18 @@
+{
+  "ticket": "AB-64",
+  "fixture": "release-review",
+  "base_commit": "7981e32be286140fbcdc61cc10b4e3477225d4f8",
+  "runs_root": "ab64-release-review-7981e32",
+  "protocol": "control-then-ail",
+  "blind_ledger_protocol": "sealed-then-operator-unsealed",
+  "model": "gpt-5.6-sol-high",
+  "same_model_both_arms": true,
+  "arms": {
+    "control": {
+      "agent_id": "bc-61644f3b-060e-5201-a553-fb3420e717aa"
+    },
+    "ail": {
+      "agent_id": "bc-cf66fea1-2149-54c2-bafb-e223dbfc71fa"
+    }
+  }
+}

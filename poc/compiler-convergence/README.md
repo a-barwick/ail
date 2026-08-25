@@ -10,7 +10,7 @@ experiments and must not be quoted as one result.
 | --- | --- | --- | --- |
 | `cancel-dispatch` (default) | module, type, capability, and an architecture complexity budget | the compiler arm, median 2 retries against 11 | [RESULTS.md](RESULTS.md) |
 | `label-batch` | type, capability, and effect only; no `architecture.json` in the workspace | the blind arm, 1 retry against 2 | [RESULTS-label-batch.md](RESULTS-label-batch.md), [fixture-label-batch/README.md](fixture-label-batch/README.md) |
-| `release-review` | a remote nominal-type mismatch and hidden ambient authority across 35 modules; no `architecture.json` | trials held until blind arms cannot read withheld findings from their own state | [fixture-release-review/README.md](fixture-release-review/README.md) |
+| `release-review` | a remote nominal-type mismatch and hidden ambient authority across 35 modules; no `architecture.json` | the blind arm, 1 retry against 2 | [RESULTS-release-review.md](RESULTS-release-review.md), [fixture-release-review/README.md](fixture-release-review/README.md) |
 
 Read each fixture row before quoting another. Compiler visibility paid when the
 repair depended on a number only the compiler measures, and paid nothing when

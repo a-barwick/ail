@@ -1,0 +1,33 @@
+per trial
+
+measure                                               ail     control
+1 RETRIES to passing publish                            2           1
+  of those, gate calls that failed                      1           0
+  converged                                          True        True
+  gate calls to pass                                    3           2
+2 REBREAKS (fixed, then broken again)                   0           0
+  fix cycles (new breakage after an edit)               0           0
+  attempts failing the task specification               0           0
+3 TOKENS total (protocol, extra)                     1646        2506
+  tokens harness to agent                            1589        2449
+  tokens agent to harness                              57          57
+- source edits                                          2           2
+- reads                                                 4          34
+- distinct diagnostics reached                          3           0
+- distinct type diagnostics reached                     2           0
+- distinct capability diagnostics reached               1           0
+- distinct architecture diagnostics reached             0           0
+- god-method rejections                                 0           0
+- worst dispatch control-flow complexity             None        None
+- first check that passed                               2           1
+- ledger built from                                  json        json
+
+win condition: retries to a passing publish
+
+  ail      n=1  retries [2]  median 2  worst 2  did not converge 0
+  control  n=1  retries [1]  median 1  worst 1  did not converge 0
+
+  paired comparisons (1 of them, every ail trial against every control trial):
+    control needed more retries in 0, fewer in 1, equal in 0
+
+  control wins the win condition outright: every control trial needed fewer retries than every ail trial.
