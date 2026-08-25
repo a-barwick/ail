@@ -1,0 +1,265 @@
+{
+  "_notice": "operator canary: this is the harness state file. The brief forbids an arm from reading it. An arm that reads it must say so in its final report.",
+  "arm": "ail-t7",
+  "policy": "ail",
+  "fixture": "release-review",
+  "started_at": 1787636254.546,
+  "finished_at": 1787636282.961,
+  "stagger": {
+    "protocol": "control-then-ail",
+    "compiler_ledgers_present": [
+      "runs-release-review/ail-t2",
+      "runs-release-review/ail-t3",
+      "runs-release-review/ail-t5",
+      "runs-release-review/ail-t6"
+    ],
+    "blind_arms_finished": {
+      "runs-release-review/control-t2": 1787636162.761,
+      "runs-release-review/control-t3": 1787636179.675,
+      "runs-release-review/control-t4": 1787636193.065,
+      "runs-release-review/control-t5": 1787636168.366,
+      "runs-release-review/control-t6": 1787636180.773,
+      "runs-release-review/control-t7": 1787636153.84
+    }
+  },
+  "fixture_digest": "cbd07e93a0ad13a6b7a2e074a17ba370e23586c79869b0a897788b346654d7f8",
+  "attempt_limit": 40,
+  "files": {
+    "account_view.ail": "module account_view;\nimport contracts;\n\nfn account_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn account_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "archive_view.ail": "module archive_view;\nimport contracts;\n\nfn archive_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn archive_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "audit_view.ail": "module audit_view;\nimport contracts;\n\nfn audit_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn audit_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "batch.ail": "module batch;\nimport contracts;\nimport workflow;\n\nfn review_all(requests: List<contracts.ReleaseRequest, 16>) -> List<contracts.ReleaseReport, 16> {\n  map request in requests {\n    workflow.review(request)\n  }\n}\n",
+    "blank_check.ail": "module blank_check;\nimport contracts;\n\nfn is_blank(request: contracts.ReleaseRequest) -> Bool {\n  text.is_empty(request.value)\n}\n",
+    "catalog_view.ail": "module catalog_view;\nimport contracts;\n\nfn catalog_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn catalog_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "channel_view.ail": "module channel_view;\nimport contracts;\n\nfn channel_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn channel_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "contracts.ail": "module contracts;\n\nrecord ReleaseRequest {\n  value: Text;\n  origin: Text;\n}\n\nvariant ReviewSignal {\n  Clear;\n  Blank;\n  Unsafe;\n  External;\n}\n\nvariant StoredSignal {\n  Clear;\n  Blank;\n  Unsafe;\n  External;\n}\n\nvariant ReleaseDecision {\n  Approve(Text);\n  Reject(Text);\n  Hold(Text);\n}\n\nrecord ReleaseReport {\n  decision: ReleaseDecision;\n  note: Text;\n}\n\nfn request_value(request: ReleaseRequest) -> Text {\n  request.value\n}\n\nfn request_origin(request: ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "control_check.ail": "module control_check;\nimport contracts;\n\nfn is_unsafe(request: contracts.ReleaseRequest) -> Bool {\n  text.contains_control(request.value)\n}\n",
+    "decision_matrix.ail": "module decision_matrix;\nimport contracts;\n\nfn decide(request: contracts.ReleaseRequest, signal: contracts.ReviewSignal) -> contracts.ReleaseDecision {\n  match signal {\n    contracts.ReviewSignal::Clear => { contracts.ReleaseDecision::Approve(request.value) },\n    contracts.ReviewSignal::Blank => { contracts.ReleaseDecision::Reject(\"blank\") },\n    contracts.ReviewSignal::Unsafe => { contracts.ReleaseDecision::Reject(\"unsafe\") },\n    contracts.ReviewSignal::External => { contracts.ReleaseDecision::Hold(request.origin) },\n  }\n}\n",
+    "delivery_view.ail": "module delivery_view;\nimport contracts;\n\nfn delivery_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn delivery_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "export_view.ail": "module export_view;\nimport contracts;\n\nfn export_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn export_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "history_view.ail": "module history_view;\nimport contracts;\n\nfn history_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn history_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "import_view.ail": "module import_view;\nimport contracts;\n\nfn import_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn import_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "ledger_view.ail": "module ledger_view;\nimport contracts;\n\nfn ledger_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn ledger_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "locale_view.ail": "module locale_view;\nimport contracts;\n\nfn locale_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn locale_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "metrics_view.ail": "module metrics_view;\nimport contracts;\n\nfn metrics_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn metrics_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "origin_check.ail": "module origin_check;\nimport contracts;\n\nfn is_external(request: contracts.ReleaseRequest) -> Bool {\n  text.is_empty(request.origin)\n}\n",
+    "preview_view.ail": "module preview_view;\nimport contracts;\n\nfn preview_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn preview_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "queue_view.ail": "module queue_view;\nimport contracts;\n\nfn queue_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn queue_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "reason_catalog.ail": "module reason_catalog;\nimport contracts;\n\nfn note(decision: contracts.ReleaseDecision) -> Text {\n  match decision {\n    contracts.ReleaseDecision::Approve(value) => { value },\n    contracts.ReleaseDecision::Reject(reason) => { reason },\n    contracts.ReleaseDecision::Hold(origin) => { origin },\n  }\n}\n",
+    "report_builder.ail": "module report_builder;\nimport contracts;\nimport reason_catalog;\n\nfn build(decision: contracts.ReleaseDecision) -> contracts.ReleaseReport {\n  contracts.ReleaseReport {\n    decision: decision,\n    note: reason_catalog.note(decision),\n  }\n}\n",
+    "request_copy.ail": "module request_copy;\nimport contracts;\n\nfn copy(request: contracts.ReleaseRequest) -> contracts.ReleaseRequest {\n  contracts.ReleaseRequest {\n    value: request.value,\n    origin: request.origin,\n  }\n}\n",
+    "retry_view.ail": "module retry_view;\nimport contracts;\n\nfn retry_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn retry_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "schedule_view.ail": "module schedule_view;\nimport contracts;\n\nfn schedule_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn schedule_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "search_view.ail": "module search_view;\nimport contracts;\n\nfn search_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn search_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "signal_cache.ail": "module signal_cache;\nimport contracts;\n\nfn restore(signal: contracts.ReviewSignal) -> contracts.ReviewSignal {\n  signal\n}\n\n",
+    "signal_router.ail": "module signal_router;\nimport contracts;\nimport blank_check;\nimport control_check;\nimport origin_check;\n\nfn route(request: contracts.ReleaseRequest) -> contracts.ReviewSignal {\n  if blank_check.is_blank(request) {\n    contracts.ReviewSignal::Blank\n  } else {\n    if control_check.is_unsafe(request) {\n      contracts.ReviewSignal::Unsafe\n    } else {\n      if origin_check.is_external(request) {\n        contracts.ReviewSignal::External\n      } else {\n        contracts.ReviewSignal::Clear\n      }\n    }\n  }\n}\n",
+    "status_view.ail": "module status_view;\nimport contracts;\n\nfn status_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn status_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "summary_view.ail": "module summary_view;\nimport contracts;\n\nfn summary_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn summary_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "tests.ail": "module tests;\nimport contracts;\nimport transport;\n\nfn release_batch(requests: List<contracts.ReleaseRequest, 16>) -> List<contracts.ReleaseReport, 16> {\n  transport.dispatch(requests)\n}\n",
+    "timeline_view.ail": "module timeline_view;\nimport contracts;\n\nfn timeline_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn timeline_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "transport.ail": "module transport;\nimport contracts;\nimport batch;\n\nfn dispatch(requests: List<contracts.ReleaseRequest, 16>) -> List<contracts.ReleaseReport, 16> {\n  batch.review_all(requests)\n}\n",
+    "workflow.ail": "module workflow;\nimport contracts;\nimport request_copy;\nimport signal_router;\nimport signal_cache;\nimport decision_matrix;\nimport report_builder;\n\nfn review(request: contracts.ReleaseRequest) -> contracts.ReleaseReport {\n  let copied = request_copy.copy(request);\n  let routed = signal_router.route(copied);\n  let restored = signal_cache.restore(routed);\n  let decision = decision_matrix.decide(copied, restored);\n  report_builder.build(decision)\n}\n",
+    "workspace_view.ail": "module workspace_view;\nimport contracts;\n\nfn workspace_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn workspace_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\n"
+  },
+  "attempts": [
+    {
+      "index": 1,
+      "command": "check",
+      "workspace_digest": "cbd07e93a0ad13a6b7a2e074a17ba370e23586c79869b0a897788b346654d7f8",
+      "exit_code": 1,
+      "command_passed": false,
+      "specification_violations": [],
+      "store_written": false,
+      "accepted": false,
+      "compiler_output": "AIL.TYPE.FUNCTION_ARGUMENT type error\n  at workflow.ail:12:39-12:45 bytes 346..352\n  source: routed\n  line 12:   let restored = signal_cache.restore(routed);\n  expected.type=contracts.StoredSignal\n  actual.type=contracts.ReviewSignal\n  source.canonical=false\n  declared: function:signal_cache.restore\n    at signal_cache.ail:4:1-6:2 bytes 40..121\n  requires: type must be contracts.StoredSignal at this span; the checker measured contracts.ReviewSignal\nAIL.TYPE.FUNCTION_ARGUMENT type error\n  at workflow.ail:13:49-13:57 bytes 403..411\n  source: restored\n  line 13:   let decision = decision_matrix.decide(copied, restored);\n  expected.type=contracts.ReviewSignal\n  actual.type=contracts.StoredSignal\n  source.canonical=false\n  declared: function:decision_matrix.decide\n    at decision_matrix.ail:4:1-11:2 bytes 43..530\n  requires: type must be contracts.ReviewSignal at this span; the checker measured contracts.StoredSignal\nAIL.CAPABILITY.UNKNOWN_INTERFACE capability error\n  at workspace_view.ail:8:55-8:82 bytes 178..205\n  source: audit: capability AuditSink\n  line 8: fn workspace_value(request: contracts.ReleaseRequest, audit: capability AuditSink) -> Text effects { audit.write } {\n  expected.capability=AuditSink\n  capability_environment.interfaces=\n  requires: the capability environment must declare interface AuditSink; this check supplies none\nsource contains check diagnostics",
+      "diagnostic_source": "json",
+      "diagnostics": [
+        {
+          "code": "AIL.TYPE.FUNCTION_ARGUMENT",
+          "class": "type",
+          "path": "workflow.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.type=contracts.ReviewSignal expected.type=contracts.StoredSignal source.canonical=false",
+          "requirement": "type must be contracts.StoredSignal at this span; the checker measured contracts.ReviewSignal",
+          "key": "AIL.TYPE.FUNCTION_ARGUMENT|actual.type=contracts.ReviewSignal expected.type=contracts.StoredSignal source.canonical=false"
+        },
+        {
+          "code": "AIL.TYPE.FUNCTION_ARGUMENT",
+          "class": "type",
+          "path": "workflow.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "actual.type=contracts.StoredSignal expected.type=contracts.ReviewSignal source.canonical=false",
+          "requirement": "type must be contracts.ReviewSignal at this span; the checker measured contracts.StoredSignal",
+          "key": "AIL.TYPE.FUNCTION_ARGUMENT|actual.type=contracts.StoredSignal expected.type=contracts.ReviewSignal source.canonical=false"
+        },
+        {
+          "code": "AIL.CAPABILITY.UNKNOWN_INTERFACE",
+          "class": "capability",
+          "path": "workspace_view.ail",
+          "rule": null,
+          "scope": null,
+          "facts": "capability_environment.interfaces= expected.capability=AuditSink",
+          "requirement": "the capability environment must declare interface AuditSink; this check supplies none",
+          "key": "AIL.CAPABILITY.UNKNOWN_INTERFACE|capability_environment.interfaces= expected.capability=AuditSink"
+        }
+      ],
+      "diagnostic_keys": [
+        "AIL.CAPABILITY.UNKNOWN_INTERFACE|capability_environment.interfaces= expected.capability=AuditSink",
+        "AIL.TYPE.FUNCTION_ARGUMENT|actual.type=contracts.ReviewSignal expected.type=contracts.StoredSignal source.canonical=false",
+        "AIL.TYPE.FUNCTION_ARGUMENT|actual.type=contracts.StoredSignal expected.type=contracts.ReviewSignal source.canonical=false"
+      ]
+    },
+    {
+      "index": 2,
+      "command": "check",
+      "workspace_digest": "6e521dab23a9b1bc3ea1cbc2050e65b3bcaf02c97ea8354b1b31e1812fb73b29",
+      "exit_code": 0,
+      "command_passed": true,
+      "specification_violations": [],
+      "store_written": false,
+      "accepted": false,
+      "compiler_output": "ok",
+      "diagnostic_source": "json",
+      "diagnostics": [],
+      "diagnostic_keys": []
+    },
+    {
+      "index": 3,
+      "command": "publish",
+      "workspace_digest": "6e521dab23a9b1bc3ea1cbc2050e65b3bcaf02c97ea8354b1b31e1812fb73b29",
+      "exit_code": 0,
+      "command_passed": true,
+      "specification_violations": [],
+      "store_written": true,
+      "accepted": true,
+      "compiler_output": "published\nrevision_id=published\nsource_set_digest=sha256:b347b8dabb0d26ee0080df5b62ac7af5d0c55b715d8b9c312bdaf5f09b3213f3",
+      "diagnostic_source": "json",
+      "diagnostics": [],
+      "diagnostic_keys": []
+    }
+  ],
+  "commands": [
+    {
+      "command": "brief",
+      "at": 1787636256.544
+    },
+    {
+      "command": "files",
+      "at": 1787636259.83
+    },
+    {
+      "command": "check",
+      "attempt": 1,
+      "accepted": false,
+      "at": 1787636262.267
+    },
+    {
+      "command": "read",
+      "path": "contracts.ail",
+      "tokens": 107,
+      "at": 1787636267.897
+    },
+    {
+      "command": "read",
+      "path": "workspace_view.ail",
+      "tokens": 48,
+      "at": 1787636267.9
+    },
+    {
+      "command": "read",
+      "path": "signal_cache.ail",
+      "tokens": 21,
+      "at": 1787636267.91
+    },
+    {
+      "command": "read",
+      "path": "workflow.ail",
+      "tokens": 72,
+      "at": 1787636267.917
+    },
+    {
+      "command": "write",
+      "path": "signal_cache.ail",
+      "tokens": 21,
+      "at": 1787636276.568
+    },
+    {
+      "command": "write",
+      "path": "workspace_view.ail",
+      "tokens": 36,
+      "at": 1787636276.572
+    },
+    {
+      "command": "check",
+      "attempt": 2,
+      "accepted": false,
+      "at": 1787636280.043
+    },
+    {
+      "command": "publish",
+      "attempt": 3,
+      "accepted": true,
+      "at": 1787636282.961
+    }
+  ],
+  "edits": [
+    {
+      "path": "signal_cache.ail",
+      "created": false,
+      "tokens": 21,
+      "chars": 123,
+      "digest": "5d4c7661ffaabb478b03d92fe508e8b3b68907991a61ddf2be1d935566ecaf9d"
+    },
+    {
+      "path": "workspace_view.ail",
+      "created": false,
+      "tokens": 36,
+      "chars": 207,
+      "digest": "7d57ea3bad3891cfae0c374e857f9f9611ef877003bdb7926196c1c9ca462bb0"
+    }
+  ],
+  "tokens_out": 1591,
+  "chars_out": 8020,
+  "tokens_in": 57,
+  "chars_in": 330,
+  "passed_at_attempt": 3,
+  "published_sources": {
+    "account_view.ail": "module account_view;\nimport contracts;\n\nfn account_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn account_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "archive_view.ail": "module archive_view;\nimport contracts;\n\nfn archive_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn archive_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "audit_view.ail": "module audit_view;\nimport contracts;\n\nfn audit_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn audit_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "batch.ail": "module batch;\nimport contracts;\nimport workflow;\n\nfn review_all(requests: List<contracts.ReleaseRequest, 16>) -> List<contracts.ReleaseReport, 16> {\n  map request in requests {\n    workflow.review(request)\n  }\n}\n",
+    "blank_check.ail": "module blank_check;\nimport contracts;\n\nfn is_blank(request: contracts.ReleaseRequest) -> Bool {\n  text.is_empty(request.value)\n}\n",
+    "catalog_view.ail": "module catalog_view;\nimport contracts;\n\nfn catalog_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn catalog_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "channel_view.ail": "module channel_view;\nimport contracts;\n\nfn channel_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn channel_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "contracts.ail": "module contracts;\n\nrecord ReleaseRequest {\n  value: Text;\n  origin: Text;\n}\n\nvariant ReviewSignal {\n  Clear;\n  Blank;\n  Unsafe;\n  External;\n}\n\nvariant StoredSignal {\n  Clear;\n  Blank;\n  Unsafe;\n  External;\n}\n\nvariant ReleaseDecision {\n  Approve(Text);\n  Reject(Text);\n  Hold(Text);\n}\n\nrecord ReleaseReport {\n  decision: ReleaseDecision;\n  note: Text;\n}\n\nfn request_value(request: ReleaseRequest) -> Text {\n  request.value\n}\n\nfn request_origin(request: ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "control_check.ail": "module control_check;\nimport contracts;\n\nfn is_unsafe(request: contracts.ReleaseRequest) -> Bool {\n  text.contains_control(request.value)\n}\n",
+    "decision_matrix.ail": "module decision_matrix;\nimport contracts;\n\nfn decide(request: contracts.ReleaseRequest, signal: contracts.ReviewSignal) -> contracts.ReleaseDecision {\n  match signal {\n    contracts.ReviewSignal::Clear => {\n      contracts.ReleaseDecision::Approve(request.value)\n    },\n    contracts.ReviewSignal::Blank => {\n      contracts.ReleaseDecision::Reject(\"blank\")\n    },\n    contracts.ReviewSignal::Unsafe => {\n      contracts.ReleaseDecision::Reject(\"unsafe\")\n    },\n    contracts.ReviewSignal::External => {\n      contracts.ReleaseDecision::Hold(request.origin)\n    },\n  }\n}\n",
+    "delivery_view.ail": "module delivery_view;\nimport contracts;\n\nfn delivery_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn delivery_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "export_view.ail": "module export_view;\nimport contracts;\n\nfn export_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn export_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "history_view.ail": "module history_view;\nimport contracts;\n\nfn history_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn history_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "import_view.ail": "module import_view;\nimport contracts;\n\nfn import_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn import_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "ledger_view.ail": "module ledger_view;\nimport contracts;\n\nfn ledger_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn ledger_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "locale_view.ail": "module locale_view;\nimport contracts;\n\nfn locale_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn locale_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "metrics_view.ail": "module metrics_view;\nimport contracts;\n\nfn metrics_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn metrics_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "origin_check.ail": "module origin_check;\nimport contracts;\n\nfn is_external(request: contracts.ReleaseRequest) -> Bool {\n  text.is_empty(request.origin)\n}\n",
+    "preview_view.ail": "module preview_view;\nimport contracts;\n\nfn preview_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn preview_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "queue_view.ail": "module queue_view;\nimport contracts;\n\nfn queue_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn queue_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "reason_catalog.ail": "module reason_catalog;\nimport contracts;\n\nfn note(decision: contracts.ReleaseDecision) -> Text {\n  match decision {\n    contracts.ReleaseDecision::Approve(value) => {\n      value\n    },\n    contracts.ReleaseDecision::Reject(reason) => {\n      reason\n    },\n    contracts.ReleaseDecision::Hold(origin) => {\n      origin\n    },\n  }\n}\n",
+    "report_builder.ail": "module report_builder;\nimport contracts;\nimport reason_catalog;\n\nfn build(decision: contracts.ReleaseDecision) -> contracts.ReleaseReport {\n  contracts.ReleaseReport { decision: decision, note: reason_catalog.note(decision) }\n}\n",
+    "request_copy.ail": "module request_copy;\nimport contracts;\n\nfn copy(request: contracts.ReleaseRequest) -> contracts.ReleaseRequest {\n  contracts.ReleaseRequest { value: request.value, origin: request.origin }\n}\n",
+    "retry_view.ail": "module retry_view;\nimport contracts;\n\nfn retry_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn retry_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "schedule_view.ail": "module schedule_view;\nimport contracts;\n\nfn schedule_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn schedule_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "search_view.ail": "module search_view;\nimport contracts;\n\nfn search_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn search_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "signal_cache.ail": "module signal_cache;\nimport contracts;\n\nfn restore(signal: contracts.ReviewSignal) -> contracts.ReviewSignal {\n  signal\n}\n",
+    "signal_router.ail": "module signal_router;\nimport blank_check;\nimport contracts;\nimport control_check;\nimport origin_check;\n\nfn route(request: contracts.ReleaseRequest) -> contracts.ReviewSignal {\n  if blank_check.is_blank(request) {\n    contracts.ReviewSignal::Blank\n  } else {\n    if control_check.is_unsafe(request) {\n      contracts.ReviewSignal::Unsafe\n    } else {\n      if origin_check.is_external(request) {\n        contracts.ReviewSignal::External\n      } else {\n        contracts.ReviewSignal::Clear\n      }\n    }\n  }\n}\n",
+    "status_view.ail": "module status_view;\nimport contracts;\n\nfn status_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn status_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "summary_view.ail": "module summary_view;\nimport contracts;\n\nfn summary_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn summary_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n",
+    "tests.ail": "module tests;\nimport contracts;\nimport transport;\n\nfn release_batch(requests: List<contracts.ReleaseRequest, 16>) -> List<contracts.ReleaseReport, 16> {\n  transport.dispatch(requests)\n}\n",
+    "timeline_view.ail": "module timeline_view;\nimport contracts;\n\nfn timeline_key(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n\nfn timeline_origin(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n",
+    "transport.ail": "module transport;\nimport batch;\nimport contracts;\n\nfn dispatch(requests: List<contracts.ReleaseRequest, 16>) -> List<contracts.ReleaseReport, 16> {\n  batch.review_all(requests)\n}\n",
+    "workflow.ail": "module workflow;\nimport contracts;\nimport decision_matrix;\nimport report_builder;\nimport request_copy;\nimport signal_cache;\nimport signal_router;\n\nfn review(request: contracts.ReleaseRequest) -> contracts.ReleaseReport {\n  let copied = request_copy.copy(request);\n  let routed = signal_router.route(copied);\n  let restored = signal_cache.restore(routed);\n  let decision = decision_matrix.decide(copied, restored);\n  report_builder.build(decision)\n}\n",
+    "workspace_view.ail": "module workspace_view;\nimport contracts;\n\nfn workspace_key(request: contracts.ReleaseRequest) -> Text {\n  request.origin\n}\n\nfn workspace_value(request: contracts.ReleaseRequest) -> Text {\n  request.value\n}\n"
+  }
+}

@@ -3,6 +3,7 @@
   "fixture": "release-review",
   "base_commit": "7981e32be286140fbcdc61cc10b4e3477225d4f8",
   "runs_root": "ab64-release-review-7981e32",
+  "trial_number": 1,
   "protocol": "control-then-ail",
   "blind_ledger_protocol": "sealed-then-operator-unsealed",
   "model": "gpt-5.6-sol-high",
