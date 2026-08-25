@@ -61,6 +61,7 @@ compiler/      Rust compiler, interpreter, and examples
 service-host/  Loopback batch-lookup HTTP host
 specs/         Language and compiler contracts plus fixtures
 benchmarks/    Job-service cases, baselines, and harnesses
+poc/           Measured experiments; see docs/poc.md
 docs/          Language overview, limits, workloads, and decisions
 tools/         Repository checks
 ```
