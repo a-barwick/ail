@@ -1,0 +1,9 @@
+module batch;
+import contracts;
+import workflow;
+
+fn review_all(requests: List<contracts.ReleaseRequest, 16>) -> List<contracts.ReleaseReport, 16> {
+  map request in requests {
+    workflow.review(request)
+  }
+}

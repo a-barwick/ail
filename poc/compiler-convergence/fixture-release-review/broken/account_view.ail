@@ -1,0 +1,10 @@
+module account_view;
+import contracts;
+
+fn account_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn account_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

@@ -1,0 +1,10 @@
+module import_view;
+import contracts;
+
+fn import_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn import_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

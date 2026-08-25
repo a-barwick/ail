@@ -1,0 +1,39 @@
+module contracts;
+
+record ReleaseRequest {
+  value: Text;
+  origin: Text;
+}
+
+variant ReviewSignal {
+  Clear;
+  Blank;
+  Unsafe;
+  External;
+}
+
+variant StoredSignal {
+  Clear;
+  Blank;
+  Unsafe;
+  External;
+}
+
+variant ReleaseDecision {
+  Approve(Text);
+  Reject(Text);
+  Hold(Text);
+}
+
+record ReleaseReport {
+  decision: ReleaseDecision;
+  note: Text;
+}
+
+fn request_value(request: ReleaseRequest) -> Text {
+  request.value
+}
+
+fn request_origin(request: ReleaseRequest) -> Text {
+  request.origin
+}

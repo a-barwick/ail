@@ -1,0 +1,10 @@
+module workspace_view;
+import contracts;
+
+fn workspace_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn workspace_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

@@ -1,0 +1,10 @@
+module channel_view;
+import contracts;
+
+fn channel_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn channel_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

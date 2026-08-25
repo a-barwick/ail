@@ -1,0 +1,11 @@
+module decision_matrix;
+import contracts;
+
+fn decide(request: contracts.ReleaseRequest, signal: contracts.ReviewSignal) -> contracts.ReleaseDecision {
+  match signal {
+    contracts.ReviewSignal::Clear => { contracts.ReleaseDecision::Approve(request.value) },
+    contracts.ReviewSignal::Blank => { contracts.ReleaseDecision::Reject("blank") },
+    contracts.ReviewSignal::Unsafe => { contracts.ReleaseDecision::Reject("unsafe") },
+    contracts.ReviewSignal::External => { contracts.ReleaseDecision::Hold(request.origin) },
+  }
+}

@@ -1,0 +1,6 @@
+module blank_check;
+import contracts;
+
+fn is_blank(request: contracts.ReleaseRequest) -> Bool {
+  text.is_empty(request.value)
+}

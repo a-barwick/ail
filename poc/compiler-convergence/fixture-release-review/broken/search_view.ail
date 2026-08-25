@@ -1,0 +1,10 @@
+module search_view;
+import contracts;
+
+fn search_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn search_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

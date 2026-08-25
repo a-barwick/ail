@@ -1,0 +1,9 @@
+module request_copy;
+import contracts;
+
+fn copy(request: contracts.ReleaseRequest) -> contracts.ReleaseRequest {
+  contracts.ReleaseRequest {
+    value: request.value,
+    origin: request.origin,
+  }
+}

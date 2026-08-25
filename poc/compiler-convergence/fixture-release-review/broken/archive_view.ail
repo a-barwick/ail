@@ -1,0 +1,10 @@
+module archive_view;
+import contracts;
+
+fn archive_key(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}
+
+fn archive_origin(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}

@@ -1,0 +1,10 @@
+module history_view;
+import contracts;
+
+fn history_key(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}
+
+fn history_origin(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}

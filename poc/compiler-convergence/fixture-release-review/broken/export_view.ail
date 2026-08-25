@@ -1,0 +1,10 @@
+module export_view;
+import contracts;
+
+fn export_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn export_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

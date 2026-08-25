@@ -1,0 +1,10 @@
+module report_builder;
+import contracts;
+import reason_catalog;
+
+fn build(decision: contracts.ReleaseDecision) -> contracts.ReleaseReport {
+  contracts.ReleaseReport {
+    decision: decision,
+    note: reason_catalog.note(decision),
+  }
+}

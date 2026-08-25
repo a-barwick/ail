@@ -1,0 +1,10 @@
+module reason_catalog;
+import contracts;
+
+fn note(decision: contracts.ReleaseDecision) -> Text {
+  match decision {
+    contracts.ReleaseDecision::Approve(value) => { value },
+    contracts.ReleaseDecision::Reject(reason) => { reason },
+    contracts.ReleaseDecision::Hold(origin) => { origin },
+  }
+}

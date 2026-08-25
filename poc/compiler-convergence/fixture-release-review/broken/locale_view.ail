@@ -1,0 +1,10 @@
+module locale_view;
+import contracts;
+
+fn locale_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn locale_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

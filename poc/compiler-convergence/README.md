@@ -3,17 +3,20 @@
 One broken AIL workspace, two agents, one success gate. The arms differ in a
 single variable: whether the agent may see what the AIL compiler already knows.
 
-Two independent fixtures run on this harness. Their numbers are separate
+Three independent fixtures run on this harness. Their numbers are separate
 experiments and must not be quoted as one result.
 
 | fixture | faults | who won the win condition | results |
 | --- | --- | --- | --- |
 | `cancel-dispatch` (default) | module, type, capability, and an architecture complexity budget | the compiler arm, median 2 retries against 11 | [RESULTS.md](RESULTS.md) |
 | `label-batch` | type, capability, and effect only; no `architecture.json` in the workspace | the blind arm, 1 retry against 2 | [RESULTS-label-batch.md](RESULTS-label-batch.md), [fixture-label-batch/README.md](fixture-label-batch/README.md) |
+| `release-review` | a remote nominal-type mismatch and hidden ambient authority across 35 modules; no `architecture.json` | trials held until blind arms cannot read withheld findings from their own state | [fixture-release-review/README.md](fixture-release-review/README.md) |
 
-Read that second row before quoting the first. Compiler visibility paid when the
+Read each fixture row before quoting another. Compiler visibility paid when the
 repair depended on a number only the compiler measures, and paid nothing when
 every fault was a locally readable type or capability error in six small files.
+The third fixture tests fault location in a substantially larger source set; it
+does not reuse either earlier workspace or result.
 
 Pass `--fixture <name>` to every harness command. It defaults to
 `cancel-dispatch`, so the commands in this file run the first fixture. The rest
@@ -37,7 +40,7 @@ On **rebreak**, whether a later edit broke an earlier check, the compiler arm
 had zero events in fourteen trials. **Tokens** are extra: median 8600 against
 11124 on the latest run.
 
-Both fixtures use the same two arms:
+All fixtures use the same two arms:
 
 - Arm `ail`: `check` and `publish` return the compiler's own output, including
   `expected.type`, `expected.cases`, `expected.capability`, and architecture

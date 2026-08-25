@@ -1,0 +1,10 @@
+module catalog_view;
+import contracts;
+
+fn catalog_key(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}
+
+fn catalog_origin(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}

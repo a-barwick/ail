@@ -1,0 +1,10 @@
+module summary_view;
+import contracts;
+
+fn summary_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn summary_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

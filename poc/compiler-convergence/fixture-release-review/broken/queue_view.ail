@@ -1,0 +1,10 @@
+module queue_view;
+import contracts;
+
+fn queue_key(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}
+
+fn queue_origin(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}

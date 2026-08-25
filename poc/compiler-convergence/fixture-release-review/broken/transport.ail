@@ -1,0 +1,7 @@
+module transport;
+import contracts;
+import batch;
+
+fn dispatch(requests: List<contracts.ReleaseRequest, 16>) -> List<contracts.ReleaseReport, 16> {
+  batch.review_all(requests)
+}

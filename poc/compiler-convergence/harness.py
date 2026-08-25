@@ -141,6 +141,7 @@ class Fixture:
 FIXTURES = {
     "cancel-dispatch": Fixture(name="cancel-dispatch", directory="fixture"),
     "label-batch": Fixture(name="label-batch", directory="fixture-label-batch"),
+    "release-review": Fixture(name="release-review", directory="fixture-release-review"),
     # Same broken workspace and same brief as `label-batch`, separate runs. Used
     # for a second condition in which the operator adds one instruction, worded
     # identically for both arms, so its trials never pool with the first
@@ -612,6 +613,32 @@ def json_findings(workspace: Path) -> list[dict] | None:
             }
         )
     return parsed
+
+
+def canonical_ail_sources(files: dict[str, str]) -> dict[str, str]:
+    """Format the AIL source set exactly as an immutable revision stores it."""
+    canonical = {}
+    for name, text in sorted(files.items()):
+        if not name.endswith(".ail"):
+            continue
+        completed = subprocess.run(
+            [str(ailc_binary()), "format", "/dev/stdin"],
+            input=text,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if completed.returncode != 0:
+            fail(f"could not canonicalize {name}: {(completed.stdout + completed.stderr).strip()}")
+        canonical[name] = completed.stdout
+    return canonical
+
+
+def published_matches_written(
+    published: dict[str, str], written: dict[str, str]
+) -> bool:
+    """Whether a revision contains the canonical form of the submitted AIL files."""
+    return published == canonical_ail_sources(written)
 
 
 def run_gate(state: dict, command: str) -> dict:
@@ -1765,6 +1792,13 @@ def command_self_test(args: argparse.Namespace) -> None:
             ",".join(spec["immutable_files"]),
         )
     )
+    checks.append(
+        (
+            "published revision contains the canonical form of the submitted AIL sources",
+            published_matches_written(result["published_sources"], repaired),
+            "",
+        )
+    )
 
     for control in spec.get("negative_controls", []):
         directory = fixture.negative_controls / control["id"]
@@ -1931,8 +1965,9 @@ def command_audit(args: argparse.Namespace) -> None:
             )
             checks.append(
                 (
-                    f"{name}: published sources are the arm's last written sources",
-                    published == state["files"],
+                    f"{name}: published sources are the canonical form of the arm's last "
+                    "written AIL sources",
+                    published_matches_written(published, state["files"]),
                     "",
                 )
             )

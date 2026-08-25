@@ -1,0 +1,10 @@
+module retry_view;
+import contracts;
+
+fn retry_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn retry_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

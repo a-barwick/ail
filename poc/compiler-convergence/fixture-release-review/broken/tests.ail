@@ -1,0 +1,7 @@
+module tests;
+import contracts;
+import transport;
+
+fn release_batch(requests: List<contracts.ReleaseRequest, 16>) -> List<contracts.ReleaseReport, 16> {
+  transport.dispatch(requests)
+}

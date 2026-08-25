@@ -1,0 +1,6 @@
+module control_check;
+import contracts;
+
+fn is_unsafe(request: contracts.ReleaseRequest) -> Bool {
+  text.contains_control(request.value)
+}

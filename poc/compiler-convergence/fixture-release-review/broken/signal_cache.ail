@@ -1,0 +1,6 @@
+module signal_cache;
+import contracts;
+
+fn restore(signal: contracts.StoredSignal) -> contracts.StoredSignal {
+  signal
+}

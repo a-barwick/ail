@@ -1,0 +1,10 @@
+module status_view;
+import contracts;
+
+fn status_key(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}
+
+fn status_origin(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}

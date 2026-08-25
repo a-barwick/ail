@@ -1,0 +1,10 @@
+module metrics_view;
+import contracts;
+
+fn metrics_key(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}
+
+fn metrics_origin(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}

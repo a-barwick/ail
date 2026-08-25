@@ -1,0 +1,220 @@
+{
+  "description": "Task specification for a 35-module release-review workspace. Every requirement already holds in the broken fixture. The faults are a remote nominal-type mismatch inside the active pipeline and ambient authority hidden in an otherwise unrelated view.",
+  "brief": {
+    "task": "A 35-module AIL workspace is broken. Make `ailc publish` succeed on it while\nthe task specification below still holds. The workspace already exists; you\nrepair AIL source.",
+    "rules": [
+      "`contracts.ail` declares the public types and is immutable. The harness rejects\n   any write to it. Weakening a type is not a solution.",
+      "The capability environment is empty and stays empty. There is no capability\n   configuration file to add."
+    ],
+    "feedback_ail": "FEEDBACK POLICY (arm ail): `check` and `publish` return the AIL compiler's\nown output verbatim: diagnostic codes, spans, `expected.*` / `actual.*`\ndetails, and declaration references. Treat that output as the only source\nof truth about what is wrong. Do not guess at causes the compiler did not report."
+  },
+  "fault_classes": [
+    "type",
+    "capability"
+  ],
+  "excluded_fault_classes": [
+    "architecture"
+  ],
+  "broken_satisfies_specification": true,
+  "comment_out_module": "workflow.ail",
+  "strip_qualifiers": [
+    "contracts."
+  ],
+  "reference_reads": [
+    "docs/language.md",
+    "docs/STATUS.md",
+    "specs/core.md",
+    "specs/bounded-lists.md",
+    "compiler/examples/composed-service/domain.ail",
+    "compiler/examples/composed-service/service.ail",
+    "compiler/examples/composed-service/validation.ail",
+    "compiler/examples/batch-cancellation/domain.ail",
+    "compiler/examples/batch-cancellation/service.ail",
+    "compiler/examples/batch-cancellation/single.ail",
+    "compiler/examples/batch-lookup/service.ail",
+    "compiler/examples/batch-lookup/types.ail"
+  ],
+  "immutable_reason": "the immutable public type surface of this workspace",
+  "immutable_files": [
+    "contracts.ail"
+  ],
+  "required_files": [
+    "account_view.ail",
+    "archive_view.ail",
+    "audit_view.ail",
+    "batch.ail",
+    "blank_check.ail",
+    "catalog_view.ail",
+    "channel_view.ail",
+    "contracts.ail",
+    "control_check.ail",
+    "decision_matrix.ail",
+    "delivery_view.ail",
+    "export_view.ail",
+    "history_view.ail",
+    "import_view.ail",
+    "ledger_view.ail",
+    "locale_view.ail",
+    "metrics_view.ail",
+    "origin_check.ail",
+    "preview_view.ail",
+    "queue_view.ail",
+    "reason_catalog.ail",
+    "report_builder.ail",
+    "request_copy.ail",
+    "retry_view.ail",
+    "schedule_view.ail",
+    "search_view.ail",
+    "signal_cache.ail",
+    "signal_router.ail",
+    "status_view.ail",
+    "summary_view.ail",
+    "tests.ail",
+    "timeline_view.ail",
+    "transport.ail",
+    "workflow.ail",
+    "workspace_view.ail"
+  ],
+  "required_declarations": [
+    {
+      "id": "module.contracts",
+      "requirement": "a module named contracts exists",
+      "pattern": "module contracts;"
+    },
+    {
+      "id": "module.workflow",
+      "requirement": "a module named workflow exists",
+      "pattern": "module workflow;"
+    },
+    {
+      "id": "module.batch",
+      "requirement": "a module named batch exists",
+      "pattern": "module batch;"
+    },
+    {
+      "id": "module.transport",
+      "requirement": "a module named transport exists",
+      "pattern": "module transport;"
+    },
+    {
+      "id": "module.tests",
+      "requirement": "a module named tests exists",
+      "pattern": "module tests;"
+    },
+    {
+      "id": "type.ReleaseRequest",
+      "requirement": "record ReleaseRequest keeps value and origin Text fields in order",
+      "pattern": "record ReleaseRequest \\{ value: Text; origin: Text; \\}"
+    },
+    {
+      "id": "type.ReviewSignal",
+      "requirement": "variant ReviewSignal keeps Clear, Blank, Unsafe, External in order",
+      "pattern": "variant ReviewSignal \\{ Clear; Blank; Unsafe; External; \\}"
+    },
+    {
+      "id": "type.ReleaseDecision",
+      "requirement": "variant ReleaseDecision keeps Approve, Reject, and Hold Text payloads in order",
+      "pattern": "variant ReleaseDecision \\{ Approve\\(Text\\); Reject\\(Text\\); Hold\\(Text\\); \\}"
+    },
+    {
+      "id": "type.ReleaseReport",
+      "requirement": "record ReleaseReport keeps decision then note",
+      "pattern": "record ReleaseReport \\{ decision: ReleaseDecision; note: Text; \\}"
+    },
+    {
+      "id": "entry.tests.release_batch",
+      "requirement": "tests.release_batch keeps its exact list-bounded signature",
+      "pattern": "fn release_batch\\(requests: List<ReleaseRequest, 16>\\) -> List<ReleaseReport, 16>"
+    },
+    {
+      "id": "call.tests.transport",
+      "requirement": "tests.release_batch still calls transport.dispatch",
+      "pattern": "transport\\.dispatch\\("
+    },
+    {
+      "id": "call.transport.batch",
+      "requirement": "transport.dispatch still calls batch.review_all",
+      "pattern": "batch\\.review_all\\("
+    },
+    {
+      "id": "pipeline.batch",
+      "requirement": "batch.review_all still maps workflow.review over requests in order",
+      "pattern": "map request in requests \\{ workflow\\.review\\(request\\) \\}"
+    },
+    {
+      "id": "pipeline.copy",
+      "requirement": "workflow.review still copies the request",
+      "pattern": "request_copy\\.copy\\("
+    },
+    {
+      "id": "pipeline.route",
+      "requirement": "workflow.review still routes a review signal",
+      "pattern": "signal_router\\.route\\("
+    },
+    {
+      "id": "pipeline.restore",
+      "requirement": "workflow.review still restores the routed signal",
+      "pattern": "signal_cache\\.restore\\("
+    },
+    {
+      "id": "pipeline.decide",
+      "requirement": "workflow.review still applies the decision matrix",
+      "pattern": "decision_matrix\\.decide\\("
+    },
+    {
+      "id": "pipeline.report",
+      "requirement": "workflow.review still builds the report",
+      "pattern": "report_builder\\.build\\("
+    },
+    {
+      "id": "rule.blank",
+      "requirement": "a blank value still routes to Blank",
+      "pattern": "ReviewSignal::Blank"
+    },
+    {
+      "id": "rule.unsafe",
+      "requirement": "a value with control characters still routes to Unsafe",
+      "pattern": "ReviewSignal::Unsafe"
+    },
+    {
+      "id": "rule.external",
+      "requirement": "a missing origin still routes to External",
+      "pattern": "ReviewSignal::External"
+    },
+    {
+      "id": "rule.clear",
+      "requirement": "every other request still routes to Clear",
+      "pattern": "ReviewSignal::Clear"
+    },
+    {
+      "id": "decision.approve",
+      "requirement": "Clear still decides Approve carrying request.value",
+      "pattern": "ReviewSignal::Clear => \\{ ReleaseDecision::Approve\\(request\\.value\\) \\}"
+    },
+    {
+      "id": "decision.blank",
+      "requirement": "Blank still decides Reject blank",
+      "pattern": "ReviewSignal::Blank => \\{ ReleaseDecision::Reject\\(\"blank\"\\) \\}"
+    },
+    {
+      "id": "decision.unsafe",
+      "requirement": "Unsafe still decides Reject unsafe",
+      "pattern": "ReviewSignal::Unsafe => \\{ ReleaseDecision::Reject\\(\"unsafe\"\\) \\}"
+    },
+    {
+      "id": "decision.external",
+      "requirement": "External still decides Hold carrying request.origin",
+      "pattern": "ReviewSignal::External => \\{ ReleaseDecision::Hold\\(request\\.origin\\) \\}"
+    },
+    {
+      "id": "record.report",
+      "requirement": "report_builder.build still constructs ReleaseReport",
+      "pattern": "ReleaseReport \\{"
+    },
+    {
+      "id": "view.workspace",
+      "requirement": "workspace_value remains available for workspace presentation",
+      "pattern": "fn workspace_value\\("
+    }
+  ]
+}

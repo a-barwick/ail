@@ -1,0 +1,15 @@
+module workflow;
+import contracts;
+import request_copy;
+import signal_router;
+import signal_cache;
+import decision_matrix;
+import report_builder;
+
+fn review(request: contracts.ReleaseRequest) -> contracts.ReleaseReport {
+  let copied = request_copy.copy(request);
+  let routed = signal_router.route(copied);
+  let restored = signal_cache.restore(routed);
+  let decision = decision_matrix.decide(copied, restored);
+  report_builder.build(decision)
+}

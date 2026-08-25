@@ -1,0 +1,21 @@
+module signal_router;
+import contracts;
+import blank_check;
+import control_check;
+import origin_check;
+
+fn route(request: contracts.ReleaseRequest) -> contracts.ReviewSignal {
+  if blank_check.is_blank(request) {
+    contracts.ReviewSignal::Blank
+  } else {
+    if control_check.is_unsafe(request) {
+      contracts.ReviewSignal::Unsafe
+    } else {
+      if origin_check.is_external(request) {
+        contracts.ReviewSignal::External
+      } else {
+        contracts.ReviewSignal::Clear
+      }
+    }
+  }
+}

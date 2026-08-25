@@ -1,0 +1,10 @@
+module audit_view;
+import contracts;
+
+fn audit_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn audit_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

@@ -1,0 +1,6 @@
+module origin_check;
+import contracts;
+
+fn is_external(request: contracts.ReleaseRequest) -> Bool {
+  text.is_empty(request.origin)
+}

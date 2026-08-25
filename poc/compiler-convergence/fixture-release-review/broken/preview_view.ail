@@ -1,0 +1,10 @@
+module preview_view;
+import contracts;
+
+fn preview_key(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
+
+fn preview_value(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}

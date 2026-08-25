@@ -1,0 +1,10 @@
+module schedule_view;
+import contracts;
+
+fn schedule_key(request: contracts.ReleaseRequest) -> Text {
+  request.value
+}
+
+fn schedule_origin(request: contracts.ReleaseRequest) -> Text {
+  request.origin
+}
