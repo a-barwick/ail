@@ -181,7 +181,8 @@ faults were locally readable type and capability errors at this scale.
    cannot be resolved after the fact. The protocol fix is to stagger the arms so
    that no `ail` ledger exists on disk while a `control` trial runs. Treat the
    control arm's 1 retry as an upper bound that the next run should confirm under
-   staggering.
+   staggering. The harness now enforces that order and `self-test` proves it, so
+   the next fixture runs staggered; see "Arm order" in [README.md](README.md).
 
    All twenty arms reported, unprompted and in detail, that they used only harness
    commands: no state file read, no `ailc` or `cargo` run, no private copy of the

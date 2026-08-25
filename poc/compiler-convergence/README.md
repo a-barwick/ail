@@ -114,8 +114,8 @@ Build the compiler once:
 cargo +1.87.0 build --release -p ail-compiler --bin ailc
 ```
 
-Prove the fixture is solvable, the gate cannot be gamed, and a failed publish
-writes nothing:
+Prove the fixture is solvable, the gate cannot be gamed, a failed publish writes
+nothing, and a blind trial runs before any compiler-arm ledger exists:
 
 ```bash
 python3 poc/compiler-convergence/harness.py self-test \
@@ -127,24 +127,26 @@ outside the working tree while the arms run, so neither agent can read it, and
 committed afterwards so the self-test and the solvability claim are auditable.
 Git history shows which commit added it.
 
-Start an arm and hand its brief to an agent:
+Start an arm and hand its brief to an agent. The blind arms run first, so start
+with `--arm control`:
 
 ```bash
-python3 poc/compiler-convergence/harness.py start --arm ail
-python3 poc/compiler-convergence/harness.py brief --arm ail
+python3 poc/compiler-convergence/harness.py start --arm control
+python3 poc/compiler-convergence/harness.py brief --arm control
 ```
 
 The agent then works only through the harness:
 
 ```bash
-python3 poc/compiler-convergence/harness.py files   --arm ail
-python3 poc/compiler-convergence/harness.py read    --arm ail transport.ail
-python3 poc/compiler-convergence/harness.py write   --arm ail transport.ail < new_transport.ail
-python3 poc/compiler-convergence/harness.py check   --arm ail
-python3 poc/compiler-convergence/harness.py publish --arm ail
+python3 poc/compiler-convergence/harness.py files   --arm control
+python3 poc/compiler-convergence/harness.py read    --arm control transport.ail
+python3 poc/compiler-convergence/harness.py write   --arm control transport.ail < new_transport.ail
+python3 poc/compiler-convergence/harness.py check   --arm control
+python3 poc/compiler-convergence/harness.py publish --arm control
 ```
 
-Repeat for `--arm control`. Then:
+Repeat for every other blind trial (`control-t2`, `control-t3`, ...). Once all
+of them have finished, repeat for `--arm ail`. Then:
 
 ```bash
 python3 poc/compiler-convergence/harness.py report --operator
@@ -163,6 +165,42 @@ its own reference material list, its own reference repair, and its own
 the original `runs/` and `report/` paths. The protocol, the gate, and the
 measures are shared, which is what makes two fixtures comparable as experiments
 even when their faults are unrelated.
+
+## Arm order
+
+Every blind arm of a broken workspace finishes before the first compiler arm of
+that workspace starts. The harness enforces both halves and refuses the command
+that would break either one:
+
+- A `control` arm cannot start, read, write, check, or publish while any `ail`
+  ledger for its broken workspace exists on disk. There is no compiler output
+  for a blind trial to find, because the file that would hold it has not been
+  written yet.
+- An `ail` arm cannot start until every `control` arm of that workspace has
+  finished, which means it passed the gate, spent its 40 gate calls, or was
+  closed by the operator with `harness.py close --arm <name> --operator
+  --reason <why>`.
+
+An `ail` ledger counts against a workspace whichever run directory holds it,
+because relevance is the broken workspace's digest, not the directory name.
+`label-batch` and `label-batch-frugal` share one broken workspace, so a
+compiler arm in either one blocks a blind arm in the other, and an archived run
+directory blocks the same way a live one does. That means the committed
+fixtures cannot take a new blind trial: their compiler ledgers are in the tree.
+Run a new batch under `--runs-root <dir>`, which holds that batch's `runs-*`
+and `report-*` directories and is where the order is enforced.
+
+Each arm records what the order looked like when it started: the compiler
+ledgers present (`[]` for a blind arm) and, for a compiler arm, when each blind
+arm finished. `harness.py audit` rechecks both from the committed ledgers, and
+reports arms recorded before this was enforced as exactly that instead of
+scoring them.
+
+`harness.py self-test` proves the order by driving the real command line in a
+temporary runs root: a blind arm starts and runs a full trial to a passing
+publish while no `ail` ledger exists anywhere on disk, the compiler arm is
+refused mid-trial, it is admitted once the blind arm finishes, and from then on
+the blind arm and a new blind arm are both refused.
 
 ## Gate semantics
 
@@ -195,6 +233,9 @@ because the defect and its effect are part of the record.
 - **The compiler runs in both arms.** The control arm's diagnostics are
   recorded and withheld, not skipped, so both ledgers are built from the same
   checker.
+- **The blind arms run first.** No compiler-arm ledger exists on disk while a
+  blind trial works, so its number cannot come from reading one. The harness
+  refuses the commands that would break that order and `self-test` proves it.
 - **No new language.** The only compiler change this work needed is that
   `ailc` now prints the architecture facts the checker had already computed
   (ADR 0015). No new syntax, no new capability file, no new command.
@@ -207,3 +248,15 @@ workspace for a control agent to compile behind the harness's back. A control
 agent that deliberately reconstructed the workspace from the state file and ran
 `ailc` itself would defeat the experiment; the brief forbids it, and each arm's
 command log is committed with the run so a reader can audit the trajectory.
+
+The arm order removes one specific way to cheat that no brief can detect after
+the fact: reading another arm's findings. The `label-batch` run had a compiler
+arm's full findings sitting on disk while the blind arms worked, so its control
+number is an upper bound. Under the enforced order that file does not exist
+yet, so there is nothing to read.
+
+Two holes stay open. A control arm's own ledger records the compiler output the
+harness withheld from it, so an arm that reads its own state file still sees
+findings; that is what the operator canary in every state file is for. And an
+arm that runs `ailc` on a workspace it reconstructed defeats the experiment
+whatever the order is.

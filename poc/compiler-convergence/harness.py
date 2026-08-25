@@ -15,6 +15,12 @@ lives in `runs/<arm>/state.json` and is materialized into a private temporary
 directory only while `ailc` runs, so no on-disk workspace exists for an arm to
 compile behind the harness's back.
 
+The arms are staggered. Every `control` arm of a broken workspace finishes
+before the first `ail` arm of that workspace starts, so a blind trial cannot
+read compiler findings out of a compiler arm's ledger: no such ledger exists
+while it works. The harness enforces both halves of that order and records it,
+and `self-test` proves it by driving the real command line.
+
 The harness never repairs source and never edits policy. It measures.
 """
 
@@ -29,7 +35,8 @@ import subprocess
 import sys
 import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from functools import lru_cache
 from pathlib import Path
 from statistics import median
 
@@ -78,10 +85,18 @@ class Fixture:
 
     name: str
     directory: str
+    # Where this fixture's run directories live. Defaults to the harness
+    # directory; `--runs-root` moves one batch elsewhere, which the self-test
+    # uses so its own trial never lands in the committed runs.
+    runs_root: Path | None = None
 
     @property
     def root(self) -> Path:
         return HERE / self.directory
+
+    @property
+    def base(self) -> Path:
+        return self.runs_root or HERE
 
     @property
     def broken(self) -> Path:
@@ -101,11 +116,19 @@ class Fixture:
 
     @property
     def runs(self) -> Path:
-        return HERE / f"runs-{self.name}" if self.directory != "fixture" else HERE / "runs"
+        return (
+            self.base / f"runs-{self.name}"
+            if self.directory != "fixture"
+            else self.base / "runs"
+        )
 
     @property
     def report(self) -> Path:
-        return HERE / f"report-{self.name}" if self.directory != "fixture" else HERE / "report"
+        return (
+            self.base / f"report-{self.name}"
+            if self.directory != "fixture"
+            else self.base / "report"
+        )
 
 
 FIXTURES = {
@@ -221,19 +244,168 @@ def fail(message: str) -> None:
     raise SystemExit(2)
 
 
-def fixture_named(name: str) -> Fixture:
+def fixture_named(name: str, runs_root: str | None = None) -> Fixture:
     if name not in FIXTURES:
         fail(f"unknown fixture {name}; expected one of {', '.join(sorted(FIXTURES))}")
-    return FIXTURES[name]
+    fixture = FIXTURES[name]
+    if runs_root:
+        fixture = replace(fixture, runs_root=Path(runs_root).resolve())
+    return fixture
 
 
-def arm(name: str, fixture: Fixture) -> Arm:
-    policy_of(name)
+def arm(name: str, fixture: Fixture, action: str) -> Arm:
+    """Resolve one arm, refusing any command the arm order forbids.
+
+    Every arm command goes through here, so the order is enforced once: a blind
+    arm may act only while no compiler-arm ledger exists, and a compiler arm may
+    start only after every blind arm of this workspace has finished.
+    """
+    if policy_of(name) == "control":
+        require_no_compiler_ledger(fixture, name, action)
+    elif action == "start":
+        require_blind_arms_finished(fixture, name)
     return Arm(name=name, path=fixture.runs / name, fixture=fixture)
 
 
 def contract(fixture: Fixture) -> dict:
     return json.loads(fixture.contract_path.read_text(encoding="utf-8"))
+
+
+# --------------------------------------------------------------------------
+# arm order: every blind arm finishes before the first compiler arm starts
+# --------------------------------------------------------------------------
+
+STAGGER_PROTOCOL = "control-then-ail"
+
+
+def broken_files(fixture: Fixture) -> dict[str, str]:
+    return {
+        item.name: item.read_text(encoding="utf-8")
+        for item in sorted(fixture.broken.iterdir())
+        if item.is_file()
+    }
+
+
+@lru_cache(maxsize=None)
+def fixture_digest(fixture: Fixture) -> str:
+    return workspace_digest(broken_files(fixture))
+
+
+@dataclass(frozen=True)
+class Ledger:
+    """One arm's state file, named by the run directory that holds it.
+
+    Two run directories of one broken workspace can hold arms of the same name,
+    so `label` is what a message or an audit check names.
+    """
+
+    arm: str
+    label: str
+    path: Path
+    state: dict
+
+    @property
+    def policy(self) -> str:
+        return policy_of(self.arm)
+
+
+def ledgers(fixture: Fixture) -> list[Ledger]:
+    """Every arm ledger under this runs root started from the same broken workspace.
+
+    Relevance is the broken workspace's digest, not the run directory's name.
+    Two fixtures can share one broken workspace, as `label-batch` and
+    `label-batch-frugal` do, and an archived run directory holds the same
+    compiler findings as a live one.
+    """
+    wanted = fixture_digest(fixture)
+    found: list[Ledger] = []
+    for path in sorted(fixture.base.glob("runs*/*/state.json")):
+        if not ARM_NAME.match(path.parent.name):
+            continue
+        try:
+            state = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if state.get("fixture_digest") == wanted:
+            found.append(
+                Ledger(
+                    arm=path.parent.name,
+                    label=str(path.parent.relative_to(fixture.base)),
+                    path=path,
+                    state=state,
+                )
+            )
+    return found
+
+
+def compiler_ledgers(fixture: Fixture) -> list[Ledger]:
+    """Every `ail` ledger on disk for this broken workspace.
+
+    These files carry the compiler output the blind arm must not see, including
+    the findings the harness withheld from it.
+    """
+    return [item for item in ledgers(fixture) if item.policy == "ail"]
+
+
+def finished_at(state: dict) -> float | None:
+    """When this arm stopped being able to change its ledger, or `None` in flight.
+
+    Runs recorded before arm-order enforcement carry no `finished_at`, so it is
+    derived: an arm that passed or exhausted its gate calls finished at its last
+    recorded command.
+    """
+    if state.get("finished_at") is not None:
+        return state["finished_at"]
+    attempts = state.get("attempts") or []
+    limit = state.get("attempt_limit", ATTEMPT_LIMIT)
+    if state.get("passed_at_attempt") is None and len(attempts) < limit:
+        return None
+    commands = state.get("commands") or []
+    return commands[-1]["at"] if commands else state.get("started_at")
+
+
+def blind_arms(fixture: Fixture) -> list[Ledger]:
+    return [item for item in ledgers(fixture) if item.policy == "control"]
+
+
+def close_if_done(state: dict) -> None:
+    """Stamp the moment this arm can no longer change its ledger."""
+    if state.get("finished_at") is not None:
+        return
+    if state["passed_at_attempt"] is not None or len(state["attempts"]) >= ATTEMPT_LIMIT:
+        state["finished_at"] = round(time.time(), 3)
+
+
+def require_no_compiler_ledger(fixture: Fixture, arm_name: str, action: str) -> None:
+    present = compiler_ledgers(fixture)
+    if not present:
+        return
+    names = ", ".join(item.label for item in present)
+    fail(
+        f"arm order violation: refusing to {action} blind arm {arm_name} because a "
+        f"compiler-arm ledger for this broken workspace already exists: {names}. A "
+        "blind trial runs before any compiler output for its workspace exists on "
+        "disk. Run the blind arms first, or run this batch under a fresh --runs-root."
+    )
+
+
+def require_blind_arms_finished(fixture: Fixture, arm_name: str) -> dict[str, float]:
+    arms = blind_arms(fixture)
+    unfinished = sorted(item.label for item in arms if finished_at(item.state) is None)
+    if unfinished:
+        fail(
+            f"arm order violation: refusing to start compiler arm {arm_name} while "
+            f"blind arms are still running: {', '.join(unfinished)}. Every control "
+            "arm finishes first, so no compiler-arm ledger exists on disk while a "
+            "blind arm works. Close an abandoned arm with: harness.py close --arm "
+            "<name> --operator --reason <why>"
+        )
+    if not arms:
+        fail(
+            f"arm order violation: refusing to start compiler arm {arm_name} before "
+            "any blind arm of this workspace has run. The blind arms run first."
+        )
+    return {item.label: finished_at(item.state) for item in arms}
 
 
 def qualifiers(spec: dict) -> tuple[str, ...]:
@@ -472,14 +644,16 @@ def run_gate(state: dict, command: str) -> dict:
 
 
 def gate(arm_name: str, command: str, fixture: Fixture) -> None:
-    active = arm(arm_name, fixture)
+    active = arm(arm_name, fixture, command)
     state = active.load()
     if state.get("passed_at_attempt") is not None:
         emit(state, f"PASS (already passed at attempt {state['passed_at_attempt']})")
+        close_if_done(state)
         active.save(state)
         return
     if len(state["attempts"]) >= ATTEMPT_LIMIT:
         emit(state, f"attempt limit {ATTEMPT_LIMIT} reached; this run did not converge")
+        close_if_done(state)
         active.save(state)
         return
 
@@ -534,6 +708,7 @@ def gate(arm_name: str, command: str, fixture: Fixture) -> None:
         lines.append("gate satisfied: ailc publish wrote a revision and the specification holds")
     emit(state, "\n".join(lines))
     log(state, {"command": command, "attempt": index, "accepted": accepted})
+    close_if_done(state)
     active.save(state)
 
 
@@ -596,14 +771,20 @@ SUCCESS
 
 
 def command_start(args: argparse.Namespace) -> None:
-    fixture = fixture_named(args.fixture)
-    active = arm(args.arm, fixture)
+    fixture = fixture_named(args.fixture, args.runs_root)
+    active = arm(args.arm, fixture, "start")
     if active.state_path.exists() and not args.force:
         fail(f"arm {args.arm} already started; pass --force to reset it")
-    files = {
-        item.name: item.read_text(encoding="utf-8")
-        for item in sorted(fixture.broken.iterdir())
-        if item.is_file()
+    files = broken_files(fixture)
+    policy = policy_of(args.arm)
+    # What the arm order looked like at the instant this arm started, recorded
+    # so `audit` can check the claim later without trusting this run.
+    stagger = {
+        "protocol": STAGGER_PROTOCOL,
+        "compiler_ledgers_present": [item.label for item in compiler_ledgers(fixture)],
+        "blind_arms_finished": (
+            require_blind_arms_finished(fixture, args.arm) if policy == "ail" else {}
+        ),
     }
     state = {
         # A canary, not a control. Nothing prevents an arm from reading this
@@ -615,9 +796,11 @@ def command_start(args: argparse.Namespace) -> None:
             "from reading it. An arm that reads it must say so in its final report."
         ),
         "arm": args.arm,
-        "policy": policy_of(args.arm),
+        "policy": policy,
         "fixture": fixture.name,
         "started_at": round(time.time(), 3),
+        "finished_at": None,
+        "stagger": stagger,
         "fixture_digest": workspace_digest(files),
         "attempt_limit": ATTEMPT_LIMIT,
         "files": files,
@@ -637,8 +820,8 @@ def command_start(args: argparse.Namespace) -> None:
 
 
 def command_brief(args: argparse.Namespace) -> None:
-    fixture = fixture_named(args.fixture)
-    active = arm(args.arm, fixture)
+    fixture = fixture_named(args.fixture, args.runs_root)
+    active = arm(args.arm, fixture, "brief")
     state = active.load()
     emit(state, brief_text(args.arm, fixture))
     log(state, {"command": "brief"})
@@ -646,7 +829,7 @@ def command_brief(args: argparse.Namespace) -> None:
 
 
 def command_files(args: argparse.Namespace) -> None:
-    active = arm(args.arm, fixture_named(args.fixture))
+    active = arm(args.arm, fixture_named(args.fixture, args.runs_root), "list files for")
     state = active.load()
     listing = "\n".join(
         f"{name}  {len(text)} chars" for name, text in sorted(state["files"].items())
@@ -657,8 +840,8 @@ def command_files(args: argparse.Namespace) -> None:
 
 
 def command_read(args: argparse.Namespace) -> None:
-    fixture = fixture_named(args.fixture)
-    active = arm(args.arm, fixture)
+    fixture = fixture_named(args.fixture, args.runs_root)
+    active = arm(args.arm, fixture, "read for")
     state = active.load()
     target = args.path
     if target in state["files"]:
@@ -677,8 +860,8 @@ def command_read(args: argparse.Namespace) -> None:
 
 
 def command_write(args: argparse.Namespace) -> None:
-    fixture = fixture_named(args.fixture)
-    active = arm(args.arm, fixture)
+    fixture = fixture_named(args.fixture, args.runs_root)
+    active = arm(args.arm, fixture, "write for")
     state = active.load()
     spec = contract(fixture)
     rejection = write_rejection(args.path, spec)
@@ -721,7 +904,7 @@ def write_rejection(path: str, spec: dict) -> str | None:
 
 
 def command_status(args: argparse.Namespace) -> None:
-    active = arm(args.arm, fixture_named(args.fixture))
+    active = arm(args.arm, fixture_named(args.fixture, args.runs_root), "report status for")
     state = active.load()
     used = len(state["attempts"])
     lines = [
@@ -737,11 +920,34 @@ def command_status(args: argparse.Namespace) -> None:
 
 
 def command_check(args: argparse.Namespace) -> None:
-    gate(args.arm, "check", fixture_named(args.fixture))
+    gate(args.arm, "check", fixture_named(args.fixture, args.runs_root))
 
 
 def command_publish(args: argparse.Namespace) -> None:
-    gate(args.arm, "publish", fixture_named(args.fixture))
+    gate(args.arm, "publish", fixture_named(args.fixture, args.runs_root))
+
+
+def command_close(args: argparse.Namespace) -> None:
+    """Close an abandoned arm so the next policy can start.
+
+    An arm that neither passed nor spent its gate calls is in flight forever,
+    and a blind arm in flight blocks every compiler arm. Closing one is an
+    operator act, it records why, and it never changes a measure.
+    """
+    if not args.operator or not args.reason.strip():
+        fail("close ends a trial the arm did not finish. Pass --operator and --reason.")
+    fixture = fixture_named(args.fixture, args.runs_root)
+    active = arm(args.arm, fixture, "close")
+    state = active.load()
+    if state.get("finished_at") is not None:
+        fail(f"arm {args.arm} already finished at {state['finished_at']}")
+    state["finished_at"] = round(time.time(), 3)
+    state["closed"] = {"reason": args.reason, "at": state["finished_at"]}
+    active.save(state)
+    print(
+        f"closed arm {args.arm} after {len(state['attempts'])} gate calls, "
+        f"passed_at_attempt={state['passed_at_attempt']}: {args.reason}"
+    )
 
 
 # --------------------------------------------------------------------------
@@ -889,7 +1095,7 @@ def command_report(args: argparse.Namespace) -> None:
             "report is an operator command: it shows both arms, including the "
             "diagnostics withheld from the control arm. Pass --operator."
         )
-    fixture = fixture_named(args.fixture)
+    fixture = fixture_named(args.fixture, args.runs_root)
     results = {}
     for state_path in sorted(fixture.runs.glob("*/state.json")):
         name = state_path.parent.name
@@ -1050,24 +1256,163 @@ def overlay(base: dict[str, str], directory: Path) -> dict[str, str]:
     return merged
 
 
+def harness_cli(
+    root: Path, fixture: Fixture, *argv: str, stdin: str | None = None
+) -> subprocess.CompletedProcess:
+    """Run one real harness command against a temporary runs root."""
+    return subprocess.run(
+        [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            *argv,
+            "--fixture",
+            fixture.name,
+            "--runs-root",
+            str(root),
+        ],
+        capture_output=True,
+        text=True,
+        input=stdin,
+        check=False,
+    )
+
+
+def first_line(text: str) -> str:
+    return text.strip().splitlines()[0] if text.strip() else ""
+
+
+def arm_order_checks(fixture: Fixture, reference: Path, spec: dict) -> list[tuple[str, bool, str]]:
+    """Prove a blind trial runs to its end before any compiler ledger exists.
+
+    Drives the real command line in a temporary runs root, so the committed runs
+    are untouched and every refusal here is the one an operator would hit. The
+    blind trial is a real one: it writes the stored reference repair through the
+    harness and publishes, with `PASS` or `FAIL` as its only feedback.
+    """
+    checks: list[tuple[str, bool, str]] = []
+    root = Path(tempfile.mkdtemp(prefix="ail-arm-order-"))
+
+    def ledger_arms() -> list[str]:
+        return sorted(path.parent.name for path in root.glob("runs*/*/state.json"))
+
+    try:
+        started = harness_cli(root, fixture, "start", "--arm", "control")
+        checks.append(
+            (
+                "blind arm starts when no compiler-arm ledger exists",
+                started.returncode == 0,
+                first_line(started.stderr),
+            )
+        )
+        early = harness_cli(root, fixture, "start", "--arm", "ail")
+        checks.append(
+            (
+                "compiler arm is refused while a blind arm is still running",
+                early.returncode != 0 and "arm order violation" in early.stderr,
+                first_line(early.stderr),
+            )
+        )
+
+        repair = {
+            item.name: item.read_text(encoding="utf-8")
+            for item in sorted(reference.iterdir())
+            if item.is_file() and item.name not in spec["immutable_files"]
+        }
+        for name, text in repair.items():
+            wrote = harness_cli(root, fixture, "write", "--arm", "control", name, stdin=text)
+            if wrote.returncode != 0:
+                checks.append((f"blind arm writes {name}", False, first_line(wrote.stderr)))
+        during = ledger_arms()
+        checks.append(
+            (
+                "no compiler-arm ledger exists on disk while the blind arm works",
+                bool(during) and all(policy_of(name) == "control" for name in during),
+                ",".join(during),
+            )
+        )
+        published = harness_cli(root, fixture, "publish", "--arm", "control")
+        checks.append(
+            (
+                "blind arm reaches a passing publish with no compiler output on disk",
+                published.returncode == 0 and "PASS" in published.stdout,
+                first_line(published.stdout),
+            )
+        )
+        checks.append(
+            (
+                "nothing the blind arm was shown carries a compiler diagnostic",
+                "AIL." not in published.stdout,
+                "",
+            )
+        )
+
+        allowed = harness_cli(root, fixture, "start", "--arm", "ail")
+        checks.append(
+            (
+                "compiler arm starts once the blind arm has finished",
+                allowed.returncode == 0,
+                first_line(allowed.stderr),
+            )
+        )
+        after = ledger_arms()
+        checks.append(
+            (
+                "the compiler-arm ledger appears only after the blind arm finished",
+                any(policy_of(name) == "ail" for name in after),
+                ",".join(after),
+            )
+        )
+        late = harness_cli(root, fixture, "start", "--arm", "control-t2")
+        checks.append(
+            (
+                "a new blind arm is refused once a compiler-arm ledger exists",
+                late.returncode != 0 and "arm order violation" in late.stderr,
+                first_line(late.stderr),
+            )
+        )
+        source = sorted(broken_files(fixture))[0]
+        blocked = harness_cli(root, fixture, "read", "--arm", "control", source)
+        checks.append(
+            (
+                "the blind arm cannot use the harness once a compiler-arm ledger exists",
+                blocked.returncode != 0 and "arm order violation" in blocked.stderr,
+                first_line(blocked.stderr),
+            )
+        )
+        audited = harness_cli(root, fixture, "audit")
+        # Audit reports the whole run, so its exit code answers more than the
+        # arm order. Read its arm-order lines, which is the claim under test.
+        order_lines = [
+            line
+            for line in audited.stdout.splitlines()
+            if "compiler-arm ledger existed" in line or "had finished before it started" in line
+        ]
+        checks.append(
+            (
+                "audit confirms the order from the ledgers alone",
+                len(order_lines) == 2 and all(line.startswith("ok") for line in order_lines),
+                "; ".join(line.strip() for line in order_lines) or first_line(audited.stderr),
+            )
+        )
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+    return checks
+
+
 def command_self_test(args: argparse.Namespace) -> None:
-    """Prove the fixture is solvable and the gate cannot be gamed.
+    """Prove the fixture is solvable, the gate cannot be gamed, and the arms are staggered.
 
     Runs no agent. Applies a reference repair directly, so it is labelled a
     self-test and never counted as an arm result.
     """
-    fixture = fixture_named(args.fixture)
+    fixture = fixture_named(args.fixture, args.runs_root)
     spec = contract(fixture)
     reference = Path(args.reference) if args.reference else fixture.reference
     if not reference.is_dir():
         fail(f"{reference} is not a directory of reference sources")
     checks: list[tuple[str, bool, str]] = []
 
-    broken = {
-        item.name: item.read_text(encoding="utf-8")
-        for item in sorted(fixture.broken.iterdir())
-        if item.is_file()
-    }
+    broken = broken_files(fixture)
     state = {"arm": "self-test", "files": dict(broken)}
 
     result = run_gate(state, "check")
@@ -1223,6 +1568,8 @@ def command_self_test(args: argparse.Namespace) -> None:
         )
     )
 
+    checks += arm_order_checks(fixture, reference, spec)
+
     failed = 0
     for label, ok, detail in checks:
         status = "ok  " if ok else "FAIL"
@@ -1233,22 +1580,68 @@ def command_self_test(args: argparse.Namespace) -> None:
     raise SystemExit(0 if failed == 0 else 1)
 
 
+def audit_arm_order(fixture: Fixture) -> list[tuple[str, bool, str]]:
+    """Check from the ledgers alone that no compiler output existed during a blind trial.
+
+    Two facts decide it, and both are recorded by the run rather than asserted
+    here: a blind arm saw no compiler-arm ledger when it started, and every
+    compiler arm started after the last blind arm had finished. Arms recorded
+    before this order was enforced carry neither fact, so they are reported as
+    what they are instead of being scored.
+    """
+    checks: list[tuple[str, bool, str]] = []
+    blind = blind_arms(fixture)
+    compiler = compiler_ledgers(fixture)
+    legacy = sorted(item.label for item in blind + compiler if "stagger" not in item.state)
+    if legacy:
+        print(
+            f"info arm order: {len(legacy)} arm(s) ran before the harness enforced the "
+            f"order and carry no record of it: {', '.join(legacy)}"
+        )
+    for item in blind:
+        if "stagger" not in item.state:
+            continue
+        seen = item.state["stagger"]["compiler_ledgers_present"]
+        checks.append(
+            (
+                f"{item.label}: no compiler-arm ledger existed when this blind arm started",
+                not seen,
+                ",".join(seen),
+            )
+        )
+    for item in compiler:
+        if "stagger" not in item.state:
+            continue
+        started = item.state["started_at"]
+        for other in blind:
+            done = finished_at(other.state)
+            if done is None:
+                detail = "still in flight"
+            else:
+                detail = f"finished {done} > started {started}" if done > started else ""
+            checks.append(
+                (
+                    f"{item.label}: blind arm {other.label} had finished before it started",
+                    done is not None and done <= started,
+                    detail,
+                )
+            )
+    return checks
+
+
 def command_audit(args: argparse.Namespace) -> None:
     """Audit finished runs against claims a reader can check without trusting us.
 
     Every check here reads the committed run ledger and the committed fixture. It
     answers: did any arm touch an immutable file, did any published workspace
     fail the task specification, did a failure class this fixture excludes ever
-    appear, and did any gate call break the write invariants.
+    appear, did any gate call break the write invariants, and did the arms run in
+    the order the protocol requires.
     """
-    fixture = fixture_named(args.fixture)
+    fixture = fixture_named(args.fixture, args.runs_root)
     spec = contract(fixture)
-    broken = {
-        item.name: item.read_text(encoding="utf-8")
-        for item in sorted(fixture.broken.iterdir())
-        if item.is_file()
-    }
-    checks: list[tuple[str, bool, str]] = []
+    broken = broken_files(fixture)
+    checks: list[tuple[str, bool, str]] = audit_arm_order(fixture)
     for state_path in sorted(fixture.runs.glob("*/state.json")):
         name = state_path.parent.name
         if not ARM_NAME.match(name):
@@ -1346,6 +1739,14 @@ def main() -> None:
             choices=sorted(FIXTURES),
             help=f"which broken workspace to run (default {DEFAULT_FIXTURE})",
         )
+        item.add_argument(
+            "--runs-root",
+            help=(
+                "directory holding this batch's runs-* and report-* directories "
+                "(default: the harness directory). The arm order is enforced within "
+                "one root; the self-test uses a temporary one."
+            ),
+        )
         return item
 
     def with_arm(name: str, handler, **kwargs):
@@ -1367,6 +1768,10 @@ def main() -> None:
     with_arm("check", command_check, help="run ailc check through the gate")
     with_arm("publish", command_publish, help="run ailc publish through the gate")
     with_arm("status", command_status, help="show remaining gate calls")
+
+    close = with_arm("close", command_close, help="close an arm the agent abandoned")
+    close.add_argument("--operator", action="store_true")
+    close.add_argument("--reason", default="", help="why this trial ended unfinished")
 
     report = with_fixture("report", help="write the two-arm measure table")
     report.add_argument("--operator", action="store_true")
