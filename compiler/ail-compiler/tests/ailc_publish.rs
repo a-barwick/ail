@@ -275,4 +275,3 @@ fn publish_does_not_replace_an_existing_revision_when_the_candidate_fails() {
 
     fs::remove_dir_all(path).expect("temporary workspace is removable");
 }
-
