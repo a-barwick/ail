@@ -5,6 +5,7 @@ record ReviewRequest {
   task: Text;
   payload: Bytes;
   priority: PriorityOption;
+  requested_by: Text;
   reviewer: Text;
 }
 
@@ -13,6 +14,7 @@ record ApprovedJob {
   task: Text;
   payload: Bytes;
   priority: Priority;
+  requested_by: Text;
   reviewer: Text;
 }
 
@@ -35,6 +37,8 @@ variant ReviewReason {
   TaskHasControl;
   PayloadTooLarge;
   MissingPriority;
+  MissingRequester;
+  InvalidRequester;
   MissingReviewer;
   InvalidReviewer;
 }

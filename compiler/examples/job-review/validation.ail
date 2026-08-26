@@ -56,6 +56,26 @@ fn validate_priority(request: contracts.ReviewRequest) -> contracts.ValidationRe
   }
 }
 
+fn validate_requester(request: contracts.ReviewRequest) -> contracts.ValidationResult {
+  if text.is_empty(request.requested_by) {
+    contracts.ValidationResult::Invalid(contracts.ReviewReason::MissingRequester)
+  } else {
+    if text.byte_length_between(request.requested_by, 1, 48) {
+      if text.first_ascii_alphanumeric(request.requested_by) {
+        if text.rest_ascii_alphanumeric_or(request.requested_by, "_-.") {
+          contracts.ValidationResult::Valid
+        } else {
+          contracts.ValidationResult::Invalid(contracts.ReviewReason::InvalidRequester)
+        }
+      } else {
+        contracts.ValidationResult::Invalid(contracts.ReviewReason::InvalidRequester)
+      }
+    } else {
+      contracts.ValidationResult::Invalid(contracts.ReviewReason::InvalidRequester)
+    }
+  }
+}
+
 fn validate_reviewer(request: contracts.ReviewRequest) -> contracts.ValidationResult {
   if text.is_empty(request.reviewer) {
     contracts.ValidationResult::Invalid(contracts.ReviewReason::MissingReviewer)

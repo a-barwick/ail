@@ -1,49 +1,7 @@
 module transport;
 import contracts;
-import validation;
+import domain;
 
 fn dispatch(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
-  match validation.validate_job_id(request) {
-    contracts.ValidationResult::Invalid(reason) => {
-      contracts.ReviewDecision::Rejected(reason)
-    },
-    contracts.ValidationResult::Valid => {
-      match validation.validate_task(request) {
-        contracts.ValidationResult::Invalid(reason) => {
-          contracts.ReviewDecision::Rejected(reason)
-        },
-        contracts.ValidationResult::Valid => {
-          match validation.validate_payload(request) {
-            contracts.ValidationResult::Invalid(reason) => {
-              contracts.ReviewDecision::Rejected(reason)
-            },
-            contracts.ValidationResult::Valid => {
-              match validation.validate_priority(request) {
-                contracts.ValidationResult::Invalid(reason) => {
-                  contracts.ReviewDecision::Rejected(reason)
-                },
-                contracts.ValidationResult::Valid => {
-                  match validation.validate_reviewer(request) {
-                    contracts.ValidationResult::Invalid(reason) => {
-                      contracts.ReviewDecision::Rejected(reason)
-                    },
-                    contracts.ValidationResult::Valid => {
-                      let job = contracts.ApprovedJob {
-                        job_id: request.job_id,
-                        task: request.task,
-                        payload: request.payload,
-                        priority: validation.selected_priority(request.priority),
-                        reviewer: request.reviewer,
-                      };
-                      contracts.ReviewDecision::Approved(job)
-                    },
-                  }
-                },
-              }
-            },
-          }
-        },
-      }
-    },
-  }
+  domain.review(request)
 }
