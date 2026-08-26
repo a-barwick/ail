@@ -1,0 +1,88 @@
+module validation;
+import contracts;
+
+fn validate_job_id(request: contracts.ReviewRequest) -> contracts.ValidationResult {
+  if text.is_empty(request.job_id) {
+    contracts.ValidationResult::Invalid(contracts.ReviewReason::MissingJobId)
+  } else {
+    if text.byte_length_between(request.job_id, 1, 64) {
+      if text.first_ascii_alphanumeric(request.job_id) {
+        if text.rest_ascii_alphanumeric_or(request.job_id, "_-") {
+          contracts.ValidationResult::Valid
+        } else {
+          contracts.ValidationResult::Invalid(contracts.ReviewReason::InvalidJobId)
+        }
+      } else {
+        contracts.ValidationResult::Invalid(contracts.ReviewReason::InvalidJobId)
+      }
+    } else {
+      contracts.ValidationResult::Invalid(contracts.ReviewReason::InvalidJobId)
+    }
+  }
+}
+
+fn validate_task(request: contracts.ReviewRequest) -> contracts.ValidationResult {
+  if text.is_empty(request.task) {
+    contracts.ValidationResult::Invalid(contracts.ReviewReason::MissingTask)
+  } else {
+    if text.scalar_count_gt(request.task, 80) {
+      contracts.ValidationResult::Invalid(contracts.ReviewReason::TaskTooLong)
+    } else {
+      if text.contains_control(request.task) {
+        contracts.ValidationResult::Invalid(contracts.ReviewReason::TaskHasControl)
+      } else {
+        contracts.ValidationResult::Valid
+      }
+    }
+  }
+}
+
+fn validate_payload(request: contracts.ReviewRequest) -> contracts.ValidationResult {
+  if bytes.length_gt(request.payload, 4096) {
+    contracts.ValidationResult::Invalid(contracts.ReviewReason::PayloadTooLarge)
+  } else {
+    contracts.ValidationResult::Valid
+  }
+}
+
+fn validate_priority(request: contracts.ReviewRequest) -> contracts.ValidationResult {
+  match request.priority {
+    contracts.PriorityOption::Some(priority) => {
+      contracts.ValidationResult::Valid
+    },
+    contracts.PriorityOption::None => {
+      contracts.ValidationResult::Invalid(contracts.ReviewReason::MissingPriority)
+    },
+  }
+}
+
+fn validate_reviewer(request: contracts.ReviewRequest) -> contracts.ValidationResult {
+  if text.is_empty(request.reviewer) {
+    contracts.ValidationResult::Invalid(contracts.ReviewReason::MissingReviewer)
+  } else {
+    if text.byte_length_between(request.reviewer, 1, 48) {
+      if text.first_ascii_alphanumeric(request.reviewer) {
+        if text.rest_ascii_alphanumeric_or(request.reviewer, "_-.") {
+          contracts.ValidationResult::Valid
+        } else {
+          contracts.ValidationResult::Invalid(contracts.ReviewReason::InvalidReviewer)
+        }
+      } else {
+        contracts.ValidationResult::Invalid(contracts.ReviewReason::InvalidReviewer)
+      }
+    } else {
+      contracts.ValidationResult::Invalid(contracts.ReviewReason::InvalidReviewer)
+    }
+  }
+}
+
+fn selected_priority(option: contracts.PriorityOption) -> contracts.Priority {
+  match option {
+    contracts.PriorityOption::Some(priority) => {
+      priority
+    },
+    contracts.PriorityOption::None => {
+      contracts.Priority::Normal
+    },
+  }
+}
