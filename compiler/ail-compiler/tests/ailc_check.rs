@@ -39,6 +39,17 @@ fn run_check(path: &Path) -> std::process::Output {
         .expect("ailc check runs")
 }
 
+fn assert_reports_source(stderr: &str, source_name: &str) {
+    assert!(
+        stderr.contains(&format!("at {source_name}:")),
+        "diagnostic must name {source_name}: {stderr}"
+    );
+    assert!(
+        !stderr.contains("<source-set>"),
+        "diagnostic must not use the generic source-set path: {stderr}"
+    );
+}
+
 fn revision_store(path: &Path) -> PathBuf {
     path.join(".ail")
 }
@@ -179,12 +190,14 @@ fn check_rejects_a_type_error_with_the_workspace_diagnostic() {
 fn check_rejects_a_name_error_with_the_workspace_diagnostic() {
     let path = write_temp_source("name", "fn run(value: Text) -> Text { missing(value) }\n");
     let output = run_check(&path);
-    fs::remove_file(path).expect("temporary source is removable");
+    let name = path.file_name().and_then(|name| name.to_str()).unwrap();
+    fs::remove_file(&path).expect("temporary source is removable");
 
     assert!(!output.status.success());
     assert_ne!(output.stdout, b"ok\n");
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("AIL.NAME.UNKNOWN_FUNCTION"), "{stderr}");
+    assert_reports_source(&stderr, name);
 }
 
 #[test]
@@ -194,12 +207,14 @@ fn check_rejects_an_effect_error_with_the_workspace_diagnostic() {
         "fn run(value: Text) -> Text effects { store.mark } {\n  value\n}\n",
     );
     let output = run_check(&path);
-    fs::remove_file(path).expect("temporary source is removable");
+    let name = path.file_name().and_then(|name| name.to_str()).unwrap();
+    fs::remove_file(&path).expect("temporary source is removable");
 
     assert!(!output.status.success());
     assert_ne!(output.stdout, b"ok\n");
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("AIL.CAPABILITY.INVALID_EFFECT"), "{stderr}");
+    assert_reports_source(&stderr, name);
 }
 
 #[test]
@@ -209,11 +224,13 @@ fn check_rejects_recursive_calls() {
         "fn first(value: Text) -> Text { second(value) }\n\nfn second(value: Text) -> Text { first(value) }\n",
     );
     let output = run_check(&path);
-    fs::remove_file(path).expect("temporary source is removable");
+    let name = path.file_name().and_then(|name| name.to_str()).unwrap();
+    fs::remove_file(&path).expect("temporary source is removable");
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("AIL.CALL.RECURSIVE_CYCLE"), "{stderr}");
+    assert_reports_source(&stderr, name);
 }
 
 #[test]
@@ -226,6 +243,7 @@ fn check_rejects_unknown_capability_interfaces() {
         stderr.contains("AIL.CAPABILITY.UNKNOWN_INTERFACE"),
         "{stderr}"
     );
+    assert_reports_source(&stderr, "service.ail");
 }
 
 #[test]
