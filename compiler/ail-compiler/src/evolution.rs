@@ -466,6 +466,7 @@ struct LayoutFile {
     base: usize,
     text: String,
     canonical: bool,
+    module: Option<String>,
 }
 
 /// One source file exactly as the caller supplied it, with its own parse.
@@ -487,6 +488,12 @@ impl SourceSetLayout {
                 base,
                 text: source.text.clone(),
                 canonical: source.canonical,
+                module: source
+                    .parsed
+                    .unit
+                    .module
+                    .as_ref()
+                    .map(|module| module.name.clone()),
             });
             base += source.text.len() + 1;
         }
@@ -539,7 +546,7 @@ impl SourceSetLayout {
     fn module_names(&self) -> String {
         self.files
             .iter()
-            .filter_map(|file| parse(&file.text).unit.module.map(|module| module.name))
+            .filter_map(|file| file.module.as_deref())
             .collect::<Vec<_>>()
             .join(",")
     }
@@ -571,6 +578,7 @@ pub struct SourceSetDiagnostic {
 struct StoredSourceSet {
     revision: SourceSetRevision,
     sources: Vec<EvolutionSource>,
+    architecture_locations: BTreeMap<String, FindingLocation>,
     identities: Vec<PersistentIdentity>,
     graph: Vec<RelationshipEdge>,
     coverage: EvolutionCoverage,
@@ -774,6 +782,14 @@ impl EvolutionWorkspace {
         self.revisions
             .get(revision_id)
             .map(|stored| stored.sources.as_slice())
+    }
+
+    pub(crate) fn architecture_location(&self, unit: &str) -> Option<FindingLocation> {
+        self.revisions
+            .get(&self.current_revision_id)?
+            .architecture_locations
+            .get(unit)
+            .cloned()
     }
 
     #[must_use]
@@ -1328,7 +1344,11 @@ impl StoredSourceSet {
             if !already_canonical {
                 source.source = canonical;
             }
-            let parsed = parse(&source.source);
+            let parsed = if already_canonical {
+                supplied.clone()
+            } else {
+                parse(&source.source)
+            };
             parsed_sources.push((source.path.clone(), parsed));
         }
         if !causes.is_empty() {
@@ -1419,6 +1439,7 @@ impl StoredSourceSet {
             .artifacts
             .sort_by(|left, right| left.path.cmp(&right.path));
         let graph = build_graph(revision_id, &parsed_sources, &identities, &coverage);
+        let architecture_locations = build_architecture_locations(&supplied_sources);
         let source_set_digest = source_set_digest(&sources);
         let metadata = sources
             .iter()
@@ -1441,6 +1462,7 @@ impl StoredSourceSet {
                 sources: metadata,
             },
             sources,
+            architecture_locations,
             identities,
             graph,
             coverage,
@@ -2985,6 +3007,26 @@ fn source_path_for_function<'a>(sources: &'a [EvolutionSource], function: &str) 
             })
         })
         .map_or("<unknown>", |source| source.path.as_str())
+}
+
+fn build_architecture_locations(sources: &[SuppliedSource]) -> BTreeMap<String, FindingLocation> {
+    let mut locations = BTreeMap::new();
+    for source in sources {
+        let Some(module) = source.parsed.unit.module.as_ref() else {
+            continue;
+        };
+        for declaration in &source.parsed.unit.declarations {
+            let Declaration::Function(function) = declaration else {
+                continue;
+            };
+            if let Some(location) =
+                FindingLocation::resolve(&source.path, &source.text, function.span)
+            {
+                locations.insert(format!("{}:{}", module.name, function.name), location);
+            }
+        }
+    }
+    locations
 }
 
 fn valid_identity(identity: &str) -> bool {

@@ -4,6 +4,14 @@ use crate::{
     SourceUnit, Span, Token, TokenKind, TypeRef, VariantCase, VariantDecl, lex,
 };
 
+#[cfg(test)]
+use std::cell::Cell;
+
+#[cfg(test)]
+thread_local! {
+    static PARSE_CALLS: Cell<usize> = const { Cell::new(0) };
+}
+
 #[derive(Debug, Clone)]
 pub struct ParseResult {
     pub unit: SourceUnit,
@@ -13,6 +21,9 @@ pub struct ParseResult {
 
 #[must_use]
 pub fn parse(source: &str) -> ParseResult {
+    #[cfg(test)]
+    PARSE_CALLS.with(|calls| calls.set(calls.get() + 1));
+
     let tokens = lex(source);
     let significant = tokens
         .iter()
@@ -40,6 +51,16 @@ pub fn parse(source: &str) -> ParseResult {
         tokens,
         diagnostics: parser.diagnostics,
     }
+}
+
+#[cfg(test)]
+pub(crate) fn reset_parse_calls() {
+    PARSE_CALLS.with(|calls| calls.set(0));
+}
+
+#[cfg(test)]
+pub(crate) fn parse_calls() -> usize {
+    PARSE_CALLS.with(Cell::get)
 }
 
 struct Parser {

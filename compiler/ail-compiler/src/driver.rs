@@ -5,11 +5,11 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
-use crate::finding::{FindingLocation, RelatedLocation, SourceFinding, flatten_json};
+use crate::finding::{RelatedLocation, SourceFinding, flatten_json};
 use crate::{
-    ArchitectureChangeResult, CapabilityEnvironment, Declaration, EvolutionBuildFailure,
-    EvolutionCoverage, EvolutionSource, EvolutionWorkspace, SourceArchitectureConfig,
-    SourceSetRevision, valid_source_path,
+    ArchitectureChangeResult, CapabilityEnvironment, EvolutionBuildFailure, EvolutionCoverage,
+    EvolutionSource, EvolutionWorkspace, SourceArchitectureConfig, SourceSetRevision,
+    valid_source_path,
 };
 
 const CHECK_REVISION: &str = "check";
@@ -109,7 +109,6 @@ fn build_cli_workspace(
     };
     let workspace = match architecture {
         Some((config, analysis_scope)) => {
-            let policy_sources = sources.clone();
             let workspace = EvolutionWorkspace::new_with_architecture(
                 workspace_id(path),
                 revision_id,
@@ -123,8 +122,7 @@ fn build_cli_workspace(
                 Ok(ArchitectureChangeResult::Success(_)) => workspace,
                 Ok(result) => {
                     return Err(CliCheckError::Architecture(architecture_failure(
-                        &result,
-                        &policy_sources,
+                        &result, &workspace,
                     )));
                 }
                 Err(error) => {
@@ -157,7 +155,7 @@ fn build_cli_workspace(
 
 fn architecture_failure(
     result: &ArchitectureChangeResult,
-    sources: &[EvolutionSource],
+    workspace: &EvolutionWorkspace,
 ) -> CliArchitectureFailure {
     let policy_findings = match result {
         ArchitectureChangeResult::Success(_) => &[] as &[Value],
@@ -170,7 +168,7 @@ fn architecture_failure(
         .collect::<Vec<_>>();
     let findings = policy_findings
         .iter()
-        .map(|finding| source_finding(finding, sources))
+        .map(|finding| source_finding(finding, workspace))
         .collect::<Vec<_>>();
     if diagnostics.is_empty() {
         return CliArchitectureFailure {
@@ -258,7 +256,7 @@ fn fact_key(prefix: String) -> String {
 /// unit identifiers of the form `module:function`. Those identifiers resolve
 /// back to a declared function, so a denied rule names the source that violated
 /// it instead of leaving the caller to search for it.
-fn source_finding(policy_finding: &Value, sources: &[EvolutionSource]) -> SourceFinding {
+fn source_finding(policy_finding: &Value, workspace: &EvolutionWorkspace) -> SourceFinding {
     let code = policy_finding
         .get("code")
         .and_then(Value::as_str)
@@ -295,7 +293,7 @@ fn source_finding(policy_finding: &Value, sources: &[EvolutionSource]) -> Source
         })
         .or_else(|| contributors.first().cloned());
     if let Some(unit) = &primary {
-        finding.location = unit_location(unit, sources);
+        finding.location = workspace.architecture_location(unit);
     }
     for unit in &contributors {
         if Some(unit) == primary.as_ref() {
@@ -304,32 +302,10 @@ fn source_finding(policy_finding: &Value, sources: &[EvolutionSource]) -> Source
         finding.related.push(RelatedLocation {
             role: "contributor".to_owned(),
             name: unit.clone(),
-            location: unit_location(unit, sources),
+            location: workspace.architecture_location(unit),
         });
     }
     finding.with_derived_requirement()
-}
-
-/// Resolve an architecture unit identifier `module:function` to its declaration.
-fn unit_location(unit: &str, sources: &[EvolutionSource]) -> Option<FindingLocation> {
-    let (module, function) = unit.split_once(':')?;
-    for source in sources {
-        let parsed = crate::parse(&source.source);
-        let declared_module = parsed.unit.module.as_ref().map(|item| item.name.as_str());
-        if declared_module.unwrap_or("") != module {
-            continue;
-        }
-        let span = parsed.unit.declarations.iter().find_map(|declaration| {
-            let Declaration::Function(candidate) = declaration else {
-                return None;
-            };
-            (candidate.name == function).then_some(candidate.span)
-        });
-        if let Some(span) = span {
-            return FindingLocation::resolve(&source.path, &source.source, span);
-        }
-    }
-    None
 }
 
 fn load_architecture_policy(
@@ -505,4 +481,30 @@ fn directory_sources(path: &Path) -> Result<Vec<EvolutionSource>, CliCheckError>
         )));
     }
     Ok(sources)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn architecture_failure_location_does_not_reparse_the_source_set() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../examples/architecture-denied");
+        let source_count = fs::read_dir(&path)
+            .expect("example directory is readable")
+            .filter_map(Result::ok)
+            .filter(|entry| {
+                entry
+                    .path()
+                    .extension()
+                    .is_some_and(|extension| extension == "ail")
+            })
+            .count();
+
+        crate::parser::reset_parse_calls();
+        let result = check_cli_path(&path);
+
+        assert!(matches!(result, Err(CliCheckError::Architecture(_))));
+        assert_eq!(crate::parser::parse_calls(), source_count);
+    }
 }
