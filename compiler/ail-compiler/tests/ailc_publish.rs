@@ -355,6 +355,12 @@ fn publish_does_not_replace_an_existing_revision_when_the_candidate_fails() {
 #[test]
 fn job_review_refuses_concentration_then_freezes_the_checked_sources() {
     let example = examples_dir().join("job-review");
+    for (name, live_bytes) in source_bytes(&example) {
+        let frozen = fs::read(example.join(".ail/revisions/published/sources").join(&name))
+            .expect("checked-in published source is readable");
+        assert_eq!(frozen, live_bytes, "{name} was changed without publish");
+    }
+
     let path = temp_workspace("job-review-audit");
     copy_dir(&example, &path);
     write_file(&path, "transport.ail", CONCENTRATED_TRANSPORT);
@@ -381,7 +387,7 @@ fn job_review_refuses_concentration_then_freezes_the_checked_sources() {
     );
     assert!(denied_stderr.contains("candidate_cfc=6"), "{denied_stderr}");
     assert!(
-        denied_stderr.contains("candidate_context="),
+        denied_stderr.contains("candidate_context=9"),
         "{denied_stderr}"
     );
     assert!(!revision_store(&path).exists(), "{denied_stderr}");
