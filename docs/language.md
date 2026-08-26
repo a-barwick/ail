@@ -70,22 +70,23 @@ This is not general networking, threads, retries, or async.
 ## Compiler services
 
 The compiler formats source canonically, checks names, types, and effects, and
-stores immutable revisions with inspectable semantic facts. `ailc check` builds
-an `EvolutionWorkspace` from a directory of `.ail` files or one file. It can
-report schema impact, validate a multi-file change as one transaction, and
-reject a workspace against project architecture policy. Check writes no
-revision. `ailc publish` writes a revision only after check and architecture
-pass. A failed candidate publishes nothing.
+stores immutable revisions with inspectable semantic facts. The
+`EvolutionWorkspace` API can report schema impact and validate a multi-file
+change as one transaction.
 
-Every rejected check emits one structured finding. A finding names the file,
-the byte range, the line and column, the source text at that range, the
-expected and actual facts the checker computed, and the constraint those facts
-require. A finding does not name the edit that would satisfy the constraint.
-Cross-file errors name the file that holds the error and the file that
-holds the declaration it disagrees with. Architecture findings name the denied
-rule, its scope, its measured facts, and the declaration of each contributing
-unit. `ailc check --json` and `ailc publish --json` emit the same findings as
-one JSON document. See
+`ailc check` builds an `EvolutionWorkspace` from a directory of `.ail` files or
+one file, then runs the compiler checks and any project architecture policy. It
+writes no revision. `ailc publish` accepts a directory workspace and writes a
+revision only after the same checks pass. A failed candidate publishes nothing.
+
+Source and architecture diagnostics can produce structured findings. Every
+finding has a code and category. It includes a file and source range,
+expected and actual facts, related locations, and a constraint only when the
+checker computed those fields. A finding does not name an edit. Input errors do
+not produce findings: examples include a bad path, a directory with no valid
+`.ail` files, and `ailc publish` given a file. One failed command can therefore
+report zero or more findings. `ailc check --json` and `ailc publish --json`
+render the available findings in one JSON document. See
 [0016-structured-check-findings.md](decisions/0016-structured-check-findings.md).
 
 The interpreter executes a checked entry point with caller-supplied
