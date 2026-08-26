@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const CONCENTRATED_TRANSPORT: &str = r#"module transport;
+const CONCENTRATED_TRANSPORT: &str = r"module transport;
 import contracts;
 import validation;
 
@@ -53,7 +53,7 @@ fn dispatch(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
     },
   }
 }
-"#;
+";
 
 fn examples_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../examples")
