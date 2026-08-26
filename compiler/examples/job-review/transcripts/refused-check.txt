@@ -1,0 +1,16 @@
+$ target/debug/ailc check compiler/examples/job-review
+exit status: 1
+stdout: empty
+stderr:
+AIL.ARCH.HOTSPOT_GROWTH architecture error
+  at transport.ail:5:1-49:2 bytes 56..1880
+  source: fn dispatch(request: contracts.ReviewRequest) -> contracts.ReviewDecision { ...
+  classification=regression
+  facts.base_cfc=1
+  facts.base_context=6
+  facts.candidate_cfc=6
+  facts.candidate_context=9
+  rule=M23-POL-DISPATCH-NO-GROWTH
+  scope=transport:dispatch
+  requires: control-flow complexity must stay at most 1 and minimal review context at most 6; the candidate measured 6 and 9
+source contains architecture diagnostics

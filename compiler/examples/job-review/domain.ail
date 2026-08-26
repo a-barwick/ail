@@ -3,7 +3,7 @@ import contracts;
 import validation;
 
 fn approve(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
-  let job = contracts.ApprovedJob { job_id: request.job_id, task: request.task, payload: request.payload, priority: validation.selected_priority(request.priority), reviewer: request.reviewer };
+  let job = contracts.ApprovedJob { job_id: request.job_id, task: request.task, payload: request.payload, priority: validation.selected_priority(request.priority), requested_by: request.requested_by, reviewer: request.reviewer };
   contracts.ReviewDecision::Approved(job)
 }
 
@@ -28,12 +28,19 @@ fn review(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
                   contracts.ReviewDecision::Rejected(reason)
                 },
                 contracts.ValidationResult::Valid => {
-                  match validation.validate_reviewer(request) {
+                  match validation.validate_requester(request) {
                     contracts.ValidationResult::Invalid(reason) => {
                       contracts.ReviewDecision::Rejected(reason)
                     },
                     contracts.ValidationResult::Valid => {
-                      approve(request)
+                      match validation.validate_reviewer(request) {
+                        contracts.ValidationResult::Invalid(reason) => {
+                          contracts.ReviewDecision::Rejected(reason)
+                        },
+                        contracts.ValidationResult::Valid => {
+                          approve(request)
+                        },
+                      }
                     },
                   }
                 },

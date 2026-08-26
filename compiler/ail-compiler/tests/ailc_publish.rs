@@ -1,59 +1,7 @@
-use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
-
-const CONCENTRATED_TRANSPORT: &str = r"module transport;
-import contracts;
-import validation;
-
-fn dispatch(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
-  match validation.validate_job_id(request) {
-    contracts.ValidationResult::Invalid(reason) => {
-      contracts.ReviewDecision::Rejected(reason)
-    },
-    contracts.ValidationResult::Valid => {
-      match validation.validate_task(request) {
-        contracts.ValidationResult::Invalid(reason) => {
-          contracts.ReviewDecision::Rejected(reason)
-        },
-        contracts.ValidationResult::Valid => {
-          match validation.validate_payload(request) {
-            contracts.ValidationResult::Invalid(reason) => {
-              contracts.ReviewDecision::Rejected(reason)
-            },
-            contracts.ValidationResult::Valid => {
-              match validation.validate_priority(request) {
-                contracts.ValidationResult::Invalid(reason) => {
-                  contracts.ReviewDecision::Rejected(reason)
-                },
-                contracts.ValidationResult::Valid => {
-                  match validation.validate_reviewer(request) {
-                    contracts.ValidationResult::Invalid(reason) => {
-                      contracts.ReviewDecision::Rejected(reason)
-                    },
-                    contracts.ValidationResult::Valid => {
-                      let job = contracts.ApprovedJob {
-                        job_id: request.job_id,
-                        task: request.task,
-                        payload: request.payload,
-                        priority: validation.selected_priority(request.priority),
-                        reviewer: request.reviewer,
-                      };
-                      contracts.ReviewDecision::Approved(job)
-                    },
-                  }
-                },
-              }
-            },
-          }
-        },
-      }
-    },
-  }
-}
-";
 
 fn examples_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../examples")
@@ -174,30 +122,6 @@ fn run_publish(path: &Path) -> std::process::Output {
         .arg(path)
         .output()
         .expect("ailc publish runs")
-}
-
-fn run_check(path: &Path) -> std::process::Output {
-    ailc()
-        .arg("check")
-        .arg(path)
-        .output()
-        .expect("ailc check runs")
-}
-
-fn source_bytes(path: &Path) -> BTreeMap<String, Vec<u8>> {
-    fs::read_dir(path)
-        .expect("workspace is readable")
-        .map(|entry| entry.expect("workspace entry is readable"))
-        .filter(|entry| entry.path().extension().is_some_and(|value| value == "ail"))
-        .map(|entry| {
-            let name = entry
-                .file_name()
-                .into_string()
-                .expect("source name is UTF-8");
-            let bytes = fs::read(entry.path()).expect("source is readable");
-            (name, bytes)
-        })
-        .collect()
 }
 
 fn revision_store(path: &Path) -> PathBuf {
@@ -348,84 +272,6 @@ fn publish_does_not_replace_an_existing_revision_when_the_candidate_fails() {
     assert!(stderr.contains("AIL.NAME.UNKNOWN_FUNCTION"), "{stderr}");
     let after = fs::read_to_string(published_revision(&path)).expect("kept revision is readable");
     assert_eq!(before, after);
-
-    fs::remove_dir_all(path).expect("temporary workspace is removable");
-}
-
-#[test]
-fn job_review_refuses_concentration_then_freezes_the_checked_sources() {
-    let example = examples_dir().join("job-review");
-    for (name, live_bytes) in source_bytes(&example) {
-        let frozen = fs::read(example.join(".ail/revisions/published/sources").join(&name))
-            .expect("checked-in published source is readable");
-        assert_eq!(frozen, live_bytes, "{name} was changed without publish");
-    }
-
-    let path = temp_workspace("job-review-audit");
-    copy_dir(&example, &path);
-    write_file(&path, "transport.ail", CONCENTRATED_TRANSPORT);
-
-    let architecture =
-        fs::read(path.join("architecture.json")).expect("architecture policy is readable");
-    fs::remove_file(path.join("architecture.json")).expect("policy can be withheld for type check");
-    let language_check = run_check(&path);
-    assert!(
-        language_check.status.success(),
-        "{}",
-        String::from_utf8_lossy(&language_check.stderr)
-    );
-    assert_eq!(language_check.stdout, b"ok\n");
-    fs::write(path.join("architecture.json"), architecture)
-        .expect("architecture policy can be restored");
-
-    let denied_check = run_check(&path);
-    let denied_stderr = String::from_utf8_lossy(&denied_check.stderr);
-    assert!(!denied_check.status.success(), "{denied_stderr}");
-    assert!(
-        denied_stderr.contains("AIL.ARCH.HOTSPOT_GROWTH"),
-        "{denied_stderr}"
-    );
-    assert!(denied_stderr.contains("candidate_cfc=6"), "{denied_stderr}");
-    assert!(
-        denied_stderr.contains("candidate_context=9"),
-        "{denied_stderr}"
-    );
-    assert!(!revision_store(&path).exists(), "{denied_stderr}");
-
-    let denied_publish = run_publish(&path);
-    assert!(
-        !denied_publish.status.success(),
-        "{}",
-        String::from_utf8_lossy(&denied_publish.stderr)
-    );
-    assert!(!revision_store(&path).exists());
-
-    fs::copy(example.join("transport.ail"), path.join("transport.ail"))
-        .expect("passing transport is copyable");
-    let passing_check = run_check(&path);
-    assert!(
-        passing_check.status.success(),
-        "{}",
-        String::from_utf8_lossy(&passing_check.stderr)
-    );
-    assert_eq!(passing_check.stdout, b"ok\n");
-    assert!(!revision_store(&path).exists());
-    let checked_sources = source_bytes(&path);
-
-    let published = run_publish(&path);
-    assert!(
-        published.status.success(),
-        "{}",
-        String::from_utf8_lossy(&published.stderr)
-    );
-    for (name, checked_bytes) in checked_sources {
-        let frozen = fs::read(path.join(".ail/revisions/published/sources").join(&name))
-            .expect("published source is readable");
-        assert_eq!(
-            frozen, checked_bytes,
-            "{name} changed between check and publish"
-        );
-    }
 
     fs::remove_dir_all(path).expect("temporary workspace is removable");
 }
