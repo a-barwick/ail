@@ -1,0 +1,7 @@
+$ target/debug/ailc publish compiler/examples/job-review
+exit status: 0
+stdout:
+published
+revision_id=published
+source_set_digest=sha256:121702fd6b29934ec98913a7aa98b86add1bc6a1360d05376ff613f957d85775
+stderr: empty
