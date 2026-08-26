@@ -1,0 +1,54 @@
+module contracts;
+
+record ReviewRequest {
+  job_id: Text;
+  task: Text;
+  payload: Bytes;
+  priority: PriorityOption;
+  reviewer: Text;
+}
+
+record ApprovedJob {
+  job_id: Text;
+  task: Text;
+  payload: Bytes;
+  priority: Priority;
+  reviewer: Text;
+}
+
+variant Priority {
+  Low;
+  Normal;
+  High;
+}
+
+variant PriorityOption {
+  Some(Priority);
+  None;
+}
+
+variant ReviewReason {
+  MissingJobId;
+  InvalidJobId;
+  MissingTask;
+  TaskTooLong;
+  TaskHasControl;
+  PayloadTooLarge;
+  MissingPriority;
+  MissingReviewer;
+  InvalidReviewer;
+}
+
+variant ValidationResult {
+  Valid;
+  Invalid(ReviewReason);
+}
+
+variant ReviewDecision {
+  Approved(ApprovedJob);
+  Rejected(ReviewReason);
+}
+
+fn preserve_request(request: ReviewRequest) -> ReviewRequest {
+  request
+}

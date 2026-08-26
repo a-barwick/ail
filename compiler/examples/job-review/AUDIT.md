@@ -1,4 +1,4 @@
-# Job review publish record
+# Job review refusal and publish record
 
 ## What changed
 
@@ -20,21 +20,30 @@ are existing compiler metrics, not new language rules.
 
 ## Refused change
 
-In commit `74fd64f`, the agent moved five validation decisions and approved-job
-construction into the live `transport.ail` source. The compiler reached
-architecture analysis, then `ailc check` and `ailc publish` both refused that
-candidate with `AIL.ARCH.HOTSPOT_GROWTH`. It measured control-flow complexity 6
-and minimal context 9 against limits 1 and 6. The failed publish left the
-existing frozen revision unchanged.
+`../job-review-refused/` is the complete source candidate from the refused
+change. It is checked in as source, not assembled by a test. Run:
+
+```bash
+target/debug/ailc check compiler/examples/job-review-refused
+```
+
+The compiler reaches architecture analysis and refuses the candidate with
+`AIL.ARCH.HOTSPOT_GROWTH`. It measures control-flow complexity 6 and minimal
+context 9 against limits 1 and 6. Commit `74fd64f` records the original agent
+edit that moved five validation decisions and approved-job construction into
+`transport.ail`; the live candidate makes that commit unnecessary for
+reproducing the refusal.
 
 `transcripts/refused-check.txt` and `transcripts/refused-publish.txt` contain
-the command output.
+the recorded command output. The failed publish left the existing frozen
+revision unchanged.
 
 ## Published change
 
-The passing edit keeps `transport.dispatch` as one call to `domain.review` and
-puts requester validation in the domain path. `ailc check` printed `ok`.
-`ailc publish` wrote source-set digest
+The publishable source remains in this directory. Its passing edit keeps
+`transport.dispatch` as one call to `domain.review` and puts requester
+validation in the domain path. `ailc check compiler/examples/job-review`
+prints `ok`. `ailc publish compiler/examples/job-review` wrote source-set digest
 `sha256:121702fd6b29934ec98913a7aa98b86add1bc6a1360d05376ff613f957d85775`.
 The `.ail` files under `.ail/revisions/published/sources/` are byte-for-byte
 copies of the live source accepted by publish.
