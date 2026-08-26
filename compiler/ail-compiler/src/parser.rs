@@ -78,24 +78,6 @@ pub(crate) fn parse_calls() -> usize {
     PARSE_CALLS.with(Cell::get)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn checking_parse_retains_no_lossless_token_text() {
-        let source = "module sample;\n\nfn run(value: Text) -> Text {\n  value\n}\n";
-        let parsed = parse_for_check(source);
-
-        assert!(parsed.diagnostics.is_empty());
-        assert!(parsed.tokens.is_empty());
-        assert!(parsed.unit.tokens.is_empty());
-        assert!(parsed.unit.declarations.iter().any(
-            |declaration| matches!(declaration, Declaration::Function(function) if function.name == "run")
-        ));
-    }
-}
-
 struct Parser {
     tokens: Vec<Token>,
     cursor: usize,
@@ -888,5 +870,23 @@ impl Parser {
             self.cursor += 1;
         }
         token
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn checking_parse_retains_no_lossless_token_text() {
+        let source = "module sample;\n\nfn run(value: Text) -> Text {\n  value\n}\n";
+        let parsed = parse_for_check(source);
+
+        assert!(parsed.diagnostics.is_empty());
+        assert!(parsed.tokens.is_empty());
+        assert!(parsed.unit.tokens.is_empty());
+        assert!(parsed.unit.declarations.iter().any(
+            |declaration| matches!(declaration, Declaration::Function(function) if function.name == "run")
+        ));
     }
 }
