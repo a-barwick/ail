@@ -1339,7 +1339,7 @@ impl StoredSourceSet {
                 path: source.path.clone(),
                 text: source.source.clone(),
                 canonical: already_canonical,
-                parsed: supplied,
+                parsed: supplied.clone(),
             });
             if !already_canonical {
                 source.source = canonical;
