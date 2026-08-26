@@ -13,7 +13,7 @@ use crate::{
 use super::{
     EvolutionSource, EvolutionWorkspace, ImpactEntry, ImpactReport, ProposedSchemaChange,
     SourceArchitectureConfig, SourceSetRevision, StoredSourceSet, UncheckedBoundary,
-    entry_functions, handle, source_name, source_path_for_function,
+    entry_functions, handle, source_name,
 };
 
 /// Complete source candidate for source-backed architecture validation.
@@ -190,7 +190,7 @@ impl CandidateRevision<'_> {
         let linked_function = &declaration.name;
         let function_handle = handle(
             &self.stored.revision.revision_id,
-            source_path_for_function(&self.stored.sources, linked_function),
+            self.stored.source_index.function_path(linked_function),
             HandleKind::Symbol,
             source_name(linked_function),
             declaration.span,
@@ -830,7 +830,7 @@ fn added_effect_location(stored: &StoredSourceSet, effect: &str) -> String {
                 .then(|| {
                     format!(
                         "{}#{}",
-                        source_path_for_function(&stored.sources, &function.name),
+                        stored.source_index.function_path(&function.name),
                         source_name(&function.name)
                     )
                 })

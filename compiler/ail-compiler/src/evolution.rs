@@ -3,6 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::finding::{FindingLocation, SourceFinding};
+use crate::parser::parse_for_check;
 use crate::semantics::check_parsed_source;
 use crate::syntax::ShiftSpans;
 use crate::{
@@ -13,7 +14,7 @@ use crate::{
     CapabilityEnvironment, CapabilityProvider, ControlFlowGraph, Declaration, DispatchBudget,
     ExecutionFailure, ExecutionResponse, ExecutionSuccess, Expr, FunctionDecl, GroupDependencies,
     HandleKind, NewUnitBudget, ParameterType, ParseResult, RuntimeFault, RuntimeValue,
-    SemanticHandle, SourceUnit, Span, StructuredDiagnostic, TypeCheckStatus, TypeRef, parse,
+    SemanticHandle, SourceUnit, Span, StructuredDiagnostic, TypeCheckStatus, TypeRef,
     source_digest,
 };
 
@@ -466,6 +467,7 @@ struct LayoutFile {
     base: usize,
     text: String,
     canonical: bool,
+    module: Option<String>,
 }
 
 /// One source file exactly as the caller supplied it, with its own parse.
@@ -475,6 +477,47 @@ struct SuppliedSource {
     text: String,
     canonical: bool,
     parsed: ParseResult,
+}
+
+#[derive(Debug, Clone)]
+struct SourceSetIndex {
+    module_paths: BTreeMap<String, String>,
+    function_paths: BTreeMap<String, String>,
+}
+
+impl SourceSetIndex {
+    fn build(parsed_sources: &[(String, ParseResult)]) -> Self {
+        let mut module_paths = BTreeMap::new();
+        let mut function_paths = BTreeMap::new();
+        for (path, parsed) in parsed_sources {
+            let module = parsed.unit.module.as_ref().map(|module| {
+                module_paths
+                    .entry(module.name.clone())
+                    .or_insert_with(|| path.clone());
+                module.name.as_str()
+            });
+            for declaration in &parsed.unit.declarations {
+                let Declaration::Function(function) = declaration else {
+                    continue;
+                };
+                let name = module.map_or_else(
+                    || function.name.clone(),
+                    |module| qualified_name(module, &function.name),
+                );
+                function_paths.entry(name).or_insert_with(|| path.clone());
+            }
+        }
+        Self {
+            module_paths,
+            function_paths,
+        }
+    }
+
+    fn function_path(&self, function: &str) -> &str {
+        self.function_paths
+            .get(function)
+            .map_or("<unknown>", String::as_str)
+    }
 }
 
 impl SourceSetLayout {
@@ -487,6 +530,12 @@ impl SourceSetLayout {
                 base,
                 text: source.text.clone(),
                 canonical: source.canonical,
+                module: source
+                    .parsed
+                    .unit
+                    .module
+                    .as_ref()
+                    .map(|module| module.name.clone()),
             });
             base += source.text.len() + 1;
         }
@@ -539,7 +588,7 @@ impl SourceSetLayout {
     fn module_names(&self) -> String {
         self.files
             .iter()
-            .filter_map(|file| parse(&file.text).unit.module.map(|module| module.name))
+            .filter_map(|file| file.module.as_deref())
             .collect::<Vec<_>>()
             .join(",")
     }
@@ -571,6 +620,8 @@ pub struct SourceSetDiagnostic {
 struct StoredSourceSet {
     revision: SourceSetRevision,
     sources: Vec<EvolutionSource>,
+    architecture_locations: BTreeMap<String, FindingLocation>,
+    source_index: SourceSetIndex,
     identities: Vec<PersistentIdentity>,
     graph: Vec<RelationshipEdge>,
     coverage: EvolutionCoverage,
@@ -776,6 +827,14 @@ impl EvolutionWorkspace {
             .map(|stored| stored.sources.as_slice())
     }
 
+    pub(crate) fn architecture_location(&self, unit: &str) -> Option<FindingLocation> {
+        self.revisions
+            .get(&self.current_revision_id)?
+            .architecture_locations
+            .get(unit)
+            .cloned()
+    }
+
     #[must_use]
     pub fn identities(&self, revision_id: &str) -> Option<&[PersistentIdentity]> {
         self.revisions
@@ -827,7 +886,7 @@ impl EvolutionWorkspace {
             .name
             .rsplit_once('.')
             .map_or_else(String::new, |(module, _)| module.to_owned());
-        let path = source_path_for_function(&stored.sources, &declaration.name);
+        let path = stored.source_index.function_path(&declaration.name);
         let function_handle = handle(
             revision_id,
             path,
@@ -1072,7 +1131,7 @@ impl EvolutionWorkspace {
         let linked_function = &declaration.name;
         let function_handle = handle(
             revision_id,
-            source_path_for_function(&stored.sources, linked_function),
+            stored.source_index.function_path(linked_function),
             HandleKind::Symbol,
             source_name(linked_function),
             declaration.span,
@@ -1307,7 +1366,7 @@ impl StoredSourceSet {
                 causes.push(format!("invalid source path {}", source.path));
                 continue;
             }
-            let supplied = parse(&source.source);
+            let supplied = parse_for_check(&source.source);
             if !supplied.diagnostics.is_empty() {
                 causes.push(format!("{} has parse diagnostics", source.path));
                 parse_findings.extend(parse_findings_for(
@@ -1323,12 +1382,16 @@ impl StoredSourceSet {
                 path: source.path.clone(),
                 text: source.source.clone(),
                 canonical: already_canonical,
-                parsed: supplied,
+                parsed: supplied.clone(),
             });
             if !already_canonical {
                 source.source = canonical;
             }
-            let parsed = parse(&source.source);
+            let parsed = if already_canonical {
+                supplied.clone()
+            } else {
+                parse_for_check(&source.source)
+            };
             parsed_sources.push((source.path.clone(), parsed));
         }
         if !causes.is_empty() {
@@ -1418,7 +1481,15 @@ impl StoredSourceSet {
         coverage
             .artifacts
             .sort_by(|left, right| left.path.cmp(&right.path));
-        let graph = build_graph(revision_id, &parsed_sources, &identities, &coverage);
+        let source_index = SourceSetIndex::build(&parsed_sources);
+        let graph = build_graph(
+            revision_id,
+            &parsed_sources,
+            &source_index,
+            &identities,
+            &coverage,
+        );
+        let architecture_locations = build_architecture_locations(&supplied_sources);
         let source_set_digest = source_set_digest(&sources);
         let metadata = sources
             .iter()
@@ -1441,6 +1512,8 @@ impl StoredSourceSet {
                 sources: metadata,
             },
             sources,
+            architecture_locations,
+            source_index,
             identities,
             graph,
             coverage,
@@ -2968,23 +3041,24 @@ pub fn valid_source_path(path: &str) -> bool {
             .all(|component| !matches!(component, "" | "." | ".."))
 }
 
-fn source_path_for_function<'a>(sources: &'a [EvolutionSource], function: &str) -> &'a str {
-    let (module, source_function) = function
-        .rsplit_once('.')
-        .map_or((None, function), |(module, function)| {
-            (Some(module), function)
-        });
-    sources
-        .iter()
-        .find(|source| {
-            let parsed = parse(&source.source);
-            module.is_none_or(|module| {
-                parsed.unit.module.as_ref().map(|item| item.name.as_str()) == Some(module)
-            }) && parsed.unit.declarations.iter().any(|declaration| {
-                matches!(declaration, Declaration::Function(candidate) if candidate.name == source_function)
-            })
-        })
-        .map_or("<unknown>", |source| source.path.as_str())
+fn build_architecture_locations(sources: &[SuppliedSource]) -> BTreeMap<String, FindingLocation> {
+    let mut locations = BTreeMap::new();
+    for source in sources {
+        let Some(module) = source.parsed.unit.module.as_ref() else {
+            continue;
+        };
+        for declaration in &source.parsed.unit.declarations {
+            let Declaration::Function(function) = declaration else {
+                continue;
+            };
+            if let Some(location) =
+                FindingLocation::resolve(&source.path, &source.text, function.span)
+            {
+                locations.insert(format!("{}:{}", module.name, function.name), location);
+            }
+        }
+    }
+    locations
 }
 
 fn valid_identity(identity: &str) -> bool {
@@ -3116,6 +3190,7 @@ fn identity_by_display(identities: &[PersistentIdentity]) -> BTreeMap<&str, &str
 fn build_graph(
     revision_id: &str,
     parsed_sources: &[(String, ParseResult)],
+    source_index: &SourceSetIndex,
     identities: &[PersistentIdentity],
     coverage: &EvolutionCoverage,
 ) -> Vec<RelationshipEdge> {
@@ -3131,16 +3206,6 @@ fn build_graph(
                 ),
                 identity.identity.as_str(),
             )
-        })
-        .collect::<BTreeMap<_, _>>();
-    let module_paths = parsed_sources
-        .iter()
-        .filter_map(|(path, parsed)| {
-            parsed
-                .unit
-                .module
-                .as_ref()
-                .map(|module| (module.name.as_str(), path.as_str()))
         })
         .collect::<BTreeMap<_, _>>();
     let mut graph = Vec::new();
@@ -3180,7 +3245,8 @@ fn build_graph(
             }
         }
         for import in &parsed.unit.imports {
-            let imported_path = module_paths
+            let imported_path = source_index
+                .module_paths
                 .get(import.module.as_str())
                 .expect("validated imports have a source path");
             for ((identity_path, name), identity) in &identity_by_path_and_name {
@@ -3543,7 +3609,7 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     };
     let subject_type = linked_type_name_for_identity(stored, &change.subject_identity)
         .unwrap_or(subject.display_name.as_str());
-    let functions = functions_with_paths(&stored.sources, &stored.unit);
+    let functions = functions_with_paths(stored);
     let handler = functions.iter().find(|(_, function)| {
         function.parameters.iter().any(
             |parameter| matches!(&parameter.ty, ParameterType::Value(ty) if ty.as_named() == Some(subject_type)),
@@ -3753,14 +3819,11 @@ fn build_impact_report(stored: &StoredSourceSet, change: ProposedSchemaChange) -
     }
 }
 
-fn functions_with_paths<'a>(
-    sources: &'a [EvolutionSource],
-    unit: &'a SourceUnit,
-) -> Vec<(&'a str, &'a FunctionDecl)> {
+fn functions_with_paths(stored: &StoredSourceSet) -> Vec<(&str, &FunctionDecl)> {
     let mut sites = Vec::new();
-    for declaration in &unit.declarations {
+    for declaration in &stored.unit.declarations {
         if let Declaration::Function(function) = declaration {
-            let path = source_path_for_function(sources, &function.name);
+            let path = stored.source_index.function_path(&function.name);
             sites.push((path, function));
         }
     }
@@ -4132,4 +4195,32 @@ fn impact_entry(location: &str, role: &str, reason: &str, path: &[&str]) -> Impa
 #[must_use]
 pub const fn relationship_kinds() -> &'static [&'static str] {
     &RELATIONSHIP_KINDS
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn source_index_resolves_hits_and_misses_without_parsing() {
+        let parsed_sources = vec![
+            (
+                "domain.ail".to_owned(),
+                parse_for_check("module domain;\n\nfn work() -> Text {\n  \"ok\"\n}\n"),
+            ),
+            (
+                "service.ail".to_owned(),
+                parse_for_check(
+                    "module service;\nimport domain;\n\nfn run() -> Text {\n  domain.work()\n}\n",
+                ),
+            ),
+        ];
+        let index = SourceSetIndex::build(&parsed_sources);
+
+        crate::parser::reset_parse_calls();
+        assert_eq!(index.module_paths.get("domain").unwrap(), "domain.ail");
+        assert_eq!(index.function_path("service.run"), "service.ail");
+        assert_eq!(index.function_path("service.missing"), "<unknown>");
+        assert_eq!(crate::parser::parse_calls(), 0);
+    }
 }

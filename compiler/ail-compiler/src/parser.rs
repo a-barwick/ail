@@ -4,6 +4,14 @@ use crate::{
     SourceUnit, Span, Token, TokenKind, TypeRef, VariantCase, VariantDecl, lex,
 };
 
+#[cfg(test)]
+use std::cell::Cell;
+
+#[cfg(test)]
+thread_local! {
+    static PARSE_CALLS: Cell<usize> = const { Cell::new(0) };
+}
+
 #[derive(Debug, Clone)]
 pub struct ParseResult {
     pub unit: SourceUnit,
@@ -13,12 +21,30 @@ pub struct ParseResult {
 
 #[must_use]
 pub fn parse(source: &str) -> ParseResult {
-    let tokens = lex(source);
-    let significant = tokens
-        .iter()
-        .filter(|token| !token.kind.is_trivia())
-        .cloned()
-        .collect();
+    parse_with_tokens(source, true)
+}
+
+pub(crate) fn parse_for_check(source: &str) -> ParseResult {
+    parse_with_tokens(source, false)
+}
+
+fn parse_with_tokens(source: &str, retain_tokens: bool) -> ParseResult {
+    #[cfg(test)]
+    PARSE_CALLS.with(|calls| calls.set(calls.get() + 1));
+
+    let mut tokens = lex(source);
+    let significant = if retain_tokens {
+        tokens
+            .iter()
+            .filter(|token| !token.kind.is_trivia())
+            .cloned()
+            .collect()
+    } else {
+        std::mem::take(&mut tokens)
+            .into_iter()
+            .filter(|token| !token.kind.is_trivia())
+            .collect()
+    };
     let mut parser = Parser {
         tokens: significant,
         cursor: 0,
@@ -33,13 +59,23 @@ pub fn parse(source: &str) -> ParseResult {
         imports,
         declarations,
         span: Span::new(0, source.len()),
-        tokens: tokens.clone(),
+        tokens: retain_tokens.then(|| tokens.clone()).unwrap_or_default(),
     };
     ParseResult {
         unit,
         tokens,
         diagnostics: parser.diagnostics,
     }
+}
+
+#[cfg(test)]
+pub(crate) fn reset_parse_calls() {
+    PARSE_CALLS.with(|calls| calls.set(0));
+}
+
+#[cfg(test)]
+pub(crate) fn parse_calls() -> usize {
+    PARSE_CALLS.with(Cell::get)
 }
 
 struct Parser {
@@ -834,5 +870,23 @@ impl Parser {
             self.cursor += 1;
         }
         token
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn checking_parse_retains_no_lossless_token_text() {
+        let source = "module sample;\n\nfn run(value: Text) -> Text {\n  value\n}\n";
+        let parsed = parse_for_check(source);
+
+        assert!(parsed.diagnostics.is_empty());
+        assert!(parsed.tokens.is_empty());
+        assert!(parsed.unit.tokens.is_empty());
+        assert!(parsed.unit.declarations.iter().any(
+            |declaration| matches!(declaration, Declaration::Function(function) if function.name == "run")
+        ));
     }
 }
