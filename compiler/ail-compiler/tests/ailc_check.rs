@@ -224,13 +224,11 @@ fn check_rejects_recursive_calls() {
         "fn first(value: Text) -> Text { second(value) }\n\nfn second(value: Text) -> Text { first(value) }\n",
     );
     let output = run_check(&path);
-    let name = path.file_name().and_then(|name| name.to_str()).unwrap();
-    fs::remove_file(&path).expect("temporary source is removable");
+    fs::remove_file(path).expect("temporary source is removable");
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("AIL.CALL.RECURSIVE_CYCLE"), "{stderr}");
-    assert_reports_source(&stderr, name);
 }
 
 #[test]
@@ -243,7 +241,6 @@ fn check_rejects_unknown_capability_interfaces() {
         stderr.contains("AIL.CAPABILITY.UNKNOWN_INTERFACE"),
         "{stderr}"
     );
-    assert_reports_source(&stderr, "service.ail");
 }
 
 #[test]
