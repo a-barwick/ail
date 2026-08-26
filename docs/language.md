@@ -82,11 +82,14 @@ revision only after the same checks pass. A failed candidate publishes nothing.
 Source and architecture diagnostics can produce structured findings. Every
 finding has a code and category. It includes a file and source range,
 expected and actual facts, related locations, and a constraint only when the
-checker computed those fields. A finding does not name an edit. Input errors do
-not produce findings: examples include a bad path, a directory with no valid
-`.ail` files, and `ailc publish` given a file. One failed command can therefore
-report zero or more findings. `ailc check --json` and `ailc publish --json`
-render the available findings in one JSON document. See
+checker computed those fields. A finding does not name an edit. Cross-file
+errors name the file that holds the error and the file that holds the
+declaration it disagrees with. Architecture findings name the denied rule, its
+scope, its measured facts, and the declaration of each contributing unit.
+Input errors do not produce findings: examples include a bad path, a directory
+with no valid `.ail` files, and `ailc publish` given a file. One failed command
+can therefore report zero or more findings. `ailc check --json` and
+`ailc publish --json` render the available findings in one JSON document. See
 [0016-structured-check-findings.md](decisions/0016-structured-check-findings.md).
 
 The interpreter executes a checked entry point with caller-supplied
