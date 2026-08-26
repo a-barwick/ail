@@ -194,6 +194,34 @@ fn publish_of_a_passing_candidate_writes_a_revision() {
 }
 
 #[test]
+fn published_sources_do_not_follow_later_live_file_edits() {
+    let path = temp_workspace("frozen-source");
+    let checked_source =
+        "module service;\n\nfn identity(value: Text) -> Text {\n  value\n}\n";
+    write_file(&path, "service.ail", checked_source);
+
+    let output = run_publish(&path);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    write_file(
+        &path,
+        "service.ail",
+        "module service;\n\nfn changed(value: Text) -> Text {\n  value\n}\n",
+    );
+    let frozen_source = fs::read(
+        path.join(".ail/revisions/published/sources/service.ail"),
+    )
+    .expect("published source is readable");
+    assert_eq!(frozen_source, checked_source.as_bytes());
+
+    fs::remove_dir_all(path).expect("temporary workspace is removable");
+}
+
+#[test]
 fn publish_of_a_passing_architecture_candidate_writes_a_revision() {
     let path = temp_workspace("arch-pass");
     write_passing_architecture_workspace(&path);
