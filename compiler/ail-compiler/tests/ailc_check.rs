@@ -123,6 +123,40 @@ fn check_rejects_a_type_correct_architecture_policy_violation() {
 }
 
 #[test]
+fn job_review_keeps_a_live_refusal_separate_from_the_publishable_program() {
+    let refused_path = examples_dir().join("job-review-refused");
+    let refused = run_check(&refused_path);
+    assert!(!refused.status.success());
+    assert!(refused.stdout.is_empty());
+    let stderr = String::from_utf8_lossy(&refused.stderr);
+    for fact in [
+        "AIL.ARCH.HOTSPOT_GROWTH architecture error",
+        "facts.base_cfc=1",
+        "facts.base_context=6",
+        "facts.candidate_cfc=6",
+        "facts.candidate_context=9",
+        "rule=M23-POL-DISPATCH-NO-GROWTH",
+        "scope=transport:dispatch",
+    ] {
+        assert!(stderr.contains(fact), "missing {fact}: {stderr}");
+    }
+    assert!(
+        !revision_store(&refused_path).exists(),
+        "the refusing candidate must not contain a published revision"
+    );
+
+    let published_path = examples_dir().join("job-review");
+    let published = run_check(&published_path);
+    assert!(
+        published.status.success(),
+        "{}",
+        String::from_utf8_lossy(&published.stderr)
+    );
+    assert_eq!(published.stdout, b"ok\n");
+    assert!(published.stderr.is_empty());
+}
+
+#[test]
 fn check_reports_the_architecture_facts_the_checker_already_computed() {
     let path = examples_dir().join("architecture-denied");
     let output = run_check(&path);

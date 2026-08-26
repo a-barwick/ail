@@ -1,4 +1,4 @@
-$ target/debug/ailc check compiler/examples/job-review
+$ target/debug/ailc check compiler/examples/job-review-refused
 exit status: 1
 stdout: empty
 stderr:
