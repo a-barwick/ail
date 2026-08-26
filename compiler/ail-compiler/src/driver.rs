@@ -498,5 +498,11 @@ fn directory_sources(path: &Path) -> Result<Vec<EvolutionSource>, CliCheckError>
             .map_err(|error| CliCheckError::Io(format!("{}: {error}", file_path.display())))?;
         sources.push(EvolutionSource::new(name, source));
     }
+    if sources.is_empty() {
+        return Err(CliCheckError::Io(format!(
+            "{}: no valid .ail source files",
+            path.display()
+        )));
+    }
     Ok(sources)
 }

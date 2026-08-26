@@ -7,6 +7,13 @@ fn examples_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../examples")
 }
 
+fn repository_root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .expect("repository root exists")
+}
+
 fn ailc() -> Command {
     Command::new(env!("CARGO_BIN_EXE_ailc"))
 }
@@ -51,6 +58,39 @@ fn check_accepts_the_composed_service_workspace() {
         !revision_store(&path).exists(),
         "ailc check must remain read-only"
     );
+}
+
+#[test]
+fn check_accepts_one_file_as_the_whole_program() {
+    let path = write_temp_source(
+        "one-file",
+        "fn identity(value: Text) -> Text {\n  value\n}\n",
+    );
+    let output = run_check(&path);
+    fs::remove_file(path).expect("temporary source is removable");
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(output.stdout, b"ok\n");
+    assert!(output.stderr.is_empty());
+}
+
+#[test]
+fn check_rejects_the_repository_root_instead_of_collecting_examples() {
+    let path = repository_root();
+    let output = run_check(&path);
+
+    assert!(!output.status.success());
+    assert_ne!(output.stdout, b"ok\n");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains(&format!("{}: no valid .ail source files", path.display())),
+        "{stderr}"
+    );
+    assert!(!stderr.contains("source set is empty"), "{stderr}");
 }
 
 #[test]
@@ -124,11 +164,13 @@ fn check_rejects_a_type_error_with_the_workspace_diagnostic() {
         "record Job {\n  job_id: Text;\n}\n\nfn make_job() -> Job {\n  let job = Job { job_id: 1 };\n  job\n}\n",
     );
     let output = run_check(&path);
-    fs::remove_file(path).expect("temporary source is removable");
+    let name = path.file_name().and_then(|name| name.to_str()).unwrap();
+    fs::remove_file(&path).expect("temporary source is removable");
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("AIL.TYPE.FIELD_MISMATCH"), "{stderr}");
+    assert!(stderr.contains(&format!("at {name}:6:27-6:28")), "{stderr}");
     assert!(stderr.contains("expected.type=Text"), "{stderr}");
     assert!(stderr.contains("actual.type=Int"), "{stderr}");
 }
