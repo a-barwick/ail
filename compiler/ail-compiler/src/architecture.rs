@@ -819,10 +819,10 @@ impl ArchitectureWorkspace {
 
     pub(crate) fn evaluate_architecture_without_behavior(
         &self,
-        candidate: ArchitectureRevision,
+        candidate: &ArchitectureRevision,
         input: &ArchitectureEvaluationInput,
     ) -> Result<ArchitectureChangeResult, ArchitectureRequestError> {
-        self.evaluate_architecture_change(&candidate, input, BehaviorRequirement::NotRun, |_| {
+        self.evaluate_architecture_change(candidate, input, BehaviorRequirement::NotRun, |_| {
             Ok(BehaviorValidation::not_run())
         })
     }

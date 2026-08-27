@@ -803,7 +803,7 @@ impl EvolutionWorkspace {
             active_baseline_revision: config.policy.baseline_match.baseline_revision.clone(),
         };
         let architecture_workspace = ArchitectureWorkspace::new(base);
-        architecture_workspace.evaluate_architecture_without_behavior(candidate, &input)
+        architecture_workspace.evaluate_architecture_without_behavior(&candidate, &input)
     }
 
     #[must_use]
