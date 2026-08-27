@@ -152,7 +152,9 @@ fn job_review_keeps_a_live_refusal_separate_from_the_publishable_program() {
         "{}",
         String::from_utf8_lossy(&published.stderr)
     );
-    assert_eq!(published.stdout, b"ok\n");
+    let stdout = String::from_utf8_lossy(&published.stdout);
+    assert_eq!(stdout, "ok\nbehavior: not-run 0/6\n");
+    assert!(!stdout.contains("passed"), "{stdout}");
     assert!(published.stderr.is_empty());
 }
 
