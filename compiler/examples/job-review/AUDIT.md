@@ -98,5 +98,32 @@ copies of the live source accepted by publish.
 the command output. `.ail/revisions/published/revision.json` records each frozen
 file digest.
 
-This record covers these candidates, this project policy, and this compiler
-path. It does not prove the language or execute application behavior.
+## Published-bytes run
+
+`ail-run` executes the frozen bytes under `.ail/revisions/published/sources/`,
+not the `.ail` files in this directory:
+
+```bash
+target/debug/ail-run compiler/examples/job-review scenarios.review_fixture \
+  --bytes 6a6f622d7061796c6f6164
+```
+
+It reports revision `published`, source-set digest
+`sha256:d04ad0c8928eab29b6d8e5e069d86ea702ebe928031100ab5e500ab3b92cfb88`, and
+`contracts.ReviewDecision::Approved` with `job_id: "fixture-job"` and
+`priority: contracts.Priority::Normal`. `transcripts/published-run.txt` holds
+that output.
+
+A copy of this directory whose live `scenarios.ail` returns `live-edit-job`
+still runs the published `fixture-job`, and `ailc check` on that copy prints
+`ok` and `behavior: not-run 0/6` with no program value.
+`transcripts/live-edit-run.txt` and `transcripts/live-edit-check.txt` hold that
+output. `transcripts/unpublished-run.txt` holds the
+`AIL.RUN.NO_PUBLISHED_REVISION` refusal for a copy with no store.
+
+This run executes one entry point of one published example with no
+capabilities. See
+[published-bytes-runner.md](../../../docs/published-bytes-runner.md).
+
+This record covers these candidates, this project policy, this compiler path,
+and this one published run. It does not prove the language.

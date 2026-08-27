@@ -66,6 +66,16 @@ environment.
 `ailc format <source.ail>` writes canonical source. `ailc reconstruct
 <source.ail>` writes the lossless token reconstruction.
 
+`check`, `publish`, `format`, and `reconstruct` all read live source, and no
+`ailc` command executes a program. `ail-run <dir> <function>` is the only command
+that executes. It runs the published revision `<dir>/.ail/current` names, reading
+only the frozen bytes under that revision's `sources/` directory. It verifies
+every recorded file digest, the source-set digest, and the capability-environment
+digest, rebuilds the frozen set as an `EvolutionWorkspace`, and refuses with an
+`AIL.RUN.*` code otherwise. It supplies no capabilities and takes `--text`,
+`--int`, and `--bytes HEX` arguments in declaration order. See
+[docs/published-bytes-runner.md](../docs/published-bytes-runner.md).
+
 ## APIs
 
 - `check_source` checks one source revision and returns canonical source,
@@ -97,6 +107,7 @@ cargo +1.87.0 test --workspace --test m28_composition
 cargo +1.87.0 test --workspace --test m29_bounded_lists
 cargo +1.87.0 test --workspace --test m30_outbound_requests
 cargo +1.87.0 test --workspace --test m31_bounded_outbound_workflows
+cargo +1.87.0 test -p ail-compiler --test published_runner
 cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
 python3 specs/tools/bounded_list_contract.py check
 python3 specs/tools/outbound_request_contract.py check

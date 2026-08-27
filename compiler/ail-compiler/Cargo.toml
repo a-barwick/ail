@@ -12,6 +12,10 @@ name = "ailc"
 path = "src/bin/ailc.rs"
 
 [[bin]]
+name = "ail-run"
+path = "src/bin/ail-run.rs"
+
+[[bin]]
 name = "ail-benchmark"
 path = "src/bin/ail-benchmark.rs"
 

@@ -1,0 +1,6 @@
+$ target/debug/ailc check /tmp/job-review-live-edit
+exit status: 0
+stdout:
+ok
+behavior: not-run 0/6
+stderr: empty
