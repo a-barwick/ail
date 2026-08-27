@@ -1,0 +1,6 @@
+module persistence;
+import contracts;
+
+fn storage_key(job: contracts.ApprovedJob) -> Text {
+  job.job_id
+}
