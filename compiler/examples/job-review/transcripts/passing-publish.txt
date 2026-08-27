@@ -3,5 +3,5 @@ exit status: 0
 stdout:
 published
 revision_id=published
-source_set_digest=sha256:35402fbaaf456cf3846516e00b9703adf33ef0eb8c37b1c6091ef27b5ab551e9
+source_set_digest=sha256:d04ad0c8928eab29b6d8e5e069d86ea702ebe928031100ab5e500ab3b92cfb88
 stderr: empty

@@ -3,11 +3,11 @@
 ## What changed
 
 A Cursor agent edited the AIL files in this directory. No Rust harness wrote
-the candidate. This change removes the missing-priority rejection. A request
-with `PriorityOption::None` now reaches `approve`, where the existing
-`selected_priority` function returns `Priority::Normal`. The scenario supplies
-`None` instead of `High`. The earlier `requested_by` fields and validation
-remain unchanged.
+the candidate. The first live edit changed `transport.dispatch` to call
+`domain.review_job` while the domain function was still named `review`. The
+compiler refused that incomplete rename. The fix renamed the domain function
+and updated the scenario caller. The final program changes the function name,
+not job-review behavior.
 
 The final program is 222 lines across six AIL files. It uses existing modules,
 records, closed variants, `if`, `match`, and ordinary calls. This change adds
@@ -19,6 +19,25 @@ no language feature, capability, or permission file.
 architecture groups required by the existing checker. Project policy holds
 `transport.dispatch` to control-flow complexity 1 and minimal context 6. Those
 are existing compiler metrics, not new language rules.
+
+## Live name-refused edit
+
+Commit `24ae9e1` records the failed live edit in `transport.ail`. With that edit
+present in this directory, both commands exited 1:
+
+```bash
+target/debug/ailc check compiler/examples/job-review
+target/debug/ailc publish compiler/examples/job-review
+```
+
+The existing `AIL.NAME.UNKNOWN_FUNCTION` check reported that the source set did
+not declare `domain.review_job`. This refusal is a name check, not concentration
+or `AIL.ARCH.HOTSPOT_GROWTH`. The failed publish left the prior frozen revision
+unchanged, so no revision contains the failing state.
+
+`transcripts/live-refused-check.txt` and
+`transcripts/live-refused-publish.txt` contain the compiler output from the live
+folder. Commit `84bbd7e` records the source fix.
 
 ## Type-refused change
 
@@ -67,12 +86,11 @@ revision unchanged.
 
 ## Published change
 
-The publishable source remains in this directory. Its passing edit keeps
-`transport.dispatch` as one call to `domain.review`. It removes
-`ReviewReason::MissingPriority`, `validate_priority`, and the corresponding
-domain rejection branch. `ailc check compiler/examples/job-review` prints
+The publishable source remains in this directory. The completed rename declares
+`domain.review_job` and uses that name from `transport.dispatch` and
+`scenarios.review_fixture`. `ailc check compiler/examples/job-review` prints
 `ok`. `ailc publish compiler/examples/job-review` wrote source-set digest
-`sha256:35402fbaaf456cf3846516e00b9703adf33ef0eb8c37b1c6091ef27b5ab551e9`.
+`sha256:d04ad0c8928eab29b6d8e5e069d86ea702ebe928031100ab5e500ab3b92cfb88`.
 The `.ail` files under `.ail/revisions/published/sources/` are byte-for-byte
 copies of the live source accepted by publish.
 
