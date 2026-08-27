@@ -3,6 +3,6 @@ import contracts;
 import domain;
 
 fn review_fixture(payload: Bytes) -> contracts.ReviewDecision {
-  let request = contracts.ReviewRequest { job_id: "fixture-job", task: "compile", payload: payload, priority: contracts.PriorityOption::Some(contracts.Priority::High), requested_by: "queue-agent", reviewer: "release-bot" };
+  let request = contracts.ReviewRequest { job_id: "fixture-job", task: "compile", payload: payload, priority: contracts.PriorityOption::None, requested_by: "queue-agent", reviewer: "release-bot" };
   domain.review(request)
 }

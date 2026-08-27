@@ -36,7 +36,6 @@ variant ReviewReason {
   TaskTooLong;
   TaskHasControl;
   PayloadTooLarge;
-  MissingPriority;
   MissingRequester;
   InvalidRequester;
   MissingReviewer;

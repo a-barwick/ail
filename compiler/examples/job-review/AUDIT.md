@@ -3,11 +3,13 @@
 ## What changed
 
 A Cursor agent edited the AIL files in this directory. No Rust harness wrote
-the candidate. The passing change adds `requested_by` to the review request and
-approved job, validates it in `validation.ail`, carries it through
-`domain.ail`, and supplies it in `scenarios.ail`.
+the candidate. This change removes the missing-priority rejection. A request
+with `PriorityOption::None` now reaches `approve`, where the existing
+`selected_priority` function returns `Priority::Normal`. The scenario supplies
+`None` instead of `High`. The earlier `requested_by` fields and validation
+remain unchanged.
 
-The final program is 241 lines across six AIL files. It uses existing modules,
+The final program is 222 lines across six AIL files. It uses existing modules,
 records, closed variants, `if`, `match`, and ordinary calls. This change adds
 no language feature, capability, or permission file.
 
@@ -41,10 +43,11 @@ revision unchanged.
 ## Published change
 
 The publishable source remains in this directory. Its passing edit keeps
-`transport.dispatch` as one call to `domain.review` and puts requester
-validation in the domain path. `ailc check compiler/examples/job-review`
-prints `ok`. `ailc publish compiler/examples/job-review` wrote source-set digest
-`sha256:121702fd6b29934ec98913a7aa98b86add1bc6a1360d05376ff613f957d85775`.
+`transport.dispatch` as one call to `domain.review`. It removes
+`ReviewReason::MissingPriority`, `validate_priority`, and the corresponding
+domain rejection branch. `ailc check compiler/examples/job-review` prints
+`ok`. `ailc publish compiler/examples/job-review` wrote source-set digest
+`sha256:35402fbaaf456cf3846516e00b9703adf33ef0eb8c37b1c6091ef27b5ab551e9`.
 The `.ail` files under `.ail/revisions/published/sources/` are byte-for-byte
 copies of the live source accepted by publish.
 
