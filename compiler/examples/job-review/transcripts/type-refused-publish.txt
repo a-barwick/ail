@@ -1,0 +1,16 @@
+$ target/debug/ailc publish compiler/examples/job-review-type-refused
+exit status: 1
+stdout: empty
+stderr:
+AIL.TYPE.FIELD_MISMATCH type error
+  at scenarios.ail:6:111-6:135 bytes 226..250
+  source: contracts.Priority::High
+  line 6:   let request = contracts.ReviewRequest { job_id: "fixture-job", task: "compile", payload: payload, priority: contracts.Priority::High, requested_by: "queue-agent", reviewer: "release-bot" };
+  expected.type=contracts.PriorityOption
+  actual.type=contracts.Priority
+  declared: record:contracts.ReviewRequest
+    at contracts.ail:3:1-10:2 bytes 19..159
+  declared: field:contracts.ReviewRequest:priority
+    at contracts.ail:7:3-7:28 bytes 92..117
+  requires: type must be contracts.PriorityOption at this span; the checker measured contracts.Priority
+source contains check diagnostics

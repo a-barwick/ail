@@ -1,4 +1,4 @@
-# Job review refusal and publish record
+# Job review refusal and publish records
 
 ## What changed
 
@@ -20,7 +20,31 @@ architecture groups required by the existing checker. Project policy holds
 `transport.dispatch` to control-flow complexity 1 and minimal context 6. Those
 are existing compiler metrics, not new language rules.
 
-## Refused change
+## Type-refused change
+
+`../job-review-type-refused/` is a complete source copy of the published
+candidate with one AIL edit. In `scenarios.ail`, `review_fixture` supplies
+`contracts.Priority::High` to the `ReviewRequest.priority` field. That field is
+declared as `contracts.PriorityOption`; the candidate does not wrap the value
+in `PriorityOption::Some`. No test writes or assembles this candidate.
+
+Run:
+
+```bash
+target/debug/ailc check compiler/examples/job-review-type-refused
+target/debug/ailc publish compiler/examples/job-review-type-refused
+```
+
+Both commands exit 1 with `AIL.TYPE.FIELD_MISMATCH` at `scenarios.ail:6`.
+The diagnostic reports expected type `contracts.PriorityOption` and actual type
+`contracts.Priority`. Source checking refuses the candidate before architecture
+analysis, so this is not a concentration or `AIL.ARCH.HOTSPOT_GROWTH` refusal.
+The failed publish created no `.ail` directory and no published revision.
+
+`transcripts/type-refused-check.txt` and
+`transcripts/type-refused-publish.txt` contain the recorded command output.
+
+## Existing architecture-refused change
 
 `../job-review-refused/` is the complete source candidate from the refused
 change. It is checked in as source, not assembled by a test. Run:
@@ -34,7 +58,8 @@ The compiler reaches architecture analysis and refuses the candidate with
 context 9 against limits 1 and 6. Commit `74fd64f` records the original agent
 edit that moved five validation decisions and approved-job construction into
 `transport.ail`; the live candidate makes that commit unnecessary for
-reproducing the refusal.
+reproducing the refusal. The new type-refused candidate does not repeat or
+modify this pile-up.
 
 `transcripts/refused-check.txt` and `transcripts/refused-publish.txt` contain
 the recorded command output. The failed publish left the existing frozen
