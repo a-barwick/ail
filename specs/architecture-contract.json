@@ -144,7 +144,7 @@
     "architecture-fixtures/rejections.json"
   ],
   "accepted_input_digests": {
-    "docs/workloads/architecture-control.md": "6e82becdfb4194da1c37a7d80fd57f421e4aab22a636760bed02a7d0a87ce00d",
+    "docs/workloads/architecture-control.md": "6d7b12f64bccfb5abbe58e9e41a9f23eb72d40a9269d9fa95060427a00609a5a",
     "specs/architecture-acceptance.json": "80d46a444f0f959074133ae6f57c08c1f9d644dea11ba48e35ed9fdeadec1e2f",
     "specs/architecture-acceptance-fixtures/workspace.json": "e4bd3366c6896115e3f942646620fa9890d00f909a304e515f714c5cf2c64c3e",
     "specs/architecture-acceptance-fixtures/candidates.json": "d2d82695782f02a917cbb2e48ddb2a999e314d9c77ea4df7c1dabdcff6cd6e34",
