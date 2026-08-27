@@ -7,7 +7,7 @@ fn approve(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
   contracts.ReviewDecision::Approved(job)
 }
 
-fn review(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
+fn review_job(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
   match validation.validate_job_id(request) {
     contracts.ValidationResult::Invalid(reason) => {
       contracts.ReviewDecision::Rejected(reason)
