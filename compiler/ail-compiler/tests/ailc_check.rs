@@ -206,20 +206,25 @@ fn check_rejects_an_imported_file_as_a_one_file_workspace() {
 
 #[test]
 fn check_rejects_a_type_error_with_the_workspace_diagnostic() {
-    let path = write_temp_source(
-        "type",
-        "record Job {\n  job_id: Text;\n}\n\nfn make_job() -> Job {\n  let job = Job { job_id: 1 };\n  job\n}\n",
-    );
+    let path = examples_dir().join("job-review-type-refused");
     let output = run_check(&path);
-    let name = path.file_name().and_then(|name| name.to_str()).unwrap();
-    fs::remove_file(&path).expect("temporary source is removable");
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("AIL.TYPE.FIELD_MISMATCH"), "{stderr}");
-    assert!(stderr.contains(&format!("at {name}:6:27-6:28")), "{stderr}");
-    assert!(stderr.contains("expected.type=Text"), "{stderr}");
-    assert!(stderr.contains("actual.type=Int"), "{stderr}");
+    assert!(stderr.contains("at scenarios.ail:6:111-6:135"), "{stderr}");
+    assert!(
+        stderr.contains("expected.type=contracts.PriorityOption"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("actual.type=contracts.Priority"),
+        "{stderr}"
+    );
+    assert!(
+        !revision_store(&path).exists(),
+        "ailc check must remain read-only"
+    );
 }
 
 #[test]

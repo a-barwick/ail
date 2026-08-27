@@ -101,8 +101,8 @@ const FIELD_MISMATCH_SOURCE: &str = concat!(
 
 #[test]
 fn a_type_error_carries_the_snippet_and_expected_versus_actual() {
-    let workspace = Workspace::new("type", &[("types.ail", FIELD_MISMATCH_SOURCE)]);
-    let path = workspace.path().to_str().expect("temp path is UTF-8");
+    let path = examples_dir().join("job-review-type-refused");
+    let path = path.to_str().expect("example path is UTF-8");
     let stderr = stderr_of(&["check", path]);
 
     assert!(
@@ -110,18 +110,29 @@ fn a_type_error_carries_the_snippet_and_expected_versus_actual() {
         "{stderr}"
     );
     assert!(
-        stderr.contains("at types.ail:6:27-6:28 bytes 81..82"),
+        stderr.contains("at scenarios.ail:6:111-6:135 bytes 226..250"),
         "{stderr}"
     );
-    assert!(stderr.contains("source: 1"), "{stderr}");
     assert!(
-        stderr.contains("line 6:   let job = Job { job_id: 1 };"),
+        stderr.contains("source: contracts.Priority::High"),
         "{stderr}"
     );
-    assert!(stderr.contains("expected.type=Text"), "{stderr}");
-    assert!(stderr.contains("actual.type=Int"), "{stderr}");
     assert!(
-        stderr.contains("requires: type must be Text at this span; the checker measured Int"),
+        stderr.contains("priority: contracts.Priority::High"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("expected.type=contracts.PriorityOption"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("actual.type=contracts.Priority"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains(
+            "requires: type must be contracts.PriorityOption at this span; the checker measured contracts.Priority"
+        ),
         "{stderr}"
     );
 
@@ -129,18 +140,18 @@ fn a_type_error_carries_the_snippet_and_expected_versus_actual() {
     let finding = only_finding(&document);
     assert_eq!(finding["code"], "AIL.TYPE.FIELD_MISMATCH");
     assert_eq!(finding["category"], "type");
-    assert_eq!(finding["location"]["path"], "types.ail");
+    assert_eq!(finding["location"]["path"], "scenarios.ail");
     assert_eq!(finding["location"]["start_line"], 6);
-    assert_eq!(finding["location"]["start_column"], 27);
-    assert_eq!(finding["location"]["byte_start"], 81);
-    assert_eq!(finding["location"]["byte_end"], 82);
-    assert_eq!(finding["location"]["snippet"], "1");
+    assert_eq!(finding["location"]["start_column"], 111);
+    assert_eq!(finding["location"]["byte_start"], 226);
+    assert_eq!(finding["location"]["byte_end"], 250);
+    assert_eq!(finding["location"]["snippet"], "contracts.Priority::High");
     assert_eq!(
         finding["location"]["line_text"],
-        "  let job = Job { job_id: 1 };"
+        "  let request = contracts.ReviewRequest { job_id: \"fixture-job\", task: \"compile\", payload: payload, priority: contracts.Priority::High, requested_by: \"queue-agent\", reviewer: \"release-bot\" };"
     );
-    assert_eq!(finding["expected"]["type"], "Text");
-    assert_eq!(finding["actual"]["type"], "Int");
+    assert_eq!(finding["expected"]["type"], "contracts.PriorityOption");
+    assert_eq!(finding["actual"]["type"], "contracts.Priority");
 }
 
 #[test]
@@ -175,37 +186,25 @@ fn the_snippet_locates_the_source_the_caller_supplied() {
 
 #[test]
 fn a_type_error_in_a_multi_file_workspace_names_the_file_that_holds_it() {
-    let workspace = Workspace::new(
-        "multifile",
-        &[
-            (
-                "alpha.ail",
-                "module alpha;\n\nrecord Job {\n  job_id: Text;\n}\n",
-            ),
-            (
-                "beta.ail",
-                "module beta;\n\nimport alpha;\n\nfn make_job() -> alpha.Job {\n  let job = alpha.Job { job_id: 1 };\n  job\n}\n",
-            ),
-        ],
-    );
-    let path = workspace.path().to_str().expect("temp path is UTF-8");
+    let path = examples_dir().join("job-review-type-refused");
+    let path = path.to_str().expect("example path is UTF-8");
 
     let document = json_document(&["check", "--json", path]);
     let finding = only_finding(&document);
     assert_eq!(finding["code"], "AIL.TYPE.FIELD_MISMATCH");
-    assert_eq!(finding["location"]["path"], "beta.ail");
+    assert_eq!(finding["location"]["path"], "scenarios.ail");
     assert_eq!(finding["location"]["start_line"], 6);
-    assert_eq!(finding["location"]["snippet"], "1");
+    assert_eq!(finding["location"]["snippet"], "contracts.Priority::High");
 
     let related = finding["related"]
         .as_array()
         .expect("related locations exist");
     let field = related
         .iter()
-        .find(|entry| entry["name"] == "field:alpha.Job:job_id")
+        .find(|entry| entry["name"] == "field:contracts.ReviewRequest:priority")
         .unwrap_or_else(|| panic!("declared field is related: {finding}"));
-    assert_eq!(field["location"]["path"], "alpha.ail");
-    assert_eq!(field["location"]["snippet"], "job_id: Text;");
+    assert_eq!(field["location"]["path"], "contracts.ail");
+    assert_eq!(field["location"]["snippet"], "priority: PriorityOption;");
 }
 
 #[test]
@@ -527,7 +526,6 @@ const EDIT_VERBS: [&str; 22] = [
 /// Temporary workspaces covering one rejection class each.
 fn failing_workspaces() -> Vec<Workspace> {
     vec![
-        Workspace::new("rule-type", &[("types.ail", FIELD_MISMATCH_SOURCE)]),
         Workspace::new(
             "rule-parse",
             &[("broken.ail", "record Job {\n  job_id\n}\n")],
@@ -621,6 +619,7 @@ fn requirement_is_a_constraint_and_never_an_edit() {
         examples_dir().join("architecture-denied"),
         examples_dir().join("composed-service/service.ail"),
         examples_dir().join("batch-lookup"),
+        examples_dir().join("job-review-type-refused"),
     ];
     let inputs = workspaces
         .iter()
@@ -674,15 +673,15 @@ fn a_passing_workspace_reports_no_findings() {
 
 #[test]
 fn publish_reports_the_same_findings_as_check_and_writes_nothing() {
-    let workspace = Workspace::new("publish", &[("types.ail", FIELD_MISMATCH_SOURCE)]);
-    let path = workspace.path().to_str().expect("temp path is UTF-8");
+    let path = examples_dir().join("job-review-type-refused");
+    let input = path.to_str().expect("example path is UTF-8");
 
-    let checked = json_document(&["check", "--json", path]);
-    let published = json_document(&["publish", "--json", path]);
+    let checked = json_document(&["check", "--json", input]);
+    let published = json_document(&["publish", "--json", input]);
     assert_eq!(checked["findings"], published["findings"]);
     assert_eq!(published["status"], "failed");
     assert!(
-        !workspace.path().join(".ail").exists(),
+        !path.join(".ail").exists(),
         "a rejected publish must write no revision"
     );
 }

@@ -38,84 +38,6 @@ fn write_file(dir: &Path, name: &str, source: &str) {
     fs::write(dir.join(name), source).expect("temporary source is writable");
 }
 
-fn passing_architecture_policy() -> &'static str {
-    r#"{
-  "semantic_model_version": "source-architecture-v1",
-  "analysis_scope": "transport:dispatch",
-  "module_groups": {
-    "adapters": "persistence-adapter",
-    "contracts": "contract",
-    "domain": "domain",
-    "tests": "verification",
-    "transport": "transport"
-  },
-  "capability_namespaces": {},
-  "endpoint_groups": {},
-  "operations": {},
-  "policy": {
-    "revision": "policy-r1",
-    "allowed_group_dependencies": {
-      "contract": [],
-      "transport": ["contract"],
-      "domain": ["contract"],
-      "persistence-adapter": [],
-      "verification": ["contract", "domain", "transport"]
-    },
-    "transport_capabilities": [],
-    "transport_state": [],
-    "dispatch_no_growth": {
-      "control_flow_complexity": 4,
-      "minimal_context_node_count": 12
-    },
-    "new_unit": {
-      "control_flow_complexity_max": 6,
-      "minimal_context_node_count_max": 12
-    },
-    "new_cycles": false,
-    "coverage_required": true,
-    "baseline_match": {
-      "baseline_revision": "baseline-r1",
-      "scope": "transport:dispatch",
-      "metrics": {
-        "control_flow_complexity": 4,
-        "minimal_context_node_count": 12
-      },
-      "accepted_debt": true
-    }
-  }
-}
-"#
-}
-
-fn write_passing_architecture_workspace(dir: &Path) {
-    write_file(
-        dir,
-        "contracts.ail",
-        "module contracts;\n\nfn keep(value: Text) -> Text {\n  value\n}\n",
-    );
-    write_file(
-        dir,
-        "domain.ail",
-        "module domain;\n\nfn work(value: Text) -> Text {\n  value\n}\n",
-    );
-    write_file(
-        dir,
-        "transport.ail",
-        "module transport;\nimport contracts;\n\nfn dispatch(value: Text) -> Text {\n  contracts.keep(value)\n}\n",
-    );
-    write_file(
-        dir,
-        "adapters.ail",
-        "module adapters;\n\nfn marker(value: Text) -> Text {\n  value\n}\n",
-    );
-    write_file(
-        dir,
-        "tests.ail",
-        "module tests;\n\nfn marker(value: Text) -> Text {\n  value\n}\n",
-    );
-    write_file(dir, "architecture.json", passing_architecture_policy());
-}
-
 fn run_publish(path: &Path) -> std::process::Output {
     ailc()
         .arg("publish")
@@ -134,34 +56,24 @@ fn published_revision(path: &Path) -> PathBuf {
 
 #[test]
 fn publish_of_a_failing_type_candidate_writes_no_revision() {
-    let path = temp_workspace("type-fail");
-    write_file(
-        &path,
-        "broken.ail",
-        "record Job {\n  job_id: Text;\n}\n\nfn make_job() -> Job {\n  let job = Job { job_id: 1 };\n  job\n}\n",
-    );
+    let path = examples_dir().join("job-review-type-refused");
 
     let output = run_publish(&path);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "{stderr}");
     assert!(stderr.contains("AIL.TYPE.FIELD_MISMATCH"), "{stderr}");
     assert!(!revision_store(&path).exists(), "{stderr}");
-
-    fs::remove_dir_all(path).expect("temporary workspace is removable");
 }
 
 #[test]
 fn publish_of_a_failing_architecture_candidate_writes_no_revision() {
-    let path = temp_workspace("arch-fail");
-    copy_dir(&examples_dir().join("architecture-denied"), &path);
+    let path = examples_dir().join("architecture-denied");
 
     let output = run_publish(&path);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "{stderr}");
     assert!(stderr.contains("AIL.ARCH.BOUNDARY"), "{stderr}");
     assert!(!revision_store(&path).exists(), "{stderr}");
-
-    fs::remove_dir_all(path).expect("temporary workspace is removable");
 }
 
 #[test]
@@ -196,8 +108,9 @@ fn publish_of_a_passing_candidate_writes_a_revision() {
 #[test]
 fn published_sources_do_not_follow_later_live_file_edits() {
     let path = temp_workspace("frozen-source");
-    let checked_source = "module service;\n\nfn identity(value: Text) -> Text {\n  value\n}\n";
-    write_file(&path, "service.ail", checked_source);
+    copy_dir(&examples_dir().join("composed-service"), &path);
+    let checked_source =
+        fs::read(path.join("service.ail")).expect("checked example source is readable");
 
     let output = run_publish(&path);
     assert!(
@@ -213,7 +126,7 @@ fn published_sources_do_not_follow_later_live_file_edits() {
     );
     let frozen_source = fs::read(path.join(".ail/revisions/published/sources/service.ail"))
         .expect("published source is readable");
-    assert_eq!(frozen_source, checked_source.as_bytes());
+    assert_eq!(frozen_source, checked_source);
 
     fs::remove_dir_all(path).expect("temporary workspace is removable");
 }
@@ -221,7 +134,7 @@ fn published_sources_do_not_follow_later_live_file_edits() {
 #[test]
 fn publish_of_a_passing_architecture_candidate_writes_a_revision() {
     let path = temp_workspace("arch-pass");
-    write_passing_architecture_workspace(&path);
+    copy_dir(&examples_dir().join("job-review"), &path);
 
     let check = ailc()
         .arg("check")
