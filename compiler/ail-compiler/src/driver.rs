@@ -7,9 +7,9 @@ use serde_json::Value;
 
 use crate::finding::{RelatedLocation, SourceFinding, flatten_json};
 use crate::{
-    ArchitectureChangeResult, CapabilityEnvironment, EvolutionBuildFailure, EvolutionCoverage,
-    EvolutionSource, EvolutionWorkspace, SourceArchitectureConfig, SourceSetRevision,
-    valid_source_path,
+    ArchitectureChangeResult, BehaviorValidation, CapabilityEnvironment, EvolutionBuildFailure,
+    EvolutionCoverage, EvolutionSource, EvolutionWorkspace, SourceArchitectureConfig,
+    SourceSetRevision, valid_source_path,
 };
 
 const CHECK_REVISION: &str = "check";
@@ -45,12 +45,26 @@ pub enum CliPublishError {
     Write(String),
 }
 
+/// Successful `ailc check` evidence.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CliCheckSuccess {
+    /// Behavior status from architecture evaluation, when project policy exists.
+    pub behavior_validation: Option<BehaviorValidation>,
+}
+
 /// A revision written by `ailc publish`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublishedRevision {
     pub revision_id: String,
     pub source_set_digest: String,
     pub store: PathBuf,
+    /// Behavior status from architecture evaluation, when project policy exists.
+    pub behavior_validation: Option<BehaviorValidation>,
+}
+
+struct BuiltCliWorkspace {
+    workspace: EvolutionWorkspace,
+    behavior_validation: Option<BehaviorValidation>,
 }
 
 /// Check a file or directory the same way `ailc check` does.
@@ -71,7 +85,20 @@ pub struct PublishedRevision {
 /// [`CliCheckError::Build`] when the source set is rejected, or
 /// [`CliCheckError::Architecture`] when project architecture policy fails.
 pub fn check_cli_path(path: impl AsRef<Path>) -> Result<(), CliCheckError> {
-    build_cli_workspace(path.as_ref(), CHECK_REVISION).map(|_| ())
+    check_cli_path_with_evidence(path).map(drop)
+}
+
+/// Check a file or directory and return non-execution evidence for CLI output.
+///
+/// # Errors
+///
+/// Returns the same errors as [`check_cli_path`].
+pub fn check_cli_path_with_evidence(
+    path: impl AsRef<Path>,
+) -> Result<CliCheckSuccess, CliCheckError> {
+    build_cli_workspace(path.as_ref(), CHECK_REVISION).map(|built| CliCheckSuccess {
+        behavior_validation: built.behavior_validation,
+    })
 }
 
 /// Publish a directory workspace the same way `ailc publish` does.
@@ -93,21 +120,19 @@ pub fn publish_cli_path(path: impl AsRef<Path>) -> Result<PublishedRevision, Cli
             "publish requires a directory workspace".to_owned(),
         )));
     }
-    let workspace = build_cli_workspace(path, PUBLISH_REVISION).map_err(CliPublishError::Check)?;
-    write_published_revision(path, &workspace).map_err(CliPublishError::Write)
+    let built = build_cli_workspace(path, PUBLISH_REVISION).map_err(CliPublishError::Check)?;
+    write_published_revision(path, &built.workspace, built.behavior_validation)
+        .map_err(CliPublishError::Write)
 }
 
-fn build_cli_workspace(
-    path: &Path,
-    revision_id: &str,
-) -> Result<EvolutionWorkspace, CliCheckError> {
+fn build_cli_workspace(path: &Path, revision_id: &str) -> Result<BuiltCliWorkspace, CliCheckError> {
     let sources = collect_sources(path)?;
     let architecture = load_architecture_policy(path)?;
     let coverage = EvolutionCoverage {
         declared_complete: true,
         ..EvolutionCoverage::default()
     };
-    let workspace = match architecture {
+    let (workspace, behavior_validation) = match architecture {
         Some((config, analysis_scope)) => {
             let workspace = EvolutionWorkspace::new_with_architecture(
                 workspace_id(path),
@@ -119,7 +144,10 @@ fn build_cli_workspace(
             )
             .map_err(CliCheckError::Build)?;
             match workspace.evaluate_current_architecture(&analysis_scope) {
-                Ok(ArchitectureChangeResult::Success(_)) => workspace,
+                Ok(ArchitectureChangeResult::Success(success)) => {
+                    let behavior_validation = success.completion.behavior_validation.clone();
+                    (workspace, Some(behavior_validation))
+                }
                 Ok(result) => {
                     return Err(CliCheckError::Architecture(architecture_failure(
                         &result, &workspace,
@@ -141,16 +169,22 @@ fn build_cli_workspace(
                 }
             }
         }
-        None => EvolutionWorkspace::new(
-            workspace_id(path),
-            revision_id,
-            sources,
-            &CapabilityEnvironment::new(),
-            coverage,
-        )
-        .map_err(CliCheckError::Build)?,
+        None => (
+            EvolutionWorkspace::new(
+                workspace_id(path),
+                revision_id,
+                sources,
+                &CapabilityEnvironment::new(),
+                coverage,
+            )
+            .map_err(CliCheckError::Build)?,
+            None,
+        ),
     };
-    Ok(workspace)
+    Ok(BuiltCliWorkspace {
+        workspace,
+        behavior_validation,
+    })
 }
 
 fn architecture_failure(
@@ -339,6 +373,7 @@ fn load_architecture_policy(
 fn write_published_revision(
     path: &Path,
     workspace: &EvolutionWorkspace,
+    behavior_validation: Option<BehaviorValidation>,
 ) -> Result<PublishedRevision, String> {
     let revision = workspace
         .revision(PUBLISH_REVISION)
@@ -380,6 +415,7 @@ fn write_published_revision(
         revision_id: revision.revision_id.clone(),
         source_set_digest: revision.source_set_digest.clone(),
         store,
+        behavior_validation,
     })
 }
 

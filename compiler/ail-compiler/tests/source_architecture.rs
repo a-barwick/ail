@@ -428,6 +428,28 @@ fn source_architecture_accepts_domain_ownership_and_rolls_back_transport_regress
 }
 
 #[test]
+fn current_architecture_evaluation_reports_behavior_not_run_without_mutation() {
+    let workspace = workspace();
+    let result = workspace
+        .evaluate_current_architecture("transport:dispatch")
+        .expect("current architecture evaluates");
+    let ArchitectureChangeResult::Success(success) = result else {
+        panic!("unchanged architecture must pass policy: {result:#?}");
+    };
+
+    assert_eq!(
+        success.completion.behavior_validation,
+        BehaviorValidation {
+            status: "not-run".into(),
+            cases_passed: 0,
+            cases_total: 6,
+        }
+    );
+    assert_eq!(workspace.current_revision_id(), "r1");
+    assert!(workspace.revision("r1-candidate").is_none());
+}
+
+#[test]
 fn missing_capability_architecture_configuration_fails_closed_without_publication() {
     let mut configurations = Vec::new();
     let mut missing_interface = architecture_config();

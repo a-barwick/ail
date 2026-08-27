@@ -10,12 +10,11 @@ use crate::{
     ArchitectureChangeResult, ArchitectureCoverage, ArchitectureEdge, ArchitectureEvaluationInput,
     ArchitecturePolicyContext, ArchitectureRequest, ArchitectureRequestError,
     ArchitectureRequestErrorKind, ArchitectureRevision, ArchitectureRevisionError,
-    ArchitectureUnit, ArchitectureWorkspace, BaselineMatch, BehaviorValidation, Block,
-    CapabilityEnvironment, CapabilityProvider, ControlFlowGraph, Declaration, DispatchBudget,
-    ExecutionFailure, ExecutionResponse, ExecutionSuccess, Expr, FunctionDecl, GroupDependencies,
-    HandleKind, NewUnitBudget, ParameterType, ParseResult, RuntimeFault, RuntimeValue,
-    SemanticHandle, SourceUnit, Span, StructuredDiagnostic, TypeCheckStatus, TypeRef,
-    source_digest,
+    ArchitectureUnit, ArchitectureWorkspace, BaselineMatch, Block, CapabilityEnvironment,
+    CapabilityProvider, ControlFlowGraph, Declaration, DispatchBudget, ExecutionFailure,
+    ExecutionResponse, ExecutionSuccess, Expr, FunctionDecl, GroupDependencies, HandleKind,
+    NewUnitBudget, ParameterType, ParseResult, RuntimeFault, RuntimeValue, SemanticHandle,
+    SourceUnit, Span, StructuredDiagnostic, TypeCheckStatus, TypeRef, source_digest,
 };
 
 mod transaction;
@@ -752,8 +751,8 @@ impl EvolutionWorkspace {
     /// Uses [`ArchitectureWorkspace::validate_architecture_change`] against a
     /// candidate that carries the same derived facts as the current revision.
     /// The evolution workspace is not mutated. The architecture evaluator's
-    /// required M26 behavior gate is reported as passed 6/6 because this path
-    /// does not execute.
+    /// M26 behavior gate is reported as `not-run` with zero passed cases because
+    /// this path does not execute.
     ///
     /// # Errors
     ///
@@ -803,14 +802,8 @@ impl EvolutionWorkspace {
             active_policy_revision: config.policy.revision.clone(),
             active_baseline_revision: config.policy.baseline_match.baseline_revision.clone(),
         };
-        let mut architecture_workspace = ArchitectureWorkspace::new(base);
-        architecture_workspace.validate_architecture_change(candidate, &input, |_| {
-            Ok(BehaviorValidation {
-                status: "passed".into(),
-                cases_passed: 6,
-                cases_total: 6,
-            })
-        })
+        let architecture_workspace = ArchitectureWorkspace::new(base);
+        architecture_workspace.evaluate_architecture_without_behavior(candidate, &input)
     }
 
     #[must_use]

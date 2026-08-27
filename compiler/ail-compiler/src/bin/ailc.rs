@@ -3,8 +3,9 @@ use std::fs;
 use std::process::ExitCode;
 
 use ail_compiler::{
-    CliCheckError, CliPublishError, EvolutionBuildFailure, SourceFinding, check_cli_path,
-    findings_document, format_source, parse, publish_cli_path, reconstruct,
+    BehaviorValidation, CliCheckError, CliPublishError, EvolutionBuildFailure, SourceFinding,
+    check_cli_path_with_evidence, findings_document, format_source, parse, publish_cli_path,
+    reconstruct,
 };
 
 const CHECK_SUMMARY: &str = "source contains check diagnostics";
@@ -76,12 +77,25 @@ fn run() -> Result<(), String> {
 }
 
 fn check(path: &str, json: bool) -> Result<(), String> {
-    match check_cli_path(path) {
-        Ok(()) => {
+    match check_cli_path_with_evidence(path) {
+        Ok(success) => {
             if json {
-                print!("{}", findings_document("ok", "", &[]));
+                if let Some(behavior) = success.behavior_validation.as_ref() {
+                    let document = serde_json::json!({
+                        "status": "ok",
+                        "summary": "",
+                        "behavior_validation": behavior_json(behavior),
+                        "findings": [],
+                    });
+                    println!("{document}");
+                } else {
+                    print!("{}", findings_document("ok", "", &[]));
+                }
             } else {
                 println!("ok");
+                if let Some(behavior) = success.behavior_validation.as_ref() {
+                    print_behavior(behavior);
+                }
             }
             Ok(())
         }
@@ -93,23 +107,47 @@ fn publish(path: &str, json: bool) -> Result<(), String> {
     match publish_cli_path(path) {
         Ok(revision) => {
             if json {
-                let document = serde_json::json!({
+                let mut document = serde_json::json!({
                     "status": "published",
                     "revision_id": revision.revision_id,
                     "source_set_digest": revision.source_set_digest,
                     "findings": [],
                 });
+                if let Some(behavior) = revision.behavior_validation.as_ref() {
+                    document
+                        .as_object_mut()
+                        .expect("publish document is an object")
+                        .insert("behavior_validation".into(), behavior_json(behavior));
+                }
                 println!("{document}");
             } else {
                 println!("published");
                 println!("revision_id={}", revision.revision_id);
                 println!("source_set_digest={}", revision.source_set_digest);
+                if let Some(behavior) = revision.behavior_validation.as_ref() {
+                    print_behavior(behavior);
+                }
             }
             Ok(())
         }
         Err(CliPublishError::Check(error)) => report_check_error(error, json),
         Err(CliPublishError::Write(message)) => Err(message),
     }
+}
+
+fn behavior_json(behavior: &BehaviorValidation) -> serde_json::Value {
+    serde_json::json!({
+        "status": behavior.status,
+        "cases_passed": behavior.cases_passed,
+        "cases_total": behavior.cases_total,
+    })
+}
+
+fn print_behavior(behavior: &BehaviorValidation) {
+    println!(
+        "behavior: {} {}/{}",
+        behavior.status, behavior.cases_passed, behavior.cases_total
+    );
 }
 
 fn report_check_error(error: CliCheckError, json: bool) -> Result<(), String> {

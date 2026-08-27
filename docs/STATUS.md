@@ -24,7 +24,9 @@ sets fail until a library caller supplies the interfaces. The driver does not
 invent capability syntax or a project manifest. When `architecture.json` is
 present, check evaluates that project policy and fails with an architecture
 diagnostic. Check writes no revision. `ailc publish` writes one revision only
-after the same checks pass.
+after the same checks pass. Neither command executes the program. Their
+architecture result reports the six-case behavior gate as `not-run` with zero
+passed cases.
 
 Structured findings expose only facts the checkers already compute. A finding
 states the constraint that must hold and the value the checker measured. It

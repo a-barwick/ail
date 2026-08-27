@@ -31,9 +31,10 @@ findings fail check with an `AIL.ARCH.*` diagnostic. Missing
 `<dir>/.ail/revisions/published`. A failing candidate creates no store and
 does not replace an existing store.
 
-The architecture evaluator still requires the existing M26 6/6 behavior gate.
-`ailc` does not execute, so that gate is reported as passed and architecture
-findings remain the result under test.
+Transactional source changes still require the existing M26 6/6 behavior gate.
+`ailc` does not execute, so its current-revision architecture assessment reports
+that gate as `not-run` with zero passed cases. Architecture findings remain the
+result under test; `ok` and `published` do not claim runtime behavior evidence.
 
 ## Consequences
 
@@ -57,8 +58,10 @@ path still fails; it does not default to the repository root.
 
 ## Validation
 
-`cargo +1.87.0 test -p ail-compiler --test ailc_check --test ailc_publish`
+`cargo +1.87.0 test -p ail-compiler --test ailc_check --test ailc_publish
+--test source_architecture`
 proves composed-service still prints `ok`, architecture-denied fails with
 `AIL.ARCH.BOUNDARY` and writes no revision, publish of a failing candidate
 writes no revision, and publish of a passing candidate writes
-`.ail/revisions/published`.
+`.ail/revisions/published`. Architecture-enabled check and publish report
+`behavior: not-run 0/6`.

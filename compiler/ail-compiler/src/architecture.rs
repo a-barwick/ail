@@ -187,12 +187,32 @@ pub struct ArchitecturePolicyContext {
     pub baseline_match: BaselineMatch,
 }
 
-/// Caller-supplied evidence from the fixed M26 six-case behavior oracle.
+/// Behavior evidence associated with an architecture evaluation.
+///
+/// Transactional source changes require the fixed M26 six-case oracle to
+/// report `passed`. Read-only callers that do not execute report `not-run`
+/// with zero passed cases instead.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BehaviorValidation {
     pub status: String,
     pub cases_passed: usize,
     pub cases_total: usize,
+}
+
+impl BehaviorValidation {
+    pub(crate) fn not_run() -> Self {
+        Self {
+            status: "not-run".into(),
+            cases_passed: 0,
+            cases_total: 6,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum BehaviorRequirement {
+    PassedSixCases,
+    NotRun,
 }
 
 impl ArchitecturePolicyContext {
@@ -783,14 +803,47 @@ impl ArchitectureWorkspace {
     where
         F: FnOnce(&ArchitectureRevision) -> Result<BehaviorValidation, ArchitectureRequestError>,
     {
+        let result = self.evaluate_architecture_change(
+            &candidate,
+            input,
+            BehaviorRequirement::PassedSixCases,
+            validate_behavior,
+        )?;
+        if matches!(result, ArchitectureChangeResult::Success(_)) {
+            self.current_revision_id.clone_from(&candidate.revision_id);
+            self.revisions
+                .insert(candidate.revision_id.clone(), candidate);
+        }
+        Ok(result)
+    }
+
+    pub(crate) fn evaluate_architecture_without_behavior(
+        &self,
+        candidate: ArchitectureRevision,
+        input: &ArchitectureEvaluationInput,
+    ) -> Result<ArchitectureChangeResult, ArchitectureRequestError> {
+        self.evaluate_architecture_change(&candidate, input, BehaviorRequirement::NotRun, |_| {
+            Ok(BehaviorValidation::not_run())
+        })
+    }
+
+    fn evaluate_architecture_change<F>(
+        &self,
+        candidate: &ArchitectureRevision,
+        input: &ArchitectureEvaluationInput,
+        behavior_requirement: BehaviorRequirement,
+        validate_behavior: F,
+    ) -> Result<ArchitectureChangeResult, ArchitectureRequestError>
+    where
+        F: FnOnce(&ArchitectureRevision) -> Result<BehaviorValidation, ArchitectureRequestError>,
+    {
         let base = self
             .revisions
             .get(&input.request.base_revision_id)
             .ok_or_else(|| ArchitectureRequestError {
                 kind: ArchitectureRequestErrorKind::StaleRevision,
                 message: "base revision is not retained".into(),
-            })?
-            .clone();
+            })?;
         if self.current_revision_id != input.request.base_revision_id {
             return Err(ArchitectureRequestError {
                 kind: ArchitectureRequestErrorKind::StaleRevision,
@@ -803,13 +856,13 @@ impl ArchitectureWorkspace {
                 message: "candidate revision identity is already retained".into(),
             });
         }
-        let result = evaluate_change(&base, &candidate, input, validate_behavior)?;
-        if matches!(result, ArchitectureChangeResult::Success(_)) {
-            self.current_revision_id.clone_from(&candidate.revision_id);
-            self.revisions
-                .insert(candidate.revision_id.clone(), candidate);
-        }
-        Ok(result)
+        evaluate_change(
+            base,
+            candidate,
+            input,
+            behavior_requirement,
+            validate_behavior,
+        )
     }
 }
 
@@ -1047,6 +1100,7 @@ fn evaluate_change<F>(
     base: &ArchitectureRevision,
     candidate: &ArchitectureRevision,
     input: &ArchitectureEvaluationInput,
+    behavior_requirement: BehaviorRequirement,
     validate_behavior: F,
 ) -> Result<ArchitectureChangeResult, ArchitectureRequestError>
 where
@@ -1061,14 +1115,28 @@ where
         message: e.0,
     })?;
     let behavior_validation = validate_behavior(candidate)?;
-    if behavior_validation.status != "passed"
-        || behavior_validation.cases_passed != 6
-        || behavior_validation.cases_total != 6
-    {
-        return Err(ArchitectureRequestError {
-            kind: ArchitectureRequestErrorKind::InvalidRevision,
-            message: "M26 behavior validation must report passed 6/6".into(),
-        });
+    match behavior_requirement {
+        BehaviorRequirement::PassedSixCases
+            if behavior_validation.status != "passed"
+                || behavior_validation.cases_passed != 6
+                || behavior_validation.cases_total != 6 =>
+        {
+            return Err(ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::InvalidRevision,
+                message: "M26 behavior validation must report passed 6/6".into(),
+            });
+        }
+        BehaviorRequirement::NotRun
+            if behavior_validation.status != "not-run"
+                || behavior_validation.cases_passed != 0
+                || behavior_validation.cases_total != 6 =>
+        {
+            return Err(ArchitectureRequestError {
+                kind: ArchitectureRequestErrorKind::InvalidRevision,
+                message: "non-executing architecture evaluation must report not-run 0/6".into(),
+            });
+        }
+        _ => {}
     }
     if base.workspace_id != candidate.workspace_id
         || base.semantic_model_version != candidate.semantic_model_version
