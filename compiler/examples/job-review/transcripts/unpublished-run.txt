@@ -1,0 +1,6 @@
+$ target/debug/ail-run /tmp/job-review-unpublished scenarios.review_fixture --bytes 6a6f622d7061796c6f6164
+exit status: 1
+stdout: empty
+stderr:
+refused
+AIL.RUN.NO_PUBLISHED_REVISION store=/tmp/job-review-unpublished/.ail reason=revision store directory is absent

@@ -1,0 +1,10 @@
+$ target/debug/ail-run compiler/examples/job-review scenarios.review_fixture --bytes 6a6f622d7061796c6f6164
+exit status: 0
+stdout:
+completed
+revision_id=published
+source_set_digest=sha256:d04ad0c8928eab29b6d8e5e069d86ea702ebe928031100ab5e500ab3b92cfb88
+function=scenarios.review_fixture
+value=contracts.ReviewDecision::Approved(contracts.ApprovedJob { job_id: "fixture-job", payload: bytes:6a6f622d7061796c6f6164, priority: contracts.Priority::Normal, requested_by: "queue-agent", reviewer: "release-bot", task: "compile" })
+calls=0
+stderr: empty

@@ -28,6 +28,15 @@ after the same checks pass. Neither command executes the program. Their
 architecture result reports the six-case behavior gate as `not-run` with zero
 passed cases.
 
+`ail-run` executes only the frozen bytes of the revision `<dir>/.ail/current`
+names. It cannot run a live edit, select another revision, roll back, or emit
+JSON. It supplies no capabilities and takes only `--text`, `--int`, and
+`--bytes` arguments; a record, variant, or list argument has no command-line
+spelling. It does not freeze or read `architecture.json`, so the
+`architecture_settings_digest` in `revision.json` names a live file the runner
+never opens. Running one published example is not a proof of the language and
+is not a production service.
+
 Structured findings expose only facts the checkers already compute. A finding
 states the constraint that must hold and the value the checker measured. It
 never names the edit that would satisfy the constraint, because the checker has
@@ -49,6 +58,7 @@ cargo +1.87.0 fmt --all --check
 cargo +1.87.0 test --workspace
 cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
 cargo +1.87.0 test -p ail-compiler --test ailc_findings
+cargo +1.87.0 test -p ail-compiler --test published_runner
 cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
 cargo +1.87.0 test -p ail-service-host --test m33_private_catalog_dogfood
 python3 specs/tools/architecture_acceptance.py check
