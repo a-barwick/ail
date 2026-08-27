@@ -45,17 +45,6 @@ fn validate_payload(request: contracts.ReviewRequest) -> contracts.ValidationRes
   }
 }
 
-fn validate_priority(request: contracts.ReviewRequest) -> contracts.ValidationResult {
-  match request.priority {
-    contracts.PriorityOption::Some(priority) => {
-      contracts.ValidationResult::Valid
-    },
-    contracts.PriorityOption::None => {
-      contracts.ValidationResult::Invalid(contracts.ReviewReason::MissingPriority)
-    },
-  }
-}
-
 fn validate_requester(request: contracts.ReviewRequest) -> contracts.ValidationResult {
   if text.is_empty(request.requested_by) {
     contracts.ValidationResult::Invalid(contracts.ReviewReason::MissingRequester)

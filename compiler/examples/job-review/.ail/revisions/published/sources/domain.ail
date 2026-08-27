@@ -23,24 +23,17 @@ fn review(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
               contracts.ReviewDecision::Rejected(reason)
             },
             contracts.ValidationResult::Valid => {
-              match validation.validate_priority(request) {
+              match validation.validate_requester(request) {
                 contracts.ValidationResult::Invalid(reason) => {
                   contracts.ReviewDecision::Rejected(reason)
                 },
                 contracts.ValidationResult::Valid => {
-                  match validation.validate_requester(request) {
+                  match validation.validate_reviewer(request) {
                     contracts.ValidationResult::Invalid(reason) => {
                       contracts.ReviewDecision::Rejected(reason)
                     },
                     contracts.ValidationResult::Valid => {
-                      match validation.validate_reviewer(request) {
-                        contracts.ValidationResult::Invalid(reason) => {
-                          contracts.ReviewDecision::Rejected(reason)
-                        },
-                        contracts.ValidationResult::Valid => {
-                          approve(request)
-                        },
-                      }
+                      approve(request)
                     },
                   }
                 },
