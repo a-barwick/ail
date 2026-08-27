@@ -28,6 +28,10 @@ after the same checks pass. Neither command executes the program. Their
 architecture result reports the six-case behavior gate as `not-run` with zero
 passed cases.
 
+`ailc format` and `ailc reconstruct` also read live source, and like check and
+publish they do not execute the program. `ail-run` is the only command that
+executes.
+
 `ail-run` executes only the frozen bytes of the revision `<dir>/.ail/current`
 names. It cannot run a live edit, select another revision, roll back, or emit
 JSON. It supplies no capabilities and takes only `--text`, `--int`, and

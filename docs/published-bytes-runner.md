@@ -4,8 +4,11 @@
 `<dir>/.ail/revisions/<current>/sources/`. It never opens the live `.ail` files
 next to that store, so an edit that was never published cannot change what runs.
 
-`ailc` still does not execute anything. `check` and `publish` are the only
-`ailc` commands that read live source, and neither evaluates a program.
+`ailc` still does not execute anything. All four of its commands can read live
+source: `check` and `publish` read the live `.ail` files of a directory or one
+file, and `format` and `reconstruct` read the live file they are given. None of
+them evaluates a program. `ail-run` is the only command that executes, and it
+reads frozen published bytes only.
 
 ## Command
 

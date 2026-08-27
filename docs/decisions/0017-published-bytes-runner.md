@@ -7,9 +7,10 @@
 
 `ailc publish` freezes a checked source set under
 `<dir>/.ail/revisions/published/sources/` and records each file digest plus the
-ordered source-set digest in `revision.json`. Nothing executed those bytes.
-`ailc check` and `ailc publish` do not evaluate a program, and the interpreter
-was reachable only from Rust tests that assembled `EvolutionSource` values
+ordered source-set digest in `revision.json`. Nothing executed those bytes. No
+`ailc` command evaluates a program: `check`, `publish`, `format`, and
+`reconstruct` all read live source and none of them runs it. The interpreter was
+reachable only from Rust tests that assembled `EvolutionSource` values
 in-process.
 
 That left the frozen store unusable as the thing that runs. A caller who wanted
@@ -24,7 +25,9 @@ that document lists under `sources/`. It never reads a `.ail` file in `<dir>`
 itself.
 
 `ailc` gains no execution command. `check`, `publish`, `format`, and
-`reconstruct` remain the whole of `ailc`, and none of them evaluates a program.
+`reconstruct` remain the whole of `ailc`. All four read live source; none of them
+evaluates a program. `ail-run` executes, and it reads frozen published bytes
+only.
 
 Before running, `load_published_program` verifies:
 

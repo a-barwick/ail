@@ -99,7 +99,10 @@ can therefore report zero or more findings. `ailc check --json` and
 The interpreter executes a checked entry point with caller-supplied
 capabilities.
 
-`ail-run <dir> <function>` executes one published revision. It reads only the
+`ailc check`, `ailc publish`, `ailc format`, and `ailc reconstruct` all read live
+source. None of them runs the program.
+
+`ail-run <dir> <function>` is the only command that executes. It reads only the
 frozen bytes under `<dir>/.ail/revisions/<current>/sources/`, verifies them
 against the digests `ailc publish` recorded, and refuses with an `AIL.RUN.*`
 code when no published revision exists or the frozen bytes disagree with those
