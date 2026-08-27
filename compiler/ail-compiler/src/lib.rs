@@ -31,8 +31,8 @@ pub use architecture::{
 };
 pub use diagnostic::Diagnostic;
 pub use driver::{
-    CliArchitectureFailure, CliCheckError, CliPublishError, PublishedRevision, check_cli_path,
-    publish_cli_path,
+    CliArchitectureFailure, CliCheckError, CliCheckSuccess, CliPublishError, PublishedRevision,
+    check_cli_path, check_cli_path_with_evidence, publish_cli_path,
 };
 pub use evolution::{
     ArchitectureSourceChangeRequest, BoundedListInspection, BoundedParallelMapInspection,

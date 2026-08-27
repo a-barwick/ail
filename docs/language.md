@@ -78,6 +78,10 @@ change as one transaction.
 one file, then runs the compiler checks and any project architecture policy. It
 writes no revision. `ailc publish` accepts a directory workspace and writes a
 revision only after the same checks pass. A failed candidate publishes nothing.
+Neither command executes an entry point. When project architecture policy is
+present, both report its six-case behavior gate as `not-run` with zero passed
+cases; `ok` or `published` means the compiler and architecture checks passed,
+not that program behavior ran.
 
 Source and architecture diagnostics can produce structured findings. Every
 finding has a code and category. It includes a file and source range,

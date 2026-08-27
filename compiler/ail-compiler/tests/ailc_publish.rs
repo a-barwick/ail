@@ -233,12 +233,17 @@ fn publish_of_a_passing_architecture_candidate_writes_a_revision() {
         "{}",
         String::from_utf8_lossy(&check.stderr)
     );
-    assert_eq!(check.stdout, b"ok\n");
+    let check_stdout = String::from_utf8_lossy(&check.stdout);
+    assert_eq!(check_stdout, "ok\nbehavior: not-run 0/6\n");
+    assert!(!check_stdout.contains("passed"), "{check_stdout}");
     assert!(!revision_store(&path).exists());
 
     let output = run_publish(&path);
+    let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(output.status.success(), "{stderr}");
+    assert!(stdout.contains("behavior: not-run 0/6\n"), "{stdout}");
+    assert!(!stdout.contains("passed"), "{stdout}");
     assert!(published_revision(&path).is_file());
     let document = fs::read_to_string(published_revision(&path)).expect("revision is readable");
     assert!(
