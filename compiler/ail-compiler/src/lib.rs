@@ -13,6 +13,7 @@ mod interpreter;
 mod lexer;
 mod parser;
 mod protocol;
+mod runner;
 mod semantics;
 mod syntax;
 
@@ -61,6 +62,7 @@ pub use protocol::{
     RenameFailure, RenameRequest, RenameResponse, RenameSuccess, RenameValidation, Revision,
     RevisionBuildFailure, Workspace, source_digest,
 };
+pub use runner::{NoCapabilities, PublishedProgram, RunRefusal, load_published_program};
 pub use semantics::{
     CapabilityEnvironment, CapabilityInterface, CapabilityOperation, CapabilityOperationKind,
     CausalStep, CheckResult, DiagnosticValue, HandleKind, OutboundCapabilityMetadata,
