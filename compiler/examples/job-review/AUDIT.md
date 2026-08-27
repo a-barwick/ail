@@ -68,11 +68,11 @@ revision unchanged.
 ## Published change
 
 The publishable source remains in this directory. Its passing edit keeps
-`transport.dispatch` as one call to `domain.review`. It removes
+`transport.dispatch` as one call to `domain.review_job`. It removes
 `ReviewReason::MissingPriority`, `validate_priority`, and the corresponding
 domain rejection branch. `ailc check compiler/examples/job-review` prints
 `ok`. `ailc publish compiler/examples/job-review` wrote source-set digest
-`sha256:35402fbaaf456cf3846516e00b9703adf33ef0eb8c37b1c6091ef27b5ab551e9`.
+`sha256:d04ad0c8928eab29b6d8e5e069d86ea702ebe928031100ab5e500ab3b92cfb88`.
 The `.ail` files under `.ail/revisions/published/sources/` are byte-for-byte
 copies of the live source accepted by publish.
 

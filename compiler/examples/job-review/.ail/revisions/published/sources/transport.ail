@@ -3,5 +3,5 @@ import contracts;
 import domain;
 
 fn dispatch(request: contracts.ReviewRequest) -> contracts.ReviewDecision {
-  domain.review(request)
+  domain.review_job(request)
 }
