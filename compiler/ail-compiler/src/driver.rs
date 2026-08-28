@@ -1,5 +1,6 @@
 //! `ailc check` and `ailc publish` drive an [`EvolutionWorkspace`].
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -7,14 +8,16 @@ use serde_json::Value;
 
 use crate::finding::{RelatedLocation, SourceFinding, flatten_json};
 use crate::{
-    ArchitectureChangeResult, BehaviorValidation, CapabilityEnvironment, EvolutionBuildFailure,
-    EvolutionCoverage, EvolutionSource, EvolutionWorkspace, SourceArchitectureConfig,
-    SourceSetRevision, valid_source_path,
+    ArchitectureChangeResult, BehaviorValidation, CapabilityEnvironment, CapabilityInterface,
+    CapabilityOperation, EvolutionBuildFailure, EvolutionCoverage, EvolutionSource,
+    EvolutionWorkspace, OutboundCapabilityMetadata, SourceArchitectureConfig, SourceSetRevision,
+    valid_source_path,
 };
 
 const CHECK_REVISION: &str = "check";
 const PUBLISH_REVISION: &str = "published";
 const ARCHITECTURE_FILE: &str = "architecture.json";
+const CAPABILITIES_FILE: &str = "capabilities.json";
 const REVISION_STORE: &str = ".ail";
 
 /// Failure from the `ailc check` driver.
@@ -50,6 +53,10 @@ pub enum CliPublishError {
 pub struct CliCheckSuccess {
     /// Behavior status from architecture evaluation, when project policy exists.
     pub behavior_validation: Option<BehaviorValidation>,
+    /// Source-set-relative path of the loaded capabilities file, when present.
+    pub capability_environment_path: Option<String>,
+    /// Digest of the loaded [`CapabilityEnvironment`], when `capabilities.json` was present.
+    pub capability_environment_digest: Option<String>,
 }
 
 /// A revision written by `ailc publish`.
@@ -60,19 +67,36 @@ pub struct PublishedRevision {
     pub store: PathBuf,
     /// Behavior status from architecture evaluation, when project policy exists.
     pub behavior_validation: Option<BehaviorValidation>,
+    /// Source-set-relative path of the loaded capabilities file, when present.
+    pub capability_environment_path: Option<String>,
+    /// Digest of the loaded [`CapabilityEnvironment`], when `capabilities.json` was present.
+    pub capability_environment_digest: Option<String>,
 }
 
 struct BuiltCliWorkspace {
     workspace: EvolutionWorkspace,
     behavior_validation: Option<BehaviorValidation>,
+    capability_environment_path: Option<String>,
+    capability_environment_digest: Option<String>,
+}
+
+struct LoadedCapabilities {
+    environment: CapabilityEnvironment,
+    path: String,
+    digest: String,
 }
 
 /// Check a file or directory the same way `ailc check` does.
 ///
 /// A directory becomes the `.ail` files whose names pass [`valid_source_path`].
-/// A file becomes a one-file workspace named by its file name. The capability
-/// environment is empty. Coverage is declared complete with no artifacts, the
-/// same claim the composed-service example uses.
+/// A file becomes a one-file workspace named by its file name. Coverage is
+/// declared complete with no artifacts, the same claim the composed-service
+/// example uses.
+///
+/// Capability interfaces load only from `capabilities.json` at the source-set
+/// root, the same directory `architecture.json` uses. If the file is absent,
+/// the environment is empty. The driver does not search another filename, the
+/// repository root, or `.ail/`.
 ///
 /// When `architecture.json` is present next to the named path, the workspace
 /// is built with those project settings and evaluated through
@@ -98,6 +122,8 @@ pub fn check_cli_path_with_evidence(
 ) -> Result<CliCheckSuccess, CliCheckError> {
     build_cli_workspace(path.as_ref(), CHECK_REVISION).map(|built| CliCheckSuccess {
         behavior_validation: built.behavior_validation,
+        capability_environment_path: built.capability_environment_path,
+        capability_environment_digest: built.capability_environment_digest,
     })
 }
 
@@ -121,13 +147,31 @@ pub fn publish_cli_path(path: impl AsRef<Path>) -> Result<PublishedRevision, Cli
         )));
     }
     let built = build_cli_workspace(path, PUBLISH_REVISION).map_err(CliPublishError::Check)?;
-    write_published_revision(path, &built.workspace, built.behavior_validation)
-        .map_err(CliPublishError::Write)
+    write_published_revision(
+        path,
+        &built.workspace,
+        built.behavior_validation,
+        built.capability_environment_path,
+        built.capability_environment_digest,
+    )
+    .map_err(CliPublishError::Write)
 }
 
 fn build_cli_workspace(path: &Path, revision_id: &str) -> Result<BuiltCliWorkspace, CliCheckError> {
     let sources = collect_sources(path)?;
     let architecture = load_architecture_policy(path)?;
+    let loaded_capabilities = load_capability_environment(path)?;
+    let capabilities = loaded_capabilities
+        .as_ref()
+        .map_or_else(CapabilityEnvironment::new, |loaded| {
+            loaded.environment.clone()
+        });
+    let capability_path = loaded_capabilities
+        .as_ref()
+        .map(|loaded| loaded.path.clone());
+    let capability_digest = loaded_capabilities
+        .as_ref()
+        .map(|loaded| loaded.digest.clone());
     let coverage = EvolutionCoverage {
         declared_complete: true,
         ..EvolutionCoverage::default()
@@ -138,11 +182,17 @@ fn build_cli_workspace(path: &Path, revision_id: &str) -> Result<BuiltCliWorkspa
                 workspace_id(path),
                 revision_id,
                 sources,
-                &CapabilityEnvironment::new(),
+                &capabilities,
                 coverage,
                 config,
             )
-            .map_err(CliCheckError::Build)?;
+            .map_err(|failure| {
+                CliCheckError::Build(attach_capability_file_facts(
+                    failure,
+                    capability_path.as_deref(),
+                    capability_digest.as_deref(),
+                ))
+            })?;
             match workspace.evaluate_current_architecture(&analysis_scope) {
                 Ok(ArchitectureChangeResult::Success(success)) => {
                     let behavior_validation = success.completion.behavior_validation.clone();
@@ -174,17 +224,47 @@ fn build_cli_workspace(path: &Path, revision_id: &str) -> Result<BuiltCliWorkspa
                 workspace_id(path),
                 revision_id,
                 sources,
-                &CapabilityEnvironment::new(),
+                &capabilities,
                 coverage,
             )
-            .map_err(CliCheckError::Build)?,
+            .map_err(|failure| {
+                CliCheckError::Build(attach_capability_file_facts(
+                    failure,
+                    capability_path.as_deref(),
+                    capability_digest.as_deref(),
+                ))
+            })?,
             None,
         ),
     };
     Ok(BuiltCliWorkspace {
         workspace,
         behavior_validation,
+        capability_environment_path: capability_path,
+        capability_environment_digest: capability_digest,
     })
+}
+
+fn attach_capability_file_facts(
+    mut failure: EvolutionBuildFailure,
+    path: Option<&str>,
+    digest: Option<&str>,
+) -> EvolutionBuildFailure {
+    let (Some(path), Some(digest)) = (path, digest) else {
+        return failure;
+    };
+    for finding in &mut failure.findings {
+        if finding.code.starts_with("AIL.CAPABILITY.") {
+            finding
+                .facts
+                .insert("capability_environment.path".to_owned(), path.to_owned());
+            finding.facts.insert(
+                "capability_environment.digest".to_owned(),
+                digest.to_owned(),
+            );
+        }
+    }
+    failure
 }
 
 fn architecture_failure(
@@ -342,16 +422,20 @@ fn source_finding(policy_finding: &Value, workspace: &EvolutionWorkspace) -> Sou
     finding.with_derived_requirement()
 }
 
-fn load_architecture_policy(
-    path: &Path,
-) -> Result<Option<(SourceArchitectureConfig, String)>, CliCheckError> {
-    let directory = if path.is_dir() {
+fn source_set_directory(path: &Path) -> PathBuf {
+    if path.is_dir() {
         path.to_path_buf()
     } else {
         path.parent()
             .unwrap_or_else(|| Path::new("."))
             .to_path_buf()
-    };
+    }
+}
+
+fn load_architecture_policy(
+    path: &Path,
+) -> Result<Option<(SourceArchitectureConfig, String)>, CliCheckError> {
+    let directory = source_set_directory(path);
     let policy_path = directory.join(ARCHITECTURE_FILE);
     if !policy_path.is_file() {
         return Ok(None);
@@ -370,10 +454,311 @@ fn load_architecture_policy(
     Ok(Some((config, analysis_scope)))
 }
 
+fn load_capability_environment(path: &Path) -> Result<Option<LoadedCapabilities>, CliCheckError> {
+    let file_path = source_set_directory(path).join(CAPABILITIES_FILE);
+    if !file_path.is_file() {
+        return Ok(None);
+    }
+    let text = fs::read_to_string(&file_path)
+        .map_err(|error| CliCheckError::Io(format!("{}: {error}", file_path.display())))?;
+    let environment = capability_environment_from_json(&text)
+        .map_err(|error| CliCheckError::Io(format!("{}: {error}", file_path.display())))?;
+    Ok(Some(LoadedCapabilities {
+        digest: environment.stable_digest(),
+        environment,
+        path: CAPABILITIES_FILE.to_owned(),
+    }))
+}
+
+fn capability_environment_from_json(text: &str) -> Result<CapabilityEnvironment, String> {
+    let value = serde_json::from_str::<Value>(text).map_err(|error| error.to_string())?;
+    if let Some(name) = first_duplicate_object_key(text.as_bytes()) {
+        return Err(format!("duplicate capability name {name}"));
+    }
+    let object = value
+        .as_object()
+        .ok_or_else(|| "capabilities must be a JSON object".to_owned())?;
+    let mut environment = CapabilityEnvironment::new();
+    for (interface_name, interface_value) in object {
+        if interface_name.is_empty() {
+            return Err("capability name must not be empty".to_owned());
+        }
+        let operations = interface_value.as_object().ok_or_else(|| {
+            format!("{interface_name} must be an object of capability operations")
+        })?;
+        let mut interface = CapabilityInterface::new();
+        for (operation_name, operation_value) in operations {
+            if operation_name.is_empty() {
+                return Err(format!("{interface_name} has an empty operation name"));
+            }
+            interface.insert_operation(
+                operation_name,
+                capability_operation_from_json(interface_name, operation_name, operation_value)?,
+            );
+        }
+        environment.insert_interface(interface_name, interface);
+    }
+    Ok(environment)
+}
+
+fn capability_operation_from_json(
+    interface_name: &str,
+    operation_name: &str,
+    value: &Value,
+) -> Result<CapabilityOperation, String> {
+    let object = value.as_object().ok_or_else(|| {
+        format!("{interface_name}.{operation_name} must be a capability operation object")
+    })?;
+    let parameters = object
+        .get("parameters")
+        .ok_or_else(|| format!("{interface_name}.{operation_name}.parameters is required"))?;
+    let parameters = parameters.as_array().ok_or_else(|| {
+        format!("{interface_name}.{operation_name}.parameters must be an array of type names")
+    })?;
+    let parameters = parameters
+        .iter()
+        .enumerate()
+        .map(|(index, parameter)| {
+            parameter.as_str().map(str::to_owned).ok_or_else(|| {
+                format!("{interface_name}.{operation_name}.parameters.{index} must be a type name")
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let result = object
+        .get("result")
+        .and_then(Value::as_str)
+        .ok_or_else(|| format!("{interface_name}.{operation_name}.result is required"))?;
+    match object
+        .get("kind")
+        .and_then(Value::as_str)
+        .unwrap_or("ordinary")
+    {
+        "ordinary" => Ok(CapabilityOperation::new(parameters, result)),
+        "outbound" => Ok(CapabilityOperation::outbound(
+            parameters,
+            result,
+            OutboundCapabilityMetadata {
+                timeout_argument_index: json_usize(
+                    object,
+                    interface_name,
+                    operation_name,
+                    "timeout_argument_index",
+                )?,
+                cancellation_argument_index: json_usize(
+                    object,
+                    interface_name,
+                    operation_name,
+                    "cancellation_argument_index",
+                )?,
+                maximum_timeout_ms: json_u128(
+                    object,
+                    interface_name,
+                    operation_name,
+                    "maximum_timeout_ms",
+                )?,
+                timed_out_case_identity: json_string(
+                    object,
+                    interface_name,
+                    operation_name,
+                    "timed_out_case_identity",
+                )?,
+                cancelled_case_identity: json_string(
+                    object,
+                    interface_name,
+                    operation_name,
+                    "cancelled_case_identity",
+                )?,
+            },
+        )),
+        kind => Err(format!(
+            "{interface_name}.{operation_name}.kind must be ordinary or outbound; it is {kind}"
+        )),
+    }
+}
+
+fn json_string(
+    object: &serde_json::Map<String, Value>,
+    interface_name: &str,
+    operation_name: &str,
+    field: &str,
+) -> Result<String, String> {
+    object
+        .get(field)
+        .and_then(Value::as_str)
+        .map(str::to_owned)
+        .ok_or_else(|| format!("{interface_name}.{operation_name}.{field} is required"))
+}
+
+fn json_usize(
+    object: &serde_json::Map<String, Value>,
+    interface_name: &str,
+    operation_name: &str,
+    field: &str,
+) -> Result<usize, String> {
+    object
+        .get(field)
+        .and_then(Value::as_u64)
+        .and_then(|value| usize::try_from(value).ok())
+        .ok_or_else(|| format!("{interface_name}.{operation_name}.{field} is required"))
+}
+
+fn json_u128(
+    object: &serde_json::Map<String, Value>,
+    interface_name: &str,
+    operation_name: &str,
+    field: &str,
+) -> Result<u128, String> {
+    object
+        .get(field)
+        .and_then(Value::as_u64)
+        .map(u128::from)
+        .ok_or_else(|| format!("{interface_name}.{operation_name}.{field} is required"))
+}
+
+fn first_duplicate_object_key(bytes: &[u8]) -> Option<String> {
+    let mut index = 0;
+    scan_json_value(bytes, &mut index, 0)
+}
+
+fn scan_json_value(bytes: &[u8], index: &mut usize, depth: usize) -> Option<String> {
+    skip_json_whitespace(bytes, index);
+    match bytes.get(*index).copied() {
+        Some(b'{') => scan_json_object(bytes, index, depth),
+        Some(b'[') => {
+            *index += 1;
+            loop {
+                skip_json_whitespace(bytes, index);
+                if bytes.get(*index) == Some(&b']') {
+                    *index += 1;
+                    return None;
+                }
+                if let Some(name) = scan_json_value(bytes, index, depth) {
+                    return Some(name);
+                }
+                skip_json_whitespace(bytes, index);
+                match bytes.get(*index) {
+                    Some(b',') => *index += 1,
+                    Some(b']') => {
+                        *index += 1;
+                        return None;
+                    }
+                    _ => return None,
+                }
+            }
+        }
+        Some(b'"') => {
+            skip_json_string(bytes, index);
+            None
+        }
+        Some(_) => {
+            skip_json_primitive(bytes, index);
+            None
+        }
+        None => None,
+    }
+}
+
+fn scan_json_object(bytes: &[u8], index: &mut usize, depth: usize) -> Option<String> {
+    *index += 1;
+    let mut seen = BTreeSet::new();
+    loop {
+        skip_json_whitespace(bytes, index);
+        if bytes.get(*index) == Some(&b'}') {
+            *index += 1;
+            return None;
+        }
+        let key = parse_json_string(bytes, index)?;
+        if !seen.insert(key.clone()) {
+            return Some(key);
+        }
+        skip_json_whitespace(bytes, index);
+        if bytes.get(*index) != Some(&b':') {
+            return None;
+        }
+        *index += 1;
+        if let Some(name) = scan_json_value(bytes, index, depth.saturating_add(1)) {
+            return Some(name);
+        }
+        skip_json_whitespace(bytes, index);
+        match bytes.get(*index) {
+            Some(b',') => *index += 1,
+            Some(b'}') => {
+                *index += 1;
+                return None;
+            }
+            _ => return None,
+        }
+    }
+}
+
+fn skip_json_whitespace(bytes: &[u8], index: &mut usize) {
+    while bytes.get(*index).is_some_and(u8::is_ascii_whitespace) {
+        *index += 1;
+    }
+}
+
+fn skip_json_string(bytes: &[u8], index: &mut usize) {
+    let _ = parse_json_string(bytes, index);
+}
+
+fn parse_json_string(bytes: &[u8], index: &mut usize) -> Option<String> {
+    if bytes.get(*index) != Some(&b'"') {
+        return None;
+    }
+    *index += 1;
+    let mut text = String::new();
+    while *index < bytes.len() {
+        match bytes[*index] {
+            b'"' => {
+                *index += 1;
+                return Some(text);
+            }
+            b'\\' => {
+                *index += 1;
+                let escaped = *bytes.get(*index)?;
+                *index += 1;
+                match escaped {
+                    b'"' | b'\\' | b'/' => text.push(char::from(escaped)),
+                    b'b' => text.push('\u{0008}'),
+                    b'f' => text.push('\u{000c}'),
+                    b'n' => text.push('\n'),
+                    b'r' => text.push('\r'),
+                    b't' => text.push('\t'),
+                    b'u' => {
+                        let end = index.checked_add(4)?;
+                        let hex = bytes.get(*index..end)?;
+                        let code = std::str::from_utf8(hex).ok()?;
+                        let scalar = u32::from_str_radix(code, 16).ok()?;
+                        text.push(char::from_u32(scalar)?);
+                        *index += 4;
+                    }
+                    _ => return None,
+                }
+            }
+            byte => {
+                text.push(char::from(byte));
+                *index += 1;
+            }
+        }
+    }
+    None
+}
+
+fn skip_json_primitive(bytes: &[u8], index: &mut usize) {
+    while bytes
+        .get(*index)
+        .is_some_and(|byte| !byte.is_ascii_whitespace() && !matches!(byte, b',' | b'}' | b']'))
+    {
+        *index += 1;
+    }
+}
+
 fn write_published_revision(
     path: &Path,
     workspace: &EvolutionWorkspace,
     behavior_validation: Option<BehaviorValidation>,
+    capability_environment_path: Option<String>,
+    capability_environment_digest: Option<String>,
 ) -> Result<PublishedRevision, String> {
     let revision = workspace
         .revision(PUBLISH_REVISION)
@@ -416,6 +801,8 @@ fn write_published_revision(
         source_set_digest: revision.source_set_digest.clone(),
         store,
         behavior_validation,
+        capability_environment_path,
+        capability_environment_digest,
     })
 }
 
@@ -522,6 +909,53 @@ fn directory_sources(path: &Path) -> Result<Vec<EvolutionSource>, CliCheckError>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn capabilities_json_loads_the_existing_environment_shape() {
+        let environment = capability_environment_from_json(
+            r#"{
+  "JobsStore": {
+    "insert": {
+      "parameters": ["Job"],
+      "result": "StoreOutcome"
+    }
+  }
+}"#,
+        )
+        .expect("fixture shape loads");
+        let store = environment
+            .interface("JobsStore")
+            .expect("JobsStore is declared");
+        let insert = store.operation("insert").expect("insert is declared");
+        assert_eq!(insert.parameters, ["Job"]);
+        assert_eq!(insert.result, "StoreOutcome");
+        assert!(matches!(
+            insert.kind,
+            crate::CapabilityOperationKind::Ordinary
+        ));
+    }
+
+    #[test]
+    fn capabilities_json_rejects_duplicate_capability_names() {
+        let error = capability_environment_from_json(
+            r#"{"JobsStore":{"insert":{"parameters":["Job"],"result":"StoreOutcome"}},"JobsStore":{"read":{"parameters":["Job"],"result":"StoreOutcome"}}}"#,
+        )
+        .expect_err("duplicate interface names are rejected");
+        assert!(
+            error.contains("duplicate capability name JobsStore"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn capabilities_json_rejects_a_shape_that_is_not_the_environment() {
+        let error = capability_environment_from_json("[\"JobsStore\"]")
+            .expect_err("an array is not CapabilityEnvironment");
+        assert!(
+            error.contains("capabilities must be a JSON object"),
+            "{error}"
+        );
+    }
 
     #[test]
     fn architecture_failure_location_does_not_reparse_the_source_set() {

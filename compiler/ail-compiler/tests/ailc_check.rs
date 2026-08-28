@@ -280,6 +280,144 @@ fn check_rejects_unknown_capability_interfaces() {
 }
 
 #[test]
+fn check_accepts_a_source_set_with_declared_capabilities() {
+    let path = examples_dir().join("capability-declared");
+    let output = run_check(&path);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(output.stdout, b"ok\n");
+    assert!(output.stderr.is_empty());
+    assert!(
+        !revision_store(&path).exists(),
+        "ailc check must remain read-only"
+    );
+
+    let json = ailc()
+        .args(["check", "--json"])
+        .arg(&path)
+        .output()
+        .expect("ailc check --json runs");
+    assert!(
+        json.status.success(),
+        "{}",
+        String::from_utf8_lossy(&json.stderr)
+    );
+    let document: serde_json::Value =
+        serde_json::from_slice(&json.stdout).expect("check --json is JSON");
+    assert_eq!(document["status"], "ok");
+    assert_eq!(
+        document["capability_environment"]["path"],
+        "capabilities.json"
+    );
+    let digest = document["capability_environment"]["digest"]
+        .as_str()
+        .expect("loaded digest is a string");
+    assert!(digest.starts_with("sha256:"), "{digest}");
+}
+
+#[test]
+fn check_does_not_search_outside_the_source_set_root_for_capabilities() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system clock is after the Unix epoch")
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!(
+        "ail-check-cap-search-{}-{unique}",
+        std::process::id()
+    ));
+    let source_set = root.join("source-set");
+    fs::create_dir_all(source_set.join(".ail")).expect("decoy directory is writable");
+    for name in ["types.ail", "service.ail"] {
+        fs::copy(
+            examples_dir().join("batch-lookup").join(name),
+            source_set.join(name),
+        )
+        .expect("batch-lookup source is copyable");
+    }
+    let declared = fs::read_to_string(examples_dir().join("capability-declared/capabilities.json"))
+        .expect("declared capabilities are readable");
+    fs::write(root.join("capabilities.json"), &declared).expect("parent decoy is writable");
+    fs::write(source_set.join(".ail/capabilities.json"), &declared)
+        .expect(".ail decoy is writable");
+    fs::write(source_set.join("capability.json"), &declared).expect("wrong-name decoy is writable");
+
+    let output = run_check(&source_set);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    assert!(
+        stderr.contains("AIL.CAPABILITY.UNKNOWN_INTERFACE"),
+        "{stderr}"
+    );
+    assert!(stderr.contains("this check supplies none"), "{stderr}");
+    assert!(
+        !stderr.contains("capabilities.json"),
+        "absent source-set file must not mention a loaded path: {stderr}"
+    );
+
+    fs::remove_dir_all(root).expect("temporary workspace is removable");
+}
+
+#[test]
+fn check_rejects_malformed_capabilities_json() {
+    let path = examples_dir().join("capability-malformed");
+    let output = run_check(&path);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    assert_ne!(output.stdout, b"ok\n");
+    assert!(stderr.contains("capabilities.json"), "{stderr}");
+    assert!(
+        stderr.contains("expected") || stderr.contains("EOF") || stderr.contains("invalid"),
+        "{stderr}"
+    );
+    assert!(
+        !stderr.contains("AIL.CAPABILITY.UNKNOWN_INTERFACE"),
+        "malformed file must fail as a load error: {stderr}"
+    );
+}
+
+#[test]
+fn check_rejects_duplicate_capability_names() {
+    let path = examples_dir().join("capability-duplicate");
+    let output = run_check(&path);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    assert!(stderr.contains("capabilities.json"), "{stderr}");
+    assert!(
+        stderr.contains("duplicate capability name JobsStore"),
+        "{stderr}"
+    );
+}
+
+#[test]
+fn check_rejects_undeclared_capability_authority() {
+    let path = examples_dir().join("capability-undeclared");
+    let output = run_check(&path);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    assert!(
+        stderr.contains("AIL.CAPABILITY.UNKNOWN_INTERFACE"),
+        "{stderr}"
+    );
+    assert!(stderr.contains("expected.capability=Clock"), "{stderr}");
+    assert!(
+        stderr.contains("capability_environment.path=capabilities.json"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("capability_environment.digest=sha256:"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("capability_environment.interfaces=JobsStore"),
+        "{stderr}"
+    );
+    assert!(!stderr.contains("this check supplies none"), "{stderr}");
+}
+
+#[test]
 fn check_reports_workspace_parse_causes() {
     let path = write_temp_source("parse", "record Job {\n  job_id\n}\n");
     let output = run_check(&path);

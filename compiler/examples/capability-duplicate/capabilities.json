@@ -1,0 +1,14 @@
+{
+  "JobsStore": {
+    "insert": {
+      "parameters": ["Job"],
+      "result": "StoreOutcome"
+    }
+  },
+  "JobsStore": {
+    "read": {
+      "parameters": ["Job"],
+      "result": "StoreOutcome"
+    }
+  }
+}

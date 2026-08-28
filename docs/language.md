@@ -78,10 +78,15 @@ change as one transaction.
 one file, then runs the compiler checks and any project architecture policy. It
 writes no revision. `ailc publish` accepts a directory workspace and writes a
 revision only after the same checks pass. A failed candidate publishes nothing.
-Neither command executes an entry point. When project architecture policy is
-present, both report its six-case behavior gate as `not-run` with zero passed
-cases; `ok` or `published` means the compiler and architecture checks passed,
-not that program behavior ran.
+Neither command executes an entry point. Both load capability interfaces only
+from `capabilities.json` at the source-set root, the same layer as
+`architecture.json`. They look only there. An absent file leaves the capability
+environment empty. A present file is loaded as a `CapabilityEnvironment`; its
+path and digest are compiler facts. There is no capability syntax in `.ail`
+files and no project manifest. When project architecture policy is present,
+both report its six-case behavior gate as `not-run` with zero passed cases;
+`ok` or `published` means the compiler and architecture checks passed, not that
+program behavior ran.
 
 Source and architecture diagnostics can produce structured findings. Every
 finding has a code and category. It includes a file and source range,

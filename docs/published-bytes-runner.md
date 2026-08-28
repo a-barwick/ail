@@ -48,15 +48,18 @@ the live files.
 ## Capabilities
 
 The runner supplies no capability instances and builds an empty
-`CapabilityEnvironment`. There is no capability file path, project manifest, or
-host config, and this change did not invent one. A published function that
-declares a capability parameter fails with the existing
+`CapabilityEnvironment`. It does not read `capabilities.json`. A published
+function that declares a capability parameter fails with the existing
 `AIL.RUNTIME.MISSING_CAPABILITY` fault at that parameter.
 
-Today no published revision can reach that fault through `ailc`: `ailc publish`
-also checks under the empty environment, so a capability-using source set fails
-`AIL.CAPABILITY.UNKNOWN_INTERFACE` before anything is frozen. The runner does
-not use the pinned lookup or batch-lookup host.
+`ailc check` and `ailc publish` load `capabilities.json` from the source-set
+root when that file is present. A source set published under a non-empty
+environment records that digest, and `ail-run` refuses it with
+`AIL.RUN.CAPABILITY_ENVIRONMENT_DIGEST` because the runner still supplies the
+empty environment. A source set without `capabilities.json` still fails
+`AIL.CAPABILITY.UNKNOWN_INTERFACE` at publish if it uses a capability. The
+runner does not use the pinned lookup or batch-lookup host. There is no
+project manifest and no capability syntax in `.ail` files.
 
 ## Reproduction
 

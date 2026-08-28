@@ -432,9 +432,37 @@ fn an_unknown_capability_interface_names_the_environment_check_supplies() {
     );
     assert_eq!(finding["expected"]["capability"], "DependencyClient");
     assert_eq!(finding["facts"]["capability_environment.interfaces"], "");
+    assert_eq!(finding["facts"].get("capability_environment.path"), None);
     assert_eq!(
         finding["requirement"],
         "the capability environment must declare interface DependencyClient; this check supplies none"
+    );
+}
+
+#[test]
+fn an_undeclared_capability_names_the_loaded_file_path_and_digest() {
+    let path = examples_dir().join("capability-undeclared");
+    let path = path.to_str().expect("example path is UTF-8");
+
+    let document = json_document(&["check", "--json", path]);
+    let finding = finding_with_code(&document, "AIL.CAPABILITY.UNKNOWN_INTERFACE");
+    assert_eq!(finding["location"]["path"], "store.ail");
+    assert_eq!(finding["expected"]["capability"], "Clock");
+    assert_eq!(
+        finding["facts"]["capability_environment.interfaces"],
+        "JobsStore"
+    );
+    assert_eq!(
+        finding["facts"]["capability_environment.path"],
+        "capabilities.json"
+    );
+    let digest = finding["facts"]["capability_environment.digest"]
+        .as_str()
+        .expect("digest fact is a string");
+    assert!(digest.starts_with("sha256:"), "{digest}");
+    assert_eq!(
+        finding["requirement"],
+        "the capability environment must declare interface Clock; it declares JobsStore"
     );
 }
 

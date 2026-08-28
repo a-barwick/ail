@@ -80,17 +80,21 @@ fn check(path: &str, json: bool) -> Result<(), String> {
     match check_cli_path_with_evidence(path) {
         Ok(success) => {
             if json {
+                let mut document =
+                    serde_json::from_str::<serde_json::Value>(&findings_document("ok", "", &[]))
+                        .expect("findings document is JSON");
                 if let Some(behavior) = success.behavior_validation.as_ref() {
-                    let document = serde_json::json!({
-                        "status": "ok",
-                        "summary": "",
-                        "behavior_validation": behavior_json(behavior),
-                        "findings": [],
-                    });
-                    println!("{document}");
-                } else {
-                    print!("{}", findings_document("ok", "", &[]));
+                    document
+                        .as_object_mut()
+                        .expect("check document is an object")
+                        .insert("behavior_validation".into(), behavior_json(behavior));
                 }
+                insert_capability_environment(
+                    &mut document,
+                    success.capability_environment_path.as_deref(),
+                    success.capability_environment_digest.as_deref(),
+                );
+                println!("{document}");
             } else {
                 println!("ok");
                 if let Some(behavior) = success.behavior_validation.as_ref() {
@@ -119,6 +123,11 @@ fn publish(path: &str, json: bool) -> Result<(), String> {
                         .expect("publish document is an object")
                         .insert("behavior_validation".into(), behavior_json(behavior));
                 }
+                insert_capability_environment(
+                    &mut document,
+                    revision.capability_environment_path.as_deref(),
+                    revision.capability_environment_digest.as_deref(),
+                );
                 println!("{document}");
             } else {
                 println!("published");
@@ -133,6 +142,26 @@ fn publish(path: &str, json: bool) -> Result<(), String> {
         Err(CliPublishError::Check(error)) => report_check_error(error, json),
         Err(CliPublishError::Write(message)) => Err(message),
     }
+}
+
+fn insert_capability_environment(
+    document: &mut serde_json::Value,
+    path: Option<&str>,
+    digest: Option<&str>,
+) {
+    let (Some(path), Some(digest)) = (path, digest) else {
+        return;
+    };
+    document
+        .as_object_mut()
+        .expect("command document is an object")
+        .insert(
+            "capability_environment".into(),
+            serde_json::json!({
+                "path": path,
+                "digest": digest,
+            }),
+        );
 }
 
 fn behavior_json(behavior: &BehaviorValidation) -> serde_json::Value {
