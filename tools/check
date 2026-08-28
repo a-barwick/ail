@@ -17,7 +17,7 @@ if ! command -v rustup >/dev/null 2>&1; then
 fi
 
 # Fresh clones may have rustup without this toolchain or rustfmt/clippy.
-rustup toolchain install 1.87.0 --profile minimal --component rustfmt --component clippy
+rustup toolchain install 1.87.0 --profile minimal --component rustfmt --component clippy --no-self-update
 
 run() {
   echo "+ $*"
