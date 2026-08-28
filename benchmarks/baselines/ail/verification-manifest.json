@@ -171,7 +171,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/architecture.rs",
-      "sha256": "f751b9c3b869a305cfed639f901307f0448264f58d23aa7729770907350c7267"
+      "sha256": "b85bca3ae82573c0d8ce237df34c3b18e43fd8080de731d098bdbf9c56fc24b3"
     },
     {
       "path": "compiler/ail-compiler/src/bin/ail-benchmark.rs",
@@ -183,11 +183,11 @@
     },
     {
       "path": "compiler/ail-compiler/src/evolution.rs",
-      "sha256": "6ef39a9209287c5061d281b6ffc6da07fe411f61cef8182cb6d9725fd6df442d"
+      "sha256": "ffbea9c08be7fa156c31a45ca298f0289740fe9814de61ace2ba55cd06b5da28"
     },
     {
       "path": "compiler/ail-compiler/src/evolution/transaction.rs",
-      "sha256": "65921f54d59adc4e7119ab6c29c4964b9d83328cc60808c98101f3ab3e49396a"
+      "sha256": "71fe6e29f981332f6a846d9dbde589b0977d9c3f104b25f53cbda95c74fd9447"
     },
     {
       "path": "compiler/ail-compiler/src/formatter.rs",
@@ -207,7 +207,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/parser.rs",
-      "sha256": "13b9a24ce3b3934b3710852ecb6a5f6131578ebccfdd2ec5ee161f5c8a9d5119"
+      "sha256": "80816e4e56ad0e704dbd79e3f9d1bf466e63102a049835fe76ce91334a3a75bf"
     },
     {
       "path": "compiler/ail-compiler/src/protocol.rs",
@@ -219,7 +219,7 @@
     },
     {
       "path": "compiler/ail-compiler/src/syntax.rs",
-      "sha256": "2507b00b6267402d39491cc48812ad4b6acc3ab3ad690e097c0c7b2e4f074d9c"
+      "sha256": "74c46003790b55c025b9ed4cfefe14f6a83be0208f431b339f97cc931b573bfa"
     },
     {
       "path": "compiler/ail-compiler/tests/m17_runtime.rs",
@@ -287,7 +287,7 @@
     },
     {
       "path": "specs/README.md",
-      "sha256": "a0b97f71c469a10355c751f4cca8f8b243fd6d109c52315fafef6d04a4cd1f83"
+      "sha256": "4622d0028490a90c891d49b2867b1c22e6c06f82d6945dcd06ffa5b02fa27d9e"
     },
     {
       "path": "specs/bounded-list-contract.json",

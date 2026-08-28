@@ -97,19 +97,40 @@ digest, rebuilds the frozen set as an `EvolutionWorkspace`, and refuses with an
 
 ## Verify
 
-From the repository root:
+The repository gate is `./tools/check` from the repository root. It runs every
+compiler check in [docs/STATUS.md](../docs/STATUS.md) and stops on the first
+failure. CI runs the same command.
+
+```bash
+./tools/check
+```
+
+That command runs:
 
 ```bash
 cargo +1.87.0 fmt --all --check
 cargo +1.87.0 test --workspace
 cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
+cargo +1.87.0 test -p ail-compiler --test ailc_findings
+cargo +1.87.0 test -p ail-compiler --test published_runner
+cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
+cargo +1.87.0 test -p ail-service-host --test m33_private_catalog_dogfood
+python3 specs/tools/architecture_acceptance.py check
+python3 specs/tools/architecture_contract.py check
+python3 specs/tools/core_contract.py check
+python3 specs/tools/bounded_list_contract.py check
+python3 specs/tools/outbound_request_contract.py check
+python3 specs/tools/bounded_outbound_workflow_contract.py check
+PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public
+python3 benchmarks/tools/fixtures.py check
+python3 tools/check_docs.py
+```
+
+Focused extra runs already covered by `cargo +1.87.0 test --workspace`:
+
+```bash
 cargo +1.87.0 test --workspace --test m28_composition
 cargo +1.87.0 test --workspace --test m29_bounded_lists
 cargo +1.87.0 test --workspace --test m30_outbound_requests
 cargo +1.87.0 test --workspace --test m31_bounded_outbound_workflows
-cargo +1.87.0 test -p ail-compiler --test published_runner
-cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
-python3 specs/tools/bounded_list_contract.py check
-python3 specs/tools/outbound_request_contract.py check
-PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public
 ```

@@ -83,18 +83,36 @@ proposed features as shipped.
 Work directly on local `main`. Do not disturb unrelated changes. Commit only
 complete changes that build and pass their focused checks.
 
-For compiler work, run the narrow test first, then the full Rust checks before
+For compiler work, run the narrow test first, then the repository gate before
 declaring completion:
+
+```bash
+./tools/check
+```
+
+That command runs every compiler check in `docs/STATUS.md` and stops on the
+first failure:
 
 ```bash
 cargo +1.87.0 fmt --all --check
 cargo +1.87.0 test --workspace
 cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
+cargo +1.87.0 test -p ail-compiler --test ailc_findings
+cargo +1.87.0 test -p ail-compiler --test published_runner
+cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
+cargo +1.87.0 test -p ail-service-host --test m33_private_catalog_dogfood
+python3 specs/tools/architecture_acceptance.py check
+python3 specs/tools/architecture_contract.py check
+python3 specs/tools/core_contract.py check
+python3 specs/tools/bounded_list_contract.py check
+python3 specs/tools/outbound_request_contract.py check
+python3 specs/tools/bounded_outbound_workflow_contract.py check
+PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public
+python3 benchmarks/tools/fixtures.py check
 python3 tools/check_docs.py
 ```
 
-Run the relevant specification or benchmark checker when the change touches its
-contract. Do not edit locked fixtures or manifests merely to make a test pass.
+Do not edit locked fixtures or manifests merely to make a test pass.
 
 Record a decision in `docs/decisions/` when it changes public semantics or makes
 an expensive implementation choice. Keep the record technical: decision,

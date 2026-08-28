@@ -1,0 +1,25 @@
+name: check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Rust 1.87.0 with rustfmt and clippy
+        run: rustup toolchain install 1.87.0 --profile minimal --component rustfmt --component clippy
+
+      - name: Run the repository gate
+        run: ./tools/check
