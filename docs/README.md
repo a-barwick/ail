@@ -12,4 +12,6 @@
 
 If prose disagrees with a fixture, the fixture wins.
 
-Run `python3 tools/check_docs.py` after documentation changes.
+The repository gate is `./tools/check`; it includes `python3 tools/check_docs.py`.
+Run that documentation check after documentation-only edits, or run the full
+gate.

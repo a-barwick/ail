@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Repository gate: every compiler check listed in docs/STATUS.md.
+# Stops on the first failure. CI runs this same command on a clean checkout.
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$root"
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "python3 is required" >&2
+  exit 1
+fi
+
+if ! command -v rustup >/dev/null 2>&1; then
+  echo "rustup is required. Install Rust 1.87.0 from https://rustup.rs" >&2
+  exit 1
+fi
+
+# Fresh clones may have rustup without this toolchain or rustfmt/clippy.
+rustup toolchain install 1.87.0 --profile minimal --component rustfmt --component clippy
+
+run() {
+  echo "+ $*"
+  "$@"
+}
+
+run cargo +1.87.0 fmt --all --check
+run cargo +1.87.0 test --workspace
+run cargo +1.87.0 clippy --workspace --all-targets -- -D warnings
+run cargo +1.87.0 test -p ail-compiler --test ailc_findings
+run cargo +1.87.0 test -p ail-compiler --test published_runner
+run cargo +1.87.0 test -p ail-service-host --test m32_pinned_http_service
+run cargo +1.87.0 test -p ail-service-host --test m33_private_catalog_dogfood
+run python3 specs/tools/architecture_acceptance.py check
+run python3 specs/tools/architecture_contract.py check
+run python3 specs/tools/core_contract.py check
+run python3 specs/tools/bounded_list_contract.py check
+run python3 specs/tools/outbound_request_contract.py check
+run python3 specs/tools/bounded_outbound_workflow_contract.py check
+echo "+ PATH=\"\$HOME/.cargo/bin:\$PATH\" python3 benchmarks/tools/harness.py verify --language ail --visibility public"
+PATH="$HOME/.cargo/bin:$PATH" python3 benchmarks/tools/harness.py verify --language ail --visibility public
+run python3 benchmarks/tools/fixtures.py check
+run python3 tools/check_docs.py

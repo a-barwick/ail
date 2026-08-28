@@ -1,6 +1,6 @@
 # Current status
 
-Last updated: 2026-08-21
+Last updated: 2026-08-28
 
 ## Limits
 
@@ -56,6 +56,18 @@ does not make AIL a general application platform.
 [language.md](language.md) describes what the compiler does implement.
 
 ## Checks after compiler changes
+
+The repository gate is `./tools/check`. Run it from the repository root. It
+needs Rust 1.87.0 via rustup (with rustfmt and clippy) and Python 3. When
+rustup is already present, the command installs that toolchain and those
+components. It then runs every command below and stops on the first failure.
+CI runs the same command on a clean checkout.
+
+```bash
+./tools/check
+```
+
+That command runs:
 
 ```bash
 cargo +1.87.0 fmt --all --check
