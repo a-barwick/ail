@@ -11,7 +11,7 @@
 ADR 0013 and ADR 0014 rejected inventing a project manifest or capability
 syntax to fill that gap.
 
-Austin chose one file at the same layer as `architecture.json`:
+Alan chose one file at the same layer as `architecture.json`:
 `capabilities.json` in the directory passed to `ailc check` and
 `ailc publish`. The driver already knows how to look at exactly one
 source-set-root JSON file and how to record a digest on publish.
