@@ -1,0 +1,8 @@
+{
+  "JobsStore": {
+    "insert": {
+      "parameters": ["store.Job"],
+      "result": "store.StoreOutcome"
+    }
+  }
+}

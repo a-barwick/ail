@@ -19,14 +19,20 @@ and requires a restart after 256 admitted executions. The interpreter cannot
 preempt stuck host code, enforce a hard deadline itself, or roll back remote
 effects.
 
-`ailc check` uses an empty capability environment. Capability-using source
-sets fail until a library caller supplies the interfaces. The driver does not
-invent capability syntax or a project manifest. When `architecture.json` is
-present, check evaluates that project policy and fails with an architecture
-diagnostic. Check writes no revision. `ailc publish` writes one revision only
-after the same checks pass. Neither command executes the program. Their
-architecture result reports the six-case behavior gate as `not-run` with zero
-passed cases.
+`ailc check` and `ailc publish` load capability interfaces only from
+`capabilities.json` at the source-set root, the same layer as
+`architecture.json`. They do not search another filename, the repository root,
+or `.ail/`. If the file is absent, the capability environment is empty and
+capability-using source sets fail because the interfaces were not supplied. If
+the file is present, they load it as a `CapabilityEnvironment`. Malformed JSON,
+a shape that is not that environment, duplicate capability names, and source
+that uses an undeclared interface are rejected. The loaded path and digest are
+compiler facts. The driver does not invent capability syntax or a project
+manifest. When `architecture.json` is present, check evaluates that project
+policy and fails with an architecture diagnostic. Check writes no revision.
+`ailc publish` writes one revision only after the same checks pass. Neither
+command executes the program. Their architecture result reports the six-case
+behavior gate as `not-run` with zero passed cases.
 
 `ailc format` and `ailc reconstruct` also read live source, and like check and
 publish they do not execute the program. `ail-run` is the only command that

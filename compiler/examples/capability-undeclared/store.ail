@@ -1,0 +1,14 @@
+module store;
+
+record Job {
+  job_id: Text;
+}
+
+variant StoreOutcome {
+  Inserted;
+  Duplicate;
+}
+
+fn persist(job: Job, jobs: capability JobsStore, clock: capability Clock) -> StoreOutcome effects { jobs.insert } {
+  jobs.insert(job)
+}

@@ -1,0 +1,5 @@
+module store;
+
+fn identity(value: Text) -> Text {
+  value
+}

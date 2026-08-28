@@ -255,6 +255,68 @@ fn publish_of_a_passing_architecture_candidate_writes_a_revision() {
 }
 
 #[test]
+fn publish_of_declared_capabilities_records_the_environment_digest() {
+    let path = temp_workspace("cap-pass");
+    copy_dir(&examples_dir().join("capability-declared"), &path);
+
+    let check = ailc()
+        .arg("check")
+        .arg(&path)
+        .output()
+        .expect("ailc check runs");
+    assert!(
+        check.status.success(),
+        "{}",
+        String::from_utf8_lossy(&check.stderr)
+    );
+    assert_eq!(check.stdout, b"ok\n");
+    assert!(!revision_store(&path).exists());
+
+    let output = run_publish(&path);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "{stderr}");
+    assert!(stdout.contains("published\n"), "{stdout}");
+    let document = fs::read_to_string(published_revision(&path)).expect("revision is readable");
+    assert!(
+        document.contains("capability_environment_digest"),
+        "{document}"
+    );
+    assert!(
+        !document.contains("\"capability_environment_digest\":\"sha256:4af4a6b7ff095044d5395564812c008d5e22607cc05eee393201afa984e7353b\""),
+        "publish must record the loaded environment, not the empty one: {document}"
+    );
+
+    let json = ailc()
+        .args(["publish", "--json"])
+        .arg(&path)
+        .output()
+        .expect("ailc publish --json runs");
+    assert!(
+        json.status.success(),
+        "{}",
+        String::from_utf8_lossy(&json.stderr)
+    );
+    let published: serde_json::Value =
+        serde_json::from_slice(&json.stdout).expect("publish --json is JSON");
+    assert_eq!(published["status"], "published");
+    assert_eq!(
+        published["capability_environment"]["path"],
+        "capabilities.json"
+    );
+    let digest = published["capability_environment"]["digest"]
+        .as_str()
+        .expect("loaded digest is a string");
+    assert!(digest.starts_with("sha256:"), "{digest}");
+    assert!(
+        document.contains(&format!("\"capability_environment_digest\":\"{digest}\"")),
+        "{document}"
+    );
+
+    fs::remove_dir_all(path).expect("temporary workspace is removable");
+}
+
+#[test]
 fn publish_does_not_replace_an_existing_revision_when_the_candidate_fails() {
     let path = temp_workspace("keep-existing");
     copy_dir(&examples_dir().join("composed-service"), &path);
